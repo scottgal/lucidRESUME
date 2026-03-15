@@ -29,7 +29,7 @@ public sealed class DoclingClient : IDoclingClient
     {
         try
         {
-            var response = await _http.GetAsync(new Uri(new Uri(_options.BaseUrl), "/health"), ct);
+            var response = await _http.GetAsync(new Uri(new Uri(_options.EffectiveBaseUrl), "/health"), ct);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -43,7 +43,8 @@ public sealed class DoclingClient : IDoclingClient
         var fileName = Path.GetFileName(filePath);
         var contentType = GuessContentType(filePath);
 
-        _logger.LogInformation("Submitting {FileName} to Docling at {BaseUrl}", fileName, _options.BaseUrl);
+        _logger.LogInformation("Submitting {FileName} to Docling at {BaseUrl} (cloud={UseCloud})",
+            fileName, _options.EffectiveBaseUrl, _options.UseCloud);
 
         await using var stream = File.OpenRead(filePath);
         var taskId = await SubmitAsync(stream, fileName, contentType, ct);
@@ -67,8 +68,12 @@ public sealed class DoclingClient : IDoclingClient
         content.Add(new StringContent("true"), "do_ocr");
         content.Add(new StringContent("true"), "do_table_structure");
 
-        var baseUri = new Uri(_options.BaseUrl);
-        var response = await _http.PostAsync(new Uri(baseUri, "/v1/convert/file/async"), content, ct);
+        using var request = new HttpRequestMessage(HttpMethod.Post,
+            new Uri(new Uri(_options.EffectiveBaseUrl), "/v1/convert/file/async")) { Content = content };
+        if (_options.UseCloud && _options.CloudApiKey is not null)
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _options.CloudApiKey);
+
+        var response = await _http.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
         var submission = await response.Content.ReadFromJsonAsync<DoclingTaskSubmission>(JsonOptions, ct);
@@ -81,13 +86,18 @@ public sealed class DoclingClient : IDoclingClient
     private async Task PollUntilCompleteAsync(string taskId, CancellationToken ct)
     {
         var deadline = DateTime.UtcNow.AddSeconds(_options.TimeoutSeconds);
-        var baseUri = new Uri(_options.BaseUrl);
+        var baseUri = new Uri(_options.EffectiveBaseUrl);
 
         while (DateTime.UtcNow < deadline)
         {
             ct.ThrowIfCancellationRequested();
 
-            var response = await _http.GetAsync(new Uri(baseUri, $"/v1/status/poll/{taskId}?wait=5"), ct);
+            using var pollRequest = new HttpRequestMessage(HttpMethod.Get,
+                new Uri(baseUri, $"/v1/status/poll/{taskId}?wait=5"));
+            if (_options.UseCloud && _options.CloudApiKey is not null)
+                pollRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _options.CloudApiKey);
+
+            var response = await _http.SendAsync(pollRequest, ct);
             response.EnsureSuccessStatusCode();
 
             var status = await response.Content.ReadFromJsonAsync<DoclingTaskStatus>(JsonOptions, ct);
@@ -111,8 +121,12 @@ public sealed class DoclingClient : IDoclingClient
 
     private async Task<DoclingConversionResult> GetResultAsync(string taskId, CancellationToken ct)
     {
-        var baseUri = new Uri(_options.BaseUrl);
-        var response = await _http.GetAsync(new Uri(baseUri, $"/v1/result/{taskId}"), ct);
+        var baseUri = new Uri(_options.EffectiveBaseUrl);
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUri, $"/v1/result/{taskId}"));
+        if (_options.UseCloud && _options.CloudApiKey is not null)
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _options.CloudApiKey);
+
+        var response = await _http.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<DoclingApiResult>(JsonOptions, ct);
