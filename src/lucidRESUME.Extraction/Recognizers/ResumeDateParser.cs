@@ -69,16 +69,20 @@ public static class ResumeDateParser
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
-    private static bool IsOpenEndedInText(string text, int start, int end)
+    private static bool IsOpenEndedInText(string text, int matchStart, int matchEnd)
     {
-        var safeEnd = Math.Min(end, text.Length - 1);
-        if (start > safeEnd) return false;
-        var slice = text[start..(safeEnd + 1)];
-        return slice.Contains("now", StringComparison.OrdinalIgnoreCase)
-            || slice.Contains("present", StringComparison.OrdinalIgnoreCase)
-            || slice.Contains("current", StringComparison.OrdinalIgnoreCase)
-            || slice.Contains("to date", StringComparison.OrdinalIgnoreCase)
-            || slice.Contains("till now", StringComparison.OrdinalIgnoreCase);
+        // Scan from the date match start to end of text.
+        // Recognizers.Text en-us does NOT classify "Present" / "present" as PRESENT_REF,
+        // so we must detect it ourselves. Searching from matchStart avoids false-positives
+        // from "present" / "currently" that appear BEFORE the date range in a sentence.
+        _ = matchEnd; // matchEnd reserved for future narrower checks
+        if (matchStart < 0 || matchStart >= text.Length) return false;
+        var fromDate = text[matchStart..];
+        return fromDate.Contains("present", StringComparison.OrdinalIgnoreCase)
+            || fromDate.Contains("current", StringComparison.OrdinalIgnoreCase)
+            || fromDate.Contains("now", StringComparison.OrdinalIgnoreCase)
+            || fromDate.Contains("to date", StringComparison.OrdinalIgnoreCase)
+            || fromDate.Contains("till now", StringComparison.OrdinalIgnoreCase);
     }
 
     private static DateOnly? ParseIsoDate(string? iso)

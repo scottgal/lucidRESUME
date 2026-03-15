@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Jobs;
+using lucidRESUME.JobSpec.Scrapers;
 using Microsoft.Extensions.Logging;
 
 namespace lucidRESUME.JobSpec;
@@ -8,12 +9,12 @@ namespace lucidRESUME.JobSpec;
 public sealed class JobSpecParser : IJobSpecParser
 {
     private readonly ILogger<JobSpecParser> _logger;
-    private readonly HttpClient? _http;
+    private readonly ScrapeStrategySelector _strategySelector;
 
-    public JobSpecParser(ILogger<JobSpecParser> logger, HttpClient? http = null)
+    public JobSpecParser(ILogger<JobSpecParser> logger, ScrapeStrategySelector? strategySelector = null)
     {
         _logger = logger;
-        _http = http;
+        _strategySelector = strategySelector!;
     }
 
     public Task<JobDescription> ParseFromTextAsync(string text, CancellationToken ct = default)
@@ -25,13 +26,92 @@ public sealed class JobSpecParser : IJobSpecParser
 
     public async Task<JobDescription> ParseFromUrlAsync(string url, CancellationToken ct = default)
     {
-        if (_http == null) throw new InvalidOperationException("HttpClient not configured for URL parsing");
-        var html = await _http.GetStringAsync(url, ct);
-        var text = StripHtml(html);
-        var job = JobDescription.Create(text, new JobSource { Type = JobSourceType.Url, Url = url });
-        ExtractFields(job, text);
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            throw new ArgumentException($"Invalid URL: {url}", nameof(url));
+
+        var scrapers = _strategySelector.SelectScrapers(uri);
+
+        // Empty scraper list = manual-only domain (Layer 5)
+        if (scrapers.Count == 0)
+        {
+            _logger.LogWarning("URL {Url} requires manual paste (login wall / bot detection).", url);
+            var manualJob = JobDescription.Create("", new JobSource { Type = JobSourceType.Url, Url = url });
+            manualJob.MarkNeedsManualInput();
+            return manualJob;
+        }
+
+        ScrapeResult? result = null;
+        foreach (var scraper in scrapers)
+        {
+            if (!scraper.CanHandle(uri))
+            {
+                _logger.LogDebug("Scraper {Scraper} reports CanHandle=false for {Url} — skipping.", scraper.Name, url);
+                continue;
+            }
+
+            _logger.LogDebug("Trying scraper {Scraper} for {Url}...", scraper.Name, url);
+            try
+            {
+                result = await scraper.ScrapeAsync(uri, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Scraper {Scraper} threw an unhandled exception for {Url}.", scraper.Name, url);
+            }
+
+            if (result is not null)
+            {
+                _logger.LogInformation("Scraper {Scraper} succeeded for {Url}.", scraper.Name, url);
+                break;
+            }
+        }
+
+        // Layer 5 fallback — all scrapers failed
+        if (result is null)
+        {
+            _logger.LogWarning("All scrapers failed for {Url} — returning NeedsManualInput.", url);
+            var fallback = JobDescription.Create("", new JobSource { Type = JobSourceType.Url, Url = url });
+            fallback.MarkNeedsManualInput();
+            return fallback;
+        }
+
+        var job = JobDescription.Create(result.Markdown, new JobSource { Type = JobSourceType.Url, Url = url });
+        ExtractFields(job, result.Markdown);
+        ApplyStructuredData(job, result.StructuredData);
         return job;
     }
+
+    // -------------------------------------------------------------------------
+    // Structured data overlay — enriches what regex couldn't find
+    // -------------------------------------------------------------------------
+
+    private static void ApplyStructuredData(JobDescription job, StructuredJobData? data)
+    {
+        if (data is null) return;
+
+        if (string.IsNullOrWhiteSpace(job.Title) && !string.IsNullOrWhiteSpace(data.Title))
+            job.Title = data.Title;
+
+        if (string.IsNullOrWhiteSpace(job.Company) && !string.IsNullOrWhiteSpace(data.Company))
+            job.Company = data.Company;
+
+        if (string.IsNullOrWhiteSpace(job.Location) && !string.IsNullOrWhiteSpace(data.Location))
+            job.Location = data.Location;
+
+        if (job.IsRemote is null && data.IsRemote.HasValue)
+            job.IsRemote = data.IsRemote;
+
+        if (job.Salary is null && data.SalaryMin.HasValue)
+            job.Salary = new SalaryRange(data.SalaryMin.Value, data.SalaryMax ?? data.SalaryMin.Value);
+
+        // OG fallbacks for title only
+        if (string.IsNullOrWhiteSpace(job.Title) && !string.IsNullOrWhiteSpace(data.OgTitle))
+            job.Title = data.OgTitle;
+    }
+
+    // -------------------------------------------------------------------------
+    // Field extraction from plain text / markdown
+    // -------------------------------------------------------------------------
 
     private static void ExtractFields(JobDescription job, string text)
     {
@@ -77,7 +157,4 @@ public sealed class JobSpecParser : IJobSpecParser
         }
         return skills;
     }
-
-    private static string StripHtml(string html) =>
-        Regex.Replace(html, "<[^>]+>", " ").Trim();
 }

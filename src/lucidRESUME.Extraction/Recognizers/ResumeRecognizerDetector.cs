@@ -58,11 +58,18 @@ public sealed class ResumeRecognizerDetector : IEntityDetector
         }
     }
 
+    // Season names that Recognizers.Text misidentifies as date references inside tech-stack text
+    private static readonly HashSet<string> SeasonOnlyWords =
+        new(StringComparer.OrdinalIgnoreCase) { "spring", "summer", "fall", "winter", "autumn" };
+
     private static void DetectDates(DetectionContext context, List<ExtractedEntity> entities)
     {
         var dates = DateTimeRecognizer.RecognizeDateTime(context.Text, Culture);
         foreach (var d in dates)
         {
+            // Skip single-word season matches — "Spring Boot", "Spring MVC", etc.
+            if (SeasonOnlyWords.Contains(d.Text.Trim())) continue;
+
             var resolutionValues = d.Resolution?.TryGetValue("values", out var v) == true
                 && v is IList<Dictionary<string, string>> list
                 ? list.FirstOrDefault()

@@ -86,10 +86,21 @@ public sealed class TemplateParsingHints
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /// <summary>True when enough hints exist to drive deterministic extraction.</summary>
+    /// <summary>
+    /// True when enough hints exist to drive deterministic extraction.
+    ///
+    /// Two modes:
+    ///   Style-based — document uses Word heading styles (SectionStyleIds populated).
+    ///   Text-based  — document uses plain paragraphs but section headings are
+    ///                 ALL-CAPS or match the section keyword map (SectionMap well-populated).
+    ///
+    /// Both modes produce semantic SemanticType values; only the path to detect headings differs.
+    /// </summary>
     [JsonIgnore]
     public bool IsUsable =>
-        (NameStyleIds.Count > 0 || SectionStyleIds.Count > 0) && SectionMap.Count > 0;
+        SectionMap.Count >= 10 ||
+        NameStyleIds.Count > 0 ||
+        SectionStyleIds.Count > 0;
 
     /// <summary>
     /// Returns the semantic section type for a heading text, or null if unknown.

@@ -275,13 +275,16 @@ public static class MarkdownSectionParser
             }
 
             // Pattern 3: "YYYY - YYYY:  Job Title, Company (Location)"
+            //             "2021-present:  Frontend developer (remote)"      ← compact, no spaces
             // Common in Eastern European / Israeli CVs from Word templates
             if (!line.StartsWith('#'))
             {
                 var prefixRange = ResumeDateParser.ExtractFirstDateRange(line);
                 if (prefixRange != null && prefixRange.MatchStart <= 2)
                 {
-                    var rest = line[(prefixRange.MatchEnd + 1)..].TrimStart(':', ' ');
+                    // Strip leading separator chars; handle compact "-present" / "-now" that the
+                    // recognizer leaves outside the match span when there are no spaces around the dash.
+                    var rest = StripDateTail(line[(prefixRange.MatchEnd + 1)..]);
                     if (rest.Length > 5) // something meaningful after the date
                     {
                         if (current != null) resume.Experience.Add(current);
@@ -400,6 +403,16 @@ public static class MarkdownSectionParser
                 if (current != null) resume.Education.Add(current);
                 current = new Education();
 
+                // Strip a leading date prefix ("2000 - 2005: master's degree in ...")
+                var headRange = ResumeDateParser.ExtractFirstDateRange(content);
+                bool dateAlreadyApplied = false;
+                if (headRange != null && headRange.MatchStart <= 2)
+                {
+                    ApplyDateRange(current, headRange);
+                    content = content[(headRange.MatchEnd + 1)..].TrimStart(':', ' ');
+                    dateAlreadyApplied = true;
+                }
+
                 // "Degree in Field — Institution" or "Institution | Degree"
                 if (content.Contains(" in "))
                 {
@@ -418,8 +431,11 @@ public static class MarkdownSectionParser
                 }
                 else current.Institution = content;
 
-                var headingRange = ResumeDateParser.ExtractFirstDateRange(content);
-                if (headingRange != null) ApplyDateRange(current, headingRange);
+                if (!dateAlreadyApplied)
+                {
+                    var headingRange = ResumeDateParser.ExtractFirstDateRange(content);
+                    if (headingRange != null) ApplyDateRange(current, headingRange);
+                }
                 continue;
             }
 
@@ -479,4 +495,28 @@ public static class MarkdownSectionParser
 
     private static bool IsJobEntry(string content) =>
         ResumeDateParser.ContainsDate(content);
+
+    /// <summary>
+    /// Strips the tail of a date-range match that the recognizer left unmatched.
+    /// Handles compact formats like "-present:", "-now:", "-current:" and then
+    /// trims any remaining colon/space separators.
+    /// </summary>
+    private static string StripDateTail(string tail)
+    {
+        // Trim dash/en-dash/em-dash prefix  (e.g. "-present:", "–now:")
+        var s = tail.TrimStart('-', '–', '—', ' ');
+
+        // If a present-reference keyword starts here, skip it and the following separator
+        ReadOnlySpan<string> presentWords = ["present", "now", "current", "to date", "till now"];
+        foreach (var word in presentWords)
+        {
+            if (s.StartsWith(word, StringComparison.OrdinalIgnoreCase))
+            {
+                s = s[word.Length..];
+                break;
+            }
+        }
+
+        return s.TrimStart(':', ' ');
+    }
 }

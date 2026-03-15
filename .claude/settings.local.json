@@ -15,7 +15,11 @@
       "Bash(which firecrawl:*)",
       "WebFetch(domain:www.freepublicapis.com)",
       "WebFetch(domain:publicapis.dev)",
-      "WebFetch(domain:www.arbeitnow.com)"
+      "WebFetch(domain:www.arbeitnow.com)",
+      "WebFetch(domain:developers.cloudflare.com)",
+      "WebFetch(domain:api.joinrise.io)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

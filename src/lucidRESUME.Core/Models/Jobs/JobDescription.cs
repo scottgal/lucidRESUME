@@ -34,6 +34,12 @@ public sealed class JobDescription
     public bool IsBlocked { get; set; }
     public string? BlockReason { get; set; }
 
+    /// <summary>
+    /// Set when the URL could not be scraped automatically (login wall, bot detection, etc.)
+    /// and the user must manually paste the job description text.
+    /// </summary>
+    public bool NeedsManualInput { get; private set; }
+
     [JsonConstructor]
     public JobDescription() { }
 
@@ -52,4 +58,6 @@ public sealed class JobDescription
         IsBlocked = true;
         BlockReason = reason;
     }
+
+    public void MarkNeedsManualInput() => NeedsManualInput = true;
 }

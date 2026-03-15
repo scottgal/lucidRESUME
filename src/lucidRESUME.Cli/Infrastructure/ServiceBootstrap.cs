@@ -29,7 +29,7 @@ public static class ServiceBootstrap
 
         services.AddIngestion(config);
         services.AddExtraction(config);
-        services.AddJobSpec();
+        services.AddJobSpec(config);
         services.AddMatching();
         services.AddExport();
         services.AddJobSearch(config);

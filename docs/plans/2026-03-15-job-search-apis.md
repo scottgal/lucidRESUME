@@ -284,32 +284,114 @@ User pastes a job URL (LinkedIn, Indeed, any job board) → app extracts the JD 
 ### Layered Strategy (try each in order, stop on success)
 
 ```
-Layer 1: HTTP GET → plain text/markdown
-    → Simplest and fastest — always try this first
-    → HTTP GET with text/html accept, strip tags, convert to markdown
-    → Works for most static and many JS-light boards (Reed, Adzuna, company pages)
-    → Use ReverseMarkdown or AngleSharp to convert HTML → clean markdown
-    → If result contains meaningful text (>200 chars) → parse it, done
+Layer 1: Accept: text/markdown header (zero cost, zero config, always try first)
+    → Plain HTTP GET with "Accept: text/markdown" header
+    → Cloudflare's "Markdown for Agents" feature (Feb 2026) auto-converts HTML→markdown
+      at the CDN edge for any site on Cloudflare with the feature enabled
+    → No API key, no account, no cost — just a header
+    → Returns Content-Type: text/markdown + x-markdown-tokens header
+    → Works for: many job boards, company career pages, Reed, Adzuna, and any
+      Cloudflare Pro/Business/Enterprise hosted site
+    → Does NOT work for: LinkedIn, Indeed, Glassdoor (not on Cloudflare CDN)
+    → If response Content-Type is text/markdown and body >200 chars → done
 
-Layer 2: JSON-LD / schema.org structured data
-    → Already in the Layer 1 HTTP response — parse <script type="application/ld+json">
-    → JobPosting schema gives title, company, location, salary, description structured
-    → LinkedIn, Greenhouse, Lever, Workday all embed this for SEO
+Layer 2: Plain HTTP GET → local HTML→markdown (always available fallback)
+    → Same HTTP GET without the markdown header
+    → Convert HTML → markdown locally via ReverseMarkdown or AngleSharp
+    → While we have the HTML, also extract JSON-LD JobPosting schema (free structured data):
+        <script type="application/ld+json"> → schema.org/JobPosting
+        → LinkedIn, Greenhouse, Lever, Workday embed this for SEO
+        → Gets title, company, location, salary, description fully structured
+    → Also extract OpenGraph tags (og:title, og:description) as supplemental fields
+    → Works for static/JS-light boards
 
-Layer 3: OpenGraph metadata
-    → og:title, og:description as supplemental fallback for any missing fields
+Layer 3: Cloudflare Browser Rendering /markdown endpoint (if CF account configured)
+    → POST https://api.cloudflare.com/client/v4/accounts/{accountId}/browser-rendering/markdown
+    → Fully renders JS, runs on Cloudflare's IP network (better bot resistance)
+    → Free: 10 hrs/month on Workers Paid plan
+    → For JS-heavy boards where layers 1-2 return thin content
 
-Layer 4: Playwright headless browser
-    → For JS-rendered boards where layer 1 returns empty/useless content
-    → Navigate, wait for content, extract main content area as markdown
-    → Works for Indeed, most mid-tier boards
-    → NOT LinkedIn (login wall) or Glassdoor (aggressive bot detection)
+Layer 4: Local Playwright (heavy fallback, no CF account needed)
+    → Lazy-init headless Chromium, only launched on demand
+    → For JS-rendered boards when CF Browser Rendering not configured
+    → Skipped if Layer 3 is configured
 
 Layer 5: Manual paste fallback
-    → When URL is LinkedIn / Glassdoor / behind auth / all layers fail
-    → App detects the domain, shows: "This site can't be scraped automatically.
-       Open the job in your browser and paste the description below."
-    → Same paste-text flow already in the JobSpecParser
+    → LinkedIn (own CDN, login wall), Glassdoor (bot detection), anything that fails
+    → App detects domain, shows: "Open this job in your browser and paste the text below."
+    → Same flow as JobSpecParser.ParseFromTextAsync
+```
+
+### Why LinkedIn won't work with Accept: text/markdown
+
+LinkedIn runs on its own CDN infrastructure (not Cloudflare). The Markdown for Agents feature requires:
+1. The site is proxied through Cloudflare's CDN
+2. The site owner has enabled it (Pro plan or higher)
+
+LinkedIn, Indeed, and Glassdoor all run their own infrastructure, so layers 1-3 won't return markdown for them. Layer 2 (plain HTTP + JSON-LD) may still extract structured job data from LinkedIn's initial HTML before the login wall kicks in.
+
+### Why Cloudflare beats local Playwright
+
+| | Cloudflare BR | Local Playwright |
+|---|---|---|
+| Browser install | None | `playwright install chromium` (~300MB) |
+| Bot detection | Cloudflare IPs, better reputation | Localhost IP, easily flagged |
+| JS rendering | Yes | Yes |
+| Cost | Free tier covers normal use | Free but heavy resource usage |
+| Config needed | API token + account ID | Nothing (but heavier) |
+| Works on Indeed | Yes | Usually |
+| Works on LinkedIn | No (login wall) | No (login wall) |
+
+### Cloudflare setup
+
+Add to `appsettings.json`:
+
+```json
+{
+  "CloudflareBrowserRendering": {
+    "AccountId": "",
+    "ApiToken": "",
+    "WaitUntil": "networkidle0"
+  }
+}
+```
+
+When `AccountId` and `ApiToken` are empty, Layer 1 is skipped — falls straight to Layer 2. Zero friction for users who don't want to configure it.
+
+### CloudflareBrowserRenderingClient
+
+```csharp
+// src/lucidRESUME.JobSpec/Scrapers/CloudflareMarkdownClient.cs
+public sealed class CloudflareMarkdownClient
+{
+    private readonly HttpClient _http;
+    private readonly CloudflareBrOptions _options;
+
+    public bool IsConfigured => !string.IsNullOrEmpty(_options.AccountId)
+                             && !string.IsNullOrEmpty(_options.ApiToken);
+
+    public async Task<string?> GetMarkdownAsync(string url, CancellationToken ct = default)
+    {
+        if (!IsConfigured) return null;
+
+        var endpoint = $"https://api.cloudflare.com/client/v4/accounts/{_options.AccountId}/browser-rendering/markdown";
+        var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiToken);
+        request.Content = JsonContent.Create(new
+        {
+            url,
+            gotoOptions = new { waitUntil = _options.WaitUntil ?? "networkidle0" }
+        });
+
+        var response = await _http.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode) return null;
+
+        var result = await response.Content.ReadFromJsonAsync<CfBrResponse>(cancellationToken: ct);
+        return result?.Success == true ? result.Result : null;
+    }
+
+    private record CfBrResponse(bool Success, string? Result);
+}
 ```
 
 ### JSON-LD is the secret weapon

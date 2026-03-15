@@ -37,5 +37,6 @@
     <ProjectReference Include="..\lucidRESUME.Matching\lucidRESUME.Matching.csproj" />
     <ProjectReference Include="..\lucidRESUME.AI\lucidRESUME.AI.csproj" />
     <ProjectReference Include="..\lucidRESUME.Export\lucidRESUME.Export.csproj" />
+    <ProjectReference Include="..\lucidRESUME.Collabora\lucidRESUME.Collabora.csproj" />
   </ItemGroup>
 </Project>

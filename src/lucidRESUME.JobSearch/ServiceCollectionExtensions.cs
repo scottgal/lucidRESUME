@@ -33,6 +33,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IJobSearchAdapter, FindworkAdapter>();
 
         services.AddSingleton<JobSearchService>();
+
+        services.AddSingleton<RoleSuggestionService>();
+        services.AddSingleton<JobDeduplicator>();
+        services.AddScoped<JobSearchOrchestrator>();
+
         return services;
     }
 }

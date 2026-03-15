@@ -18,7 +18,7 @@ public static class TuneCommand
 {
     public static Command Build()
     {
-        var folderOpt = new Option<DirectoryInfo>("--folder") { Required = true, Description = "Folder containing .docx files to analyse" };
+        var folderOpt = new Option<DirectoryInfo?>("--folder") { Description = "Folder containing .docx files to analyse" };
         var patternOpt = new Option<string>("--pattern") { Description = "File glob pattern", DefaultValueFactory = _ => "*.docx" };
         var recursiveOpt = new Option<bool>("--recursive") { Description = "Search sub-folders" };
         var listOpt = new Option<bool>("--list") { Description = "List registry templates with hint status" };
@@ -39,7 +39,13 @@ public static class TuneCommand
                 return;
             }
 
-            var folder = parseResult.GetValue(folderOpt)!;
+            var folder = parseResult.GetValue(folderOpt);
+            if (folder is null)
+            {
+                Console.Error.WriteLine("--folder is required unless --list is specified");
+                return;
+            }
+
             var pattern = parseResult.GetValue(patternOpt)!;
             var recursive = parseResult.GetValue(recursiveOpt);
 
