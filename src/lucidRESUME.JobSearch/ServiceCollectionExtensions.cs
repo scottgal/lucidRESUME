@@ -21,12 +21,14 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<JoinRiseAdapter>().AddStandardResilienceHandler();
         services.AddHttpClient<ReedAdapter>().AddStandardResilienceHandler();
         services.AddHttpClient<FindworkAdapter>().AddStandardResilienceHandler();
+        services.AddHttpClient<JobicyRssAdapter>().AddStandardResilienceHandler();
 
         // Adapter registrations
         services.AddSingleton<IJobSearchAdapter, RemotiveAdapter>();
         services.AddSingleton<IJobSearchAdapter, AdzunaAdapter>();
         services.AddSingleton<IJobSearchAdapter, ArbeitnowAdapter>();
         services.AddSingleton<IJobSearchAdapter, JoinRiseAdapter>();
+        services.AddSingleton<IJobSearchAdapter, JobicyRssAdapter>();
         services.AddSingleton<IJobSearchAdapter, ReedAdapter>();
         services.AddSingleton<IJobSearchAdapter, FindworkAdapter>();
 
