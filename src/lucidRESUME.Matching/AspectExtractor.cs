@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
 
@@ -7,10 +8,18 @@ public sealed record ExtractedAspect(AspectType Type, string Value, string Sourc
 
 /// <summary>
 /// Extracts votable aspects from a <see cref="JobDescription"/> for display in the UI.
+/// Results are memoized per <see cref="JobDescription.JobId"/> — repeated calls for the
+/// same job (e.g. from SkillMatchingService and VoteService in a single search pass) return
+/// the cached list without re-scanning the raw text.
 /// </summary>
 public sealed class AspectExtractor
 {
+    private readonly ConcurrentDictionary<Guid, IReadOnlyList<ExtractedAspect>> _cache = new();
+
     public IReadOnlyList<ExtractedAspect> Extract(JobDescription job)
+        => _cache.GetOrAdd(job.JobId, _ => ExtractCore(job));
+
+    private static IReadOnlyList<ExtractedAspect> ExtractCore(JobDescription job)
     {
         var results = new List<ExtractedAspect>();
         // Use a (type, normalised-value) set for deduplication; value is already lowercased before Add

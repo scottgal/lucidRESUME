@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
             .AddStandardResilienceHandler();
         services.AddSingleton<IDocumentImageCache>(_ => new FileSystemImageCache());
         services.AddDirectParsing();
-        services.AddScoped<IResumeParser, ResumeParser>();
+        services.AddTransient<IResumeParser, ResumeParser>();
         return services;
     }
 }

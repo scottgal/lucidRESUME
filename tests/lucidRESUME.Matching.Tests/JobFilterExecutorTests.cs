@@ -139,4 +139,54 @@ public class JobFilterExecutorTests
         var filter = FilterNode.Leaf("company", FilterOp.Equal, "acme corp");
         Assert.True(_executor.Evaluate(filter, job));
     }
+
+    [Fact]
+    public void Evaluate_IsRemote_IsTrue()
+    {
+        var job = JobDescription.Create("role", new JobSource { Type = JobSourceType.PastedText });
+        job.IsRemote = true;
+        var filter = FilterNode.Leaf("is_remote", FilterOp.IsTrue, null);
+        Assert.True(_executor.Evaluate(filter, job));
+    }
+
+    [Fact]
+    public void Evaluate_IsRemote_IsFalse_WhenNotSet()
+    {
+        var job = JobDescription.Create("role", new JobSource { Type = JobSourceType.PastedText });
+        // IsRemote not set — defaults to false
+        var filter = FilterNode.Leaf("is_remote", FilterOp.IsFalse, null);
+        Assert.True(_executor.Evaluate(filter, job));
+    }
+
+    [Fact]
+    public void Evaluate_Industry_In_MatchesMultiIndustryJob()
+    {
+        // A job that mentions both "fintech" and "saas" keywords should match an industry In filter
+        // for either industry, because ResolveIndustries yields all matching industries.
+        var job = JobDescription.Create("SaaS platform in the fintech space", new JobSource { Type = JobSourceType.PastedText });
+        job.Title = "Senior Engineer";
+
+        // Should match for SaaS
+        var filterSaaS = FilterNode.Leaf("industry", FilterOp.In, new[] { "SaaS" });
+        Assert.True(_executor.Evaluate(filterSaaS, job));
+
+        // Should also match for Fintech
+        var filterFintech = FilterNode.Leaf("industry", FilterOp.In, new[] { "Fintech" });
+        Assert.True(_executor.Evaluate(filterFintech, job));
+    }
+
+    [Fact]
+    public void Evaluate_NotAll_ReturnsFalse_WhenAllChildrenMatch()
+    {
+        var job = JobDescription.Create("role", new JobSource { Type = JobSourceType.PastedText });
+        job.IsRemote = true;
+        job.RequiredSkills = [".NET"];
+
+        // Not(All(...)) — both children match, so All=true, Not(All)=false
+        var filter = FilterNode.Not(FilterNode.All(
+            FilterNode.Leaf("work_model", FilterOp.Equal, "Remote"),
+            FilterNode.Leaf("skills", FilterOp.In, new[] { ".NET" })
+        ));
+        Assert.False(_executor.Evaluate(filter, job));
+    }
 }

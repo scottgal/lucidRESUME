@@ -54,6 +54,8 @@ public sealed class JobFilterExecutor
             "location"      => job.Location,
             "title"         => job.Title,
             "industry"      => ResolveIndustries(job),   // returns IEnumerable<string>
+            "is_remote"     => job.IsRemote ?? false,
+            "is_hybrid"     => job.IsHybrid ?? false,
             _               => null
         };
 
