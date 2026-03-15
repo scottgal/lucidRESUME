@@ -10,12 +10,18 @@ public sealed class ResumeParser : IResumeParser
 {
     private readonly IDoclingClient _docling;
     private readonly ExtractionPipeline _extraction;
+    private readonly IDocumentImageCache _imageCache;
     private readonly ILogger<ResumeParser> _logger;
 
-    public ResumeParser(IDoclingClient docling, ExtractionPipeline extraction, ILogger<ResumeParser> logger)
+    public ResumeParser(
+        IDoclingClient docling,
+        ExtractionPipeline extraction,
+        IDocumentImageCache imageCache,
+        ILogger<ResumeParser> logger)
     {
         _docling = docling;
         _extraction = extraction;
+        _imageCache = imageCache;
         _logger = logger;
     }
 
@@ -38,7 +44,31 @@ public sealed class ResumeParser : IResumeParser
         if (docling.Markdown is not null)
             MarkdownSectionParser.PopulateSections(resume, docling.Markdown);
 
+        // Cache page images — page 1 eagerly, rest deferred to caller
+        if (docling.PageImages.Count > 0)
+        {
+            var cacheKey = _imageCache.ComputeKey(filePath);
+            resume.ImageCacheKey = cacheKey;
+            resume.PageCount = docling.PageImages.Count;
+
+            // Store page 1 synchronously so the UI can show it immediately
+            await _imageCache.StorePageAsync(cacheKey, 1, docling.PageImages[0], ct);
+
+            // Fire-and-forget the remaining pages
+            if (docling.PageImages.Count > 1)
+                _ = CacheRemainingPagesAsync(cacheKey, docling.PageImages, ct);
+        }
+
         return resume;
+    }
+
+    private async Task CacheRemainingPagesAsync(string cacheKey, IReadOnlyList<byte[]> images, CancellationToken ct)
+    {
+        for (var i = 1; i < images.Count; i++)
+        {
+            try { await _imageCache.StorePageAsync(cacheKey, i + 1, images[i], ct); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Failed to cache page {Page}", i + 1); }
+        }
     }
 
     private static void MapEntitiesToSchema(ResumeDocument resume, IReadOnlyList<ExtractedEntity> entities)

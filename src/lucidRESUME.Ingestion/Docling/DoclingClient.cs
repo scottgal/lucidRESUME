@@ -67,6 +67,8 @@ public sealed class DoclingClient : IDoclingClient
         content.Add(new StringContent("json"), "to_formats");
         content.Add(new StringContent("true"), "do_ocr");
         content.Add(new StringContent("true"), "do_table_structure");
+        content.Add(new StringContent("embedded"), "image_export_mode");
+        content.Add(new StringContent("1.5"), "images_scale");
 
         using var request = new HttpRequestMessage(HttpMethod.Post,
             new Uri(new Uri(_options.EffectiveBaseUrl), "/v1/convert/file/async")) { Content = content };
@@ -138,8 +140,37 @@ public sealed class DoclingClient : IDoclingClient
             ? JsonSerializer.Serialize(result.Document.JsonContent)
             : null;
         var plainText = result.Document.TextContent;
+        var pageImages = ExtractPageImages(result.Document.JsonContent);
 
-        return new DoclingConversionResult(markdown, json, plainText);
+        return new DoclingConversionResult(markdown, json, plainText, pageImages);
+    }
+
+    /// <summary>
+    /// Extracts page PNG images from the Docling JSON document.
+    /// Docling embeds pages as: document.pages.{pageNum}.image.uri = "data:image/png;base64,..."
+    /// </summary>
+    private static IReadOnlyList<byte[]> ExtractPageImages(System.Text.Json.JsonElement? jsonContent)
+    {
+        if (jsonContent is null) return [];
+        if (!jsonContent.Value.TryGetProperty("pages", out var pages)) return [];
+
+        var images = new List<(int page, byte[] data)>();
+        foreach (var page in pages.EnumerateObject())
+        {
+            if (!int.TryParse(page.Name, out var pageNum)) continue;
+            if (!page.Value.TryGetProperty("image", out var img)) continue;
+            if (!img.TryGetProperty("uri", out var uriEl)) continue;
+            var uri = uriEl.GetString();
+            const string prefix = "data:image/png;base64,";
+            if (uri?.StartsWith(prefix, StringComparison.Ordinal) != true) continue;
+            try
+            {
+                images.Add((pageNum, Convert.FromBase64String(uri[prefix.Length..])));
+            }
+            catch (FormatException) { /* skip malformed */ }
+        }
+
+        return images.OrderBy(x => x.page).Select(x => x.data).ToList();
     }
 
     private static string GuessContentType(string filePath) =>

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,9 +12,9 @@ namespace lucidRESUME.ViewModels.Pages;
 public sealed partial class ResumePageViewModel : ViewModelBase
 {
     private readonly IResumeParser _parser;
+    private readonly IDocumentImageCache _imageCache;
     private readonly IAppStore _store;
 
-    // Set by ResumePage.axaml.cs once the control is attached to the visual tree
     internal TopLevel? TopLevel { get; set; }
 
     [ObservableProperty] private ResumeDocument? _resume;
@@ -21,7 +22,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private string? _errorMessage;
 
-    // Flattened display properties (updated when Resume changes)
+    // Structured display
     [ObservableProperty] private string _fullName = string.Empty;
     [ObservableProperty] private string _contactLine = string.Empty;
     [ObservableProperty] private string _summary = string.Empty;
@@ -30,9 +31,19 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private IReadOnlyList<SkillGroup> _skillGroups = [];
     [ObservableProperty] private bool _hasResume;
 
-    public ResumePageViewModel(IResumeParser parser, IAppStore store)
+    // Page image display
+    [ObservableProperty] private Bitmap? _currentPageImage;
+    [ObservableProperty] private int _currentPage = 1;
+    [ObservableProperty] private int _pageCount;
+    [ObservableProperty] private bool _hasPageImages;
+
+    public bool CanGoToPrevPage => CurrentPage > 1;
+    public bool CanGoToNextPage => CurrentPage < PageCount;
+
+    public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store)
     {
         _parser = parser;
+        _imageCache = imageCache;
         _store = store;
     }
 
@@ -64,6 +75,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         {
             Resume = await _parser.ParseAsync(path);
             PopulateDisplayProperties();
+            await LoadPageImageAsync(1);
             StatusMessage = $"Imported {Path.GetFileName(path)}";
         }
         catch (Exception ex)
@@ -75,6 +87,41 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         {
             IsLoading = false;
         }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanGoToPrevPage))]
+    private async Task PrevPageAsync()
+    {
+        if (CurrentPage > 1)
+            await LoadPageImageAsync(CurrentPage - 1);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
+    private async Task NextPageAsync()
+    {
+        if (CurrentPage < PageCount)
+            await LoadPageImageAsync(CurrentPage + 1);
+    }
+
+    private async Task LoadPageImageAsync(int page)
+    {
+        if (Resume?.ImageCacheKey is null) return;
+
+        var path = _imageCache.GetCachedPagePath(Resume.ImageCacheKey, page);
+        if (path is null) return;
+
+        // Load bitmap off the UI thread
+        var bitmap = await Task.Run(() =>
+        {
+            using var stream = File.OpenRead(path);
+            return new Bitmap(stream);
+        });
+
+        CurrentPageImage?.Dispose();
+        CurrentPageImage = bitmap;
+        CurrentPage = page;
+        OnPropertyChanged(nameof(CanGoToPrevPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
     }
 
     private void PopulateDisplayProperties()
@@ -100,9 +147,10 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             .Select(g => new SkillGroup(g.Key, string.Join(", ", g.Select(s => s.Name))))
             .ToList();
 
+        PageCount = Resume.PageCount;
+        HasPageImages = Resume.ImageCacheKey is not null && PageCount > 0;
         HasResume = true;
     }
 }
 
-/// <summary>Simple flat record for binding skill groups to the UI.</summary>
 public record SkillGroup(string Category, string Skills);

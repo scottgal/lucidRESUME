@@ -1,5 +1,6 @@
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Ingestion.Docling;
+using lucidRESUME.Ingestion.Images;
 using lucidRESUME.Ingestion.Parsing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ public static class ServiceCollectionExtensions
         services.Configure<DoclingOptions>(config.GetSection("Docling"));
         services.AddHttpClient<IDoclingClient, DoclingClient>()
             .AddStandardResilienceHandler();
+        services.AddSingleton<IDocumentImageCache>(_ => new FileSystemImageCache());
         services.AddScoped<IResumeParser, ResumeParser>();
         return services;
     }

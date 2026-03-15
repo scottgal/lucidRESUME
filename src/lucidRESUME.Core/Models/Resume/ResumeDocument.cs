@@ -17,6 +17,12 @@ public sealed class ResumeDocument
     public string? RawJson { get; set; }
     public string? PlainText { get; set; }
 
+    /// <summary>Filesystem cache key for page images (null if not yet cached).</summary>
+    public string? ImageCacheKey { get; set; }
+
+    /// <summary>Total number of pages cached (0 if unknown).</summary>
+    public int PageCount { get; set; }
+
     // Parsed sections
     public PersonalInfo Personal { get; set; } = new();
     public List<WorkExperience> Experience { get; set; } = [];

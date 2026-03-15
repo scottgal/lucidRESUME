@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace lucidRESUME.Ingestion.Docling.Models;
@@ -23,5 +24,6 @@ internal record DoclingApiResult(
 internal record DoclingApiDocument(
     [property: JsonPropertyName("md_content")] string? MdContent,
     [property: JsonPropertyName("text_content")] string? TextContent,
-    [property: JsonPropertyName("json_content")] object? JsonContent
+    // JsonElement lets us navigate the Docling document tree to extract page images
+    [property: JsonPropertyName("json_content")] JsonElement? JsonContent
 );
