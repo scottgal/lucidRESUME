@@ -2,6 +2,7 @@ using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Extraction;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Extraction.Pipeline;
+using lucidRESUME.Parsing;
 using Microsoft.Extensions.Logging;
 
 namespace lucidRESUME.Ingestion.Parsing;
@@ -11,17 +12,20 @@ public sealed class ResumeParser : IResumeParser
     private readonly IDoclingClient _docling;
     private readonly ExtractionPipeline _extraction;
     private readonly IDocumentImageCache _imageCache;
+    private readonly ParserSelector _parserSelector;
     private readonly ILogger<ResumeParser> _logger;
 
     public ResumeParser(
         IDoclingClient docling,
         ExtractionPipeline extraction,
         IDocumentImageCache imageCache,
+        ParserSelector parserSelector,
         ILogger<ResumeParser> logger)
     {
         _docling = docling;
         _extraction = extraction;
         _imageCache = imageCache;
+        _parserSelector = parserSelector;
         _logger = logger;
     }
 
@@ -30,34 +34,53 @@ public sealed class ResumeParser : IResumeParser
         var fileInfo = new FileInfo(filePath);
         var resume = ResumeDocument.Create(fileInfo.Name, GetContentType(fileInfo.Extension), fileInfo.Length);
 
-        _logger.LogInformation("Converting {File} via Docling", fileInfo.Name);
-        var docling = await _docling.ConvertAsync(filePath, ct);
-        resume.SetDoclingOutput(docling.Markdown, docling.Json, docling.PlainText);
+        // ── 1. Try direct parse (no Docling round-trip) ───────────────────
+        var direct = await _parserSelector.TryDirectParseAsync(filePath, ct);
 
-        var context = new DetectionContext(docling.PlainText ?? docling.Markdown, docling.Markdown);
+        string markdown;
+        string? plainText;
+
+        if (direct is not null)
+        {
+            _logger.LogInformation("Using direct parse result for {File}", fileInfo.Name);
+            markdown = direct.Markdown;
+            plainText = direct.PlainText;
+            resume.SetDoclingOutput(markdown, null, plainText);
+            resume.PageCount = direct.PageCount;
+        }
+        else
+        {
+            // ── 2. Docling fallback ───────────────────────────────────────
+            _logger.LogInformation("Converting {File} via Docling", fileInfo.Name);
+            var docling = await _docling.ConvertAsync(filePath, ct);
+            resume.SetDoclingOutput(docling.Markdown, docling.Json, docling.PlainText);
+            markdown = docling.Markdown;
+            plainText = docling.PlainText;
+
+            // Cache page images — page 1 eagerly, rest fire-and-forget
+            if (docling.PageImages.Count > 0)
+            {
+                var cacheKey = _imageCache.ComputeKey(filePath);
+                resume.ImageCacheKey = cacheKey;
+                resume.PageCount = docling.PageImages.Count;
+
+                await _imageCache.StorePageAsync(cacheKey, 1, docling.PageImages[0], ct);
+
+                if (docling.PageImages.Count > 1)
+                    _ = CacheRemainingPagesAsync(cacheKey, docling.PageImages, ct);
+            }
+        }
+
+        // ── 3. Entity extraction ──────────────────────────────────────────
+        var context = new DetectionContext(plainText ?? markdown, markdown);
         var entities = await _extraction.RunAsync(context, ct);
         foreach (var entity in entities)
             resume.AddEntity(entity);
 
         MapEntitiesToSchema(resume, entities);
 
-        if (docling.Markdown is not null)
-            MarkdownSectionParser.PopulateSections(resume, docling.Markdown);
-
-        // Cache page images — page 1 eagerly, rest deferred to caller
-        if (docling.PageImages.Count > 0)
-        {
-            var cacheKey = _imageCache.ComputeKey(filePath);
-            resume.ImageCacheKey = cacheKey;
-            resume.PageCount = docling.PageImages.Count;
-
-            // Store page 1 synchronously so the UI can show it immediately
-            await _imageCache.StorePageAsync(cacheKey, 1, docling.PageImages[0], ct);
-
-            // Fire-and-forget the remaining pages
-            if (docling.PageImages.Count > 1)
-                _ = CacheRemainingPagesAsync(cacheKey, docling.PageImages, ct);
-        }
+        // ── 4. Section parsing ────────────────────────────────────────────
+        MarkdownSectionParser.PopulateSections(resume, markdown);
 
         return resume;
     }

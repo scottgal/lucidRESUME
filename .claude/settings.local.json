@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(dotnet:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(tail:*)"
     ]
   }
 }
