@@ -1,9 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.JobSearch;
+using lucidRESUME.Matching;
 
 namespace lucidRESUME.ViewModels.Pages;
 
@@ -17,10 +19,18 @@ public sealed record JobListItem(
     string SourceUrl,
     string Description);
 
+/// <summary>A single votable aspect shown in the job detail panel.</summary>
+public sealed record AspectVoteItem(
+    AspectType Type,
+    string TypeLabel,
+    string Value,
+    int Score);
+
 public sealed partial class JobsPageViewModel : ViewModelBase
 {
     private readonly JobSearchService _jobSearchService;
     private readonly IMatchingService _matchingService;
+    private readonly VoteService _voteService;
     private readonly IAppStore _store;
     private readonly ApplyPageViewModel _applyPage;
 
@@ -40,14 +50,18 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     [ObservableProperty] private bool _selectedJobIsRemote;
     [ObservableProperty] private string _selectedJobDescription = "";
 
+    [ObservableProperty] private IReadOnlyList<AspectVoteItem> _selectedJobAspects = [];
+
     public JobsPageViewModel(
         JobSearchService jobSearchService,
         IMatchingService matchingService,
+        VoteService voteService,
         IAppStore store,
         ApplyPageViewModel applyPage)
     {
         _jobSearchService = jobSearchService;
         _matchingService = matchingService;
+        _voteService = voteService;
         _store = store;
         _applyPage = applyPage;
     }
@@ -60,6 +74,53 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         SelectedJobIsRemote = value?.IsRemote ?? false;
         SelectedJobDescription = value?.Description ?? "";
         TailorSelectedJobCommand.NotifyCanExecuteChanged();
+        _ = RefreshAspectsAsync();
+    }
+
+    private async Task RefreshAspectsAsync()
+    {
+        if (SelectedJob is null)
+        {
+            SelectedJobAspects = [];
+            return;
+        }
+
+        try
+        {
+            var state = await _store.LoadAsync();
+            var job = BuildJobDescription(SelectedJob);
+            var scored = _voteService.GetScoredAspects(job, state.Profile);
+            SelectedJobAspects = scored
+                .Select(a => new AspectVoteItem(
+                    a.Aspect.Type,
+                    AspectLabel(a.Aspect.Type),
+                    a.Aspect.Value,
+                    a.CurrentScore))
+                .ToList()
+                .AsReadOnly();
+        }
+        catch
+        {
+            SelectedJobAspects = [];
+        }
+    }
+
+    [RelayCommand]
+    private async Task VoteUpAsync(AspectVoteItem item)
+    {
+        var state = await _store.LoadAsync();
+        _voteService.VoteUp(state.Profile, item.Type, item.Value);
+        await _store.SaveAsync(state);
+        await RefreshAspectsAsync();
+    }
+
+    [RelayCommand]
+    private async Task VoteDownAsync(AspectVoteItem item)
+    {
+        var state = await _store.LoadAsync();
+        _voteService.VoteDown(state.Profile, item.Type, item.Value);
+        await _store.SaveAsync(state);
+        await RefreshAspectsAsync();
     }
 
     [RelayCommand]
@@ -122,10 +183,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void SelectJob(JobListItem item)
-    {
-        SelectedJob = item;
-    }
+    private void SelectJob(JobListItem item) => SelectedJob = item;
 
     [RelayCommand(CanExecute = nameof(HasSelectedJob))]
     private async Task TailorSelectedJobAsync()
@@ -133,21 +191,31 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         if (SelectedJob is null) return;
 
         var state = await _store.LoadAsync();
-
-        var job = new JobDescription
-        {
-            JobId = SelectedJob.JobId,
-            CreatedAt = DateTimeOffset.UtcNow,
-            Title = SelectedJob.Title,
-            Company = SelectedJob.Company,
-            Location = SelectedJob.Location,
-            IsRemote = SelectedJob.IsRemote,
-            RawText = SelectedJob.Description
-        };
-
-        _applyPage.SetContext(state.Resume, job);
+        _applyPage.SetContext(state.Resume, BuildJobDescription(SelectedJob));
         NavigateTo?.Invoke("Apply");
     }
 
     private bool HasSelectedJob() => SelectedJob is not null;
+
+    private static JobDescription BuildJobDescription(JobListItem item) => new()
+    {
+        JobId = item.JobId,
+        CreatedAt = DateTimeOffset.UtcNow,
+        Title = item.Title,
+        Company = item.Company,
+        Location = item.Location,
+        IsRemote = item.IsRemote,
+        RawText = item.Description
+    };
+
+    private static string AspectLabel(AspectType type) => type switch
+    {
+        AspectType.Skill         => "Skill",
+        AspectType.WorkModel     => "Work Model",
+        AspectType.CompanyType   => "Company Type",
+        AspectType.Industry      => "Industry",
+        AspectType.SalaryBand    => "Salary",
+        AspectType.CultureSignal => "Culture",
+        _                        => type.ToString()
+    };
 }
