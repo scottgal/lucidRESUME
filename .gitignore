@@ -17,15 +17,8 @@ artifacts/
 *.sln.docstates
 .vs/
 
-## Rider/JetBrains (keep .idea directory configs but ignore local)
-.idea/**/workspace.xml
-.idea/**/tasks.xml
-.idea/**/usage.statistics.xml
-.idea/**/shelf/
-.idea/**/aws.xml
-.idea/**/httpRequests/
-.idea/**/sonarlint/
-.idea/projectSettingsUpdater.xml
+## Rider/JetBrains
+.idea/
 
 ## macOS
 .DS_Store
@@ -38,3 +31,6 @@ artifacts/
 
 ## Logs
 *.log
+
+## Claude Code
+.claude/settings.local.json

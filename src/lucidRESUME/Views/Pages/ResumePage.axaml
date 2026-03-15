@@ -1,0 +1,120 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:resume="using:lucidRESUME.Core.Models.Resume"
+             x:DataType="vm:ResumePageViewModel"
+             x:Class="lucidRESUME.Views.Pages.ResumePage">
+  <Grid RowDefinitions="Auto,Auto,*">
+
+    <!-- Toolbar -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="16,8">
+      <Button Content="Import Resume…" Command="{Binding ImportResumeCommand}"/>
+      <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
+      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#A6ADC8"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+    </StackPanel>
+
+    <!-- Error banner -->
+    <Border Grid.Row="1" Background="#3E1E1E" Padding="12,6" Margin="16,0"
+            IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <TextBlock Text="{Binding ErrorMessage}" Foreground="#F38BA8"/>
+    </Border>
+
+    <!-- Empty state -->
+    <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                IsVisible="{Binding !HasResume}">
+      <TextBlock Text="No resume imported yet." FontSize="16" HorizontalAlignment="Center" Foreground="#6C7086"/>
+      <Button Content="Import Resume…" Command="{Binding ImportResumeCommand}" HorizontalAlignment="Center"/>
+    </StackPanel>
+
+    <!-- Resume content -->
+    <ScrollViewer Grid.Row="2" IsVisible="{Binding HasResume}" Margin="16,0,16,16">
+      <StackPanel Spacing="16">
+
+        <!-- Header -->
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding FullName}" FontSize="26" FontWeight="Bold" Foreground="#CDD6F4"/>
+          <TextBlock Text="{Binding ContactLine}" Foreground="#A6ADC8"
+                     IsVisible="{Binding ContactLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        </StackPanel>
+
+        <!-- Summary -->
+        <StackPanel Spacing="4" IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock Text="Summary" FontSize="14" FontWeight="SemiBold" Foreground="#89B4FA"/>
+          <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="#CDD6F4"/>
+        </StackPanel>
+
+        <!-- Skills -->
+        <StackPanel Spacing="4" IsVisible="{Binding SkillGroups.Count}">
+          <TextBlock Text="Skills" FontSize="14" FontWeight="SemiBold" Foreground="#89B4FA"/>
+          <ItemsControl ItemsSource="{Binding SkillGroups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SkillGroup">
+                <TextBlock TextWrapping="Wrap" Margin="0,2">
+                  <Run Text="{Binding Category}" FontWeight="SemiBold" Foreground="#A6E3A1"/>
+                  <Run Text=": "/>
+                  <Run Text="{Binding Skills}" Foreground="#CDD6F4"/>
+                </TextBlock>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <!-- Experience -->
+        <StackPanel Spacing="8" IsVisible="{Binding Experience.Count}">
+          <TextBlock Text="Experience" FontSize="14" FontWeight="SemiBold" Foreground="#89B4FA"/>
+          <ItemsControl ItemsSource="{Binding Experience}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="resume:WorkExperience">
+                <Border Background="#1E1E2E" CornerRadius="4" Padding="12,8" Margin="0,0,0,8">
+                  <StackPanel Spacing="2">
+                    <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4">
+                      <Run Text="{Binding Title}"/>
+                      <Run Text=" — "/>
+                      <Run Text="{Binding Company}"/>
+                    </TextBlock>
+                    <TextBlock Foreground="#6C7086" FontSize="12">
+                      <Run Text="{Binding Location}"/>
+                    </TextBlock>
+                    <ItemsControl ItemsSource="{Binding Achievements}" Margin="0,4,0,0">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                          <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="#BAC2DE"
+                                     Margin="0,1"/>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <!-- Education -->
+        <StackPanel Spacing="8" IsVisible="{Binding Education.Count}">
+          <TextBlock Text="Education" FontSize="14" FontWeight="SemiBold" Foreground="#89B4FA"/>
+          <ItemsControl ItemsSource="{Binding Education}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="resume:Education">
+                <Border Background="#1E1E2E" CornerRadius="4" Padding="12,8" Margin="0,0,0,8">
+                  <StackPanel Spacing="2">
+                    <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4">
+                      <Run Text="{Binding Degree}"/>
+                      <Run Text=" — "/>
+                      <Run Text="{Binding Institution}"/>
+                    </TextBlock>
+                    <TextBlock Text="{Binding FieldOfStudy}" Foreground="#A6ADC8"
+                               IsVisible="{Binding FieldOfStudy, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+      </StackPanel>
+    </ScrollViewer>
+
+  </Grid>
+</UserControl>

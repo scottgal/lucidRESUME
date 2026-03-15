@@ -9,6 +9,7 @@
     <ProjectReference Include="..\lucidRESUME.Matching\lucidRESUME.Matching.csproj" />
     <ProjectReference Include="..\lucidRESUME.Export\lucidRESUME.Export.csproj" />
     <ProjectReference Include="..\lucidRESUME.JobSearch\lucidRESUME.JobSearch.csproj" />
+    <ProjectReference Include="..\lucidRESUME.AI\lucidRESUME.AI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -34,6 +34,10 @@ public sealed class ResumeParser : IResumeParser
             resume.AddEntity(entity);
 
         MapEntitiesToSchema(resume, entities);
+
+        if (docling.Markdown is not null)
+            MarkdownSectionParser.PopulateSections(resume, docling.Markdown);
+
         return resume;
     }
 

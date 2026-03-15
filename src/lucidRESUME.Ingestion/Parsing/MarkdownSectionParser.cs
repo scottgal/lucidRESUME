@@ -1,0 +1,381 @@
+using System.Text.RegularExpressions;
+using lucidRESUME.Core.Models.Resume;
+
+namespace lucidRESUME.Ingestion.Parsing;
+
+/// <summary>
+/// Parses structured resume sections (Experience, Education, Skills) out of
+/// the Docling-generated markdown output. Uses heuristics rather than strict
+/// schema since Docling's markdown is document-layout-dependent.
+/// </summary>
+public static class MarkdownSectionParser
+{
+    // Matches date ranges like "Jan 2012 – Present", "Oct 2024 - Present", "2019 – 2022"
+    private static readonly Regex DateRangePattern = new(
+        @"((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|\d{4})\s*[-–]\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|\d{4}|Present|Current)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex YearPattern = new(@"\b(19|20)\d{2}\b", RegexOptions.Compiled);
+
+    public static void PopulateSections(ResumeDocument resume, string markdown)
+    {
+        var lines = markdown.Split('\n');
+
+        // ── 1. Extract summary: first non-heading paragraph ──────────────────
+        var summary = ExtractSummary(lines);
+        if (!string.IsNullOrWhiteSpace(summary) && resume.Personal.Summary == null)
+            resume.Personal.Summary = summary;
+
+        // ── 2. Extract full name from first heading (if not already set) ─────
+        if (resume.Personal.FullName == null)
+        {
+            var firstHeading = lines.FirstOrDefault(l => l.StartsWith("# ") || l.StartsWith("## "));
+            if (firstHeading != null)
+            {
+                var raw = firstHeading.TrimStart('#').Trim();
+                // Pattern: "Name | Title | Location" — take first segment
+                var namePart = raw.Split('|')[0].Trim();
+                // Only use if it looks like a name (no common section keywords)
+                if (namePart.Length > 2 && !IsKnownSection(namePart) && !namePart.Contains('@'))
+                    resume.Personal.FullName = namePart.Split('.')[0].Trim();
+            }
+        }
+
+        // ── 3. Split into labelled sections ──────────────────────────────────
+        var sections = SplitIntoSections(lines);
+
+        // ── 4. Parse Skills ───────────────────────────────────────────────────
+        if (resume.Skills.Count == 0)
+        {
+            var skillsContent = sections.Where(s => s.Label == "Skills")
+                                        .SelectMany(s => s.Lines)
+                                        .ToList();
+            if (skillsContent.Count > 0)
+                ParseSkills(resume, skillsContent);
+        }
+
+        // ── 5. Parse Experience ───────────────────────────────────────────────
+        if (resume.Experience.Count == 0)
+        {
+            var expContent = sections.Where(s => s.Label == "Experience")
+                                     .SelectMany(s => s.Lines)
+                                     .ToList();
+            if (expContent.Count > 0)
+                ParseExperience(resume, expContent);
+        }
+
+        // ── 6. Parse Education ────────────────────────────────────────────────
+        if (resume.Education.Count == 0)
+        {
+            var eduContent = sections.Where(s => s.Label == "Education")
+                                     .SelectMany(s => s.Lines)
+                                     .ToList();
+            if (eduContent.Count > 0)
+                ParseEducation(resume, eduContent);
+        }
+
+        // ── 7. If no explicit Experience section, try heading-pipe heuristic ─
+        if (resume.Experience.Count == 0)
+            ParseExperienceFromPipeHeadings(resume, lines);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private static string? ExtractSummary(string[] lines)
+    {
+        var sb = new System.Text.StringBuilder();
+        var pastFirstHeading = false;
+        var inSummary = false;
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith('#'))
+            {
+                if (!pastFirstHeading) { pastFirstHeading = true; continue; }
+                if (inSummary) break;
+
+                var section = SectionClassifier.ClassifyHeading(line);
+                if (section == "Summary") { inSummary = true; continue; }
+                if (sb.Length > 0) break;
+                continue;
+            }
+
+            if (!pastFirstHeading) continue;
+
+            var trimmed = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed)) continue;
+
+            sb.Append(trimmed).Append(' ');
+            if (sb.Length > 800) break;
+        }
+
+        return sb.Length > 0 ? sb.ToString().Trim() : null;
+    }
+
+    private record SectionBlock(string Label, List<string> Lines);
+
+    private static List<SectionBlock> SplitIntoSections(string[] lines)
+    {
+        var result = new List<SectionBlock>();
+        string? currentLabel = null;
+        var currentLines = new List<string>();
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith('#'))
+            {
+                var label = SectionClassifier.ClassifyHeading(line);
+                if (label != null)
+                {
+                    if (currentLabel != null && currentLines.Count > 0)
+                        result.Add(new SectionBlock(currentLabel, [.. currentLines]));
+                    currentLabel = label;
+                    currentLines.Clear();
+                    continue;
+                }
+            }
+
+            if (currentLabel != null)
+                currentLines.Add(line);
+        }
+
+        if (currentLabel != null && currentLines.Count > 0)
+            result.Add(new SectionBlock(currentLabel, currentLines));
+
+        return result;
+    }
+
+    private static void ParseSkills(ResumeDocument resume, List<string> lines)
+    {
+        string? currentCategory = null;
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            // Sub-headings become skill categories
+            if (line.StartsWith('#'))
+            {
+                currentCategory = line.TrimStart('#').Trim();
+                continue;
+            }
+
+            // Lines like "Server Side: C#, Python, Java"
+            var colonIdx = line.IndexOf(':');
+            if (colonIdx > 0 && colonIdx < 40)
+            {
+                currentCategory = line[..colonIdx].Trim();
+                line = line[(colonIdx + 1)..].Trim();
+            }
+
+            // Split on common skill delimiters
+            var parts = line.Split([',', ';', '•', '·', '\t'], StringSplitOptions.RemoveEmptyEntries);
+            foreach (var part in parts)
+            {
+                var skill = part.Trim().TrimStart('-', '*', ' ');
+                // Skip noise: very short, very long, or containing full sentences
+                if (skill.Length < 2 || skill.Length > 50 || skill.Contains("experience") ||
+                    skill.Count(c => c == ' ') > 5) continue;
+
+                resume.Skills.Add(new Skill { Name = skill, Category = currentCategory });
+            }
+        }
+    }
+
+    private static void ParseExperience(ResumeDocument resume, List<string> lines)
+    {
+        // Within an Experience section, each entry starts with a heading or bolded line
+        WorkExperience? current = null;
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            // Headings that contain "|" → "Company | Title | Location Dates"
+            if (line.StartsWith('#') && line.Contains('|'))
+            {
+                if (current != null) resume.Experience.Add(current);
+                current = ParseJobHeading(line.TrimStart('#').Trim());
+                continue;
+            }
+
+            // Date-only headings → set on the current job
+            if (line.StartsWith('#') && DateRangePattern.IsMatch(line))
+            {
+                current ??= new WorkExperience();
+                ApplyDateRange(current, line);
+                continue;
+            }
+
+            if (current == null) continue;
+
+            // Date ranges inline
+            var dateMatch = DateRangePattern.Match(line);
+            if (dateMatch.Success && line.Replace(dateMatch.Value, "").Trim().Length < 20)
+            {
+                ApplyDateRange(current, line);
+                continue;
+            }
+
+            // Achievement bullets
+            if (line.Length > 20 && !line.StartsWith('#'))
+                current.Achievements.Add(line.TrimStart('-', '*', '•', ' '));
+        }
+
+        if (current != null) resume.Experience.Add(current);
+    }
+
+    private static void ParseExperienceFromPipeHeadings(ResumeDocument resume, string[] lines)
+    {
+        WorkExperience? current = null;
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            if (line.StartsWith('#') && line.Contains('|'))
+            {
+                var content = line.TrimStart('#').Trim();
+                // Skip section headings like "Scott Galloway | .NET Developer | Remote"
+                if (!IsJobEntry(content)) continue;
+
+                if (current != null) resume.Experience.Add(current);
+                current = ParseJobHeading(content);
+                continue;
+            }
+
+            // Date headings
+            if (line.StartsWith('#') && DateRangePattern.IsMatch(line))
+            {
+                current ??= new WorkExperience();
+                ApplyDateRange(current, line);
+                continue;
+            }
+
+            if (current == null) continue;
+
+            var dateMatch = DateRangePattern.Match(line);
+            if (dateMatch.Success && line.Replace(dateMatch.Value, "").Trim().Length < 20)
+            {
+                ApplyDateRange(current, line);
+                continue;
+            }
+
+            if (line.Length > 30 && !line.StartsWith('#'))
+                current.Achievements.Add(line.TrimStart('-', '*', '•', ' '));
+        }
+
+        if (current != null) resume.Experience.Add(current);
+    }
+
+    private static void ParseEducation(ResumeDocument resume, List<string> lines)
+    {
+        Education? current = null;
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            var isHeading = line.StartsWith('#');
+            var content = isHeading ? line.TrimStart('#').Trim() : line;
+
+            // Both headings and plain-text lines that look like institution entries start a new record
+            if (isHeading || (current == null && (content.Contains(" | ") || content.Contains(" in "))))
+            {
+                if (current != null) resume.Education.Add(current);
+                current = new Education();
+
+                // "Degree in Field — Institution" or "Institution | Degree"
+                if (content.Contains(" in "))
+                {
+                    var inIdx = content.IndexOf(" in ");
+                    current.Degree = content[..inIdx].Trim();
+                    var rest = content[(inIdx + 4)..];
+                    var atIdx = rest.IndexOf(" — ");
+                    if (atIdx > 0) { current.FieldOfStudy = rest[..atIdx].Trim(); current.Institution = rest[(atIdx + 3)..].Trim(); }
+                    else current.FieldOfStudy = rest.Trim();
+                }
+                else if (content.Contains(" | "))
+                {
+                    var parts = content.Split(" | ", 2);
+                    current.Institution = parts[0].Trim();
+                    current.Degree = parts[1].Trim();
+                }
+                else current.Institution = content;
+
+                ApplyDateRange(current, content);
+                continue;
+            }
+
+            if (current != null)
+            {
+                var dateMatch = DateRangePattern.Match(line);
+                if (dateMatch.Success) ApplyDateRange(current, line);
+                else if (line.Length > 5) current.Highlights.Add(line.TrimStart('-', '*', '•', ' '));
+            }
+        }
+
+        if (current != null) resume.Education.Add(current);
+    }
+
+    private static WorkExperience ParseJobHeading(string content)
+    {
+        var job = new WorkExperience();
+        // Pattern: "Company | Title | Location DateRange"
+        // or: "Company | Title | Location\nDateRange"
+        var parts = content.Split('|');
+        if (parts.Length >= 2)
+        {
+            job.Company = parts[0].Trim();
+            job.Title = parts[1].Trim();
+            if (parts.Length >= 3) job.Location = parts[2].Trim();
+        }
+        else job.Company = content;
+
+        ApplyDateRange(job, content);
+        return job;
+    }
+
+    private static void ApplyDateRange(WorkExperience job, string text)
+    {
+        var m = DateRangePattern.Match(text);
+        if (!m.Success) return;
+        job.StartDate = ParseDate(m.Groups[1].Value);
+        var endStr = m.Groups[2].Value;
+        job.IsCurrent = endStr.Equals("Present", StringComparison.OrdinalIgnoreCase) ||
+                        endStr.Equals("Current", StringComparison.OrdinalIgnoreCase);
+        if (!job.IsCurrent) job.EndDate = ParseDate(endStr);
+    }
+
+    private static void ApplyDateRange(Education edu, string text)
+    {
+        var m = DateRangePattern.Match(text);
+        if (!m.Success) return;
+        edu.StartDate = ParseDate(m.Groups[1].Value);
+        var endStr = m.Groups[2].Value;
+        if (!endStr.Equals("Present", StringComparison.OrdinalIgnoreCase))
+            edu.EndDate = ParseDate(endStr);
+    }
+
+    private static DateOnly? ParseDate(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return null;
+        if (DateOnly.TryParseExact(s.Trim(), ["MMM yyyy", "MMMM yyyy"], null,
+            System.Globalization.DateTimeStyles.None, out var d)) return d;
+        if (int.TryParse(s.Trim(), out var year)) return new DateOnly(year, 1, 1);
+        return null;
+    }
+
+    private static bool IsKnownSection(string text) =>
+        SectionClassifier.ClassifyHeading(text) != null;
+
+    private static bool IsJobEntry(string content)
+    {
+        // A job entry has a company/title pattern — contains at least one year or date
+        return YearPattern.IsMatch(content) || DateRangePattern.IsMatch(content);
+    }
+}

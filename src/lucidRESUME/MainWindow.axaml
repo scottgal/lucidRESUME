@@ -1,9 +1,33 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:vm="using:lucidRESUME.ViewModels"
+        x:DataType="vm:MainWindowViewModel"
         x:Class="lucidRESUME.MainWindow"
-        Title="lucidRESUME">
-    Welcome to Avalonia!
+        Title="lucidRESUME" Width="1200" Height="800"
+        MinWidth="900" MinHeight="600">
+
+  <Grid ColumnDefinitions="200,*">
+
+    <!-- Sidebar -->
+    <Border Grid.Column="0" Background="#1E1E2E" Padding="8">
+      <StackPanel Spacing="4">
+        <TextBlock Text="lucidRESUME" FontSize="18" FontWeight="Bold"
+                   Foreground="#CDD6F4" Margin="8,16,8,24"/>
+        <Button Content="My CV" Command="{Binding NavigateCommand}" CommandParameter="Resume"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
+        <Button Content="Jobs" Command="{Binding NavigateCommand}" CommandParameter="Jobs"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
+        <Button Content="Search" Command="{Binding NavigateCommand}" CommandParameter="Search"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
+        <Button Content="Apply" Command="{Binding NavigateCommand}" CommandParameter="Apply"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
+        <Button Content="Profile" Command="{Binding NavigateCommand}" CommandParameter="Profile"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
+      </StackPanel>
+    </Border>
+
+    <!-- Main content area -->
+    <ContentControl Grid.Column="1" Content="{Binding CurrentPage}"/>
+
+  </Grid>
 </Window>

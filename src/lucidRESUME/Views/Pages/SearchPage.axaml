@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             x:DataType="vm:SearchPageViewModel"
+             x:Class="lucidRESUME.Views.Pages.SearchPage">
+  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" Width="400">
+    <TextBlock Text="Search Jobs" FontSize="24" HorizontalAlignment="Center"/>
+    <TextBox Text="{Binding Keywords}" Watermark="Keywords (e.g. C# developer)"/>
+    <TextBox Text="{Binding Location}" Watermark="Location (optional)"/>
+    <Button Content="Search" Command="{Binding SearchCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+    <TextBlock Text="Searching..." IsVisible="{Binding IsSearching}" HorizontalAlignment="Center"/>
+  </StackPanel>
+</UserControl>

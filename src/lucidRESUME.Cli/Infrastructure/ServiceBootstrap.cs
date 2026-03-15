@@ -1,3 +1,4 @@
+using lucidRESUME.AI;
 using lucidRESUME.Export;
 using lucidRESUME.Extraction;
 using lucidRESUME.Ingestion;
@@ -32,6 +33,7 @@ public static class ServiceBootstrap
         services.AddMatching();
         services.AddExport();
         services.AddJobSearch(config);
+        services.AddAiTailoring(config);
 
         return services.BuildServiceProvider();
     }

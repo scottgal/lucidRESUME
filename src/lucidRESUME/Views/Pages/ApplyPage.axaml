@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             x:DataType="vm:ApplyPageViewModel"
+             x:Class="lucidRESUME.Views.Pages.ApplyPage">
+  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+    <TextBlock Text="Apply" FontSize="24" HorizontalAlignment="Center"/>
+    <TextBlock Text="{Binding StatusMessage}" HorizontalAlignment="Center" Foreground="#A6ADC8"/>
+  </StackPanel>
+</UserControl>
