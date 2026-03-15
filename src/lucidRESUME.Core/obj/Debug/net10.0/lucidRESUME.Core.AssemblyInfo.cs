@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("lucidRESUME.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c91c6dda9c865bfaed4f490deee67b0c76cf8aba")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+440b80d39c975bdbf357215d97e7a88897aa720a")]
 [assembly: System.Reflection.AssemblyProductAttribute("lucidRESUME.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("lucidRESUME.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
