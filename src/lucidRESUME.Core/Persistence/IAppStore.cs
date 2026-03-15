@@ -1,3 +1,4 @@
+using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
@@ -17,4 +18,10 @@ public sealed class AppState
     public UserProfile Profile { get; set; } = new();
     public List<JobDescription> Jobs { get; set; } = [];
     public DateTimeOffset LastSaved { get; set; }
+    public List<SavedSearch> SavedSearches { get; set; } = [];
+    public List<SearchPreset> CustomPresets { get; set; } = [];
+
+    // Returns built-ins + custom presets merged
+    public IReadOnlyList<SearchPreset> AllPresets =>
+        [.. SearchPreset.BuiltIns, .. CustomPresets];
 }

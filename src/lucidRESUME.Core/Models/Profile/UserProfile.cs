@@ -1,3 +1,5 @@
+using lucidRESUME.Core.Models.Filters;
+
 namespace lucidRESUME.Core.Models.Profile;
 
 public sealed class UserProfile
@@ -44,5 +46,43 @@ public sealed class UserProfile
     {
         SkillsToAvoid.Add(new SkillPreference { SkillName = skill, Reason = reason });
         UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    // Aspect voting
+    public List<AspectVote> AspectVotes { get; private set; } = [];
+
+    public void VoteUp(AspectType type, string value)
+    {
+        var vote = GetOrCreateVote(type, value);
+        vote.Score = Math.Min(5, vote.Score + 1);
+        vote.LastVoted = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void VoteDown(AspectType type, string value)
+    {
+        var vote = GetOrCreateVote(type, value);
+        vote.Score = Math.Max(-5, vote.Score - 1);
+        vote.LastVoted = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public int GetVoteScore(AspectType type, string value)
+    {
+        return AspectVotes
+            .FirstOrDefault(v => v.AspectType == type &&
+                                 string.Equals(v.AspectValue, value, StringComparison.OrdinalIgnoreCase))
+            ?.Score ?? 0;
+    }
+
+    private AspectVote GetOrCreateVote(AspectType type, string value)
+    {
+        var existing = AspectVotes.FirstOrDefault(v =>
+            v.AspectType == type &&
+            string.Equals(v.AspectValue, value, StringComparison.OrdinalIgnoreCase));
+        if (existing != null) return existing;
+        var newVote = new AspectVote { AspectType = type, AspectValue = value };
+        AspectVotes.Add(newVote);
+        return newVote;
     }
 }
