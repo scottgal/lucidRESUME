@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\lucidRESUME.Core\lucidRESUME.Core.csproj" />
+    <ProjectReference Include="..\..\src\lucidRESUME.Ingestion\lucidRESUME.Ingestion.csproj" />
   </ItemGroup>
 
 </Project>
