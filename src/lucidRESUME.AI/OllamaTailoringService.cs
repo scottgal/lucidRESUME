@@ -14,7 +14,10 @@ public sealed class OllamaTailoringService : IAiTailoringService
     private readonly OllamaOptions _options;
     private readonly ILogger<OllamaTailoringService> _logger;
 
-    public bool IsAvailable { get; private set; }
+    // volatile: written by CheckAvailabilityAsync (potentially background thread),
+    // read by UI thread — ensures visibility without locking.
+    private volatile bool _isAvailable;
+    public bool IsAvailable => _isAvailable;
 
     public OllamaTailoringService(HttpClient http, IOptions<OllamaOptions> options, ILogger<OllamaTailoringService> logger)
     {
@@ -55,12 +58,12 @@ public sealed class OllamaTailoringService : IAiTailoringService
         try
         {
             var response = await _http.GetAsync($"{_options.BaseUrl}/api/tags", ct);
-            IsAvailable = response.IsSuccessStatusCode;
-            return IsAvailable;
+            _isAvailable = response.IsSuccessStatusCode;
+            return _isAvailable;
         }
         catch
         {
-            IsAvailable = false;
+            _isAvailable = false;
             return false;
         }
     }

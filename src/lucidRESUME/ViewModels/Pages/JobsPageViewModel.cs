@@ -17,7 +17,8 @@ public sealed record JobListItem(
     bool IsRemote,
     double SkillScore,
     string SourceUrl,
-    string Description);
+    // Carry the full job so aspect extraction and tailoring have structured fields
+    JobDescription FullJob);
 
 /// <summary>A single votable aspect shown in the job detail panel.</summary>
 public sealed record AspectVoteItem(
@@ -33,6 +34,9 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private readonly VoteService _voteService;
     private readonly IAppStore _store;
     private readonly ApplyPageViewModel _applyPage;
+
+    // Cancels any in-flight RefreshAspectsAsync when the selected job changes
+    private CancellationTokenSource? _refreshCts;
 
     /// <summary>Set after construction to allow navigation to the Apply page.</summary>
     public Action<string>? NavigateTo { get; set; }
@@ -72,12 +76,17 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         SelectedJobCompany = value?.Company ?? "";
         SelectedJobLocation = value?.Location ?? "";
         SelectedJobIsRemote = value?.IsRemote ?? false;
-        SelectedJobDescription = value?.Description ?? "";
+        SelectedJobDescription = value?.FullJob.RawText ?? "";
         TailorSelectedJobCommand.NotifyCanExecuteChanged();
-        _ = RefreshAspectsAsync();
+
+        // Cancel previous refresh and start a fresh one
+        _refreshCts?.Cancel();
+        _refreshCts?.Dispose();
+        _refreshCts = new CancellationTokenSource();
+        _ = RefreshAspectsAsync(_refreshCts.Token);
     }
 
-    private async Task RefreshAspectsAsync()
+    private async Task RefreshAspectsAsync(CancellationToken ct)
     {
         if (SelectedJob is null)
         {
@@ -87,9 +96,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
 
         try
         {
-            var state = await _store.LoadAsync();
-            var job = BuildJobDescription(SelectedJob);
-            var scored = _voteService.GetScoredAspects(job, state.Profile);
+            var state = await _store.LoadAsync(ct);
+            ct.ThrowIfCancellationRequested();
+
+            var scored = _voteService.GetScoredAspects(SelectedJob.FullJob, state.Profile);
             SelectedJobAspects = scored
                 .Select(a => new AspectVoteItem(
                     a.Aspect.Type,
@@ -98,6 +108,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
                     a.CurrentScore))
                 .ToList()
                 .AsReadOnly();
+        }
+        catch (OperationCanceledException)
+        {
+            // Selection changed before we finished — discard silently
         }
         catch
         {
@@ -108,19 +122,15 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     [RelayCommand]
     private async Task VoteUpAsync(AspectVoteItem item)
     {
-        var state = await _store.LoadAsync();
-        _voteService.VoteUp(state.Profile, item.Type, item.Value);
-        await _store.SaveAsync(state);
-        await RefreshAspectsAsync();
+        await _store.MutateAsync(state => _voteService.VoteUp(state.Profile, item.Type, item.Value));
+        await RefreshAspectsAsync(CancellationToken.None);
     }
 
     [RelayCommand]
     private async Task VoteDownAsync(AspectVoteItem item)
     {
-        var state = await _store.LoadAsync();
-        _voteService.VoteDown(state.Profile, item.Type, item.Value);
-        await _store.SaveAsync(state);
-        await RefreshAspectsAsync();
+        await _store.MutateAsync(state => _voteService.VoteDown(state.Profile, item.Type, item.Value));
+        await RefreshAspectsAsync(CancellationToken.None);
     }
 
     [RelayCommand]
@@ -152,6 +162,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
                         var match = await _matchingService.MatchAsync(resume, job, profile);
                         score = match.Score;
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw; // propagate cancellation
+                    }
                     catch
                     {
                         score = 0.0;
@@ -166,11 +180,15 @@ public sealed partial class JobsPageViewModel : ViewModelBase
                     IsRemote: job.IsRemote ?? false,
                     SkillScore: score,
                     SourceUrl: job.Source?.Url ?? "",
-                    Description: job.RawText));
+                    FullJob: job));
             }
 
             Jobs = items;
             StatusMessage = results.Count == 0 ? "No results found." : $"Found {results.Count} jobs.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Search cancelled.";
         }
         catch (Exception ex)
         {
@@ -189,24 +207,12 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private async Task TailorSelectedJobAsync()
     {
         if (SelectedJob is null) return;
-
         var state = await _store.LoadAsync();
-        _applyPage.SetContext(state.Resume, BuildJobDescription(SelectedJob));
+        _applyPage.SetContext(state.Resume, SelectedJob.FullJob);
         NavigateTo?.Invoke("Apply");
     }
 
     private bool HasSelectedJob() => SelectedJob is not null;
-
-    private static JobDescription BuildJobDescription(JobListItem item) => new()
-    {
-        JobId = item.JobId,
-        CreatedAt = DateTimeOffset.UtcNow,
-        Title = item.Title,
-        Company = item.Company,
-        Location = item.Location,
-        IsRemote = item.IsRemote,
-        RawText = item.Description
-    };
 
     private static string AspectLabel(AspectType type) => type switch
     {

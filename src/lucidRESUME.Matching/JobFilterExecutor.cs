@@ -9,21 +9,6 @@ namespace lucidRESUME.Matching;
 /// </summary>
 public sealed class JobFilterExecutor
 {
-    private static readonly string[] CompanyTypeKeywords =
-        ["startup", "start-up", "scale-up", "scaleup", "enterprise", "agency", "consultancy"];
-
-    private static readonly (string[] Keywords, string Industry)[] IndustryKeywords =
-    [
-        (["fintech", "financial technology"], "Fintech"),
-        (["health", "medical", "nhs", "pharma"], "Healthcare"),
-        (["defence", "defense", "military", "government"], "Defence"),
-        (["gambling", "betting", "casino", "gaming"], "Gambling"),
-        (["e-commerce", "ecommerce", "retail"], "E-commerce"),
-        (["saas", "software as a service"], "SaaS"),
-        (["consulting", "consultancy"], "Consulting"),
-        (["agency"], "Agency"),
-    ];
-
     /// <summary>Returns true if the job passes the filter tree.</summary>
     public bool Evaluate(FilterNode filter, JobDescription job) => EvaluateNode(filter, job);
 
@@ -36,8 +21,11 @@ public sealed class JobFilterExecutor
         {
             FilterLogic.All => node.Children.All(c => EvaluateNode(c, job)),
             FilterLogic.Any => node.Children.Any(c => EvaluateNode(c, job)),
-            FilterLogic.Not => node.Children.Count == 1 && !EvaluateNode(node.Children[0], job),
-            _               => false
+            FilterLogic.Not => node.Children.Count == 1
+                ? !EvaluateNode(node.Children[0], job)
+                : throw new InvalidOperationException(
+                    $"FilterNode.Not requires exactly 1 child, got {node.Children.Count}."),
+            _ => false
         };
     }
 
@@ -65,7 +53,7 @@ public sealed class JobFilterExecutor
             "company_type"  => ResolveCompanyType(job),
             "location"      => job.Location,
             "title"         => job.Title,
-            "industry"      => ResolveIndustry(job),
+            "industry"      => ResolveIndustries(job),   // returns IEnumerable<string>
             _               => null
         };
 
@@ -86,15 +74,19 @@ public sealed class JobFilterExecutor
         return null;
     }
 
-    private static string? ResolveIndustry(JobDescription job)
+    /// <summary>
+    /// Returns ALL matching industries for a job (a "Fintech SaaS" job matches both).
+    /// Using the shared <see cref="JobKeywords.Industries"/> table ensures parity with
+    /// <see cref="AspectExtractor"/>.
+    /// </summary>
+    private static IEnumerable<string> ResolveIndustries(JobDescription job)
     {
         var text = ((job.Title ?? "") + " " + job.RawText).ToLowerInvariant();
-        foreach (var (keywords, industry) in IndustryKeywords)
+        foreach (var (keywords, industry) in JobKeywords.Industries)
         {
             if (Contains(text, keywords))
-                return industry;
+                yield return industry;
         }
-        return null;
     }
 
     // -------------------------------------------------------------------------
@@ -103,19 +95,21 @@ public sealed class JobFilterExecutor
 
     private static bool ApplyOp(FilterNode node, object? resolved)
     {
-        // Skill list (IEnumerable<string>) — handled separately for In/NotIn
-        if (resolved is IEnumerable<string> skillList)
+        // String list (skills, industries) — Equal/NotEqual treated as In/NotIn
+        if (resolved is IEnumerable<string> stringList)
         {
-            var skills = skillList.ToList();
+            var items = stringList.ToList();
             return node.Op switch
             {
-                FilterOp.In    => MatchesSkillList(skills, node.Value),
-                FilterOp.NotIn => !MatchesSkillList(skills, node.Value),
-                _              => false
+                FilterOp.Equal    => MatchesStringList(items, node.Value),
+                FilterOp.NotEqual => !MatchesStringList(items, node.Value),
+                FilterOp.In       => MatchesStringList(items, node.Value),
+                FilterOp.NotIn    => !MatchesStringList(items, node.Value),
+                _                 => false
             };
         }
 
-        // Null handling: NotIn and NotEqual return true for nulls
+        // Null handling: NotIn and NotEqual return true for nulls (i.e., "does not have this value")
         if (resolved is null)
         {
             return node.Op switch
@@ -145,20 +139,19 @@ public sealed class JobFilterExecutor
         };
     }
 
-    private static bool MatchesSkillList(IReadOnlyList<string> skills, object? filterValue)
+    private static bool MatchesStringList(IReadOnlyList<string> items, object? filterValue)
     {
         if (filterValue is null) return false;
 
-        // Support string[] or IEnumerable<string> as the filter value
         IEnumerable<string> candidates = filterValue switch
         {
-            string[] arr              => arr,
-            IEnumerable<string> seq   => seq,
-            string s                  => [s],
-            _                         => [filterValue.ToString() ?? ""]
+            string[] arr            => arr,
+            IEnumerable<string> seq => seq,
+            string s                => [s],
+            _                       => [filterValue.ToString() ?? ""]
         };
 
-        return candidates.Any(c => skills.Any(s =>
+        return candidates.Any(c => items.Any(s =>
             string.Equals(s, c, StringComparison.OrdinalIgnoreCase)));
     }
 
@@ -182,10 +175,10 @@ public sealed class JobFilterExecutor
 
         IEnumerable<string> candidates = filterValue switch
         {
-            string[] arr              => arr,
-            IEnumerable<string> seq   => seq,
-            string s                  => [s],
-            _                         => [filterValue.ToString() ?? ""]
+            string[] arr            => arr,
+            IEnumerable<string> seq => seq,
+            string s                => [s],
+            _                       => [filterValue.ToString() ?? ""]
         };
 
         var resolvedStr = resolved.ToString() ?? "";
@@ -197,11 +190,7 @@ public sealed class JobFilterExecutor
     // -------------------------------------------------------------------------
 
     private static int NumericCompare(object left, object? right)
-    {
-        var l = ToDouble(left);
-        var r = ToDouble(right);
-        return l.CompareTo(r);
-    }
+        => ToDouble(left).CompareTo(ToDouble(right));
 
     private static double ToDouble(object? value) => value switch
     {

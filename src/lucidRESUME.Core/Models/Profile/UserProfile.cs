@@ -48,8 +48,17 @@ public sealed class UserProfile
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    // Aspect voting
+    // -------------------------------------------------------------------------
+    //  Aspect voting
+    // -------------------------------------------------------------------------
+
     public List<AspectVote> AspectVotes { get; private set; } = [];
+
+    /// <summary>
+    /// O(1) lookup cache built lazily from <see cref="AspectVotes"/>.
+    /// Invalidated on every mutation via <see cref="InvalidateCache"/>.
+    /// </summary>
+    private Dictionary<(AspectType, string), AspectVote>? _voteCache;
 
     public void VoteUp(AspectType type, string value)
     {
@@ -57,6 +66,7 @@ public sealed class UserProfile
         vote.Score = Math.Min(5, vote.Score + 1);
         vote.LastVoted = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
+        InvalidateCache();
     }
 
     public void VoteDown(AspectType type, string value)
@@ -65,18 +75,28 @@ public sealed class UserProfile
         vote.Score = Math.Max(-5, vote.Score - 1);
         vote.LastVoted = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
+        InvalidateCache();
     }
 
+    /// <summary>O(1) lookup after the first call — cache is built on demand.</summary>
     public int GetVoteScore(AspectType type, string value)
     {
-        return AspectVotes
-            .FirstOrDefault(v => v.AspectType == type &&
-                                 string.Equals(v.AspectValue, value, StringComparison.OrdinalIgnoreCase))
-            ?.Score ?? 0;
+        _voteCache ??= BuildCache();
+        var key = (type, value.ToLowerInvariant());
+        return _voteCache.TryGetValue(key, out var vote) ? vote.Score : 0;
     }
+
+    private Dictionary<(AspectType, string), AspectVote> BuildCache()
+        => AspectVotes.ToDictionary(
+            v => (v.AspectType, v.AspectValue.ToLowerInvariant()),
+            v => v);
+
+    private void InvalidateCache() => _voteCache = null;
 
     private AspectVote GetOrCreateVote(AspectType type, string value)
     {
+        // Work against the list directly; cache is rebuilt after mutation
+        var normalised = value.ToLowerInvariant();
         var existing = AspectVotes.FirstOrDefault(v =>
             v.AspectType == type &&
             string.Equals(v.AspectValue, value, StringComparison.OrdinalIgnoreCase));

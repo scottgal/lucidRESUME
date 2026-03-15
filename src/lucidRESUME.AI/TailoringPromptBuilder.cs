@@ -7,6 +7,14 @@ namespace lucidRESUME.AI;
 
 public static class TailoringPromptBuilder
 {
+    /// <summary>
+    /// Builds a tailoring prompt by embedding user-controlled content (job description,
+    /// resume text, career goals). This is intentionally structured rather than freeform
+    /// to reduce the prompt-injection surface, but it is not fully immune. This is acceptable
+    /// for a local single-user Ollama deployment where the user controls all input.
+    /// If connecting to a hosted model, add structural delimiters (e.g. XML tags) around
+    /// each user-supplied section and validate/truncate inputs.
+    /// </summary>
     public static string Build(ResumeDocument resume, JobDescription job, UserProfile profile)
     {
         var sb = new StringBuilder();

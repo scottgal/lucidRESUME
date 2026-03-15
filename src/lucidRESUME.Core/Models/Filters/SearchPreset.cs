@@ -10,8 +10,8 @@ public sealed class SearchPreset
     public List<SortCriterion> Sort { get; set; } = [];
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
-    // Built-in presets
-    public static SearchPreset RemoteDotNetUk => new()
+    // Built-in presets — static readonly so they are allocated once, not per-access
+    public static readonly SearchPreset RemoteDotNetUk = new()
     {
         PresetId = "builtin-remote-dotnet-uk",
         Name = "Remote .NET (UK)",
@@ -22,7 +22,7 @@ public sealed class SearchPreset
         )
     };
 
-    public static SearchPreset SeniorFintech => new()
+    public static readonly SearchPreset SeniorFintech = new()
     {
         PresetId = "builtin-senior-fintech",
         Name = "Senior Fintech",
@@ -33,7 +33,7 @@ public sealed class SearchPreset
         )
     };
 
-    public static SearchPreset StartupEngineer => new()
+    public static readonly SearchPreset StartupEngineer = new()
     {
         PresetId = "builtin-startup",
         Name = "Startup Engineer",
@@ -41,5 +41,6 @@ public sealed class SearchPreset
         Filter = FilterNode.Leaf("company_type", FilterOp.Equal, "Startup")
     };
 
-    public static IReadOnlyList<SearchPreset> BuiltIns => [RemoteDotNetUk, SeniorFintech, StartupEngineer];
+    public static readonly IReadOnlyList<SearchPreset> BuiltIns =
+        [RemoteDotNetUk, SeniorFintech, StartupEngineer];
 }

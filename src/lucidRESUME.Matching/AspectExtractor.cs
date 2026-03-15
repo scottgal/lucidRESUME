@@ -10,33 +10,11 @@ public sealed record ExtractedAspect(AspectType Type, string Value, string Sourc
 /// </summary>
 public sealed class AspectExtractor
 {
-    private static readonly (string[] Keywords, string Industry)[] IndustryKeywords =
-    [
-        (["fintech", "financial technology"], "Fintech"),
-        (["health", "medical", "nhs", "pharma"], "Healthcare"),
-        (["defence", "defense", "military", "government"], "Defence"),
-        (["gambling", "betting", "casino", "gaming"], "Gambling"),
-        (["e-commerce", "ecommerce", "retail"], "E-commerce"),
-        (["saas", "software as a service"], "SaaS"),
-        (["consulting", "consultancy"], "Consulting"),
-        (["agency"], "Agency"),
-    ];
-
-    private static readonly (string[] Keywords, string Signal)[] CultureKeywords =
-    [
-        (["on-call", "on call", "pagerduty"], "On-call"),
-        (["fast-paced", "fast paced", "high-pressure"], "Fast-paced"),
-        (["work-life balance", "work life balance"], "Work-life balance"),
-        (["flexible hours", "flexible working", "flexibility"], "Flexible hours"),
-        (["remote-first", "remote first"], "Remote-first culture"),
-        (["no overtime", "sustainable pace"], "Sustainable pace"),
-    ];
-
     public IReadOnlyList<ExtractedAspect> Extract(JobDescription job)
     {
         var results = new List<ExtractedAspect>();
-        var seen = new HashSet<(AspectType, string)>(StringComparer.OrdinalIgnoreCase as IEqualityComparer<(AspectType, string)>
-                   ?? EqualityComparer<(AspectType, string)>.Default);
+        // Use a (type, normalised-value) set for deduplication; value is already lowercased before Add
+        var seen = new HashSet<(AspectType, string)>();
 
         void Add(AspectType type, string value, string source)
         {
@@ -60,23 +38,17 @@ public sealed class AspectExtractor
 
         // SalaryBand
         if (job.Salary?.Min is not null)
-        {
-            var band = BucketSalary(job.Salary.Min.Value);
-            Add(AspectType.SalaryBand, band, "Salary.Min");
-        }
+            Add(AspectType.SalaryBand, BucketSalary(job.Salary.Min.Value), "Salary.Min");
 
-        // Industry
+        // Industry — collect ALL matching industries (a job can be both Fintech and SaaS)
         var searchText = ((job.Title ?? "") + " " + job.RawText).ToLowerInvariant();
-        foreach (var (keywords, industry) in IndustryKeywords)
+        foreach (var (keywords, industry) in JobKeywords.Industries)
         {
             if (keywords.Any(k => searchText.Contains(k, StringComparison.OrdinalIgnoreCase)))
-            {
                 Add(AspectType.Industry, industry, "Title/RawText");
-                break;
-            }
         }
 
-        // CompanyType
+        // CompanyType — first definitive match wins (a company is one type)
         var descText = job.RawText.ToLowerInvariant();
         if (ContainsAny(descText, "startup", "start-up", "seed", "series a", "series b"))
             Add(AspectType.CompanyType, "Startup", "RawText");
@@ -87,8 +59,8 @@ public sealed class AspectExtractor
         else if (ContainsAny(descText, "agency", "consultancy"))
             Add(AspectType.CompanyType, "Agency", "RawText");
 
-        // CultureSignals
-        foreach (var (keywords, signal) in CultureKeywords)
+        // CultureSignals — all that match
+        foreach (var (keywords, signal) in JobKeywords.CultureSignals)
         {
             if (keywords.Any(k => descText.Contains(k, StringComparison.OrdinalIgnoreCase)))
                 Add(AspectType.CultureSignal, signal, "RawText");

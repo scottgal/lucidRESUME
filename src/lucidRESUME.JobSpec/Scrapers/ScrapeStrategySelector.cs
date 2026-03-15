@@ -45,7 +45,9 @@ public sealed class ScrapeStrategySelector
     /// </summary>
     public IReadOnlyList<IJobPageScraper> SelectScrapers(Uri uri)
     {
-        var host = uri.Host.TrimStart('w', '.');
+        var host = uri.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase)
+            ? uri.Host[4..]
+            : uri.Host;
 
         foreach (var domain in ManualOnlyDomains)
         {

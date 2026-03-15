@@ -10,6 +10,12 @@ public interface IAppStore
 {
     Task<AppState> LoadAsync(CancellationToken ct = default);
     Task SaveAsync(AppState state, CancellationToken ct = default);
+
+    /// <summary>
+    /// Atomically loads, applies <paramref name="mutate"/>, and saves state
+    /// under a single lock — prevents concurrent callers from overwriting each other.
+    /// </summary>
+    Task MutateAsync(Action<AppState> mutate, CancellationToken ct = default);
 }
 
 public sealed class AppState

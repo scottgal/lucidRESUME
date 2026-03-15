@@ -11,10 +11,18 @@ public sealed class JobSpecParser : IJobSpecParser
     private readonly ILogger<JobSpecParser> _logger;
     private readonly ScrapeStrategySelector _strategySelector;
 
-    public JobSpecParser(ILogger<JobSpecParser> logger, ScrapeStrategySelector? strategySelector = null)
+    public JobSpecParser(ILogger<JobSpecParser> logger, ScrapeStrategySelector strategySelector)
+    {
+        ArgumentNullException.ThrowIfNull(strategySelector);
+        _logger = logger;
+        _strategySelector = strategySelector;
+    }
+
+    /// <summary>Constructor for text-only use (no URL scraping). Tests use this.</summary>
+    internal JobSpecParser(ILogger<JobSpecParser> logger)
     {
         _logger = logger;
-        _strategySelector = strategySelector!;
+        _strategySelector = null!;
     }
 
     public Task<JobDescription> ParseFromTextAsync(string text, CancellationToken ct = default)
@@ -140,8 +148,8 @@ public sealed class JobSpecParser : IJobSpecParser
         var salaryMatch = Regex.Match(text, @"[£$€](\d[\d,]+)\s*[-–]\s*[£$€]?(\d[\d,]+)", RegexOptions.IgnoreCase);
         if (salaryMatch.Success)
         {
-            var min = decimal.Parse(salaryMatch.Groups[1].Value.Replace(",", ""));
-            var max = decimal.Parse(salaryMatch.Groups[2].Value.Replace(",", ""));
+            var min = decimal.Parse(salaryMatch.Groups[1].Value.Replace(",", ""), System.Globalization.CultureInfo.InvariantCulture);
+            var max = decimal.Parse(salaryMatch.Groups[2].Value.Replace(",", ""), System.Globalization.CultureInfo.InvariantCulture);
             job.Salary = new SalaryRange(min, max);
         }
     }

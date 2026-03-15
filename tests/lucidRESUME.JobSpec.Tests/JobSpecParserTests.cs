@@ -5,6 +5,7 @@ namespace lucidRESUME.JobSpec.Tests;
 
 public class JobSpecParserTests
 {
+    // Use the internal text-only constructor — no scraper needed for these tests
     private readonly JobSpecParser _parser = new(NullLogger<JobSpecParser>.Instance);
 
     [Fact]

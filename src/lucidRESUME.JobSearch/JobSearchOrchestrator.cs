@@ -33,17 +33,33 @@ public sealed class JobSearchOrchestrator
         // 2. Fan out every query to every configured adapter in parallel
         var configuredAdapters = _adapters.Where(a => a.IsConfigured).ToList();
 
-        var searchTasks = queries
+        var searchPairs = queries
             .SelectMany(q => configuredAdapters.Select(a => (Adapter: a, Query: q)))
-            .Select(pair => pair.Adapter.SearchAsync(pair.Query, ct)
-                .ContinueWith(t => (pair.Adapter.AdapterName, Jobs: t.Result),
-                    ct, TaskContinuationOptions.OnlyOnRanToCompletion,
-                    TaskScheduler.Default));
+            .ToList();
+
+        var searchTasks = searchPairs.Select(async pair =>
+        {
+            try
+            {
+                var jobs = await pair.Adapter.SearchAsync(pair.Query, ct);
+                return jobs;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Log and degrade gracefully — one failing adapter should not crash the search
+                _ = ex; // surfaced to caller via logs in the adapter; swallow here
+                return (IReadOnlyList<JobDescription>)[];
+            }
+        });
 
         var allResults = await Task.WhenAll(searchTasks);
 
         // 3. Flatten all results
-        var allJobs = allResults.SelectMany(r => r.Jobs);
+        var allJobs = allResults.SelectMany(r => r);
 
         // 4. Deduplicate
         var deduplicated = _deduplicator.Deduplicate(allJobs);
