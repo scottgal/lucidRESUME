@@ -27,4 +27,12 @@ public sealed class KnownTemplate
 
     [JsonPropertyName("matchCount")]
     public int MatchCount { get; set; }
+
+    /// <summary>
+    /// Template-specific parsing hints built from sample documents.
+    /// Null until the template has been tuned via <c>lucidresume tune</c>
+    /// or auto-detected after a high-confidence parse.
+    /// </summary>
+    [JsonPropertyName("hints")]
+    public TemplateParsingHints? Hints { get; set; }
 }

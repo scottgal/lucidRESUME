@@ -46,6 +46,7 @@ public sealed class DocxDirectParser : IDocumentParser
                 matchedTemplate = await _registry.FindMatchAsync(fingerprint, ct);
 
             // ── Content extraction ────────────────────────────────────────
+            var hints = matchedTemplate?.Hints;
             var sb = new StringBuilder();
             var plain = new StringBuilder();
             var sections = new List<DocumentSection>();
@@ -59,14 +60,31 @@ public sealed class DocxDirectParser : IDocumentParser
                 var text = GetParagraphText(para);
                 if (string.IsNullOrWhiteSpace(text)) continue;
 
-                var headingLevel = DetectHeadingLevel(para, styles, text);
+                int headingLevel;
+                string? semanticType = null;
+
+                if (hints?.IsUsable == true)
+                {
+                    // Deterministic: use known style mappings from hints
+                    (headingLevel, semanticType) = DetectHeadingLevelFromHints(para, hints, text);
+                }
+                else
+                {
+                    // Fallback: heuristic detection
+                    headingLevel = DetectHeadingLevel(para, styles, text);
+                }
 
                 if (headingLevel > 0)
                 {
                     if (currentSection != null)
                         sections.Add(currentSection with { Body = bodyBuf.ToString().Trim() });
                     bodyBuf.Clear();
-                    currentSection = new DocumentSection { Heading = text, Level = headingLevel };
+                    currentSection = new DocumentSection
+                    {
+                        Heading = text,
+                        Level = headingLevel,
+                        SemanticType = semanticType
+                    };
 
                     var prefix = new string('#', headingLevel + 1); // h1→##, h2→###
                     sb.AppendLine($"{prefix} {text}");
@@ -85,7 +103,9 @@ public sealed class DocxDirectParser : IDocumentParser
 
             // ── Confidence ────────────────────────────────────────────────
             var baseConfidence = sections.Count > 0 ? 0.85 : 0.5;
-            var confidence = Math.Min(1.0, baseConfidence + (matchedTemplate?.ConfidenceBoost ?? 0));
+            // Tuned templates with usable hints get a higher base confidence
+            var hintBoost = hints?.IsUsable == true ? 0.10 : 0.0;
+            var confidence = Math.Min(1.0, baseConfidence + hintBoost + (matchedTemplate?.ConfidenceBoost ?? 0));
 
             return new ParsedDocument
             {
@@ -113,7 +133,47 @@ public sealed class DocxDirectParser : IDocumentParser
         return sb.ToString().Trim();
     }
 
-    // ── Heading detection ────────────────────────────────────────────────────
+    // ── Hint-based heading detection ─────────────────────────────────────────
+
+    private static (int level, string? semanticType) DetectHeadingLevelFromHints(
+        Paragraph para, TemplateParsingHints hints, string text)
+    {
+        var styleId = para.ParagraphProperties?.ParagraphStyleId?.Val?.Value ?? "Normal";
+
+        // ── 1. Section map: deterministic signal from training data ───────────
+        // If this exact text (or a prefix) is a known section heading, trust it.
+        if (text.Length < 100)
+        {
+            var knownSemantic = hints.MapSection(text);
+            if (knownSemantic != null)
+                return (2, knownSemantic);
+        }
+
+        // ── 2. Style-based role lookup ─────────────────────────────────────────
+        if (hints.NameStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
+            return (1, "Name");
+
+        if (hints.SectionStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
+        {
+            var semantic = hints.MapSection(text);
+            return (2, semantic);
+        }
+
+        if (hints.SubSectionStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
+            return (3, null);
+
+        // ── 3. ALL-CAPS catch-all for headings not in training data ────────────
+        var allCaps = text.Length < 60 && text == text.ToUpperInvariant() && text.Any(char.IsLetter);
+        if (allCaps)
+        {
+            var semantic = hints.MapSection(text);
+            return (2, semantic);
+        }
+
+        return (0, null);
+    }
+
+    // ── Heuristic heading detection ──────────────────────────────────────────
 
     private static int DetectHeadingLevel(Paragraph para, Styles? styles, string text)
     {

@@ -25,6 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\lucidRESUME.Core\lucidRESUME.Core.csproj" />
     <ProjectReference Include="..\lucidRESUME.Ingestion\lucidRESUME.Ingestion.csproj" />
     <ProjectReference Include="..\lucidRESUME.Extraction\lucidRESUME.Extraction.csproj" />

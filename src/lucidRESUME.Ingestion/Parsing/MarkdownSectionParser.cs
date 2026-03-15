@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.Parsing;
 
 namespace lucidRESUME.Ingestion.Parsing;
 
@@ -10,15 +11,38 @@ namespace lucidRESUME.Ingestion.Parsing;
 /// </summary>
 public static class MarkdownSectionParser
 {
-    // Matches date ranges like "Jan 2012 – Present", "Oct 2024 - Present", "2019 – 2022"
+    // Matches date ranges like "Jan 2012 – Present", "Oct 2024 - Present", "2019 – 2022", "2020 - now"
     private static readonly Regex DateRangePattern = new(
-        @"((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|\d{4})\s*[-–]\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|\d{4}|Present|Current)",
+        @"((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|\d{4})\s*[-–]\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|\d{4}|Present|Current|now)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    // Matches date-prefixed job lines: "2020 - now:  Java Developer, Company (Location)"
+    private static readonly Regex DatePrefixJobLine = new(
+        @"^(\d{4})\s*[-–]\s*(\d{4}|Present|Current|now)\s*:?\s+(.+)$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex YearPattern = new(@"\b(19|20)\d{2}\b", RegexOptions.Compiled);
 
-    public static void PopulateSections(ResumeDocument resume, string markdown)
+    /// <summary>
+    /// Populate resume sections from pre-parsed <see cref="DocumentSection"/> objects
+    /// (produced by the direct DOCX/PDF parser).  When sections carry a
+    /// <see cref="DocumentSection.SemanticType"/> from template hints, classification
+    /// is skipped entirely — extraction becomes deterministic.
+    /// Falls back to heuristic markdown parsing when sections are null/empty.
+    /// </summary>
+    public static void PopulateSections(
+        ResumeDocument resume, string markdown, IReadOnlyList<DocumentSection>? sections = null)
     {
+        // ── Fast path: use pre-classified sections from template hints ────────
+        if (sections is { Count: > 0 } && sections.Any(s => s.SemanticType != null))
+        {
+            PopulateSectionsFromStructured(resume, sections);
+            // Still run name extraction from markdown as a guard
+            ExtractNameFromMarkdown(resume, markdown.Split('\n'));
+            return;
+        }
+
+        // ── Standard heuristic path ───────────────────────────────────────────
         var lines = markdown.Split('\n');
 
         // ── 1. Extract summary: first non-heading paragraph ──────────────────
@@ -27,27 +51,15 @@ public static class MarkdownSectionParser
             resume.Personal.Summary = summary;
 
         // ── 2. Extract full name from first heading (if not already set) ─────
-        if (resume.Personal.FullName == null)
-        {
-            var firstHeading = lines.FirstOrDefault(l => l.StartsWith("# ") || l.StartsWith("## "));
-            if (firstHeading != null)
-            {
-                var raw = firstHeading.TrimStart('#').Trim();
-                // Pattern: "Name | Title | Location" — take first segment
-                var namePart = raw.Split('|')[0].Trim();
-                // Only use if it looks like a name (no common section keywords)
-                if (namePart.Length > 2 && !IsKnownSection(namePart) && !namePart.Contains('@'))
-                    resume.Personal.FullName = namePart.Split('.')[0].Trim();
-            }
-        }
+        ExtractNameFromMarkdown(resume, lines);
 
         // ── 3. Split into labelled sections ──────────────────────────────────
-        var sections = SplitIntoSections(lines);
+        var labelledSections = SplitIntoSections(lines);
 
         // ── 4. Parse Skills ───────────────────────────────────────────────────
         if (resume.Skills.Count == 0)
         {
-            var skillsContent = sections.Where(s => s.Label == "Skills")
+            var skillsContent = labelledSections.Where(s => s.Label == "Skills")
                                         .SelectMany(s => s.Lines)
                                         .ToList();
             if (skillsContent.Count > 0)
@@ -57,7 +69,7 @@ public static class MarkdownSectionParser
         // ── 5. Parse Experience ───────────────────────────────────────────────
         if (resume.Experience.Count == 0)
         {
-            var expContent = sections.Where(s => s.Label == "Experience")
+            var expContent = labelledSections.Where(s => s.Label == "Experience")
                                      .SelectMany(s => s.Lines)
                                      .ToList();
             if (expContent.Count > 0)
@@ -67,7 +79,7 @@ public static class MarkdownSectionParser
         // ── 6. Parse Education ────────────────────────────────────────────────
         if (resume.Education.Count == 0)
         {
-            var eduContent = sections.Where(s => s.Label == "Education")
+            var eduContent = labelledSections.Where(s => s.Label == "Education")
                                      .SelectMany(s => s.Lines)
                                      .ToList();
             if (eduContent.Count > 0)
@@ -77,6 +89,64 @@ public static class MarkdownSectionParser
         // ── 7. If no explicit Experience section, try heading-pipe heuristic ─
         if (resume.Experience.Count == 0)
             ParseExperienceFromPipeHeadings(resume, lines);
+    }
+
+    // ── Structured path (template-hint driven) ────────────────────────────────
+
+    private static void PopulateSectionsFromStructured(
+        ResumeDocument resume, IReadOnlyList<DocumentSection> sections)
+    {
+        foreach (var section in sections)
+        {
+            var type = section.SemanticType ?? SectionClassifier.ClassifyHeading(section.Heading);
+            var bodyLines = section.Body.Split('\n');
+
+            switch (type)
+            {
+                case "Name":
+                    if (resume.Personal.FullName == null)
+                        resume.Personal.FullName = section.Heading.Split('|')[0].Trim();
+                    break;
+
+                case "Summary":
+                    if (resume.Personal.Summary == null && section.Body.Length > 10)
+                        resume.Personal.Summary = section.Body.Trim();
+                    break;
+
+                case "Skills":
+                    if (resume.Skills.Count == 0)
+                        ParseSkills(resume, bodyLines.ToList());
+                    break;
+
+                case "Experience":
+                    if (resume.Experience.Count == 0)
+                        ParseExperience(resume, bodyLines.ToList());
+                    break;
+
+                case "Education":
+                    if (resume.Education.Count == 0)
+                        ParseEducation(resume, bodyLines.ToList());
+                    break;
+            }
+        }
+
+        // Last-resort: pipe-heading heuristic across all body text
+        if (resume.Experience.Count == 0)
+        {
+            var allLines = sections.SelectMany(s => s.Body.Split('\n')).ToArray();
+            ParseExperienceFromPipeHeadings(resume, allLines);
+        }
+    }
+
+    private static void ExtractNameFromMarkdown(ResumeDocument resume, string[] lines)
+    {
+        if (resume.Personal.FullName != null) return;
+        var firstHeading = lines.FirstOrDefault(l => l.StartsWith("# ") || l.StartsWith("## "));
+        if (firstHeading == null) return;
+        var raw = firstHeading.TrimStart('#').Trim();
+        var namePart = raw.Split('|')[0].Trim();
+        if (namePart.Length > 2 && !IsKnownSection(namePart) && !namePart.Contains('@'))
+            resume.Personal.FullName = namePart.Split('.')[0].Trim();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -185,7 +255,6 @@ public static class MarkdownSectionParser
 
     private static void ParseExperience(ResumeDocument resume, List<string> lines)
     {
-        // Within an Experience section, each entry starts with a heading or bolded line
         WorkExperience? current = null;
 
         foreach (var rawLine in lines)
@@ -193,7 +262,7 @@ public static class MarkdownSectionParser
             var line = rawLine.Trim();
             if (string.IsNullOrWhiteSpace(line)) continue;
 
-            // Headings that contain "|" → "Company | Title | Location Dates"
+            // Pattern 1: "Company | Title | Location Dates" heading
             if (line.StartsWith('#') && line.Contains('|'))
             {
                 if (current != null) resume.Experience.Add(current);
@@ -201,7 +270,7 @@ public static class MarkdownSectionParser
                 continue;
             }
 
-            // Date-only headings → set on the current job
+            // Pattern 2: Date-only heading (inline date range)
             if (line.StartsWith('#') && DateRangePattern.IsMatch(line))
             {
                 current ??= new WorkExperience();
@@ -209,9 +278,37 @@ public static class MarkdownSectionParser
                 continue;
             }
 
+            // Pattern 3: "YYYY - YYYY:  Job Title, Company (Location)"
+            // Common in Eastern European / Israeli CVs from Word templates
+            var datePrefixMatch = DatePrefixJobLine.Match(line);
+            if (datePrefixMatch.Success)
+            {
+                if (current != null) resume.Experience.Add(current);
+                current = new WorkExperience();
+                ApplyDateRange(current, line);
+
+                var rest = datePrefixMatch.Groups[3].Value.Trim();
+                // Try "Title, Company (Location)" — split on last comma before a paren or end
+                var parenIdx = rest.IndexOf('(');
+                var baseText = parenIdx > 0 ? rest[..parenIdx].TrimEnd(',', ' ') : rest;
+                var commaIdx = baseText.LastIndexOf(',');
+                if (commaIdx > 0)
+                {
+                    current.Title = baseText[..commaIdx].Trim();
+                    current.Company = baseText[(commaIdx + 1)..].Trim();
+                    if (parenIdx > 0)
+                        current.Location = rest[(parenIdx + 1)..].TrimEnd(')').Trim();
+                }
+                else
+                {
+                    current.Title = baseText.Trim();
+                }
+                continue;
+            }
+
             if (current == null) continue;
 
-            // Date ranges inline
+            // Inline date range that IS the full line content (date-only separator)
             var dateMatch = DateRangePattern.Match(line);
             if (dateMatch.Success && line.Replace(dateMatch.Value, "").Trim().Length < 20)
             {

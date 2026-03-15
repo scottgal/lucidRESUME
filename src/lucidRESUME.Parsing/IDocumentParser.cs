@@ -56,4 +56,11 @@ public record DocumentSection
     public string Heading { get; init; } = string.Empty;
     public string Body { get; init; } = string.Empty;
     public int Level { get; init; } = 1;
+
+    /// <summary>
+    /// Canonical semantic section type resolved from template hints.
+    /// E.g. "Experience", "Education", "Skills", "Summary".
+    /// Null when no hints are available (heuristic parse path).
+    /// </summary>
+    public string? SemanticType { get; init; }
 }

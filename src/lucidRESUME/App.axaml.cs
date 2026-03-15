@@ -26,6 +26,11 @@ public partial class App : Application
         ConfigureServices(services);
         var provider = services.BuildServiceProvider();
 
+        // Wire up inter-VM navigation after building the container
+        var jobsPage = provider.GetRequiredService<JobsPageViewModel>();
+        var mainVm = provider.GetRequiredService<MainWindowViewModel>();
+        jobsPage.NavigateTo = page => mainVm.NavigateCommand.Execute(page);
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             desktop.MainWindow = provider.GetRequiredService<MainWindow>();
 
@@ -52,13 +57,13 @@ public partial class App : Application
             "lucidRESUME", "data.json");
         services.AddSingleton<IAppStore>(_ => new JsonAppStore(appDataPath));
 
-        // ViewModels
-        services.AddTransient<MainWindowViewModel>();
-        services.AddTransient<ResumePageViewModel>();
-        services.AddTransient<JobsPageViewModel>();
-        services.AddTransient<SearchPageViewModel>();
-        services.AddTransient<ApplyPageViewModel>();
-        services.AddTransient<ProfilePageViewModel>();
+        // ViewModels — singletons so shared state (ApplyPageViewModel) is consistent
+        services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<ResumePageViewModel>();
+        services.AddSingleton<JobsPageViewModel>();
+        services.AddSingleton<SearchPageViewModel>();
+        services.AddSingleton<ApplyPageViewModel>();
+        services.AddSingleton<ProfilePageViewModel>();
 
         // Window
         services.AddTransient<MainWindow>();

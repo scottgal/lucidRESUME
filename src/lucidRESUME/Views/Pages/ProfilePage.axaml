@@ -3,8 +3,78 @@
              xmlns:vm="using:lucidRESUME.ViewModels.Pages"
              x:DataType="vm:ProfilePageViewModel"
              x:Class="lucidRESUME.Views.Pages.ProfilePage">
-  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-    <TextBlock Text="Profile" FontSize="24" HorizontalAlignment="Center"/>
-    <TextBlock Text="Manage your profile settings here." HorizontalAlignment="Center" Foreground="#A6ADC8"/>
-  </StackPanel>
+
+  <ScrollViewer>
+    <StackPanel Margin="24,16" Spacing="0" MaxWidth="640">
+
+      <TextBlock Text="Profile" FontSize="22" FontWeight="Bold"
+                 Foreground="#CDD6F4" Margin="0,0,0,20"/>
+
+      <!-- Two-column form grid -->
+      <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" >
+
+        <!-- Full Name -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Full Name" Foreground="#A6ADC8"
+                   FontSize="12" Margin="0,0,8,4"/>
+        <TextBlock Grid.Row="0" Grid.Column="1" Text="Email" Foreground="#A6ADC8"
+                   FontSize="12" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding FullName}"
+                 Watermark="Your full name" Margin="0,0,8,12"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Email}"
+                 Watermark="your@email.com" Margin="0,0,0,12"/>
+
+        <!-- Preferred Location -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Preferred Location" Foreground="#A6ADC8"
+                   FontSize="12" Margin="0,0,8,4"/>
+        <TextBlock Grid.Row="2" Grid.Column="1" Text="Open to Remote" Foreground="#A6ADC8"
+                   FontSize="12" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding PreferredLocation}"
+                 Watermark="e.g. London, UK" Margin="0,0,8,12"/>
+        <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding OpenToRemote}"
+                  Content="Yes, open to remote work"
+                  Foreground="#CDD6F4" Margin="0,0,0,12" VerticalAlignment="Center"/>
+
+        <!-- Career Goals -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                   Text="Career Goals" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
+                 Text="{Binding CareerGoals}"
+                 Watermark="Describe your career goals and what you're looking for…"
+                 AcceptsReturn="True" TextWrapping="Wrap" Height="80"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
+
+        <!-- Skills to Emphasise -->
+        <TextBlock Grid.Row="6" Grid.Column="0" Text="Skills to Emphasise" Foreground="#A6ADC8"
+                   FontSize="12" Margin="0,0,8,4"/>
+        <TextBlock Grid.Row="6" Grid.Column="1" Text="Skills to Avoid" Foreground="#A6ADC8"
+                   FontSize="12" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="7" Grid.Column="0" Text="{Binding SkillsToEmphasise}"
+                 Watermark="e.g. C#, Kubernetes, Azure" Margin="0,0,8,12"/>
+        <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SkillsToAvoid}"
+                 Watermark="e.g. PHP, legacy VB.NET" Margin="0,0,0,12"/>
+
+        <!-- Blocked Companies -->
+        <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2"
+                   Text="Blocked Companies (comma-separated)" Foreground="#A6ADC8"
+                   FontSize="12" Margin="0,0,0,4"/>
+
+      </Grid>
+
+      <TextBox Text="{Binding BlockedCompanies}"
+               Watermark="e.g. Megacorp Inc, Evil Corp"
+               Margin="0,0,0,20"/>
+
+      <!-- Save section -->
+      <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+        <Button Content="Save Profile" Command="{Binding SaveCommand}"
+                Background="#1E3A5F" Foreground="#89B4FA"
+                FontSize="14" FontWeight="SemiBold" Padding="20,10"/>
+        <Border Background="#1A3A1A" CornerRadius="6" Padding="12,6"
+                IsVisible="{Binding IsSaved}">
+          <TextBlock Text="Saved!" Foreground="#A6E3A1" FontWeight="SemiBold" FontSize="13"/>
+        </Border>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
 </UserControl>

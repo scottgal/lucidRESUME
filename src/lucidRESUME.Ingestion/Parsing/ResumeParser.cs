@@ -43,6 +43,7 @@ public sealed class ResumeParser : IResumeParser
 
         string markdown;
         string? plainText;
+        IReadOnlyList<lucidRESUME.Parsing.DocumentSection>? structuredSections = null;
 
         if (direct is not null)
         {
@@ -50,6 +51,7 @@ public sealed class ResumeParser : IResumeParser
                 fileInfo.Name, direct.Confidence, direct.TemplateName ?? "unknown");
             markdown = direct.Markdown;
             plainText = direct.PlainText;
+            structuredSections = direct.Sections.Count > 0 ? direct.Sections : null;
             resume.SetDoclingOutput(markdown, null, plainText);
             resume.PageCount = direct.PageCount;
 
@@ -94,7 +96,7 @@ public sealed class ResumeParser : IResumeParser
         MapEntitiesToSchema(resume, entities);
 
         // ── 4. Section parsing ────────────────────────────────────────────
-        MarkdownSectionParser.PopulateSections(resume, markdown);
+        MarkdownSectionParser.PopulateSections(resume, markdown, structuredSections);
 
         return resume;
     }

@@ -105,6 +105,35 @@ public sealed class TemplateRegistry
     public async Task<IReadOnlyList<KnownTemplate>> GetAllAsync(CancellationToken ct = default) =>
         await LoadAsync(ct);
 
+    /// <summary>
+    /// Updates (or creates) parsing hints for the template with <paramref name="templateId"/>
+    /// by analysing the provided sample file paths.
+    /// </summary>
+    public async Task UpdateHintsAsync(
+        string templateId,
+        IEnumerable<string> sampleFilePaths,
+        CancellationToken ct = default)
+    {
+        var templates = await LoadAsync(ct);
+        var template = templates.FirstOrDefault(t => t.Id == templateId);
+        if (template is null)
+        {
+            _logger.LogWarning("Template id '{Id}' not found — cannot update hints", templateId);
+            return;
+        }
+
+        var paths = sampleFilePaths.ToList();
+        template.Hints = template.Hints is null
+            ? TemplateHintsBuilder.BuildFromFiles(paths)
+            : TemplateHintsBuilder.RefineHints(template.Hints, paths);
+
+        _logger.LogInformation(
+            "Updated hints for '{Name}' ({Samples} samples, {Sections} section mappings)",
+            template.Name, template.Hints.SampleCount, template.Hints.SectionMap.Count);
+
+        await SaveAsync(ct);
+    }
+
     // ── Persistence ───────────────────────────────────────────────────────────
 
     private async Task<List<KnownTemplate>> LoadAsync(CancellationToken ct)

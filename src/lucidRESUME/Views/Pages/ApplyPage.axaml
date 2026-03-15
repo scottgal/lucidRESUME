@@ -3,8 +3,102 @@
              xmlns:vm="using:lucidRESUME.ViewModels.Pages"
              x:DataType="vm:ApplyPageViewModel"
              x:Class="lucidRESUME.Views.Pages.ApplyPage">
-  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-    <TextBlock Text="Apply" FontSize="24" HorizontalAlignment="Center"/>
-    <TextBlock Text="{Binding StatusMessage}" HorizontalAlignment="Center" Foreground="#A6ADC8"/>
-  </StackPanel>
+
+  <Grid ColumnDefinitions="*,*" Margin="16,12">
+
+    <!-- LEFT: job input form -->
+    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
+
+      <TextBlock Grid.Row="0" Text="Tailor Resume" FontSize="18" FontWeight="Bold"
+                 Foreground="#CDD6F4" Margin="0,0,0,16"/>
+
+      <!-- Job Title -->
+      <StackPanel Grid.Row="1" Spacing="4" Margin="0,0,0,10">
+        <TextBlock Text="Job Title" Foreground="#A6ADC8" FontSize="12"/>
+        <TextBox Text="{Binding JobTitle}" Watermark="e.g. Senior Software Engineer"/>
+      </StackPanel>
+
+      <!-- Company -->
+      <StackPanel Grid.Row="2" Spacing="4" Margin="0,0,0,10">
+        <TextBlock Text="Company" Foreground="#A6ADC8" FontSize="12"/>
+        <TextBox Text="{Binding Company}" Watermark="e.g. Acme Corp"/>
+      </StackPanel>
+
+      <!-- Job Description -->
+      <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,10">
+        <TextBlock Text="Job Description" Foreground="#A6ADC8" FontSize="12"/>
+        <TextBox Text="{Binding JobDescriptionText}"
+                 Watermark="Paste the full job description here…"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 Height="200"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+      </StackPanel>
+
+      <!-- Tailor button -->
+      <Button Grid.Row="4"
+              Content="Tailor Resume"
+              Command="{Binding TailorCommand}"
+              IsEnabled="{Binding !IsTailoring}"
+              Background="#1E3A5F" Foreground="#89B4FA"
+              FontSize="15" FontWeight="SemiBold"
+              Padding="20,10"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center"
+              Margin="0,0,0,8"/>
+
+      <!-- Progress bar -->
+      <ProgressBar Grid.Row="5" IsVisible="{Binding IsTailoring}"
+                   IsIndeterminate="True" Margin="0,0,0,8"/>
+
+      <!-- Status / Error -->
+      <StackPanel Grid.Row="6" Spacing="4">
+        <TextBlock Text="{Binding StatusMessage}" Foreground="#A6ADC8" FontSize="12"
+                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        <Border Background="#3E1E1E" Padding="10,6" CornerRadius="4"
+                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock Text="{Binding ErrorMessage}" Foreground="#F38BA8" TextWrapping="Wrap"/>
+        </Border>
+      </StackPanel>
+
+    </Grid>
+
+    <!-- RIGHT: tailored result -->
+    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="12,0,0,0">
+
+      <TextBlock Grid.Row="0" Text="Tailored Resume" FontSize="18" FontWeight="Bold"
+                 Foreground="#CDD6F4" Margin="0,0,0,16"/>
+
+      <!-- Empty state -->
+      <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6"
+                  IsVisible="{Binding !HasResult}">
+        <TextBlock Text="Tailored resume will appear here." Foreground="#6C7086"
+                   FontSize="14" HorizontalAlignment="Center"/>
+        <TextBlock Text="Fill in the form and click Tailor Resume." Foreground="#45475A"
+                   FontSize="12" HorizontalAlignment="Center"/>
+      </StackPanel>
+
+      <!-- Result -->
+      <Border Grid.Row="1" Background="#181825" CornerRadius="4"
+              IsVisible="{Binding HasResult}">
+        <ScrollViewer Padding="12">
+          <TextBlock Text="{Binding TailoredMarkdown}"
+                     TextWrapping="Wrap" Foreground="#CDD6F4"
+                     FontFamily="Cascadia Code,Consolas,monospace"
+                     FontSize="12" LineHeight="18"/>
+        </ScrollViewer>
+      </Border>
+
+      <!-- Export button -->
+      <Button Grid.Row="2"
+              Content="Export as Markdown"
+              Command="{Binding ExportCommand}"
+              IsVisible="{Binding HasResult}"
+              Background="#1A3A1A" Foreground="#A6E3A1"
+              Padding="16,8"
+              Margin="0,8,0,0"/>
+
+    </Grid>
+
+  </Grid>
 </UserControl>

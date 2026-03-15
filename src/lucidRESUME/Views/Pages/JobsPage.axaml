@@ -3,8 +3,115 @@
              xmlns:vm="using:lucidRESUME.ViewModels.Pages"
              x:DataType="vm:JobsPageViewModel"
              x:Class="lucidRESUME.Views.Pages.JobsPage">
-  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-    <TextBlock Text="Jobs" FontSize="24" HorizontalAlignment="Center"/>
-    <TextBlock Text="{Binding StatusMessage}" HorizontalAlignment="Center" Foreground="#A6ADC8"/>
-  </StackPanel>
+
+  <Grid RowDefinitions="Auto,*">
+
+    <!-- Search toolbar -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="16,10,16,8">
+      <TextBox Text="{Binding SearchQuery}"
+               Watermark="Search jobs (e.g. C# developer London)…"
+               Width="380" VerticalAlignment="Center"/>
+      <Button Content="Search" Command="{Binding SearchCommand}" VerticalAlignment="Center"/>
+      <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True"
+                   Width="100" VerticalAlignment="Center"/>
+      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#A6ADC8"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+    </StackPanel>
+
+    <!-- Main content area -->
+    <Grid Grid.Row="1" ColumnDefinitions="300,*">
+
+      <!-- LEFT: job list -->
+      <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#313244">
+        <Panel>
+
+          <!-- Empty state -->
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6"
+                      IsVisible="{Binding !Jobs.Count}">
+            <TextBlock Text="No jobs yet." Foreground="#6C7086" FontSize="14"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="Run a search above." Foreground="#45475A" FontSize="12"
+                       HorizontalAlignment="Center"/>
+          </StackPanel>
+
+          <!-- Job list -->
+          <ScrollViewer IsVisible="{Binding Jobs.Count}">
+            <ItemsControl ItemsSource="{Binding Jobs}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:JobListItem">
+                  <Button Command="{Binding $parent[ItemsControl].((vm:JobsPageViewModel)DataContext).SelectJobCommand}"
+                          CommandParameter="{Binding}"
+                          HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Stretch"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          Padding="12,8"
+                          Margin="0,0,0,1">
+                    <StackPanel Spacing="3">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold"
+                                 Foreground="#CDD6F4" FontSize="13" TextWrapping="Wrap"/>
+                      <TextBlock FontSize="11" Foreground="#A6ADC8">
+                        <Run Text="{Binding Company}"/>
+                        <Run Text=" · "/>
+                        <Run Text="{Binding Location}"/>
+                      </TextBlock>
+                      <TextBlock FontSize="10" Foreground="#6C7086"
+                                 Text="{Binding SkillScore, StringFormat='Match: {0:P0}'}"/>
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+
+        </Panel>
+      </Border>
+
+      <!-- RIGHT: job detail -->
+      <Panel Grid.Column="1">
+
+        <!-- No selection placeholder -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6"
+                    IsVisible="{Binding SelectedJob, Converter={x:Static ObjectConverters.IsNull}}">
+          <TextBlock Text="Select a job to view details." Foreground="#6C7086" FontSize="14"/>
+        </StackPanel>
+
+        <!-- Job detail -->
+        <Grid RowDefinitions="Auto,*,Auto" Margin="20,16"
+              IsVisible="{Binding SelectedJob, Converter={x:Static ObjectConverters.IsNotNull}}">
+
+          <!-- Header — bind through SelectedJobDetail sub-properties exposed on VM -->
+          <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,12">
+            <TextBlock Text="{Binding SelectedJobTitle}" FontSize="20" FontWeight="Bold"
+                       Foreground="#CDD6F4" TextWrapping="Wrap"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="{Binding SelectedJobCompany}" Foreground="#A6ADC8" FontSize="14"/>
+              <TextBlock Text="·" Foreground="#45475A" FontSize="14"/>
+              <TextBlock Text="{Binding SelectedJobLocation}" Foreground="#A6ADC8" FontSize="14"/>
+              <Border Background="#1E3A5F" CornerRadius="10" Padding="8,2"
+                      IsVisible="{Binding SelectedJobIsRemote}">
+                <TextBlock Text="Remote" Foreground="#89B4FA" FontSize="11"/>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+
+          <!-- Description -->
+          <ScrollViewer Grid.Row="1">
+            <TextBlock Text="{Binding SelectedJobDescription}"
+                       TextWrapping="Wrap" Foreground="#BAC2DE" FontSize="12" LineHeight="18"/>
+          </ScrollViewer>
+
+          <!-- Actions -->
+          <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+            <Button Content="Apply / Tailor Resume"
+                    Command="{Binding TailorSelectedJobCommand}"
+                    Background="#1E3A5F" Foreground="#89B4FA"
+                    Padding="16,8"/>
+          </StackPanel>
+
+        </Grid>
+      </Panel>
+
+    </Grid>
+  </Grid>
 </UserControl>
