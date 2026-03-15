@@ -22,5 +22,7 @@
   </ImportGroup>
   <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <Pkgxunit_analyzers Condition=" '$(Pkgxunit_analyzers)' == '' ">C:\Users\scott\.nuget\packages\xunit.analyzers\1.18.0</Pkgxunit_analyzers>
+    <Pkgvswhere Condition=" '$(Pkgvswhere)' == '' ">C:\Users\scott\.nuget\packages\vswhere\2.8.4</Pkgvswhere>
+    <PkgNuGet_CommandLine Condition=" '$(PkgNuGet_CommandLine)' == '' ">C:\Users\scott\.nuget\packages\nuget.commandline\5.11.5</PkgNuGet_CommandLine>
   </PropertyGroup>
 </Project>

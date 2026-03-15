@@ -392,6 +392,40 @@
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
+          "dependencies": {
+            "Microsoft.Extensions.Configuration.Abstractions": {
+              "target": "Package",
+              "version": "[10.0.5, )"
+            },
+            "Microsoft.Extensions.Logging.Abstractions": {
+              "target": "Package",
+              "version": "[10.0.5, )"
+            },
+            "Microsoft.Extensions.Options.ConfigurationExtensions": {
+              "target": "Package",
+              "version": "[10.0.5, )"
+            },
+            "Microsoft.ML.OnnxRuntime": {
+              "target": "Package",
+              "version": "[1.24.3, )"
+            },
+            "Microsoft.Recognizers.Text": {
+              "target": "Package",
+              "version": "[1.8.13, )"
+            },
+            "Microsoft.Recognizers.Text.DateTime": {
+              "target": "Package",
+              "version": "[1.8.13, )"
+            },
+            "Microsoft.Recognizers.Text.Number": {
+              "target": "Package",
+              "version": "[1.8.13, )"
+            },
+            "Microsoft.Recognizers.Text.Sequence": {
+              "target": "Package",
+              "version": "[1.8.13, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

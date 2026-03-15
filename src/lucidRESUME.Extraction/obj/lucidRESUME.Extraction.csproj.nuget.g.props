@@ -13,4 +13,11 @@
     <SourceRoot Include="C:\Users\scott\.nuget\packages\" />
     <SourceRoot Include="C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages\" />
   </ItemGroup>
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)microsoft.ml.onnxruntime\1.24.3\build\netstandard2.1\Microsoft.ML.OnnxRuntime.props" Condition="Exists('$(NuGetPackageRoot)microsoft.ml.onnxruntime\1.24.3\build\netstandard2.1\Microsoft.ML.OnnxRuntime.props')" />
+  </ImportGroup>
+  <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Pkgvswhere Condition=" '$(Pkgvswhere)' == '' ">C:\Users\scott\.nuget\packages\vswhere\2.8.4</Pkgvswhere>
+    <PkgNuGet_CommandLine Condition=" '$(PkgNuGet_CommandLine)' == '' ">C:\Users\scott\.nuget\packages\nuget.commandline\5.11.5</PkgNuGet_CommandLine>
+  </PropertyGroup>
 </Project>
