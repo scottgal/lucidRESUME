@@ -1,0 +1,15 @@
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\bin\Debug\net10.0\lucidRESUME.JobSpec.deps.json
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\bin\Debug\net10.0\lucidRESUME.JobSpec.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\bin\Debug\net10.0\lucidRESUME.JobSpec.pdb
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\bin\Debug\net10.0\lucidRESUME.Core.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\bin\Debug\net10.0\lucidRESUME.Core.pdb
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\lucidRESUME.JobSpec.csproj.AssemblyReference.cache
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\lucidRESUME.JobSpec.GeneratedMSBuildEditorConfig.editorconfig
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\lucidRESUME.JobSpec.AssemblyInfoInputs.cache
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\lucidRESUME.JobSpec.AssemblyInfo.cs
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\lucidRESUME.JobSpec.csproj.CoreCompileInputs.cache
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\lucidRES.3D7F4AED.Up2Date
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\lucidRESUME.JobSpec.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\refint\lucidRESUME.JobSpec.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\lucidRESUME.JobSpec.pdb
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.JobSpec\obj\Debug\net10.0\ref\lucidRESUME.JobSpec.dll

@@ -1,0 +1,11 @@
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\bin\Debug\net10.0\lucidRESUME.Core.deps.json
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\bin\Debug\net10.0\lucidRESUME.Core.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\bin\Debug\net10.0\lucidRESUME.Core.pdb
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\obj\Debug\net10.0\lucidRESUME.Core.GeneratedMSBuildEditorConfig.editorconfig
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\obj\Debug\net10.0\lucidRESUME.Core.AssemblyInfoInputs.cache
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\obj\Debug\net10.0\lucidRESUME.Core.AssemblyInfo.cs
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\obj\Debug\net10.0\lucidRESUME.Core.csproj.CoreCompileInputs.cache
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\obj\Debug\net10.0\lucidRESUME.Core.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\obj\Debug\net10.0\refint\lucidRESUME.Core.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\obj\Debug\net10.0\lucidRESUME.Core.pdb
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Core\obj\Debug\net10.0\ref\lucidRESUME.Core.dll

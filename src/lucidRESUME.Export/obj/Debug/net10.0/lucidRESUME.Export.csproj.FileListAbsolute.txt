@@ -1,0 +1,15 @@
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\bin\Debug\net10.0\lucidRESUME.Export.deps.json
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\bin\Debug\net10.0\lucidRESUME.Export.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\bin\Debug\net10.0\lucidRESUME.Export.pdb
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\bin\Debug\net10.0\lucidRESUME.Core.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\bin\Debug\net10.0\lucidRESUME.Core.pdb
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\lucidRESUME.Export.csproj.AssemblyReference.cache
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\lucidRESUME.Export.GeneratedMSBuildEditorConfig.editorconfig
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\lucidRESUME.Export.AssemblyInfoInputs.cache
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\lucidRESUME.Export.AssemblyInfo.cs
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\lucidRESUME.Export.csproj.CoreCompileInputs.cache
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\lucidRES.5D65138B.Up2Date
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\lucidRESUME.Export.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\refint\lucidRESUME.Export.dll
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\lucidRESUME.Export.pdb
+E:\source\lucidRESUME\lucidRESUME\src\lucidRESUME.Export\obj\Debug\net10.0\ref\lucidRESUME.Export.dll
