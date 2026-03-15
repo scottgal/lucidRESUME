@@ -1,38 +1,41 @@
+using System.Text.Json.Serialization;
 using lucidRESUME.Core.Models.Extraction;
 
 namespace lucidRESUME.Core.Models.Resume;
 
 public sealed class ResumeDocument
 {
-    public Guid ResumeId { get; private set; }
-    public string FileName { get; private set; } = "";
-    public string ContentType { get; private set; } = "";
-    public long FileSizeBytes { get; private set; }
-    public DateTimeOffset CreatedAt { get; private set; }
-    public DateTimeOffset? LastModifiedAt { get; private set; }
+    public Guid ResumeId { get; set; }
+    public string FileName { get; set; } = "";
+    public string ContentType { get; set; } = "";
+    public long FileSizeBytes { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? LastModifiedAt { get; set; }
 
     // Docling output
-    public string? RawMarkdown { get; private set; }
-    public string? RawJson { get; private set; }
-    public string? PlainText { get; private set; }
+    public string? RawMarkdown { get; set; }
+    public string? RawJson { get; set; }
+    public string? PlainText { get; set; }
 
     // Parsed sections
-    public PersonalInfo Personal { get; private set; } = new();
-    public List<WorkExperience> Experience { get; private set; } = [];
-    public List<Education> Education { get; private set; } = [];
-    public List<Skill> Skills { get; private set; } = [];
-    public List<Certification> Certifications { get; private set; } = [];
-    public List<Project> Projects { get; private set; } = [];
+    public PersonalInfo Personal { get; set; } = new();
+    public List<WorkExperience> Experience { get; set; } = [];
+    public List<Education> Education { get; set; } = [];
+    public List<Skill> Skills { get; set; } = [];
+    public List<Certification> Certifications { get; set; } = [];
+    public List<Project> Projects { get; set; } = [];
 
     // Extraction metadata
-    private readonly List<ExtractedEntity> _entities = [];
-    public IReadOnlyList<ExtractedEntity> Entities => _entities.AsReadOnly();
+    public List<ExtractedEntity> Entities { get; set; } = [];
 
     // Tailoring metadata
-    public Guid? TailoredForJobId { get; private set; }
+    public Guid? TailoredForJobId { get; set; }
+
+    [JsonIgnore]
     public bool IsTailored => TailoredForJobId.HasValue;
 
-    private ResumeDocument() { }
+    [JsonConstructor]
+    public ResumeDocument() { }
 
     public static ResumeDocument Create(string fileName, string contentType, long fileSizeBytes) => new()
     {
@@ -51,7 +54,7 @@ public sealed class ResumeDocument
         LastModifiedAt = DateTimeOffset.UtcNow;
     }
 
-    public void AddEntity(ExtractedEntity entity) => _entities.Add(entity);
+    public void AddEntity(ExtractedEntity entity) => Entities.Add(entity);
 
     public void MarkTailoredFor(Guid jobId) => TailoredForJobId = jobId;
 }

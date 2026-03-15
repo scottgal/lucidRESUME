@@ -1,12 +1,14 @@
+using System.Text.Json.Serialization;
+
 namespace lucidRESUME.Core.Models.Jobs;
 
 public sealed class JobDescription
 {
-    public Guid JobId { get; private set; }
-    public DateTimeOffset CreatedAt { get; private set; }
+    public Guid JobId { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 
     // Source
-    public JobSource Source { get; private set; } = new();
+    public JobSource Source { get; set; } = new();
 
     // Core fields
     public string? Title { get; set; }
@@ -25,14 +27,15 @@ public sealed class JobDescription
     public List<string> Benefits { get; set; } = [];
 
     // Raw content always preserved
-    public string RawText { get; private set; } = "";
+    public string RawText { get; set; } = "";
 
     // Application tracking
-    public double? MatchScore { get; private set; }
-    public bool IsBlocked { get; private set; }
-    public string? BlockReason { get; private set; }
+    public double? MatchScore { get; set; }
+    public bool IsBlocked { get; set; }
+    public string? BlockReason { get; set; }
 
-    private JobDescription() { }
+    [JsonConstructor]
+    public JobDescription() { }
 
     public static JobDescription Create(string rawText, JobSource source) => new()
     {

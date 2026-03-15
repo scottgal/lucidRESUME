@@ -15,13 +15,13 @@ public sealed class UserProfile
     public WorkPreferences Preferences { get; set; } = new();
 
     // Skills they actively want to use
-    public List<SkillPreference> SkillsToEmphasise { get; private set; } = [];
+    public List<SkillPreference> SkillsToEmphasise { get; set; } = [];
 
     // Skills they have but want to avoid
-    public List<SkillPreference> SkillsToAvoid { get; private set; } = [];
+    public List<SkillPreference> SkillsToAvoid { get; set; } = [];
 
     // Companies/orgs they won't work for
-    public List<string> BlockedCompanies { get; private set; } = [];
+    public List<string> BlockedCompanies { get; set; } = [];
 
     // Free-form notes for the AI (context, career goals, anything)
     public string? CareerGoals { get; set; }
