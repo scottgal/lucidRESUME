@@ -7,7 +7,7 @@ namespace lucidRESUME.Matching.Tests;
 
 public class SkillMatchingServiceTests
 {
-    private readonly SkillMatchingService _service = new();
+    private readonly SkillMatchingService _service = new(new AspectExtractor());
 
     [Fact]
     public async Task Match_HighOverlap_ReturnsHighScore()
