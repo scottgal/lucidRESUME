@@ -6,6 +6,9 @@
     <ProjectReference Include="..\lucidRESUME.Ingestion\lucidRESUME.Ingestion.csproj" />
     <ProjectReference Include="..\lucidRESUME.Extraction\lucidRESUME.Extraction.csproj" />
     <ProjectReference Include="..\lucidRESUME.JobSpec\lucidRESUME.JobSpec.csproj" />
+    <ProjectReference Include="..\lucidRESUME.Matching\lucidRESUME.Matching.csproj" />
+    <ProjectReference Include="..\lucidRESUME.Export\lucidRESUME.Export.csproj" />
+    <ProjectReference Include="..\lucidRESUME.JobSearch\lucidRESUME.JobSearch.csproj" />
   </ItemGroup>
 
   <ItemGroup>

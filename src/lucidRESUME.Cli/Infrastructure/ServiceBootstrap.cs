@@ -1,6 +1,9 @@
+using lucidRESUME.Export;
 using lucidRESUME.Extraction;
 using lucidRESUME.Ingestion;
+using lucidRESUME.JobSearch;
 using lucidRESUME.JobSpec;
+using lucidRESUME.Matching;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -26,6 +29,9 @@ public static class ServiceBootstrap
         services.AddIngestion(config);
         services.AddExtraction(config);
         services.AddJobSpec();
+        services.AddMatching();
+        services.AddExport();
+        services.AddJobSearch(config);
 
         return services.BuildServiceProvider();
     }

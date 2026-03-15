@@ -1,6 +1,1 @@
-﻿namespace lucidRESUME.JobSearch;
-
-public class Class1
-{
-
-}
+﻿// This file intentionally left blank — replaced by JobSearchService.cs and Adapters/
