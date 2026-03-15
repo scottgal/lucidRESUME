@@ -1,6 +1,7 @@
 using System.Text;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using lucidRESUME.Parsing.Templates;
 
 namespace lucidRESUME.Parsing;
 
@@ -10,32 +11,46 @@ namespace lucidRESUME.Parsing;
 /// Heading detection strategy (in priority order):
 ///   1. Word built-in heading styles: "Heading 1" … "Heading 6"
 ///   2. Custom styles whose name contains "heading" (case-insensitive)
-///   3. Bold + larger-than-body font size heuristic
-///   4. ALL-CAPS short paragraphs (common in resume section labels)
+///   3. Bold + ALL-CAPS short paragraphs (common in resume section labels)
 ///
-/// The resulting markdown uses ## / ### prefixes so MarkdownSectionParser
-/// can classify sections the same way it does with Docling output.
+/// Template fingerprinting: if a <see cref="TemplateRegistry"/> is provided,
+/// the document is matched against known templates. A match boosts confidence
+/// and can unlock template-specific field mappings in future.
 /// </summary>
 public sealed class DocxDirectParser : IDocumentParser
 {
+    private readonly TemplateRegistry? _registry;
+
+    public DocxDirectParser(TemplateRegistry? registry = null)
+    {
+        _registry = registry;
+    }
+
     public IReadOnlyList<string> SupportedExtensions { get; } = [".docx"];
 
-    public Task<ParsedDocument?> ParseAsync(string filePath, CancellationToken ct = default)
+    public async Task<ParsedDocument?> ParseAsync(string filePath, CancellationToken ct = default)
     {
         try
         {
             using var doc = WordprocessingDocument.Open(filePath, isEditable: false);
             if (doc.MainDocumentPart?.Document?.Body is null)
-                return Task.FromResult<ParsedDocument?>(null);
+                return null;
 
             var body = doc.MainDocumentPart.Document.Body;
             var styles = doc.MainDocumentPart.StyleDefinitionsPart?.Styles;
 
-            var sb = new StringBuilder();       // markdown
-            var plain = new StringBuilder();    // plain text
+            // ── Template fingerprint lookup ───────────────────────────────
+            var fingerprint = TemplateFingerprint.FromDocument(doc);
+            KnownTemplate? matchedTemplate = null;
+            if (_registry is not null)
+                matchedTemplate = await _registry.FindMatchAsync(fingerprint, ct);
+
+            // ── Content extraction ────────────────────────────────────────
+            var sb = new StringBuilder();
+            var plain = new StringBuilder();
             var sections = new List<DocumentSection>();
             DocumentSection? currentSection = null;
-            var bodyLines = new StringBuilder();
+            var bodyBuf = new StringBuilder();
 
             foreach (var para in body.Elements<Paragraph>())
             {
@@ -48,12 +63,9 @@ public sealed class DocxDirectParser : IDocumentParser
 
                 if (headingLevel > 0)
                 {
-                    // Flush previous section
                     if (currentSection != null)
-                    {
-                        sections.Add(currentSection with { Body = bodyLines.ToString().Trim() });
-                        bodyLines.Clear();
-                    }
+                        sections.Add(currentSection with { Body = bodyBuf.ToString().Trim() });
+                    bodyBuf.Clear();
                     currentSection = new DocumentSection { Heading = text, Level = headingLevel };
 
                     var prefix = new string('#', headingLevel + 1); // h1→##, h2→###
@@ -64,25 +76,30 @@ public sealed class DocxDirectParser : IDocumentParser
                 {
                     sb.AppendLine(text);
                     plain.AppendLine(text);
-                    bodyLines.AppendLine(text);
+                    bodyBuf.AppendLine(text);
                 }
             }
 
             if (currentSection != null)
-                sections.Add(currentSection with { Body = bodyLines.ToString().Trim() });
+                sections.Add(currentSection with { Body = bodyBuf.ToString().Trim() });
 
-            return Task.FromResult<ParsedDocument?>(new ParsedDocument
+            // ── Confidence ────────────────────────────────────────────────
+            var baseConfidence = sections.Count > 0 ? 0.85 : 0.5;
+            var confidence = Math.Min(1.0, baseConfidence + (matchedTemplate?.ConfidenceBoost ?? 0));
+
+            return new ParsedDocument
             {
                 Markdown = sb.ToString(),
                 PlainText = plain.ToString(),
                 Sections = sections,
-                PageCount = 0, // OpenXml doesn't expose page count without rendering
-                Confidence = sections.Count > 0 ? 0.85 : 0.5
-            });
+                PageCount = 0,
+                Confidence = confidence,
+                TemplateName = matchedTemplate?.Name
+            };
         }
         catch
         {
-            return Task.FromResult<ParsedDocument?>(null);
+            return null;
         }
     }
 
@@ -103,13 +120,11 @@ public sealed class DocxDirectParser : IDocumentParser
         var styleId = para.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
         if (styleId != null)
         {
-            // Built-in heading styles
             var lower = styleId.ToLowerInvariant();
             if (lower == "heading1" || lower == "1") return 1;
             if (lower == "heading2" || lower == "2") return 2;
             if (lower == "heading3" || lower == "3") return 3;
 
-            // Custom style names
             if (styles != null)
             {
                 var styleName = styles.Elements<Style>()
@@ -121,12 +136,10 @@ public sealed class DocxDirectParser : IDocumentParser
             }
         }
 
-        // Heuristic: bold run with no lowercase letters → section label
         var isBold = para.Descendants<Bold>().Any();
         if (isBold && text.Length < 60 && text == text.ToUpperInvariant() && text.Any(char.IsLetter))
             return 2;
 
-        // Heuristic: short all-caps line (common in plain-text-style resumes)
         if (text.Length < 50 && text.Length > 3
             && text == text.ToUpperInvariant()
             && text.Any(char.IsLetter)

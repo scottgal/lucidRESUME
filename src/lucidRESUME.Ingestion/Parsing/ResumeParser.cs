@@ -3,6 +3,7 @@ using lucidRESUME.Core.Models.Extraction;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Extraction.Pipeline;
 using lucidRESUME.Parsing;
+using lucidRESUME.Parsing.Templates;
 using Microsoft.Extensions.Logging;
 
 namespace lucidRESUME.Ingestion.Parsing;
@@ -13,6 +14,7 @@ public sealed class ResumeParser : IResumeParser
     private readonly ExtractionPipeline _extraction;
     private readonly IDocumentImageCache _imageCache;
     private readonly ParserSelector _parserSelector;
+    private readonly TemplateRegistry _templateRegistry;
     private readonly ILogger<ResumeParser> _logger;
 
     public ResumeParser(
@@ -20,12 +22,14 @@ public sealed class ResumeParser : IResumeParser
         ExtractionPipeline extraction,
         IDocumentImageCache imageCache,
         ParserSelector parserSelector,
+        TemplateRegistry templateRegistry,
         ILogger<ResumeParser> logger)
     {
         _docling = docling;
         _extraction = extraction;
         _imageCache = imageCache;
         _parserSelector = parserSelector;
+        _templateRegistry = templateRegistry;
         _logger = logger;
     }
 
@@ -42,11 +46,21 @@ public sealed class ResumeParser : IResumeParser
 
         if (direct is not null)
         {
-            _logger.LogInformation("Using direct parse result for {File}", fileInfo.Name);
+            _logger.LogInformation("Using direct parse result for {File} (confidence={Confidence:P0}, template={Template})",
+                fileInfo.Name, direct.Confidence, direct.TemplateName ?? "unknown");
             markdown = direct.Markdown;
             plainText = direct.PlainText;
             resume.SetDoclingOutput(markdown, null, plainText);
             resume.PageCount = direct.PageCount;
+
+            // Learn this template if it was a confident anonymous parse (no prior match)
+            if (direct.TemplateName is null && direct.Confidence >= 0.80
+                && Path.GetExtension(filePath).Equals(".docx", StringComparison.OrdinalIgnoreCase))
+            {
+                var fingerprint = TemplateFingerprint.FromFile(filePath);
+                if (fingerprint is not null)
+                    _ = _templateRegistry.LearnAsync(fingerprint, fileInfo.Name, ct);
+            }
         }
         else
         {

@@ -46,6 +46,9 @@ public sealed class ParsedDocument
     /// 0.0 = could not parse — caller should fall back to Docling.
     /// </summary>
     public double Confidence { get; init; } = 0.5;
+
+    /// <summary>Name of the matched known template, or null if none matched.</summary>
+    public string? TemplateName { get; init; }
 }
 
 public record DocumentSection
