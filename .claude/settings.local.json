@@ -19,7 +19,19 @@
       "WebFetch(domain:developers.cloudflare.com)",
       "WebFetch(domain:api.joinrise.io)",
       "WebFetch(domain:api.github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Read(//e/tmp/**)",
+      "Bash(cp \"E:/source/lucidRESUME/lucidRESUME/samples/vacancy-cv-docx/12.docx\" 12.docx)",
+      "Bash(unzip -p 12.docx word/document.xml)",
+      "Bash(node:*)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//e/source/lucidRESUME/lucidRESUME/**)",
+      "Bash(done)",
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(for cv:*)",
+      "Bash(grep:*)"
     ]
   }
 }

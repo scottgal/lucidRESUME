@@ -1,0 +1,13 @@
+name: profile-screenshot
+description: Navigate to Profile page and capture screenshot
+default_delay: 300
+
+actions:
+  - type: Wait
+    value: "800"
+  - type: Navigate
+    value: Profile
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: profile-current

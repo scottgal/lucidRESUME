@@ -1,0 +1,39 @@
+name: navigate-pages
+description: Test navigation between all pages
+default_delay: 300
+
+actions:
+  - type: Navigate
+    value: Resume
+    description: Go to Resume page
+    
+  - type: Screenshot
+    value: page-resume
+    
+  - type: Navigate
+    value: Jobs
+    description: Go to Jobs page
+    
+  - type: Screenshot
+    value: page-jobs
+    
+  - type: Navigate
+    value: Search
+    description: Go to Search page
+    
+  - type: Screenshot
+    value: page-search
+    
+  - type: Navigate
+    value: Apply
+    description: Go to Apply page
+    
+  - type: Screenshot
+    value: page-apply
+    
+  - type: Navigate
+    value: Profile
+    description: Go to Profile page
+    
+  - type: Screenshot
+    value: page-profile

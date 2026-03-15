@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using lucidRESUME.Parsing.Templates;
@@ -53,48 +54,61 @@ public sealed class DocxDirectParser : IDocumentParser
             DocumentSection? currentSection = null;
             var bodyBuf = new StringBuilder();
 
-            foreach (var para in body.Elements<Paragraph>())
+            foreach (var para in body.Descendants<Paragraph>())
             {
                 ct.ThrowIfCancellationRequested();
 
-                var text = GetParagraphText(para);
-                if (string.IsNullOrWhiteSpace(text)) continue;
+                var rawLines = GetParagraphLines(para);
+                // For hints-based parsing, expand long flat lines that embed section keywords
+                var lines = hints?.IsUsable == true
+                    ? rawLines.SelectMany(l => SplitOnInlineHeadings(l, hints))
+                    : rawLines;
 
-                int headingLevel;
-                string? semanticType = null;
+                bool firstLine = true;
+                foreach (var text in lines)
+                {
+                    int headingLevel;
+                    string? semanticType = null;
 
-                if (hints?.IsUsable == true)
-                {
-                    // Deterministic: use known style mappings from hints
-                    (headingLevel, semanticType) = DetectHeadingLevelFromHints(para, hints, text);
-                }
-                else
-                {
-                    // Fallback: heuristic detection
-                    headingLevel = DetectHeadingLevel(para, styles, text);
-                }
-
-                if (headingLevel > 0)
-                {
-                    if (currentSection != null)
-                        sections.Add(currentSection with { Body = bodyBuf.ToString().Trim() });
-                    bodyBuf.Clear();
-                    currentSection = new DocumentSection
+                    if (hints?.IsUsable == true)
                     {
-                        Heading = text,
-                        Level = headingLevel,
-                        SemanticType = semanticType
-                    };
+                        // After inline splitting, every segment can use section-map detection.
+                        // Style-based check is only meaningful on the very first physical line.
+                        (headingLevel, semanticType) = firstLine
+                            ? DetectHeadingLevelFromHints(para, hints, text)
+                            : DetectHeadingLevelFromHints(para, hints, text, styleCheckDisabled: true);
+                    }
+                    else
+                    {
+                        headingLevel = firstLine
+                            ? DetectHeadingLevel(para, styles, text)
+                            : DetectHeadingLevelTextOnly(text);
+                    }
 
-                    var prefix = new string('#', headingLevel + 1); // h1→##, h2→###
-                    sb.AppendLine($"{prefix} {text}");
-                    plain.AppendLine(text);
-                }
-                else
-                {
-                    sb.AppendLine(text);
-                    plain.AppendLine(text);
-                    bodyBuf.AppendLine(text);
+                    if (headingLevel > 0)
+                    {
+                        if (currentSection != null)
+                            sections.Add(currentSection with { Body = bodyBuf.ToString().Trim() });
+                        bodyBuf.Clear();
+                        currentSection = new DocumentSection
+                        {
+                            Heading = text,
+                            Level = headingLevel,
+                            SemanticType = semanticType
+                        };
+
+                        var prefix = new string('#', headingLevel + 1); // h1→##, h2→###
+                        sb.AppendLine($"{prefix} {text}");
+                        plain.AppendLine(text);
+                    }
+                    else
+                    {
+                        sb.AppendLine(text);
+                        plain.AppendLine(text);
+                        bodyBuf.AppendLine(text);
+                    }
+
+                    firstLine = false;
                 }
             }
 
@@ -125,21 +139,174 @@ public sealed class DocxDirectParser : IDocumentParser
 
     // ── Text extraction ──────────────────────────────────────────────────────
 
-    private static string GetParagraphText(Paragraph para)
+    /// <summary>
+    /// Splits a paragraph's text on soft-return breaks (<w:br/>), returning
+    /// each visual line as a separate string.  This handles the common resume
+    /// template pattern where an entire sidebar column is a single &lt;w:p&gt;
+    /// with its entries separated by Shift-Enter line breaks.
+    /// </summary>
+    private static IEnumerable<string> GetParagraphLines(Paragraph para)
     {
-        var sb = new StringBuilder();
+        var current = new StringBuilder();
         foreach (var run in para.Elements<Run>())
-            sb.Append(run.InnerText);
-        return sb.ToString().Trim();
+        {
+            foreach (var child in run.ChildElements)
+            {
+                if (child is Text t)
+                    current.Append(t.InnerText);
+                else if (child is Break)
+                {
+                    var seg = current.ToString().Trim();
+                    if (!string.IsNullOrWhiteSpace(seg))
+                        yield return seg;
+                    current.Clear();
+                }
+            }
+        }
+        var last = current.ToString().Trim();
+        if (!string.IsNullOrWhiteSpace(last))
+            yield return last;
+    }
+
+    /// <summary>
+    /// For very long flat paragraphs (entire column in one &lt;w:t&gt; element),
+    /// splits on known section keywords that appear in Title Case or ALL CAPS
+    /// preceded by 2+ spaces or a sentence-ending period.
+    /// Returns the original segment unchanged if no splits are found.
+    /// </summary>
+    // High-confidence section keywords that rarely appear in natural sentences.
+    // Used for inline splitting of flat paragraphs to avoid false positives.
+    private static readonly HashSet<string> HighConfidenceSectionWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "experience", "education", "skills", "summary", "profile", "qualifications",
+        "certifications", "certificates", "publications", "volunteer", "references",
+        "languages", "interests", "awards", "achievements", "projects", "employment",
+        "overview", "objective", "competencies", "expertise"
+    };
+
+    private static IEnumerable<string> SplitOnInlineHeadings(string text, TemplateParsingHints hints)
+    {
+        if (text.Length <= 200)
+        {
+            // Short paragraphs: still check for a leading section keyword so that
+            // e.g. "SUMMARY Main stack: PHP…" is split into heading + body.
+            foreach (var part in SplitLeadingKeyword(text, hints))
+                yield return part;
+            yield break;
+        }
+
+        // Build alternation from HIGH-CONFIDENCE single-word section map keys only.
+        // We avoid low-signal words like "stack", "tools", "honours" that often appear
+        // in regular prose and cause false-positive splits.
+        var singleWordKeys = hints.SectionMap.Keys
+            .Where(k => !k.Contains(' ') && k.Length >= 4 && HighConfidenceSectionWords.Contains(k))
+            .SelectMany(k => new[]
+            {
+                char.ToUpperInvariant(k[0]) + k[1..],  // Title Case
+                k.ToUpperInvariant()                    // ALL CAPS
+            })
+            .Distinct(StringComparer.Ordinal)
+            .OrderByDescending(k => k.Length)
+            .ToList();
+
+        if (singleWordKeys.Count == 0)
+        {
+            yield return text;
+            yield break;
+        }
+
+        var altPattern = string.Join("|", singleWordKeys.Select(Regex.Escape));
+        // Require a space (not just any non-word char like '-') before the keyword
+        // to avoid false positives like "full-Stack" or "Honours degree".
+        var re = new Regex($@"(?<![^\s])(?:{altPattern})(?!\w)", RegexOptions.Compiled);
+
+        var splits = re.Matches(text)
+            .Where(m => m.Index > 0)
+            .Select(m => m.Index)
+            .OrderBy(i => i)
+            .ToList();
+
+        if (splits.Count == 0)
+        {
+            foreach (var part in SplitLeadingKeyword(text, hints))
+                yield return part;
+            yield break;
+        }
+
+        // Yield segments; each (except possibly the first) starts with a keyword.
+        var prev = 0;
+        foreach (var idx in splits)
+        {
+            if (idx > prev)
+            {
+                var seg = text[prev..idx].Trim();
+                if (!string.IsNullOrWhiteSpace(seg))
+                    foreach (var part in SplitLeadingKeyword(seg, hints))
+                        yield return part;
+            }
+            prev = idx;
+        }
+        var final = text[prev..].Trim();
+        if (!string.IsNullOrWhiteSpace(final))
+            foreach (var part in SplitLeadingKeyword(final, hints))
+                yield return part;
+    }
+
+    /// <summary>
+    /// If <paramref name="seg"/> starts with a known section keyword followed by a
+    /// space and more content, yield the keyword alone first, then the remainder.
+    /// Otherwise yield the segment as-is.
+    /// </summary>
+    private static IEnumerable<string> SplitLeadingKeyword(string seg, TemplateParsingHints hints)
+    {
+        // Try each single-word section map key (Title Case and ALL CAPS forms)
+        foreach (var raw in hints.SectionMap.Keys.Where(k => !k.Contains(' ') && k.Length >= 4))
+        {
+            var titleCase = char.ToUpperInvariant(raw[0]) + raw[1..];
+            var allCaps   = raw.ToUpperInvariant();
+
+            foreach (var kw in new[] { titleCase, allCaps })
+            {
+                if (!seg.StartsWith(kw, StringComparison.Ordinal)) continue;
+                if (seg.Length == kw.Length || char.IsWhiteSpace(seg[kw.Length]))
+                {
+                    var body = seg[kw.Length..].TrimStart();
+                    if (string.IsNullOrWhiteSpace(body))
+                    {
+                        yield return kw;
+                        yield break;
+                    }
+
+                    // Don't split if body is a single known section keyword — composite
+                    // headings like "Skills summary" or "Work Experience" must stay intact.
+                    // But DO split when body has further content: "EXPERIENCE Experience with APIs"
+                    // is a section heading followed by body text, not a composite heading.
+                    var bodyParts = body.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (bodyParts.Length == 1)
+                    {
+                        var soloWord = bodyParts[0].TrimEnd(':', ',', ';', '.');
+                        if (hints.SectionMap.ContainsKey(soloWord.ToLowerInvariant()))
+                        {
+                            yield return seg;
+                            yield break;
+                        }
+                    }
+
+                    yield return kw;
+                    yield return body;
+                    yield break;
+                }
+            }
+        }
+
+        yield return seg;
     }
 
     // ── Hint-based heading detection ─────────────────────────────────────────
 
     private static (int level, string? semanticType) DetectHeadingLevelFromHints(
-        Paragraph para, TemplateParsingHints hints, string text)
+        Paragraph para, TemplateParsingHints hints, string text, bool styleCheckDisabled = false)
     {
-        var styleId = para.ParagraphProperties?.ParagraphStyleId?.Val?.Value ?? "Normal";
-
         // ── 1. Section map: deterministic signal from training data ───────────
         // If this exact text (or a prefix) is a known section heading, trust it.
         if (text.Length < 100)
@@ -149,18 +316,23 @@ public sealed class DocxDirectParser : IDocumentParser
                 return (2, knownSemantic);
         }
 
-        // ── 2. Style-based role lookup ─────────────────────────────────────────
-        if (hints.NameStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
-            return (1, "Name");
-
-        if (hints.SectionStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
+        if (!styleCheckDisabled)
         {
-            var semantic = hints.MapSection(text);
-            return (2, semantic);
-        }
+            var styleId = para.ParagraphProperties?.ParagraphStyleId?.Val?.Value ?? "Normal";
 
-        if (hints.SubSectionStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
-            return (3, null);
+            // ── 2. Style-based role lookup ─────────────────────────────────────
+            if (hints.NameStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
+                return (1, "Name");
+
+            if (hints.SectionStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
+            {
+                var semantic = hints.MapSection(text);
+                return (2, semantic);
+            }
+
+            if (hints.SubSectionStyleIds.Contains(styleId, StringComparer.OrdinalIgnoreCase))
+                return (3, null);
+        }
 
         // ── 3. ALL-CAPS catch-all for headings not in training data ────────────
         var allCaps = text.Length < 60 && text == text.ToUpperInvariant() && text.Any(char.IsLetter);
@@ -171,6 +343,17 @@ public sealed class DocxDirectParser : IDocumentParser
         }
 
         return (0, null);
+    }
+
+    /// <summary>
+    /// Heuristic heading detection for soft-return continuation lines where
+    /// no paragraph style is available.  Only uses ALL-CAPS detection.
+    /// </summary>
+    private static int DetectHeadingLevelTextOnly(string text)
+    {
+        if (text.Length < 60 && text == text.ToUpperInvariant() && text.Any(char.IsLetter))
+            return 2;
+        return 0;
     }
 
     // ── Heuristic heading detection ──────────────────────────────────────────

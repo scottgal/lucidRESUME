@@ -331,6 +331,163 @@ public static class MarkdownSectionParser
         }
 
         if (current != null) resume.Experience.Add(current);
+
+        // Pattern 5: flat blob (all jobs in one line) — split on inline date ranges
+        if (resume.Experience.Count == 0)
+        {
+            var blob = string.Join(" ", lines.Select(l => l.Trim()).Where(l => l.Length > 0));
+            if (blob.Length > 100)
+                ParseFlatExperienceBlob(resume, blob);
+        }
+    }
+
+    /// <summary>
+    /// Handles the "flat paragraph" resume format where the entire experience block
+    /// is a single line: Title &lt;spaces&gt; Date Company Description Title &lt;spaces&gt; Date …
+    ///
+    /// Strategy: find each date-range occurrence; everything between the end of the
+    /// previous entry and the start of the date range is the job title; the first
+    /// 1–4 Title-Case words immediately after the date range are the company name.
+    /// </summary>
+    /// <summary>
+    /// Handles the "flat paragraph" resume format where the entire experience block
+    /// is a single blob: Title &lt;many-spaces&gt; Date Company Description Title &lt;many-spaces&gt; Date …
+    ///
+    /// Key insight: job templates separate the title from the date with a run of
+    /// 10+ spaces (visual alignment).  We use this to scan BACKWARDS from each
+    /// date-range position to find where the title begins, cleanly separating it
+    /// from the previous entry's description.
+    /// </summary>
+    private static void ParseFlatExperienceBlob(ResumeDocument resume, string blob)
+    {
+        var allDates = Microsoft.Recognizers.Text.DateTime.DateTimeRecognizer
+            .RecognizeDateTime(blob, "en-us");
+
+        var datePositions = allDates
+            .Where(d =>
+            {
+                if (d.Resolution?.TryGetValue("values", out var v) == true
+                    && v is IList<System.Collections.Generic.Dictionary<string, string>> list)
+                {
+                    var first = list.FirstOrDefault();
+                    return first?.TryGetValue("type", out var t) == true
+                        && (t is "daterange" or "datetimerange" or "date");
+                }
+                return false;
+            })
+            .Select(d => (Start: d.Start, End: d.End))
+            .OrderBy(p => p.Start)
+            .ToList();
+
+        if (datePositions.Count == 0) return;
+
+        for (var i = 0; i < datePositions.Count; i++)
+        {
+            var (dStart, dEnd) = datePositions[i];
+
+            // Scan BACKWARDS from the date to find the title separator:
+            // the last run of 10+ consecutive spaces before the date is the
+            // padding between title and date in these aligned templates.
+            var title = ExtractTitleBeforeDate(blob, dStart);
+            if (string.IsNullOrWhiteSpace(title)) continue;
+
+            var dateSnippet = blob[dStart..Math.Min(dEnd + 60, blob.Length)];
+            var dateRange = ResumeDateParser.ExtractFirstDateRange(dateSnippet);
+
+            var job = new WorkExperience { Title = title };
+            if (dateRange != null) ApplyDateRange(job, dateRange);
+
+            // Company: first 1-4 Title-Case words immediately after the FULL date range
+            // dateRange.MatchEnd is relative to dateSnippet (starting at dStart)
+            var fullDateEnd = dateRange != null ? dStart + dateRange.MatchEnd : dEnd;
+            var afterDate = blob[Math.Min(fullDateEnd + 1, blob.Length - 1)..].TrimStart();
+            job.Company = ExtractCompanyName(afterDate);
+
+            resume.Experience.Add(job);
+        }
+    }
+
+    /// <summary>
+    /// Scans LEFT from the date's start position, collecting space-separated tokens
+    /// until a sentence-ending word (ends with '.', '!' or '?') is encountered or
+    /// the start of the string is reached.  Returns the collected tokens as the
+    /// job title.
+    ///
+    /// Background: flat-layout CVs pad the title from the date with 20–50 spaces
+    /// (visual column alignment).  The end of the PREVIOUS entry is always marked
+    /// by sentence-terminating punctuation ("GIT, TFS." / "Trello." etc.), so
+    /// stopping at the first such word cleanly separates entries.
+    /// </summary>
+    private static string ExtractTitleBeforeDate(string blob, int dateStart)
+    {
+        // titleEnd = position right before the alignment spaces before the date
+        var titleEnd = dateStart;
+        while (titleEnd > 0 && blob[titleEnd - 1] == ' ') titleEnd--;
+
+        if (titleEnd == 0) return string.Empty;
+
+        var words = new List<string>();
+        var i = titleEnd - 1;
+
+        while (i >= 0 && words.Count < 10)
+        {
+            // Skip word-separating spaces
+            while (i >= 0 && blob[i] == ' ') i--;
+            if (i < 0) break;
+            if (blob[i] == '\n') break;
+
+            // Collect one token (going right-to-left)
+            var wordEnd = i;
+            while (i >= 0 && blob[i] != ' ' && blob[i] != '\n') i--;
+            var word = blob[(i + 1)..(wordEnd + 1)];
+
+            // A word ending with '.' / '!' / '?' terminates the previous sentence
+            if (word.Length > 0 && (word[^1] == '.' || word[^1] == '!' || word[^1] == '?'))
+                break;
+
+            words.Add(word);
+        }
+
+        words.Reverse();
+        return string.Join(" ", words).Trim(' ', '-', '–', '—', '|');
+    }
+
+    private static string? ExtractCompanyName(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+
+        // Strip any date tail the recognizer left unmatched:
+        // "– Present", "- current", "– now", etc.
+        var t = text.TrimStart();
+        if (t.Length > 0 && (t[0] == '-' || t[0] == '–' || t[0] == '—'))
+        {
+            t = t.TrimStart('-', '–', '—', ' ');
+            ReadOnlySpan<string> presentWords = ["present", "current", "now", "to date", "till now"];
+            foreach (var word in presentWords)
+                if (t.StartsWith(word, StringComparison.OrdinalIgnoreCase))
+                { t = t[word.Length..].TrimStart(); break; }
+        }
+
+        var words = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var company = new System.Text.StringBuilder();
+        foreach (var w in words.Take(4))
+        {
+            // Stop at any lowercase word
+            if (!char.IsUpper(w[0])) break;
+            // Stop if we already have a word and this looks like a sentence-starting verb/noun
+            // e.g., "Performed", "Developed", "Promotion", "Responsibilities", "Part-time"
+            if (company.Length > 0 && (w.Length >= 6 &&
+                (w.EndsWith("ed", StringComparison.OrdinalIgnoreCase) ||
+                 w.EndsWith("ing", StringComparison.OrdinalIgnoreCase) ||
+                 w.EndsWith("tion", StringComparison.OrdinalIgnoreCase) ||
+                 w.EndsWith("ities", StringComparison.OrdinalIgnoreCase))
+                || w.Contains('-')))  // hyphenated descriptor like "Part-time", "Full-time"
+                break;
+            if (company.Length > 0) company.Append(' ');
+            company.Append(w);
+        }
+        var result = company.ToString().TrimEnd(',', '.', ';');
+        return result.Length > 1 ? result : null;
     }
 
     private static void ParseExperienceFromPipeHeadings(ResumeDocument resume, string[] lines)
@@ -385,9 +542,28 @@ public static class MarkdownSectionParser
         if (current != null) resume.Experience.Add(current);
     }
 
+    // Words that appear as contact-app labels or short noise in table-layout CVs —
+    // skip these when starting an education entry in flat mode.
+    private static readonly HashSet<string> EduNoiseWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "telegram", "whatsapp", "viber", "skype", "cell", "mobile", "phone",
+        "email", "linkedin", "github", "twitter", "facebook", "instagram"
+    };
+
     private static void ParseEducation(ResumeDocument resume, List<string> lines)
     {
         Education? current = null;
+        // Buffer institution lines that arrive before the date range
+        var institutionBuffer = new List<string>();
+
+        void FlushBuffer()
+        {
+            if (institutionBuffer.Count == 0) return;
+            if (current == null) current = new Education();
+            if (current.Institution == null)
+                current.Institution = string.Join(", ", institutionBuffer);
+            institutionBuffer.Clear();
+        }
 
         foreach (var rawLine in lines)
         {
@@ -397,9 +573,10 @@ public static class MarkdownSectionParser
             var isHeading = line.StartsWith('#');
             var content = isHeading ? line.TrimStart('#').Trim() : line;
 
-            // Both headings and plain-text lines that look like institution entries start a new record
-            if (isHeading || (current == null && (content.Contains(" | ") || content.Contains(" in "))))
+            // Headings and structured patterns (" | ", " in ") start a new record
+            if (isHeading || content.Contains(" | ") || content.Contains(" in "))
             {
+                FlushBuffer();
                 if (current != null) resume.Education.Add(current);
                 current = new Education();
 
@@ -439,14 +616,36 @@ public static class MarkdownSectionParser
                 continue;
             }
 
-            if (current != null)
+            // Date range line
+            var dateRange = ResumeDateParser.ExtractFirstDateRange(line);
+            if (dateRange != null)
             {
-                var dateRange = ResumeDateParser.ExtractFirstDateRange(line);
-                if (dateRange != null) ApplyDateRange(current, dateRange);
-                else if (line.Length > 5) current.Highlights.Add(line.TrimStart('-', '*', '•', ' '));
+                // Commit buffered institution lines first, then apply dates
+                FlushBuffer();
+                if (current == null) current = new Education();
+                ApplyDateRange(current, dateRange);
+                continue;
+            }
+
+            // Plain content line
+            if (current == null)
+            {
+                // Flat mode: buffer institution names that precede the date line.
+                // Skip obvious contact-app noise (Telegram, WhatsApp, Cell, etc.).
+                if (line.Length >= 4 && !EduNoiseWords.Contains(line.Split(' ')[0]))
+                    institutionBuffer.Add(content);
+            }
+            else
+            {
+                // After a date: treat as degree/field if not yet set, otherwise highlight.
+                if (current.Degree == null && line.Length > 4)
+                    current.Degree = content;
+                else if (line.Length > 5)
+                    current.Highlights.Add(line.TrimStart('-', '*', '•', ' '));
             }
         }
 
+        FlushBuffer();
         if (current != null) resume.Education.Add(current);
     }
 

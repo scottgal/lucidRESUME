@@ -1,0 +1,26 @@
+name: import-resume
+description: Test resume import workflow
+default_delay: 500
+
+actions:
+  - type: Navigate
+    value: resume
+    description: Go to Resume page
+    
+  - type: Screenshot
+    value: resume-empty-state
+    
+  - type: Assert
+    target: ImportResumeButton
+    value: enabled:true
+    description: Import button should be enabled
+    
+  # Note: File picker cannot be automated directly
+  # This script documents the expected workflow
+  
+  - type: Wait
+    value: 1000
+    description: Wait for UI to settle
+    
+  - type: Screenshot
+    value: resume-after-import

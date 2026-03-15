@@ -114,7 +114,19 @@ public sealed class TemplateParsingHints
         // Prefix match — handles "Professional Experience 2020–Present" etc.
         foreach (var (k, v) in SectionMap)
         {
-            if (key.StartsWith(k) || k.StartsWith(key))
+            // Forward: key = "professional experience 2020", k = "professional experience"
+            // Only match if the tail after the key is empty or starts with a digit (year suffix).
+            // Reject word continuations like "experience, and runtime stability".
+            if (key.StartsWith(k))
+            {
+                var tail = key[k.Length..].TrimStart();
+                if (tail.Length == 0 || char.IsDigit(tail[0]))
+                    return v;
+            }
+
+            // Reverse: short/truncated heading "experien" matches longer key "experience"
+            // Require at least 5 chars to avoid single-syllable false matches.
+            if (key.Length >= 5 && k.StartsWith(key))
                 return v;
         }
 

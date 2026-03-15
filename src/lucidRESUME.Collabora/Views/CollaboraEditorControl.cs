@@ -146,9 +146,9 @@ public sealed class CollaboraEditorControl : UserControl
         _openButton.IsVisible = false;
     }
 
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    protected override void OnDetachedFromLogicalTree(Avalonia.LogicalTree.LogicalTreeAttachmentEventArgs e)
     {
         CloseDocument();
-        base.OnDetachedFromVisualTree(e);
+        base.OnDetachedFromLogicalTree(e);
     }
 }

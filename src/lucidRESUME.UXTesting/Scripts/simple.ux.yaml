@@ -1,0 +1,11 @@
+name: simple-screenshot
+description: Just take one screenshot
+default_delay: 500
+
+actions:
+  - type: Wait
+    value: 2000
+    description: Wait for window to fully render
+    
+  - type: Screenshot
+    value: test-screenshot
