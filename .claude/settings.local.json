@@ -11,7 +11,11 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "Bash(pip install:*)",
-      "Bash(kaggle datasets:*)"
+      "Bash(kaggle datasets:*)",
+      "Bash(which firecrawl:*)",
+      "WebFetch(domain:www.freepublicapis.com)",
+      "WebFetch(domain:publicapis.dev)",
+      "WebFetch(domain:www.arbeitnow.com)"
     ]
   }
 }

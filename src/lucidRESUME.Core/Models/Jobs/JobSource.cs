@@ -1,6 +1,6 @@
 namespace lucidRESUME.Core.Models.Jobs;
 
-public enum JobSourceType { PastedText, Url, Adzuna, Remotive, Reed, Indeed, LinkedIn }
+public enum JobSourceType { PastedText, Url, Adzuna, Remotive, Reed, Indeed, LinkedIn, Arbeitnow, JoinRise, Jobicy, Findwork }
 
 public sealed class JobSource
 {

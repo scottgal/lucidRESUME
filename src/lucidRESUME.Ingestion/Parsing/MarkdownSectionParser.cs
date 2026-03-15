@@ -1,5 +1,5 @@
-using System.Text.RegularExpressions;
 using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.Extraction.Recognizers;
 using lucidRESUME.Parsing;
 
 namespace lucidRESUME.Ingestion.Parsing;
@@ -8,21 +8,13 @@ namespace lucidRESUME.Ingestion.Parsing;
 /// Parses structured resume sections (Experience, Education, Skills) out of
 /// the Docling-generated markdown output. Uses heuristics rather than strict
 /// schema since Docling's markdown is document-layout-dependent.
+///
+/// Date extraction uses Microsoft.Recognizers.Text.DateTime (rule-based, offline)
+/// rather than hand-crafted regex — handles all common date formats including
+/// "Jan 2020 – Present", "2019–2022", "2020 - now", "October 2018 to date".
 /// </summary>
 public static class MarkdownSectionParser
 {
-    // Matches date ranges like "Jan 2012 – Present", "Oct 2024 - Present", "2019 – 2022", "2020 - now"
-    private static readonly Regex DateRangePattern = new(
-        @"((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|\d{4})\s*[-–]\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|\d{4}|Present|Current|now)",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    // Matches date-prefixed job lines: "2020 - now:  Java Developer, Company (Location)"
-    private static readonly Regex DatePrefixJobLine = new(
-        @"^(\d{4})\s*[-–]\s*(\d{4}|Present|Current|now)\s*:?\s+(.+)$",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    private static readonly Regex YearPattern = new(@"\b(19|20)\d{2}\b", RegexOptions.Compiled);
-
     /// <summary>
     /// Populate resume sections from pre-parsed <see cref="DocumentSection"/> objects
     /// (produced by the direct DOCX/PDF parser).  When sections carry a
@@ -270,50 +262,64 @@ public static class MarkdownSectionParser
                 continue;
             }
 
-            // Pattern 2: Date-only heading (inline date range)
-            if (line.StartsWith('#') && DateRangePattern.IsMatch(line))
+            // Pattern 2: Date-range-only heading
+            if (line.StartsWith('#'))
             {
-                current ??= new WorkExperience();
-                ApplyDateRange(current, line);
-                continue;
+                var headingRange = ResumeDateParser.ExtractFirstDateRange(line);
+                if (headingRange != null)
+                {
+                    current ??= new WorkExperience();
+                    ApplyDateRange(current, headingRange);
+                    continue;
+                }
             }
 
             // Pattern 3: "YYYY - YYYY:  Job Title, Company (Location)"
             // Common in Eastern European / Israeli CVs from Word templates
-            var datePrefixMatch = DatePrefixJobLine.Match(line);
-            if (datePrefixMatch.Success)
+            if (!line.StartsWith('#'))
             {
-                if (current != null) resume.Experience.Add(current);
-                current = new WorkExperience();
-                ApplyDateRange(current, line);
+                var prefixRange = ResumeDateParser.ExtractFirstDateRange(line);
+                if (prefixRange != null && prefixRange.MatchStart <= 2)
+                {
+                    var rest = line[(prefixRange.MatchEnd + 1)..].TrimStart(':', ' ');
+                    if (rest.Length > 5) // something meaningful after the date
+                    {
+                        if (current != null) resume.Experience.Add(current);
+                        current = new WorkExperience();
+                        ApplyDateRange(current, prefixRange);
 
-                var rest = datePrefixMatch.Groups[3].Value.Trim();
-                // Try "Title, Company (Location)" — split on last comma before a paren or end
-                var parenIdx = rest.IndexOf('(');
-                var baseText = parenIdx > 0 ? rest[..parenIdx].TrimEnd(',', ' ') : rest;
-                var commaIdx = baseText.LastIndexOf(',');
-                if (commaIdx > 0)
-                {
-                    current.Title = baseText[..commaIdx].Trim();
-                    current.Company = baseText[(commaIdx + 1)..].Trim();
-                    if (parenIdx > 0)
-                        current.Location = rest[(parenIdx + 1)..].TrimEnd(')').Trim();
+                        // Try "Title, Company (Location)" — split on last comma before paren or end
+                        var parenIdx = rest.IndexOf('(');
+                        var baseText = parenIdx > 0 ? rest[..parenIdx].TrimEnd(',', ' ') : rest;
+                        var commaIdx = baseText.LastIndexOf(',');
+                        if (commaIdx > 0)
+                        {
+                            current.Title = baseText[..commaIdx].Trim();
+                            current.Company = baseText[(commaIdx + 1)..].Trim();
+                            if (parenIdx > 0)
+                                current.Location = rest[(parenIdx + 1)..].TrimEnd(')').Trim();
+                        }
+                        else
+                        {
+                            current.Title = baseText.Trim();
+                        }
+                        continue;
+                    }
                 }
-                else
-                {
-                    current.Title = baseText.Trim();
-                }
-                continue;
             }
 
             if (current == null) continue;
 
             // Inline date range that IS the full line content (date-only separator)
-            var dateMatch = DateRangePattern.Match(line);
-            if (dateMatch.Success && line.Replace(dateMatch.Value, "").Trim().Length < 20)
+            var dateRange = ResumeDateParser.ExtractFirstDateRange(line);
+            if (dateRange != null)
             {
-                ApplyDateRange(current, line);
-                continue;
+                int matchLen = dateRange.MatchEnd - dateRange.MatchStart + 1;
+                if (line.Length - matchLen < 20)
+                {
+                    ApplyDateRange(current, dateRange);
+                    continue;
+                }
             }
 
             // Achievement bullets
@@ -345,20 +351,28 @@ public static class MarkdownSectionParser
             }
 
             // Date headings
-            if (line.StartsWith('#') && DateRangePattern.IsMatch(line))
+            if (line.StartsWith('#'))
             {
-                current ??= new WorkExperience();
-                ApplyDateRange(current, line);
-                continue;
+                var headingRange = ResumeDateParser.ExtractFirstDateRange(line);
+                if (headingRange != null)
+                {
+                    current ??= new WorkExperience();
+                    ApplyDateRange(current, headingRange);
+                    continue;
+                }
             }
 
             if (current == null) continue;
 
-            var dateMatch = DateRangePattern.Match(line);
-            if (dateMatch.Success && line.Replace(dateMatch.Value, "").Trim().Length < 20)
+            var dateRange = ResumeDateParser.ExtractFirstDateRange(line);
+            if (dateRange != null)
             {
-                ApplyDateRange(current, line);
-                continue;
+                int matchLen = dateRange.MatchEnd - dateRange.MatchStart + 1;
+                if (line.Length - matchLen < 20)
+                {
+                    ApplyDateRange(current, dateRange);
+                    continue;
+                }
             }
 
             if (line.Length > 30 && !line.StartsWith('#'))
@@ -404,14 +418,15 @@ public static class MarkdownSectionParser
                 }
                 else current.Institution = content;
 
-                ApplyDateRange(current, content);
+                var headingRange = ResumeDateParser.ExtractFirstDateRange(content);
+                if (headingRange != null) ApplyDateRange(current, headingRange);
                 continue;
             }
 
             if (current != null)
             {
-                var dateMatch = DateRangePattern.Match(line);
-                if (dateMatch.Success) ApplyDateRange(current, line);
+                var dateRange = ResumeDateParser.ExtractFirstDateRange(line);
+                if (dateRange != null) ApplyDateRange(current, dateRange);
                 else if (line.Length > 5) current.Highlights.Add(line.TrimStart('-', '*', '•', ' '));
             }
         }
@@ -423,7 +438,6 @@ public static class MarkdownSectionParser
     {
         var job = new WorkExperience();
         // Pattern: "Company | Title | Location DateRange"
-        // or: "Company | Title | Location\nDateRange"
         var parts = content.Split('|');
         if (parts.Length >= 2)
         {
@@ -433,46 +447,36 @@ public static class MarkdownSectionParser
         }
         else job.Company = content;
 
-        ApplyDateRange(job, content);
+        var dateRange = ResumeDateParser.ExtractFirstDateRange(content);
+        if (dateRange != null) ApplyDateRange(job, dateRange);
         return job;
+    }
+
+    private static void ApplyDateRange(WorkExperience job, DateRangeResult range)
+    {
+        job.StartDate = range.Start;
+        job.EndDate = range.End;
+        job.IsCurrent = range.IsCurrent;
     }
 
     private static void ApplyDateRange(WorkExperience job, string text)
     {
-        var m = DateRangePattern.Match(text);
-        if (!m.Success) return;
-        job.StartDate = ParseDate(m.Groups[1].Value);
-        var endStr = m.Groups[2].Value;
-        job.IsCurrent = endStr.Equals("Present", StringComparison.OrdinalIgnoreCase) ||
-                        endStr.Equals("Current", StringComparison.OrdinalIgnoreCase);
-        if (!job.IsCurrent) job.EndDate = ParseDate(endStr);
+        var range = ResumeDateParser.ExtractFirstDateRange(text);
+        if (range == null) return;
+        job.StartDate = range.Start;
+        job.EndDate = range.End;
+        job.IsCurrent = range.IsCurrent;
     }
 
-    private static void ApplyDateRange(Education edu, string text)
+    private static void ApplyDateRange(Education edu, DateRangeResult range)
     {
-        var m = DateRangePattern.Match(text);
-        if (!m.Success) return;
-        edu.StartDate = ParseDate(m.Groups[1].Value);
-        var endStr = m.Groups[2].Value;
-        if (!endStr.Equals("Present", StringComparison.OrdinalIgnoreCase))
-            edu.EndDate = ParseDate(endStr);
-    }
-
-    private static DateOnly? ParseDate(string s)
-    {
-        if (string.IsNullOrWhiteSpace(s)) return null;
-        if (DateOnly.TryParseExact(s.Trim(), ["MMM yyyy", "MMMM yyyy"], null,
-            System.Globalization.DateTimeStyles.None, out var d)) return d;
-        if (int.TryParse(s.Trim(), out var year)) return new DateOnly(year, 1, 1);
-        return null;
+        edu.StartDate = range.Start;
+        if (!range.IsCurrent) edu.EndDate = range.End;
     }
 
     private static bool IsKnownSection(string text) =>
         SectionClassifier.ClassifyHeading(text) != null;
 
-    private static bool IsJobEntry(string content)
-    {
-        // A job entry has a company/title pattern — contains at least one year or date
-        return YearPattern.IsMatch(content) || DateRangePattern.IsMatch(content);
-    }
+    private static bool IsJobEntry(string content) =>
+        ResumeDateParser.ContainsDate(content);
 }
