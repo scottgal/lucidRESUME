@@ -1,79 +1,274 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:controls="using:lucidRESUME.Views.Controls"
              x:DataType="vm:ProfilePageViewModel"
              x:Class="lucidRESUME.Views.Pages.ProfilePage">
 
-  <ScrollViewer>
-    <StackPanel Margin="24,16" Spacing="0" MaxWidth="640">
+  <ScrollViewer Background="#1E1E2E">
+    <StackPanel Margin="24,16" Spacing="16" MaxWidth="720">
 
+      <!-- Page heading -->
       <TextBlock Text="Profile" FontSize="22" FontWeight="Bold"
-                 Foreground="#CDD6F4" Margin="0,0,0,20"/>
+                 Foreground="#CDD6F4" Margin="0,0,0,8"/>
 
-      <!-- Two-column form grid -->
-      <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" >
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <!-- Card 1: Identity                                                    -->
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+              CornerRadius="8" Padding="0">
+        <Grid ColumnDefinitions="3,*">
 
-        <!-- Full Name -->
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="Full Name" Foreground="#A6ADC8"
-                   FontSize="12" Margin="0,0,8,4"/>
-        <TextBlock Grid.Row="0" Grid.Column="1" Text="Email" Foreground="#A6ADC8"
-                   FontSize="12" Margin="0,0,0,4"/>
-        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding FullName}"
-                 Watermark="Your full name" Margin="0,0,8,12"/>
-        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Email}"
-                 Watermark="your@email.com" Margin="0,0,0,12"/>
+          <!-- Left accent bar: blue -->
+          <Border Grid.Column="0" Background="#89B4FA" CornerRadius="3,0,0,3" MinHeight="1"/>
 
-        <!-- Preferred Location -->
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="Preferred Location" Foreground="#A6ADC8"
-                   FontSize="12" Margin="0,0,8,4"/>
-        <TextBlock Grid.Row="2" Grid.Column="1" Text="Open to Remote" Foreground="#A6ADC8"
-                   FontSize="12" Margin="0,0,0,4"/>
-        <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding PreferredLocation}"
-                 Watermark="e.g. London, UK" Margin="0,0,8,12"/>
-        <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding OpenToRemote}"
-                  Content="Yes, open to remote work"
-                  Foreground="#CDD6F4" Margin="0,0,0,12" VerticalAlignment="Center"/>
+          <!-- Card content -->
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
 
-        <!-- Career Goals -->
-        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
-                   Text="Career Goals" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
-        <TextBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
-                 Text="{Binding CareerGoals}"
-                 Watermark="Describe your career goals and what you're looking for…"
-                 AcceptsReturn="True" TextWrapping="Wrap" Height="80"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
+            <!-- Section header -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="👤" FontSize="16" FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
+              <TextBlock Text="Identity" FontSize="14" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+            </StackPanel>
 
-        <!-- Skills to Emphasise -->
-        <TextBlock Grid.Row="6" Grid.Column="0" Text="Skills to Emphasise" Foreground="#A6ADC8"
-                   FontSize="12" Margin="0,0,8,4"/>
-        <TextBlock Grid.Row="6" Grid.Column="1" Text="Skills to Avoid" Foreground="#A6ADC8"
-                   FontSize="12" Margin="0,0,0,4"/>
-        <TextBox Grid.Row="7" Grid.Column="0" Text="{Binding SkillsToEmphasise}"
-                 Watermark="e.g. C#, Kubernetes, Azure" Margin="0,0,8,12"/>
-        <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SkillsToAvoid}"
-                 Watermark="e.g. PHP, legacy VB.NET" Margin="0,0,0,12"/>
+            <!-- Name + Title (two columns), then Years of Experience -->
+            <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,Auto,Auto,Auto">
 
-        <!-- Blocked Companies -->
-        <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2"
-                   Text="Blocked Companies (comma-separated)" Foreground="#A6ADC8"
-                   FontSize="12" Margin="0,0,0,4"/>
+              <!-- Row 0: labels -->
+              <TextBlock Grid.Row="0" Grid.Column="0"
+                         Text="Your Name" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Grid.Row="0" Grid.Column="2"
+                         Text="Current Title" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
 
-      </Grid>
+              <!-- Row 1: inputs -->
+              <TextBox Grid.Row="1" Grid.Column="0"
+                       Text="{Binding FullName}"
+                       Watermark="e.g. Jane Smith"
+                       Background="#1E1E2E" BorderBrush="#45475A"
+                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
+              <TextBox Grid.Row="1" Grid.Column="2"
+                       Text="{Binding CurrentTitle}"
+                       Watermark="e.g. Senior Developer"
+                       Background="#1E1E2E" BorderBrush="#45475A"
+                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
 
-      <TextBox Text="{Binding BlockedCompanies}"
-               Watermark="e.g. Megacorp Inc, Evil Corp"
-               Margin="0,0,0,20"/>
+              <!-- Row 2: label -->
+              <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
+                         Text="Years of Experience"
+                         Foreground="#A6ADC8" FontSize="12" Margin="0,8,0,4"/>
 
-      <!-- Save section -->
-      <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <Button Content="Save Profile" Command="{Binding SaveCommand}"
-                Background="#1E3A5F" Foreground="#89B4FA"
-                FontSize="14" FontWeight="SemiBold" Padding="20,10"/>
-        <Border Background="#1A3A1A" CornerRadius="6" Padding="12,6"
-                IsVisible="{Binding IsSaved}">
-          <TextBlock Text="Saved!" Foreground="#A6E3A1" FontWeight="SemiBold" FontSize="13"/>
-        </Border>
-      </StackPanel>
+              <!-- Row 3: input (half width) -->
+              <TextBox Grid.Row="3" Grid.Column="0"
+                       Text="{Binding YearsOfExperience}"
+                       Watermark="e.g. 8"
+                       Background="#1E1E2E" BorderBrush="#45475A"
+                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
+
+            </Grid>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <!-- Card 2: Work Preferences                                            -->
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+              CornerRadius="8" Padding="0">
+        <Grid ColumnDefinitions="3,*">
+
+          <!-- Left accent bar: purple -->
+          <Border Grid.Column="0" Background="#CBA6F7" CornerRadius="3,0,0,3" MinHeight="1"/>
+
+          <!-- Card content -->
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
+
+            <!-- Section header -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="💼" FontSize="16" FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
+              <TextBlock Text="Work Preferences" FontSize="14" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+            </StackPanel>
+
+            <!-- Work Style -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Work Style" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <controls:WorkStyleToggleGroup
+                  OpenToRemote="{Binding OpenToRemote, Mode=TwoWay}"
+                  OpenToHybrid="{Binding OpenToHybrid, Mode=TwoWay}"
+                  OpenToOnsite="{Binding OpenToOnsite, Mode=TwoWay}"/>
+            </StackPanel>
+
+            <!-- Preferred Locations -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Preferred Locations" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <controls:TagChipEditor Items="{Binding PreferredLocations}"
+                                      Placeholder="Add location…"
+                                      AccentColor="#CBA6F7"/>
+            </StackPanel>
+
+            <!-- Target Roles -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Target Roles" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <controls:TagChipEditor Items="{Binding TargetRoles}"
+                                      Placeholder="Add role…"
+                                      AccentColor="#CBA6F7"/>
+            </StackPanel>
+
+            <!-- Min Salary + Currency (two columns) -->
+            <Grid ColumnDefinitions="*,16,80" RowDefinitions="Auto,Auto">
+              <TextBlock Grid.Row="0" Grid.Column="0"
+                         Text="Min Salary" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Grid.Row="0" Grid.Column="2"
+                         Text="Currency" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBox Grid.Row="1" Grid.Column="0"
+                       Text="{Binding MinSalary}"
+                       Watermark="e.g. 80000"
+                       Background="#1E1E2E" BorderBrush="#45475A"
+                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
+              <TextBox Grid.Row="1" Grid.Column="2"
+                       Text="{Binding PreferredCurrency}"
+                       Watermark="GBP"
+                       Background="#1E1E2E" BorderBrush="#45475A"
+                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
+            </Grid>
+
+            <!-- Max Commute -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Max Commute (minutes)" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBox Text="{Binding MaxCommuteMinutes}"
+                       Watermark="e.g. 45"
+                       Background="#1E1E2E" BorderBrush="#45475A"
+                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"
+                       HorizontalAlignment="Left" Width="160"/>
+            </StackPanel>
+
+            <!-- Target Industries -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Target Industries" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <controls:TagChipEditor Items="{Binding TargetIndustries}"
+                                      Placeholder="Add industry…"
+                                      AccentColor="#CBA6F7"/>
+            </StackPanel>
+
+            <!-- Blocked Industries -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Blocked Industries" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <controls:TagChipEditor Items="{Binding BlockedIndustries}"
+                                      Placeholder="Add industry…"
+                                      AccentColor="#F38BA8"/>
+            </StackPanel>
+
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <!-- Card 3: Skills                                                      -->
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+              CornerRadius="8" Padding="0">
+        <Grid ColumnDefinitions="3,*">
+
+          <!-- Left accent bar: green -->
+          <Border Grid.Column="0" Background="#A6E3A1" CornerRadius="3,0,0,3" MinHeight="1"/>
+
+          <!-- Card content -->
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
+
+            <!-- Section header -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="⚡" FontSize="16" FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
+              <TextBlock Text="Skills" FontSize="14" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+            </StackPanel>
+
+            <!-- Skills to Emphasise -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="SKILLS TO EMPHASISE"
+                         Foreground="#A6ADC8" FontSize="11" FontWeight="SemiBold"
+                         Margin="0,0,0,4"/>
+              <controls:TagChipEditor Items="{Binding SkillsToEmphasise}"
+                                      Placeholder="Add skill…"
+                                      AccentColor="#A6E3A1"
+                                      AllowReasons="True"/>
+            </StackPanel>
+
+            <!-- 8px visual spacer between sub-sections -->
+            <Border Height="1" Background="#45475A" Margin="0,4,0,4"/>
+
+            <!-- Skills to Avoid -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="SKILLS TO AVOID"
+                         Foreground="#A6ADC8" FontSize="11" FontWeight="SemiBold"
+                         Margin="0,0,0,4"/>
+              <controls:TagChipEditor Items="{Binding SkillsToAvoid}"
+                                      Placeholder="Add skill…"
+                                      AccentColor="#F38BA8"
+                                      AllowReasons="True"/>
+            </StackPanel>
+
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <!-- Card 4: AI Context                                                  -->
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+              CornerRadius="8" Padding="0">
+        <Grid ColumnDefinitions="3,*">
+
+          <!-- Left accent bar: yellow -->
+          <Border Grid.Column="0" Background="#F9E2AF" CornerRadius="3,0,0,3" MinHeight="1"/>
+
+          <!-- Card content -->
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
+
+            <!-- Section header -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="🤖" FontSize="16" FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
+              <TextBlock Text="AI Context" FontSize="14" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+            </StackPanel>
+
+            <!-- Career Goals -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Career Goals" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBox Text="{Binding CareerGoals}"
+                       Watermark="Describe what you're looking for…"
+                       AcceptsReturn="True" TextWrapping="Wrap" Height="80"
+                       Background="#1E1E2E" BorderBrush="#45475A"
+                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"
+                       ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            </StackPanel>
+
+            <!-- Additional Context -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Additional Context" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBox Text="{Binding AdditionalContext}"
+                       Watermark="Anything else for the AI to know…"
+                       AcceptsReturn="True" TextWrapping="Wrap" Height="64"
+                       Background="#1E1E2E" BorderBrush="#45475A"
+                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"
+                       ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            </StackPanel>
+
+            <!-- Blocked Companies -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Blocked Companies" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <controls:TagChipEditor Items="{Binding BlockedCompanies}"
+                                      Placeholder="Add company…"
+                                      AccentColor="#F38BA8"/>
+            </StackPanel>
+
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <!-- Toast row                                                           -->
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <Border Background="#1A3A1A" CornerRadius="6" Padding="12,6"
+              IsVisible="{Binding IsSaved}" HorizontalAlignment="Left">
+        <TextBlock Text="✓  Saved" Foreground="#A6E3A1" FontWeight="SemiBold" FontSize="13"/>
+      </Border>
 
     </StackPanel>
   </ScrollViewer>

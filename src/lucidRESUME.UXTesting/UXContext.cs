@@ -100,7 +100,8 @@ public sealed class UXContext
         var finalProp = current.GetType().GetProperty(parts[^1], BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
         if (finalProp == null || !finalProp.CanWrite) return false;
         
-        var convertedValue = Convert.ChangeType(value, finalProp.PropertyType);
+        var targetType = Nullable.GetUnderlyingType(finalProp.PropertyType) ?? finalProp.PropertyType;
+        var convertedValue = value == null ? null : Convert.ChangeType(value, targetType);
         finalProp.SetValue(current, convertedValue);
         return true;
     }

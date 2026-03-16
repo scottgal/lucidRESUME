@@ -1,0 +1,19 @@
+name: profile-full
+description: Capture profile page top and bottom
+default_delay: 300
+
+actions:
+  - type: Wait
+    value: "800"
+  - type: Navigate
+    value: Profile
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: profile-top
+  - type: PressKey
+    value: End
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: profile-bottom

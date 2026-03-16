@@ -115,12 +115,15 @@ public sealed class TemplateParsingHints
         foreach (var (k, v) in SectionMap)
         {
             // Forward: key = "professional experience 2020", k = "professional experience"
-            // Only match if the tail after the key is empty or starts with a digit (year suffix).
-            // Reject word continuations like "experience, and runtime stability".
+            // Accept if the tail is empty, a year/digit, or starts with a connector character
+            // ("skills & expertise", "experience / history", "skills - summary").
+            // Reject plain word continuations like "experience, and runtime stability".
             if (key.StartsWith(k))
             {
                 var tail = key[k.Length..].TrimStart();
-                if (tail.Length == 0 || char.IsDigit(tail[0]))
+                if (tail.Length == 0 || char.IsDigit(tail[0])
+                    || tail[0] == '&' || tail[0] == '/' || tail[0] == '|'
+                    || tail[0] == '-' || tail[0] == '–' || tail[0] == '—')
                     return v;
             }
 

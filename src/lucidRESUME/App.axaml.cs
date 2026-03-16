@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using lucidRESUME.AI;
+using lucidRESUME.Collabora;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.Export;
 using lucidRESUME.Extraction;
@@ -203,6 +204,7 @@ public partial class App : Application
         services.AddMatching();
         services.AddAiTailoring(config);
         services.AddExport();
+        services.AddCollabora(config);
 
         var appDataPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

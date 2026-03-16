@@ -31,6 +31,9 @@ public static class MarkdownSectionParser
             PopulateSectionsFromStructured(resume, sections);
             // Still run name extraction from markdown as a guard
             ExtractNameFromMarkdown(resume, markdown.Split('\n'));
+            // Fallback: if skills still empty, scan pre-heading area for "Hard Skills:" etc.
+            if (resume.Skills.Count == 0)
+                ExtractSkillsFromPreHeader(resume, markdown.Split('\n'));
             return;
         }
 
@@ -88,8 +91,9 @@ public static class MarkdownSectionParser
     private static void PopulateSectionsFromStructured(
         ResumeDocument resume, IReadOnlyList<DocumentSection> sections)
     {
-        foreach (var section in sections)
+        for (int i = 0; i < sections.Count; i++)
         {
+            var section = sections[i];
             var type = section.SemanticType ?? SectionClassifier.ClassifyHeading(section.Heading);
             var bodyLines = section.Body.Split('\n');
 
@@ -107,7 +111,12 @@ public static class MarkdownSectionParser
 
                 case "Skills":
                     if (resume.Skills.Count == 0)
-                        ParseSkills(resume, bodyLines.ToList());
+                    {
+                        var lines = string.IsNullOrWhiteSpace(section.Body)
+                            ? CollectUnclassifiedFollowingSections(sections, i)
+                            : bodyLines.ToList();
+                        ParseSkills(resume, lines);
+                    }
                     break;
 
                 case "Experience":
@@ -127,6 +136,81 @@ public static class MarkdownSectionParser
         {
             var allLines = sections.SelectMany(s => s.Body.Split('\n')).ToArray();
             ParseExperienceFromPipeHeadings(resume, allLines);
+        }
+    }
+
+    /// <summary>
+    /// When a known section (e.g. Skills) has an empty body — common in two-column
+    /// table CVs where the adjacent column heading immediately follows — collect
+    /// content from the next sections that are unclassified (no semantic type and
+    /// no known section classifier match), treating their headings as content lines.
+    /// Stops at the first section that has a known semantic type.
+    /// </summary>
+    private static List<string> CollectUnclassifiedFollowingSections(
+        IReadOnlyList<DocumentSection> sections, int fromIndex)
+    {
+        var lines = new List<string>();
+        for (int j = fromIndex + 1; j < sections.Count; j++)
+        {
+            var s = sections[j];
+            var t = s.SemanticType ?? SectionClassifier.ClassifyHeading(s.Heading);
+            if (t != null) break; // Stop at the next classified section
+
+            // Include heading as a content line (it may itself be a skill name like "HTML5")
+            if (!string.IsNullOrWhiteSpace(s.Heading))
+                lines.Add(s.Heading);
+            if (!string.IsNullOrWhiteSpace(s.Body))
+                lines.AddRange(s.Body.Split('\n'));
+        }
+        return lines;
+    }
+
+    // Labels that signal a skill list even outside a dedicated Skills section.
+    private static bool IsSkillLabel(string label) =>
+        label.Contains("skill") || label == "technologies" || label == "stack"
+        || label == "technical" || label.Contains("competenc") || label.Contains("expertise");
+
+    /// <summary>
+    /// Fallback skill extraction: scans the entire markdown for "Hard Skills:" /
+    /// "Technical Skills:" / "Technical Skills Set" style labels, extracting the
+    /// comma-separated items that follow on the same or next non-empty line.
+    /// Runs after the structured path when skills are still empty.
+    /// </summary>
+    private static void ExtractSkillsFromPreHeader(ResumeDocument resume, string[] lines)
+    {
+        string? pendingCategory = null;
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line)) { pendingCategory = null; continue; }
+
+            // Skip markdown headings but don't stop scanning
+            if (line.StartsWith('#')) { pendingCategory = null; continue; }
+
+            var colonIdx = line.IndexOf(':');
+            if (colonIdx > 0 && colonIdx < 50)
+            {
+                var label = line[..colonIdx].Trim().ToLowerInvariant();
+                if (IsSkillLabel(label))
+                {
+                    var rest = line[(colonIdx + 1)..].Trim();
+                    if (!string.IsNullOrWhiteSpace(rest))
+                        ParseSkills(resume, [rest]);
+                    else
+                        pendingCategory = label; // Items follow on next line(s)
+                    continue;
+                }
+            }
+
+            if (pendingCategory != null)
+            {
+                // Collect lines that are category: item pairs (e.g. "API/frameworks: Alamofire, SwiftyJSON")
+                ParseSkills(resume, [line]);
+                // Keep pending until a blank line or new labeled section
+                if (!line.Contains(':'))
+                    pendingCategory = null;
+            }
         }
     }
 

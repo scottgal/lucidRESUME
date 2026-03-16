@@ -15,6 +15,7 @@ public sealed class ResumeParser : IResumeParser
     private readonly IDocumentImageCache _imageCache;
     private readonly ParserSelector _parserSelector;
     private readonly TemplateRegistry _templateRegistry;
+    private readonly ILlmExtractionService? _llm;
     private readonly ILogger<ResumeParser> _logger;
 
     public ResumeParser(
@@ -23,13 +24,15 @@ public sealed class ResumeParser : IResumeParser
         IDocumentImageCache imageCache,
         ParserSelector parserSelector,
         TemplateRegistry templateRegistry,
-        ILogger<ResumeParser> logger)
+        ILogger<ResumeParser> logger,
+        ILlmExtractionService? llm = null)
     {
         _docling = docling;
         _extraction = extraction;
         _imageCache = imageCache;
         _parserSelector = parserSelector;
         _templateRegistry = templateRegistry;
+        _llm = llm;
         _logger = logger;
     }
 
@@ -98,7 +101,37 @@ public sealed class ResumeParser : IResumeParser
         // ── 4. Section parsing ────────────────────────────────────────────
         MarkdownSectionParser.PopulateSections(resume, markdown, structuredSections);
 
+        // ── 5. LLM fallback for missing fields (fire-and-forget) ─────────
+        // Non-blocking: doesn't slow down parse return, updates resume in background.
+        // Results are available if the caller awaits resume.LlmEnhancementTask.
+        if (_llm != null && (resume.Skills.Count == 0 || resume.Experience.Count == 0))
+            resume.LlmEnhancementTask = LlmFillMissingAsync(resume, plainText ?? markdown, CancellationToken.None);
+
         return resume;
+    }
+
+    private async Task LlmFillMissingAsync(ResumeDocument resume, string text, CancellationToken ct)
+    {
+        // Skills: ask LLM only when rule-based extraction found nothing
+        if (resume.Skills.Count == 0)
+        {
+            _logger.LogDebug("Skills empty — asking LLM for extraction");
+            var raw = await _llm!.ExtractSkillsAsync(text, ct);
+            if (!string.IsNullOrWhiteSpace(raw))
+            {
+                // Parse the comma-separated response into Skill objects
+                foreach (var part in raw.Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var name = part.Trim().TrimStart('-', '*', '•', ' ').Trim();
+                    if (name.Length >= 2 && name.Length <= 50
+                        && !name.Contains("experience", StringComparison.OrdinalIgnoreCase)
+                        && name.Count(c => c == ' ') <= 5)
+                        resume.Skills.Add(new lucidRESUME.Core.Models.Resume.Skill { Name = name });
+                }
+                if (resume.Skills.Count > 0)
+                    _logger.LogInformation("LLM recovered {Count} skills", resume.Skills.Count);
+            }
+        }
     }
 
     private async Task CacheRemainingPagesAsync(string cacheKey, IReadOnlyList<byte[]> images, CancellationToken ct)

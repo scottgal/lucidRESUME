@@ -46,6 +46,8 @@ public static class ParseCommand
 
             Console.Error.WriteLine($"Parsing {file.Name}...");
             var resume = await parser.ParseAsync(file.FullName, ct);
+            if (resume.LlmEnhancementTask != null)
+                await resume.LlmEnhancementTask;
 
             var json = JsonSerializer.Serialize(resume, PrettyJson);
 

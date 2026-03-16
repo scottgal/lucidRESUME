@@ -89,7 +89,7 @@ public sealed class CollaboraEditorControl : UserControl
             _statusText.Text = $"Ready: {Path.GetFileName(filePath)}\n\nClick below to open in Collabora editor";
             _openButton.IsVisible = true;
             
-            OpenInEditorAsync().ConfigureAwait(false);
+            _ = OpenInEditorAsync();
             return true;
         }
         catch (Exception ex)

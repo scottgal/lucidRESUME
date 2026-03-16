@@ -16,8 +16,9 @@ public static class ServiceBootstrap
     public static IServiceProvider Build(string? configFile = null)
     {
         var config = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: true)
-            .AddJsonFile(configFile ?? "lucidresume.json", optional: true)
+            .AddJsonFile(configFile ?? Path.Combine(Directory.GetCurrentDirectory(), "lucidresume.json"), optional: true)
             .AddEnvironmentVariables("LUCIDRESUME_")
             .Build();
 

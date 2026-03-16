@@ -1,0 +1,13 @@
+name: resume-libreoffice
+description: Navigate to My CV page and screenshot the LibreOffice integration
+default_delay: 400
+
+actions:
+  - type: Wait
+    value: "1000"
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: resume-libreoffice

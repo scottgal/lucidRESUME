@@ -1,8 +1,11 @@
+using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using lucidRESUME.Collabora.DocumentOpeners;
+using lucidRESUME.Collabora.Services;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
@@ -14,8 +17,23 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly IResumeParser _parser;
     private readonly IDocumentImageCache _imageCache;
     private readonly IAppStore _store;
+    private readonly LibreOfficeService _libreOffice;
+    private readonly DocumentOpenerService _openers;
+    private string? _loadedFilePath;
+
+    // LibreOffice-generated page image paths (fallback when Docling unavailable)
+    private string[] _libreOfficePageImages = [];
 
     internal TopLevel? TopLevel { get; set; }
+
+    public bool HasLibreOffice => _libreOffice.IsAvailable;
+    public bool HasAnyOpener => _openers.HasAny;
+    public string PrimaryOpenerName => _openers.Primary?.Name ?? "Open in…";
+
+    // Pre-built items for MenuFlyout binding — each carries its own Command
+    public IReadOnlyList<OpenerItem> OpenerItems => _openers.Available
+        .Select(o => new OpenerItem(o.Name, new RelayCommand(() => o.Open(_loadedFilePath ?? ""))))
+        .ToList();
 
     [ObservableProperty] private ResumeDocument? _resume;
     [ObservableProperty] private bool _isLoading;
@@ -40,11 +58,14 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     public bool CanGoToPrevPage => CurrentPage > 1;
     public bool CanGoToNextPage => CurrentPage < PageCount;
 
-    public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store)
+    public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store,
+        LibreOfficeService libreOffice, DocumentOpenerService openers)
     {
         _parser = parser;
         _imageCache = imageCache;
         _store = store;
+        _libreOffice = libreOffice;
+        _openers = openers;
     }
 
     [RelayCommand]
@@ -67,6 +88,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         if (files.Count == 0) return;
 
         var path = files[0].Path.LocalPath;
+        _loadedFilePath = path;
+        _libreOfficePageImages = [];
         ErrorMessage = null;
         StatusMessage = $"Parsing {Path.GetFileName(path)}…";
         IsLoading = true;
@@ -75,7 +98,19 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         {
             Resume = await _parser.ParseAsync(path);
             PopulateDisplayProperties();
-            await LoadPageImageAsync(1);
+
+            // Tier 2: Docling images
+            if (HasPageImages)
+            {
+                await LoadPageImageAsync(1);
+            }
+            // Tier 3: LibreOffice fallback when Docling produced no images
+            else if (_libreOffice.IsAvailable)
+            {
+                StatusMessage = $"Generating preview via LibreOffice…";
+                await GenerateLibreOfficePreviewAsync(path);
+            }
+
             StatusMessage = $"Imported {Path.GetFileName(path)}";
         }
         catch (Exception ex)
@@ -88,6 +123,30 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             IsLoading = false;
         }
     }
+
+    private async Task GenerateLibreOfficePreviewAsync(string filePath)
+    {
+        var outputDir = Path.Combine(
+            Path.GetTempPath(), "lucidRESUME-preview",
+            Path.GetFileNameWithoutExtension(filePath));
+
+        _libreOfficePageImages = await _libreOffice.ConvertToImagesAsync(filePath, outputDir);
+
+        if (_libreOfficePageImages.Length > 0)
+        {
+            PageCount = _libreOfficePageImages.Length;
+            HasPageImages = true;
+            await LoadPageImageAsync(1);
+        }
+    }
+
+    [RelayCommand]
+    private void OpenWithPrimary()
+    {
+        if (_loadedFilePath != null)
+            _openers.Primary?.Open(_loadedFilePath);
+    }
+
 
     [RelayCommand(CanExecute = nameof(CanGoToPrevPage))]
     private async Task PrevPageAsync()
@@ -105,15 +164,24 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
     private async Task LoadPageImageAsync(int page)
     {
-        if (Resume?.ImageCacheKey is null) return;
+        string? imagePath = null;
 
-        var path = _imageCache.GetCachedPagePath(Resume.ImageCacheKey, page);
-        if (path is null) return;
+        // Tier 3: LibreOffice-generated images
+        if (_libreOfficePageImages.Length > 0 && page >= 1 && page <= _libreOfficePageImages.Length)
+        {
+            imagePath = _libreOfficePageImages[page - 1];
+        }
+        // Tier 2: Docling image cache
+        else if (Resume?.ImageCacheKey is not null)
+        {
+            imagePath = _imageCache.GetCachedPagePath(Resume.ImageCacheKey, page);
+        }
 
-        // Load bitmap off the UI thread
+        if (imagePath is null || !File.Exists(imagePath)) return;
+
         var bitmap = await Task.Run(() =>
         {
-            using var stream = File.OpenRead(path);
+            using var stream = File.OpenRead(imagePath);
             return new Bitmap(stream);
         });
 
@@ -147,6 +215,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             .Select(g => new SkillGroup(g.Key, string.Join(", ", g.Select(s => s.Name))))
             .ToList();
 
+        // Tier 2 images come from Docling; tier 3 (LibreOffice) is resolved post-parse
         PageCount = Resume.PageCount;
         HasPageImages = Resume.ImageCacheKey is not null && PageCount > 0;
         HasResume = true;
@@ -154,3 +223,5 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 }
 
 public record SkillGroup(string Category, string Skills);
+
+public record OpenerItem(string Name, ICommand Command);

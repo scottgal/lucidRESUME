@@ -7,6 +7,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <UserSecretsId>e7e3de57-7a67-4384-ba07-90139e44ae83</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

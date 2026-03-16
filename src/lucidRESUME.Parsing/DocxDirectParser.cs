@@ -188,6 +188,14 @@ public sealed class DocxDirectParser : IDocumentParser
     {
         if (text.Length <= 200)
         {
+            // If the whole text is itself a recognised section heading, never split it —
+            // e.g. "SKILLS & EXPERTISE" must stay intact so heading detection works.
+            if (hints.MapSection(text) != null)
+            {
+                yield return text;
+                yield break;
+            }
+
             // Short paragraphs: still check for a leading section keyword so that
             // e.g. "SUMMARY Main stack: PHP…" is split into heading + body.
             foreach (var part in SplitLeadingKeyword(text, hints))
@@ -274,6 +282,15 @@ public sealed class DocxDirectParser : IDocumentParser
                     if (string.IsNullOrWhiteSpace(body))
                     {
                         yield return kw;
+                        yield break;
+                    }
+
+                    // Don't split if body starts with a connector character — it's a compound
+                    // heading like "SKILLS & EXPERTISE" or "EXPERIENCE / HISTORY".
+                    if (body[0] == '&' || body[0] == '/' || body[0] == '|'
+                        || body[0] == '-' || body[0] == '–' || body[0] == '—')
+                    {
+                        yield return seg;
                         yield break;
                     }
 

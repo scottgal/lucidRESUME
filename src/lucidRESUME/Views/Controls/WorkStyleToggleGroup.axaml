@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="lucidRESUME.Views.Controls.WorkStyleToggleGroup">
+
+  <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+
+    <CheckBox x:Name="RemoteCheckBox"
+              Content="Remote"
+              Foreground="#CDD6F4"/>
+
+    <CheckBox x:Name="HybridCheckBox"
+              Content="Hybrid"
+              Foreground="#CDD6F4"/>
+
+    <CheckBox x:Name="OnsiteCheckBox"
+              Content="Onsite"
+              Foreground="#CDD6F4"/>
+
+    <Button x:Name="RemoteOnlyButton"
+            Content="Remote Only ↩"
+            Background="#313244"
+            Foreground="#A6ADC8"
+            BorderBrush="#45475A"
+            BorderThickness="1"
+            Padding="10,4"
+            FontSize="12"
+            VerticalAlignment="Center">
+      <Button.Styles>
+        <Style Selector="Button:pointerover /template/ ContentPresenter">
+          <Setter Property="Background" Value="#3D3F5C"/>
+          <Setter Property="Foreground" Value="#CDD6F4"/>
+        </Style>
+        <Style Selector="Button:pressed /template/ ContentPresenter">
+          <Setter Property="Background" Value="#45475A"/>
+        </Style>
+      </Button.Styles>
+    </Button>
+
+  </StackPanel>
+
+</UserControl>

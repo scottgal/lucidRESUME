@@ -9,6 +9,16 @@
     <!-- Toolbar -->
     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="16,8">
       <Button Content="Import Resume…" Command="{Binding ImportResumeCommand}"/>
+      <SplitButton x:Name="OpenInButton"
+                   Content="{Binding PrimaryOpenerName}"
+                   Command="{Binding OpenWithPrimaryCommand}"
+                   IsVisible="{Binding HasAnyOpener}"
+                   IsEnabled="{Binding HasResume}"
+                   ToolTip.Tip="Open document in a local editor">
+        <SplitButton.Flyout>
+          <MenuFlyout/>
+        </SplitButton.Flyout>
+      </SplitButton>
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#A6ADC8"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>

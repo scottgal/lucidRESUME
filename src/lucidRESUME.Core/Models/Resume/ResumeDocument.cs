@@ -40,6 +40,14 @@ public sealed class ResumeDocument
     [JsonIgnore]
     public bool IsTailored => TailoredForJobId.HasValue;
 
+    /// <summary>
+    /// Background task that fills missing fields via LLM.
+    /// Null if no LLM enhancement was triggered.  Await before persisting to disk
+    /// if you need guaranteed-complete data.
+    /// </summary>
+    [JsonIgnore]
+    public Task? LlmEnhancementTask { get; set; }
+
     [JsonConstructor]
     public ResumeDocument() { }
 

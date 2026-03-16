@@ -1,0 +1,57 @@
+name: profile-scroll
+description: Capture profile page scrolled down
+default_delay: 300
+
+actions:
+  - type: Wait
+    value: "800"
+  - type: Navigate
+    value: Profile
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: profile-redesign-top
+  - type: Click
+    target: NameTextBox
+  - type: Wait
+    value: "200"
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: PressKey
+    value: Tab
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: profile-redesign-bottom

@@ -11,6 +11,8 @@ public static class ServiceCollectionExtensions
         services.Configure<OllamaOptions>(config.GetSection("Ollama"));
         services.AddHttpClient<IAiTailoringService, OllamaTailoringService>()
             .AddStandardResilienceHandler();
+        services.AddHttpClient<ILlmExtractionService, OllamaExtractionService>(client =>
+            client.Timeout = TimeSpan.FromSeconds(60));
         return services;
     }
 }
