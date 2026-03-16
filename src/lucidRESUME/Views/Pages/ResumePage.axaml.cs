@@ -1,8 +1,22 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data.Converters;
 using lucidRESUME.ViewModels.Pages;
 
 namespace lucidRESUME.Views.Pages;
+
+public sealed class ScoreToColorConverter : IValueConverter
+{
+    public static readonly ScoreToColorConverter Instance = new();
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        int score = value is int i ? i : 0;
+        return score >= 80 ? "#A6E3A1" : score >= 60 ? "#FAB387" : "#F38BA8";
+    }
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
 
 public partial class ResumePage : UserControl
 {

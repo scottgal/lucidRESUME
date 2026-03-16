@@ -9,5 +9,6 @@ public sealed class Education
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public double? Gpa { get; set; }
+    public int? GraduationYear { get; set; }
     public List<string> Highlights { get; set; } = [];
 }

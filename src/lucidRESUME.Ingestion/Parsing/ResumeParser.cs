@@ -119,13 +119,16 @@ public sealed class ResumeParser : IResumeParser
             var raw = await _llm!.ExtractSkillsAsync(text, ct);
             if (!string.IsNullOrWhiteSpace(raw))
             {
-                // Parse the comma-separated response into Skill objects
+                // Parse the comma-separated response into Skill objects, deduplicated, max 60
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var part in raw.Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries))
                 {
+                    if (resume.Skills.Count >= 60) break;
                     var name = part.Trim().TrimStart('-', '*', '•', ' ').Trim();
                     if (name.Length >= 2 && name.Length <= 50
                         && !name.Contains("experience", StringComparison.OrdinalIgnoreCase)
-                        && name.Count(c => c == ' ') <= 5)
+                        && name.Count(c => c == ' ') <= 5
+                        && seen.Add(name))
                         resume.Skills.Add(new lucidRESUME.Core.Models.Resume.Skill { Name = name });
                 }
                 if (resume.Skills.Count > 0)

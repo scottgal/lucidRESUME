@@ -152,6 +152,17 @@ public sealed class JobSpecParser : IJobSpecParser
             var max = decimal.Parse(salaryMatch.Groups[2].Value.Replace(",", ""), System.Globalization.CultureInfo.InvariantCulture);
             job.Salary = new SalaryRange(min, max);
         }
+
+        // Years of experience: "5+ years", "minimum 3 years", "at least 2 years experience"
+        var yearsMatch = Regex.Match(text,
+            @"(\d+)\+?\s*(?:to\s*\d+\s*)?years?\s*(?:of\s*)?(?:experience|exp)",
+            RegexOptions.IgnoreCase);
+        if (yearsMatch.Success && int.TryParse(yearsMatch.Groups[1].Value, out int years))
+            job.RequiredYearsExperience = years;
+
+        // Responsibilities: lines under "Responsibilities:", "You will:", "What you'll do:"
+        job.Responsibilities = ExtractBulletSection(text,
+            @"responsibilities|you will|what you.{0,10}do|key duties|your role");
     }
 
     private static List<string> ExtractSkillsList(string text, string sectionPattern)
@@ -164,5 +175,37 @@ public sealed class JobSpecParser : IJobSpecParser
             skills.AddRange(items.Select(s => s.Trim()).Where(s => s.Length > 1));
         }
         return skills;
+    }
+
+    private static List<string> ExtractBulletSection(string text, string sectionPattern)
+    {
+        var items = new List<string>();
+        // Find the section header, then collect bullet/dash lines until next header or blank block
+        var lines = text.Split('\n');
+        bool inSection = false;
+        int blankCount = 0;
+        var headerRx = new Regex($@"^\s*(?:#{1,3}\s*)?(?:{sectionPattern})\s*:?\s*$",
+            RegexOptions.IgnoreCase);
+        var nextHeaderRx = new Regex(@"^\s*#{1,3}\s+\w", RegexOptions.IgnoreCase);
+        var bulletRx = new Regex(@"^\s*[-•·*]\s+(.+)$");
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (headerRx.IsMatch(line)) { inSection = true; blankCount = 0; continue; }
+            if (!inSection) continue;
+            if (string.IsNullOrWhiteSpace(line)) { blankCount++; if (blankCount > 2) break; continue; }
+            if (nextHeaderRx.IsMatch(line)) break;
+            blankCount = 0;
+
+            var m = bulletRx.Match(rawLine);
+            if (m.Success)
+                items.Add(m.Groups[1].Value.Trim());
+            else if (line.Length > 20)   // plain sentence lines also count
+                items.Add(line);
+
+            if (items.Count >= 20) break;  // cap at 20 bullets
+        }
+        return items;
     }
 }

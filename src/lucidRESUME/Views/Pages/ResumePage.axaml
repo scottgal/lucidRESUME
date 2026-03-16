@@ -2,8 +2,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:lucidRESUME.ViewModels.Pages"
              xmlns:resume="using:lucidRESUME.Core.Models.Resume"
+             xmlns:local="using:lucidRESUME.Views.Pages"
              x:DataType="vm:ResumePageViewModel"
              x:Class="lucidRESUME.Views.Pages.ResumePage">
+  <UserControl.Resources>
+    <local:ScoreToColorConverter x:Key="ScoreToColorConverter"/>
+  </UserControl.Resources>
   <Grid RowDefinitions="Auto,Auto,*">
 
     <!-- Toolbar -->
@@ -77,6 +81,39 @@
       <!-- RIGHT: Structured resume content -->
       <ScrollViewer Grid.Column="1" Margin="8,8,16,16">
         <StackPanel Spacing="16">
+
+          <!-- Quality Score Banner -->
+          <Border Background="#1E1E2E" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
+                  IsVisible="{Binding HasQualityReport}">
+            <StackPanel Spacing="8">
+              <!-- Score header -->
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Resume Quality" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#89B4FA" VerticalAlignment="Center"/>
+                <Border Grid.Column="1" CornerRadius="12" Padding="10,3"
+                        Background="{Binding QualityScore, Converter={StaticResource ScoreToColorConverter}}">
+                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="#1E1E2E">
+                    <Run Text="{Binding QualityScore}"/>
+                    <Run Text="/100"/>
+                  </TextBlock>
+                </Border>
+              </Grid>
+              <!-- Findings list (errors and warnings only, max 5) -->
+              <ItemsControl ItemsSource="{Binding QualityFindings}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:QualityFindingViewModel">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                      <Border Width="8" Height="8" CornerRadius="4"
+                              Background="{Binding SeverityColor}"
+                              VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding Message}" FontSize="11"
+                                 Foreground="#BAC2DE" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
 
           <!-- Header -->
           <StackPanel Spacing="4">

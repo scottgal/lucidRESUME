@@ -1,4 +1,5 @@
 using System.Text;
+using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
@@ -15,7 +16,8 @@ public static class TailoringPromptBuilder
     /// If connecting to a hosted model, add structural delimiters (e.g. XML tags) around
     /// each user-supplied section and validate/truncate inputs.
     /// </summary>
-    public static string Build(ResumeDocument resume, JobDescription job, UserProfile profile)
+    public static string Build(ResumeDocument resume, JobDescription job, UserProfile profile,
+        IReadOnlyList<TermMatch>? termMappings = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine("You are a professional CV editor. Your task is to tailor the candidate's resume for a specific job.");
@@ -28,6 +30,23 @@ public static class TailoringPromptBuilder
         sb.AppendLine($"## Required Skills: {string.Join(", ", job.RequiredSkills)}");
         sb.AppendLine($"## Preferred Skills: {string.Join(", ", job.PreferredSkills)}");
         sb.AppendLine();
+
+        if (termMappings is { Count: > 0 })
+        {
+            var pairs = termMappings
+                .Where(m => m.MatchedSourceTerm is not null &&
+                            !string.Equals(m.MatchedSourceTerm, m.TargetTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (pairs.Count > 0)
+            {
+                sb.AppendLine("## Term Normalization (IMPORTANT):");
+                sb.AppendLine("When the candidate's resume uses any of the following equivalent terms, USE the job description's exact phrasing instead:");
+                foreach (var m in pairs)
+                    sb.AppendLine($"- Resume says \"{m.MatchedSourceTerm}\" → use \"{m.TargetTerm}\"");
+                sb.AppendLine();
+            }
+        }
 
         if (profile.SkillsToEmphasise.Count > 0)
             sb.AppendLine($"## Candidate wants to emphasise: {string.Join(", ", profile.SkillsToEmphasise.Select(s => s.SkillName))}");

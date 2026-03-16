@@ -84,6 +84,10 @@ public static class MarkdownSectionParser
         // ── 7. If no explicit Experience section, try heading-pipe heuristic ─
         if (resume.Experience.Count == 0)
             ParseExperienceFromPipeHeadings(resume, lines);
+
+        // ── 8. Last-resort: scan ALL lines for inline "Professional Experience:" labels ──
+        if (resume.Experience.Count == 0)
+            ExtractExperienceFromInlineLabel(resume, lines);
     }
 
     // ── Structured path (template-hint driven) ────────────────────────────────
@@ -136,6 +140,13 @@ public static class MarkdownSectionParser
         {
             var allLines = sections.SelectMany(s => s.Body.Split('\n')).ToArray();
             ParseExperienceFromPipeHeadings(resume, allLines);
+        }
+
+        // Inline-label fallback across all sections (e.g. "Professional Experience:" outside heading)
+        if (resume.Experience.Count == 0)
+        {
+            var allLines = sections.SelectMany(s => new[] { s.Heading }.Concat(s.Body.Split('\n'))).ToArray();
+            ExtractExperienceFromInlineLabel(resume, allLines);
         }
     }
 
@@ -212,6 +223,60 @@ public static class MarkdownSectionParser
                     pendingCategory = null;
             }
         }
+    }
+
+    private static bool IsExperienceLabel(string label) =>
+        label.Contains("experience") || label == "employment" || label == "career"
+        || label.Contains("work history") || label.Contains("professional history");
+
+    /// <summary>
+    /// Scans all lines for inline experience labels like "Professional Experience:" /
+    /// "Work experience:" that appear as plain text (not ### headings). Extracts
+    /// date-prefixed job entries that follow.
+    /// </summary>
+    private static void ExtractExperienceFromInlineLabel(ResumeDocument resume, string[] lines)
+    {
+        bool inBlock = false;
+        var blockLines = new List<string>();
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            // A known markdown section heading ends the experience block
+            if (line.StartsWith('#'))
+            {
+                var sectionType = SectionClassifier.ClassifyHeading(line);
+                if (sectionType != null && sectionType != "Experience")
+                    inBlock = false;
+                continue;
+            }
+
+            // Detect inline label: "Professional Experience:" / "Work experience:"
+            if (!inBlock)
+            {
+                var colonIdx = line.IndexOf(':');
+                if (colonIdx > 0 && colonIdx < 50)
+                {
+                    var label = line[..colonIdx].Trim().ToLowerInvariant();
+                    if (IsExperienceLabel(label))
+                    {
+                        inBlock = true;
+                        // Remainder of this line (after colon) may be a job entry too
+                        var rest = line[(colonIdx + 1)..].Trim();
+                        if (!string.IsNullOrWhiteSpace(rest))
+                            blockLines.Add(rest);
+                    }
+                }
+                continue;
+            }
+
+            blockLines.Add(line);
+        }
+
+        if (blockLines.Count > 0)
+            ParseExperience(resume, blockLines);
     }
 
     private static void ExtractNameFromMarkdown(ResumeDocument resume, string[] lines)

@@ -13,6 +13,8 @@ public static class ServiceCollectionExtensions
             .AddStandardResilienceHandler();
         services.AddHttpClient<ILlmExtractionService, OllamaExtractionService>(client =>
             client.Timeout = TimeSpan.FromSeconds(60));
+        services.AddHttpClient<IEmbeddingService, OllamaEmbeddingService>()
+            .AddStandardResilienceHandler();
         return services;
     }
 }

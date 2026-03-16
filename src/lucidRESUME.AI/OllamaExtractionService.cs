@@ -79,7 +79,7 @@ public sealed class OllamaExtractionService : ILlmExtractionService
                 if (chunk is null) continue;
                 if (!string.IsNullOrEmpty(chunk.Response))
                     sb.Append(chunk.Response);
-                if (chunk.Done) break;
+                if (chunk.Done || sb.Length > 2000) break; // cap to avoid runaway generation
             }
 
             _isAvailable = true;

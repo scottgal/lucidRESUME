@@ -1,8 +1,12 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:local="using:lucidRESUME.Views.Pages"
              x:DataType="vm:JobsPageViewModel"
              x:Class="lucidRESUME.Views.Pages.JobsPage">
+  <UserControl.Resources>
+    <local:ScoreToColorConverter x:Key="ScoreToColorConverter"/>
+  </UserControl.Resources>
 
   <Grid RowDefinitions="Auto,*">
 
@@ -77,7 +81,7 @@
         </StackPanel>
 
         <!-- Job detail -->
-        <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="20,16"
+        <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Margin="20,16"
               IsVisible="{Binding SelectedJob, Converter={x:Static ObjectConverters.IsNotNull}}">
 
           <!-- Header -->
@@ -95,14 +99,45 @@
             </StackPanel>
           </StackPanel>
 
+          <!-- JD Quality Banner -->
+          <Border Grid.Row="1" Background="#1E1E2E" CornerRadius="6" Padding="12,8" Margin="0,0,0,10"
+                  IsVisible="{Binding HasJdQualityReport}">
+            <StackPanel Spacing="8">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="JD Quality" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#89B4FA" VerticalAlignment="Center"/>
+                <Border Grid.Column="1" CornerRadius="12" Padding="10,3"
+                        Background="{Binding JdQualityScore, Converter={StaticResource ScoreToColorConverter}}">
+                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="#1E1E2E">
+                    <Run Text="{Binding JdQualityScore}"/>
+                    <Run Text="/100"/>
+                  </TextBlock>
+                </Border>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding JdQualityFindings}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:QualityFindingViewModel">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                      <Border Width="8" Height="8" CornerRadius="4"
+                              Background="{Binding SeverityColor}"
+                              VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding Message}" FontSize="11"
+                                 Foreground="#BAC2DE" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
           <!-- Description -->
-          <ScrollViewer Grid.Row="1">
+          <ScrollViewer Grid.Row="2">
             <TextBlock Text="{Binding SelectedJobDescription}"
                        TextWrapping="Wrap" Foreground="#BAC2DE" FontSize="12" LineHeight="18"/>
           </ScrollViewer>
 
           <!-- Aspect voting panel -->
-          <StackPanel Grid.Row="2" Spacing="4" Margin="0,12,0,4"
+          <StackPanel Grid.Row="3" Spacing="4" Margin="0,12,0,4"
                       IsVisible="{Binding SelectedJobAspects.Count}">
 
             <TextBlock Text="Rate Aspects" FontSize="12" FontWeight="SemiBold"
@@ -159,7 +194,7 @@
           </StackPanel>
 
           <!-- Actions -->
-          <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+          <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
             <Button Content="Apply / Tailor Resume"
                     Command="{Binding TailorSelectedJobCommand}"
                     Background="#1E3A5F" Foreground="#89B4FA"

@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.Collabora.DocumentOpeners;
 using lucidRESUME.Collabora.Services;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Quality;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
 
@@ -19,6 +20,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly IAppStore _store;
     private readonly LibreOfficeService _libreOffice;
     private readonly DocumentOpenerService _openers;
+    private readonly IResumeQualityAnalyser _qualityAnalyser;
     private string? _loadedFilePath;
 
     // LibreOffice-generated page image paths (fallback when Docling unavailable)
@@ -49,6 +51,11 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private IReadOnlyList<SkillGroup> _skillGroups = [];
     [ObservableProperty] private bool _hasResume;
 
+    // Quality analysis
+    [ObservableProperty] private int _qualityScore;
+    [ObservableProperty] private bool _hasQualityReport;
+    [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _qualityFindings = [];
+
     // Page image display
     [ObservableProperty] private Bitmap? _currentPageImage;
     [ObservableProperty] private int _currentPage = 1;
@@ -59,13 +66,14 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     public bool CanGoToNextPage => CurrentPage < PageCount;
 
     public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store,
-        LibreOfficeService libreOffice, DocumentOpenerService openers)
+        LibreOfficeService libreOffice, DocumentOpenerService openers, IResumeQualityAnalyser qualityAnalyser)
     {
         _parser = parser;
         _imageCache = imageCache;
         _store = store;
         _libreOffice = libreOffice;
         _openers = openers;
+        _qualityAnalyser = qualityAnalyser;
     }
 
     [RelayCommand]
@@ -219,9 +227,33 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         PageCount = Resume.PageCount;
         HasPageImages = Resume.ImageCacheKey is not null && PageCount > 0;
         HasResume = true;
+        _ = RunQualityAnalysisAsync();
+    }
+
+    private async Task RunQualityAnalysisAsync()
+    {
+        if (Resume is null) return;
+        var report = await _qualityAnalyser.AnalyseAsync(Resume);
+        QualityScore = report.OverallScore;
+        HasQualityReport = true;
+        QualityFindings = report.AllFindings
+            .OrderByDescending(f => f.Severity)
+            .Select(f => new QualityFindingViewModel(
+                f.Severity.ToString(),
+                f.Severity switch {
+                    FindingSeverity.Error   => "#F38BA8",
+                    FindingSeverity.Warning => "#FAB387",
+                    _                      => "#A6E3A1"
+                },
+                f.Code,
+                f.Message,
+                f.Section))
+            .ToList();
     }
 }
 
 public record SkillGroup(string Category, string Skills);
 
 public record OpenerItem(string Name, ICommand Command);
+
+public record QualityFindingViewModel(string Severity, string SeverityColor, string Code, string Message, string Section);

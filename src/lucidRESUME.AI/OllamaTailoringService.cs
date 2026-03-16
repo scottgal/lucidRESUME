@@ -13,23 +13,53 @@ public sealed class OllamaTailoringService : IAiTailoringService
     private readonly HttpClient _http;
     private readonly OllamaOptions _options;
     private readonly ILogger<OllamaTailoringService> _logger;
+    private readonly ITermNormalizer _termNormalizer;
 
     // volatile: written by CheckAvailabilityAsync (potentially background thread),
     // read by UI thread — ensures visibility without locking.
     private volatile bool _isAvailable;
     public bool IsAvailable => _isAvailable;
 
-    public OllamaTailoringService(HttpClient http, IOptions<OllamaOptions> options, ILogger<OllamaTailoringService> logger)
+    public OllamaTailoringService(HttpClient http, IOptions<OllamaOptions> options,
+        ILogger<OllamaTailoringService> logger, ITermNormalizer termNormalizer)
     {
         _http = http;
         _options = options.Value;
         _logger = logger;
+        _termNormalizer = termNormalizer;
     }
 
     public async Task<ResumeDocument> TailorAsync(ResumeDocument resume, JobDescription job,
         UserProfile profile, CancellationToken ct = default)
     {
-        var prompt = TailoringPromptBuilder.Build(resume, job, profile);
+        IReadOnlyList<TermMatch>? termMappings = null;
+
+        var resumeTerms = resume.Skills
+            .Select(s => s.Name)
+            .Concat(resume.Experience.SelectMany(e => e.Technologies))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var jdTerms = job.RequiredSkills
+            .Concat(job.PreferredSkills)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (resumeTerms.Count > 0 && jdTerms.Count > 0)
+        {
+            try
+            {
+                termMappings = await _termNormalizer.FindMatchesAsync(jdTerms, resumeTerms,
+                    minSimilarity: 0.85f, ct: ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Term normalization failed; continuing without it");
+            }
+        }
+
+        var prompt = TailoringPromptBuilder.Build(resume, job, profile, termMappings);
 
         _logger.LogInformation("Tailoring resume for {Title} at {Company} using {Model}",
             job.Title, job.Company, _options.Model);

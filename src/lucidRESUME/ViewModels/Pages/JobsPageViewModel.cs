@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
+using lucidRESUME.Core.Models.Quality;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.JobSearch;
 using lucidRESUME.Matching;
@@ -32,6 +33,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private readonly JobSearchService _jobSearchService;
     private readonly IMatchingService _matchingService;
     private readonly VoteService _voteService;
+    private readonly IJobQualityAnalyser _jobQualityAnalyser;
     private readonly IAppStore _store;
     private readonly ApplyPageViewModel _applyPage;
 
@@ -56,16 +58,23 @@ public sealed partial class JobsPageViewModel : ViewModelBase
 
     [ObservableProperty] private IReadOnlyList<AspectVoteItem> _selectedJobAspects = [];
 
+    // JD quality banner
+    [ObservableProperty] private bool _hasJdQualityReport;
+    [ObservableProperty] private int _jdQualityScore;
+    [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _jdQualityFindings = [];
+
     public JobsPageViewModel(
         JobSearchService jobSearchService,
         IMatchingService matchingService,
         VoteService voteService,
+        IJobQualityAnalyser jobQualityAnalyser,
         IAppStore store,
         ApplyPageViewModel applyPage)
     {
         _jobSearchService = jobSearchService;
         _matchingService = matchingService;
         _voteService = voteService;
+        _jobQualityAnalyser = jobQualityAnalyser;
         _store = store;
         _applyPage = applyPage;
     }
@@ -77,6 +86,8 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         SelectedJobLocation = value?.Location ?? "";
         SelectedJobIsRemote = value?.IsRemote ?? false;
         SelectedJobDescription = value?.FullJob.RawText ?? "";
+        HasJdQualityReport = false;
+        JdQualityFindings = [];
         TailorSelectedJobCommand.NotifyCanExecuteChanged();
 
         // Cancel previous refresh and start a fresh one
@@ -84,6 +95,35 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _refreshCts?.Dispose();
         _refreshCts = new CancellationTokenSource();
         _ = RefreshAspectsAsync(_refreshCts.Token);
+
+        if (value is not null)
+            _ = RunJdQualityAsync(value.FullJob);
+    }
+
+    private Task RunJdQualityAsync(JobDescription job)
+    {
+        try
+        {
+            var report = _jobQualityAnalyser.Analyse(job);
+            JdQualityScore = report.OverallScore;
+            JdQualityFindings = report.Errors
+                .Concat(report.Warnings)
+                .Take(5)
+                .Select(f => new QualityFindingViewModel(
+                    f.Severity.ToString(),
+                    f.Severity == FindingSeverity.Error ? "#F38BA8" : "#FAB387",
+                    f.Code,
+                    f.Message,
+                    f.Section))
+                .ToList()
+                .AsReadOnly();
+            HasJdQualityReport = true;
+        }
+        catch
+        {
+            // Non-critical — silently skip if JD quality fails
+        }
+        return Task.CompletedTask;
     }
 
     private async Task RefreshAspectsAsync(CancellationToken ct)

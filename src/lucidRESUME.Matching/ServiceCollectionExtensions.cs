@@ -10,7 +10,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AspectExtractor>();
         services.AddSingleton<VoteService>();
         services.AddSingleton<JobFilterExecutor>();
-        services.AddSingleton<IMatchingService, SkillMatchingService>();
+        services.AddSingleton<IMatchingService>(sp =>
+            new SkillMatchingService(
+                sp.GetRequiredService<AspectExtractor>(),
+                sp.GetService<IEmbeddingService>()));  // null if not registered
+        services.AddSingleton<IResumeQualityAnalyser, ResumeQualityAnalyser>();
+        services.AddSingleton<IJobQualityAnalyser, JobQualityAnalyser>();
+        services.AddSingleton<ITermNormalizer, SemanticTermNormalizer>();
         return services;
     }
 }

@@ -92,7 +92,12 @@
       "Read(//c/Program Files/**)",
       "Read(//c/Program Files \\(x86\\)/**)",
       "Bash(xargs -I{} taskkill //PID {} //F)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(npm install:*)",
+      "Bash(firecrawl:*)",
+      "Bash(for i:*)",
+      "Bash(EXE=\"E:/source/lucidRESUME/lucidRESUME/src/lucidRESUME.Cli/bin/Debug/net10.0/lucidRESUME.Cli.exe\"\n\"$EXE\" parse -f \"E:/source/lucidRESUME/lucidRESUME/samples/vacancy-cv-docx/40.docx\" 2>&1 | grep -E \"section|Section|template|Template|confidence\")",
+      "Bash(EXE=\"E:/source/lucidRESUME/lucidRESUME/src/lucidRESUME.Cli/bin/Debug/net10.0/lucidRESUME.Cli.exe\"\n\"$EXE\" parse -f \"E:/source/lucidRESUME/lucidRESUME/samples/vacancy-cv-docx/5.docx\" 2>&1 | python -c \"import sys,json; lines=sys.stdin.readlines\\(\\); json_start=next\\(\\(i for i,l in enumerate\\(lines\\) if l.strip\\(\\).startswith\\('{'\\)\\),None\\); d=json.loads\\(''.join\\(lines[json_start:]\\)\\) if json_start else {}; [print\\(s.get\\('Heading',''\\), '->', s.get\\('SemanticType',''\\)\\) for s in d.get\\('StructuredSections',[]\\) if s]\" 2>/dev/null || echo \"no structured sections key\")"
     ]
   }
 }
