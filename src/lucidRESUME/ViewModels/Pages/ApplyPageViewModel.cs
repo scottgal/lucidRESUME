@@ -3,6 +3,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
@@ -12,6 +13,7 @@ namespace lucidRESUME.ViewModels.Pages;
 public sealed partial class ApplyPageViewModel : ViewModelBase
 {
     private readonly IAiTailoringService _tailoringService;
+    private readonly ICoverageAnalyser _coverageAnalyser;
     private readonly IAppStore _store;
 
     internal TopLevel? TopLevel { get; set; }
@@ -28,10 +30,22 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private string? _errorMessage;
 
-    public ApplyPageViewModel(IAiTailoringService tailoringService, IAppStore store)
+    // Ollama availability
+    [ObservableProperty] private bool _isOllamaUnavailable;
+
+    // Coverage summary
+    [ObservableProperty] private bool _hasCoverage;
+    [ObservableProperty] private int _coveragePercent;
+    [ObservableProperty] private int _gapCount;
+    [ObservableProperty] private string _companyTypeLabel = "";
+
+    public ApplyPageViewModel(IAiTailoringService tailoringService,
+        ICoverageAnalyser coverageAnalyser, IAppStore store)
     {
         _tailoringService = tailoringService;
+        _coverageAnalyser = coverageAnalyser;
         _store = store;
+        IsOllamaUnavailable = !tailoringService.IsAvailable;
     }
 
     /// <summary>Called by JobsPage or ResumePageViewModel to pre-populate the form.</summary>
@@ -45,6 +59,29 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             JobTitle = job.Title ?? "";
             Company = job.Company ?? "";
             JobDescriptionText = job.RawText;
+        }
+
+        IsOllamaUnavailable = !_tailoringService.IsAvailable;
+
+        if (resume is not null && job is not null)
+            _ = RunCoverageAsync(resume, job);
+    }
+
+    private async Task RunCoverageAsync(ResumeDocument resume, JobDescription job)
+    {
+        try
+        {
+            var report = await _coverageAnalyser.AnalyseAsync(resume, job);
+            CoveragePercent = report.CoveragePercent;
+            GapCount = report.RequiredGaps.Count();
+            CompanyTypeLabel = report.CompanyType == CompanyType.Unknown
+                ? ""
+                : report.CompanyType.ToString();
+            HasCoverage = true;
+        }
+        catch
+        {
+            // Non-critical
         }
     }
 

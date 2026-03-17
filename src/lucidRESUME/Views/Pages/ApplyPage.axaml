@@ -7,25 +7,54 @@
   <Grid ColumnDefinitions="*,*" Margin="16,12">
 
     <!-- LEFT: job input form -->
-    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
+    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
 
+      <!-- Header -->
       <TextBlock Grid.Row="0" Text="Tailor Resume" FontSize="18" FontWeight="Bold"
                  Foreground="#CDD6F4" Margin="0,0,0,16"/>
 
+      <!-- Ollama unavailable warning -->
+      <Border Grid.Row="1" Background="#3E2A00" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
+              IsVisible="{Binding IsOllamaUnavailable}">
+        <TextBlock Text="⚠ Ollama is not reachable. Start Ollama before tailoring."
+                   Foreground="#FAB387" FontSize="12" TextWrapping="Wrap"/>
+      </Border>
+
+      <!-- Coverage summary -->
+      <Border Grid.Row="2" Background="#1E1E2E" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
+              IsVisible="{Binding HasCoverage}">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Foreground="#89B4FA" FontSize="12" VerticalAlignment="Center">
+            <Run Text="Coverage:"/>
+            <Run Text="{Binding CoveragePercent}" FontWeight="Bold"/>
+            <Run Text="%"/>
+          </TextBlock>
+          <TextBlock Foreground="#F38BA8" FontSize="12" VerticalAlignment="Center"
+                     IsVisible="{Binding GapCount}">
+            <Run Text="{Binding GapCount}"/>
+            <Run Text="required gap(s)"/>
+          </TextBlock>
+          <Border Background="#2A2A3E" CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
+                  IsVisible="{Binding CompanyTypeLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding CompanyTypeLabel}" FontSize="10" Foreground="#CBA6F7"/>
+          </Border>
+        </StackPanel>
+      </Border>
+
       <!-- Job Title -->
-      <StackPanel Grid.Row="1" Spacing="4" Margin="0,0,0,10">
+      <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Job Title" Foreground="#A6ADC8" FontSize="12"/>
         <TextBox Text="{Binding JobTitle}" Watermark="e.g. Senior Software Engineer"/>
       </StackPanel>
 
       <!-- Company -->
-      <StackPanel Grid.Row="2" Spacing="4" Margin="0,0,0,10">
+      <StackPanel Grid.Row="4" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Company" Foreground="#A6ADC8" FontSize="12"/>
         <TextBox Text="{Binding Company}" Watermark="e.g. Acme Corp"/>
       </StackPanel>
 
       <!-- Job Description -->
-      <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,10">
+      <StackPanel Grid.Row="5" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Job Description" Foreground="#A6ADC8" FontSize="12"/>
         <TextBox Text="{Binding JobDescriptionText}"
                  Watermark="Paste the full job description here…"
@@ -36,7 +65,7 @@
       </StackPanel>
 
       <!-- Tailor button -->
-      <Button Grid.Row="4"
+      <Button Grid.Row="6"
               Content="Tailor Resume"
               Command="{Binding TailorCommand}"
               IsEnabled="{Binding !IsTailoring}"
@@ -48,11 +77,11 @@
               Margin="0,0,0,8"/>
 
       <!-- Progress bar -->
-      <ProgressBar Grid.Row="5" IsVisible="{Binding IsTailoring}"
+      <ProgressBar Grid.Row="7" IsVisible="{Binding IsTailoring}"
                    IsIndeterminate="True" Margin="0,0,0,8"/>
 
       <!-- Status / Error -->
-      <StackPanel Grid.Row="6" Spacing="4">
+      <StackPanel Grid.Row="8" Spacing="4">
         <TextBlock Text="{Binding StatusMessage}" Foreground="#A6ADC8" FontSize="12"
                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
         <Border Background="#3E1E1E" Padding="10,6" CornerRadius="4"
