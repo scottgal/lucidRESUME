@@ -93,6 +93,34 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _coverageAnalyser = coverageAnalyser;
         _store = store;
         _applyPage = applyPage;
+        _ = LoadSavedAsync();
+    }
+
+    [RelayCommand]
+    private async Task LoadSavedAsync()
+    {
+        var state = await _store.LoadAsync();
+        if (state.Jobs.Count == 0)
+        {
+            if (Jobs.Count == 0)
+                StatusMessage = "No saved jobs yet. Use Add Job or search to get started.";
+            return;
+        }
+
+        Jobs = state.Jobs
+            .OrderByDescending(j => j.CreatedAt)
+            .Select(j => new JobListItem(
+                j.JobId,
+                j.Title ?? "(No title)",
+                j.Company ?? "(Unknown)",
+                j.Location ?? "",
+                j.IsRemote ?? false,
+                j.MatchScore ?? 0.0,
+                j.Source?.Url ?? "",
+                j))
+            .ToList()
+            .AsReadOnly();
+        StatusMessage = $"{state.Jobs.Count} saved job(s).";
     }
 
     partial void OnSelectedJobChanged(JobListItem? value)

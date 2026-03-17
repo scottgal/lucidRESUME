@@ -16,6 +16,8 @@
                Watermark="Search jobs (e.g. C# developer London)…"
                Width="380" VerticalAlignment="Center"/>
       <Button Content="Search" Command="{Binding SearchCommand}" VerticalAlignment="Center"/>
+      <Button Content="Saved" Command="{Binding LoadSavedCommand}" VerticalAlignment="Center"
+              Padding="12,6" FontSize="12"/>
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True"
                    Width="100" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#A6ADC8"
