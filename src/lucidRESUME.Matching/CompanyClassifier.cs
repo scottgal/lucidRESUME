@@ -26,7 +26,7 @@ public sealed class CompanyClassifier
             return CompanyType.Finance;
 
         if (ContainsAny(text, "consultancy", "consulting firm", "advisory", "big 4",
-                              "systems integrator", "professional services", "fintech"))
+                              "systems integrator", "professional services"))
             return CompanyType.Consultancy;
 
         if (ContainsAny(text, " agency", "digital agency", "creative agency", "marketing agency",

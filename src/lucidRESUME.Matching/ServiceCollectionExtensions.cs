@@ -18,6 +18,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IResumeQualityAnalyser, ResumeQualityAnalyser>();
         services.AddSingleton<IJobQualityAnalyser, JobQualityAnalyser>();
         services.AddSingleton<ITermNormalizer, SemanticTermNormalizer>();
+        services.AddSingleton<ICoverageAnalyser>(sp =>
+            new ResumeCoverageAnalyser(
+                sp.GetRequiredService<CompanyClassifier>(),
+                sp.GetService<IEmbeddingService>()));
         return services;
     }
 }
