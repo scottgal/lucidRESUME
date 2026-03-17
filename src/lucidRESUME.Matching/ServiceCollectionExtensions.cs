@@ -7,6 +7,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddMatching(this IServiceCollection services)
     {
+        services.AddSingleton<CompanyClassifier>();
         services.AddSingleton<AspectExtractor>();
         services.AddSingleton<VoteService>();
         services.AddSingleton<JobFilterExecutor>();
