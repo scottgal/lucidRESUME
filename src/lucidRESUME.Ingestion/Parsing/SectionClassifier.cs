@@ -4,7 +4,7 @@ public static partial class SectionClassifier
 {
     private static readonly (string[] Keywords, string Section)[] SectionMap =
     [
-        (["experience", "employment", "work history", "career history", "professional experience"], "Experience"),
+        (["experience", "employment", "work history", "career history", "professional history", "professional background", "positions held"], "Experience"),
         (["education", "academic", "qualifications"], "Education"),
         (["skills", "technical skills", "core competencies", "technologies", "expertise"], "Skills"),
         (["certifications", "certificates", "accreditations", "credentials"], "Certifications"),

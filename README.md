@@ -72,7 +72,7 @@ Configure once, applied everywhere:
 - Career goals and free-text context fed to the AI
 
 ### AI Resume Tailoring
-- Powered by any Ollama model (default: `llama3.1:8b`)
+- Powered by any Ollama model (default: `qwen3.5:4b`)
 - Builds a context-aware prompt from your profile + the job description
 - Creates a new tailored copy — your original is never modified
 - Honest-only prompt constraints: no fabrication of skills or experience
@@ -134,7 +134,7 @@ lucidRESUME (Avalonia UI)
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- (Optional) [Ollama](https://ollama.ai) for AI tailoring — `ollama pull llama3.1:8b`
+- (Optional) [Ollama](https://ollama.ai) for AI tailoring — `ollama pull qwen3.5:4b`
 - (Optional) [Docling](https://github.com/DS4SD/docling) for high-quality document conversion
 - (Optional) LibreOffice, Word, or another editor for the "Open in…" button
 
@@ -154,7 +154,8 @@ Edit `src/lucidRESUME/appsettings.json`:
 {
   "Ollama": {
     "BaseUrl": "http://localhost:11434",
-    "Model": "llama3.1:8b"
+    "Model": "qwen3.5:4b",
+    "NumCtx": 16384
   },
   "Docling": {
     "BaseUrl": "http://localhost:5001"

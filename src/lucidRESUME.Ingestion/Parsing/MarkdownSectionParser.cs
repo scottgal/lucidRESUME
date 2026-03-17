@@ -125,7 +125,12 @@ public static class MarkdownSectionParser
 
                 case "Experience":
                     if (resume.Experience.Count == 0)
-                        ParseExperience(resume, bodyLines.ToList());
+                    {
+                        var expLines = string.IsNullOrWhiteSpace(section.Body)
+                            ? CollectUnclassifiedFollowingSections(sections, i)
+                            : bodyLines.ToList();
+                        ParseExperience(resume, expLines);
+                    }
                     break;
 
                 case "Education":
