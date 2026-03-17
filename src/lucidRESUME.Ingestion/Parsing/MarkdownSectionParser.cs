@@ -147,6 +147,13 @@ public static class MarkdownSectionParser
             ParseExperienceFromPipeHeadings(resume, allLines);
         }
 
+        // Try ParseExperience on ALL body lines (catches date-prefixed jobs in non-Experience sections)
+        if (resume.Experience.Count == 0)
+        {
+            var allBodyLines = sections.SelectMany(s => s.Body.Split('\n')).ToList();
+            ParseExperience(resume, allBodyLines);
+        }
+
         // Inline-label fallback across all sections (e.g. "Professional Experience:" outside heading)
         if (resume.Experience.Count == 0)
         {
