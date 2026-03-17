@@ -46,8 +46,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private string _fullName = string.Empty;
     [ObservableProperty] private string _contactLine = string.Empty;
     [ObservableProperty] private string _summary = string.Empty;
-    [ObservableProperty] private IReadOnlyList<WorkExperience> _experience = [];
-    [ObservableProperty] private IReadOnlyList<Education> _education = [];
+    [ObservableProperty] private IReadOnlyList<ExperienceItemViewModel> _experience = [];
+    [ObservableProperty] private IReadOnlyList<EducationItemViewModel> _education = [];
     [ObservableProperty] private IReadOnlyList<SkillGroup> _skillGroups = [];
     [ObservableProperty] private bool _hasResume;
 
@@ -215,8 +215,25 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         ContactLine = string.Join("  ·  ", contacts);
 
         Summary = p.Summary ?? string.Empty;
-        Experience = Resume.Experience;
-        Education = Resume.Education;
+
+        Experience = Resume.Experience
+            .Select(e => new ExperienceItemViewModel(
+                e.Title ?? "",
+                e.Company ?? "",
+                e.Location ?? "",
+                FormatDateRange(e.StartDate, e.EndDate, e.IsCurrent),
+                string.Join(", ", e.Technologies),
+                e.Achievements.AsReadOnly()))
+            .ToList();
+
+        Education = Resume.Education
+            .Select(e => new EducationItemViewModel(
+                e.Degree ?? "",
+                e.Institution ?? "",
+                e.FieldOfStudy ?? "",
+                FormatDateRange(e.StartDate, e.EndDate, false),
+                e.Highlights.AsReadOnly()))
+            .ToList();
 
         SkillGroups = Resume.Skills
             .GroupBy(s => s.Category ?? "General")
@@ -228,6 +245,14 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         HasPageImages = Resume.ImageCacheKey is not null && PageCount > 0;
         HasResume = true;
         _ = RunQualityAnalysisAsync();
+    }
+
+    private static string FormatDateRange(DateOnly? start, DateOnly? end, bool isCurrent)
+    {
+        var s = start?.ToString("MMM yyyy") ?? "";
+        var e = isCurrent ? "Present" : end?.ToString("MMM yyyy") ?? "";
+        if (s == "" && e == "") return "";
+        return e == "" ? s : s == "" ? e : $"{s} – {e}";
     }
 
     private async Task RunQualityAnalysisAsync()
@@ -253,6 +278,21 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 }
 
 public record SkillGroup(string Category, string Skills);
+
+public record ExperienceItemViewModel(
+    string Title,
+    string Company,
+    string Location,
+    string DateRange,
+    string TechnologiesLine,
+    IReadOnlyList<string> Achievements);
+
+public record EducationItemViewModel(
+    string Degree,
+    string Institution,
+    string FieldOfStudy,
+    string DateRange,
+    IReadOnlyList<string> Highlights);
 
 public record OpenerItem(string Name, ICommand Command);
 

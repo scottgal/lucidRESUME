@@ -150,16 +150,30 @@
             <TextBlock Text="Experience" FontSize="13" FontWeight="SemiBold" Foreground="#89B4FA"/>
             <ItemsControl ItemsSource="{Binding Experience}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="resume:WorkExperience">
+                <DataTemplate x:DataType="vm:ExperienceItemViewModel">
                   <Border Background="#1E1E2E" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
-                    <StackPanel Spacing="2">
-                      <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4" FontSize="12">
-                        <Run Text="{Binding Title}"/>
-                        <Run Text=" — "/>
-                        <Run Text="{Binding Company}"/>
+                    <StackPanel Spacing="3">
+                      <!-- Title / Company -->
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4" FontSize="12">
+                          <Run Text="{Binding Title}"/>
+                          <Run Text=" — " Foreground="#6C7086"/>
+                          <Run Text="{Binding Company}"/>
+                        </TextBlock>
+                        <TextBlock Grid.Column="1" Text="{Binding DateRange}"
+                                   Foreground="#6C7086" FontSize="11" VerticalAlignment="Center"/>
+                      </Grid>
+                      <!-- Location -->
+                      <TextBlock Text="{Binding Location}" Foreground="#6C7086" FontSize="11"
+                                 IsVisible="{Binding Location, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                      <!-- Technologies -->
+                      <TextBlock Foreground="#A6E3A1" FontSize="11" TextWrapping="Wrap"
+                                 IsVisible="{Binding TechnologiesLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <Run Text="Tech: "/>
+                        <Run Text="{Binding TechnologiesLine}"/>
                       </TextBlock>
-                      <TextBlock Text="{Binding Location}" Foreground="#6C7086" FontSize="11"/>
-                      <ItemsControl ItemsSource="{Binding Achievements}" Margin="0,3,0,0">
+                      <!-- Achievements -->
+                      <ItemsControl ItemsSource="{Binding Achievements}" Margin="0,2,0,0">
                         <ItemsControl.ItemTemplate>
                           <DataTemplate x:DataType="x:String">
                             <TextBlock Text="{Binding}" TextWrapping="Wrap"
@@ -179,14 +193,18 @@
             <TextBlock Text="Education" FontSize="13" FontWeight="SemiBold" Foreground="#89B4FA"/>
             <ItemsControl ItemsSource="{Binding Education}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="resume:Education">
+                <DataTemplate x:DataType="vm:EducationItemViewModel">
                   <Border Background="#1E1E2E" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
                     <StackPanel Spacing="2">
-                      <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4" FontSize="12">
-                        <Run Text="{Binding Degree}"/>
-                        <Run Text=" — "/>
-                        <Run Text="{Binding Institution}"/>
-                      </TextBlock>
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4" FontSize="12">
+                          <Run Text="{Binding Degree}"/>
+                          <Run Text=" — " Foreground="#6C7086"/>
+                          <Run Text="{Binding Institution}"/>
+                        </TextBlock>
+                        <TextBlock Grid.Column="1" Text="{Binding DateRange}"
+                                   Foreground="#6C7086" FontSize="11" VerticalAlignment="Center"/>
+                      </Grid>
                       <TextBlock Text="{Binding FieldOfStudy}" Foreground="#A6ADC8" FontSize="11"
                                  IsVisible="{Binding FieldOfStudy, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     </StackPanel>
