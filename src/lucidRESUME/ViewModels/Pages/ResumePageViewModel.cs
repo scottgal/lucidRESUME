@@ -21,6 +21,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly LibreOfficeService _libreOffice;
     private readonly DocumentOpenerService _openers;
     private readonly IResumeQualityAnalyser _qualityAnalyser;
+    private readonly IResumeExporter? _jsonExporter;
+    private readonly IResumeExporter? _markdownExporter;
     private string? _loadedFilePath;
 
     // LibreOffice-generated page image paths (fallback when Docling unavailable)
@@ -66,7 +68,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     public bool CanGoToNextPage => CurrentPage < PageCount;
 
     public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store,
-        LibreOfficeService libreOffice, DocumentOpenerService openers, IResumeQualityAnalyser qualityAnalyser)
+        LibreOfficeService libreOffice, DocumentOpenerService openers, IResumeQualityAnalyser qualityAnalyser,
+        IEnumerable<IResumeExporter> exporters)
     {
         _parser = parser;
         _imageCache = imageCache;
@@ -74,6 +77,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         _libreOffice = libreOffice;
         _openers = openers;
         _qualityAnalyser = qualityAnalyser;
+        var exporterList = exporters.ToList();
+        _jsonExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.JsonResume);
+        _markdownExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.Markdown);
     }
 
     [RelayCommand]
@@ -155,6 +161,53 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             _openers.Primary?.Open(_loadedFilePath);
     }
 
+    [RelayCommand(CanExecute = nameof(HasResume))]
+    private async Task ExportJsonAsync()
+    {
+        if (TopLevel is null || Resume is null || _jsonExporter is null) return;
+        var file = await TopLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export JSON Resume",
+            SuggestedFileName = $"{Resume.Personal.FullName ?? "resume"}.json",
+            FileTypeChoices = [new FilePickerFileType("JSON Resume") { Patterns = ["*.json"] }]
+        });
+        if (file is null) return;
+        try
+        {
+            var bytes = await _jsonExporter.ExportAsync(Resume);
+            await using var stream = await file.OpenWriteAsync();
+            await stream.WriteAsync(bytes);
+            StatusMessage = $"Exported to {file.Name}";
+        }
+        catch (Exception ex) { ErrorMessage = $"Export failed: {ex.Message}"; }
+    }
+
+    [RelayCommand(CanExecute = nameof(HasResume))]
+    private async Task ExportMarkdownAsync()
+    {
+        if (TopLevel is null || Resume is null || _markdownExporter is null) return;
+        var file = await TopLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Markdown Resume",
+            SuggestedFileName = $"{Resume.Personal.FullName ?? "resume"}.md",
+            FileTypeChoices = [new FilePickerFileType("Markdown") { Patterns = ["*.md"] }]
+        });
+        if (file is null) return;
+        try
+        {
+            var bytes = await _markdownExporter.ExportAsync(Resume);
+            await using var stream = await file.OpenWriteAsync();
+            await stream.WriteAsync(bytes);
+            StatusMessage = $"Exported to {file.Name}";
+        }
+        catch (Exception ex) { ErrorMessage = $"Export failed: {ex.Message}"; }
+    }
+
+    partial void OnHasResumeChanged(bool value)
+    {
+        ExportJsonCommand.NotifyCanExecuteChanged();
+        ExportMarkdownCommand.NotifyCanExecuteChanged();
+    }
 
     [RelayCommand(CanExecute = nameof(CanGoToPrevPage))]
     private async Task PrevPageAsync()

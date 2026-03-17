@@ -23,6 +23,10 @@
           <MenuFlyout/>
         </SplitButton.Flyout>
       </SplitButton>
+      <Button Content="Export JSON" Command="{Binding ExportJsonCommand}"
+              IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"/>
+      <Button Content="Export Markdown" Command="{Binding ExportMarkdownCommand}"
+              IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"/>
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#A6ADC8"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
