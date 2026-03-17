@@ -29,6 +29,9 @@ public sealed class JobDescription
     // Raw content always preserved
     public string RawText { get; set; } = "";
 
+    /// <summary>Classified employer type — populated by ResumeCoverageAnalyser on first analysis.</summary>
+    public CompanyType CompanyType { get; set; } = CompanyType.Unknown;
+
     // Application tracking
     public double? MatchScore { get; set; }
     public bool IsBlocked { get; set; }

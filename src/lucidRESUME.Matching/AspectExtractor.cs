@@ -14,12 +14,18 @@ public sealed record ExtractedAspect(AspectType Type, string Value, string Sourc
 /// </summary>
 public sealed class AspectExtractor
 {
+    private readonly CompanyClassifier _classifier;
     private readonly ConcurrentDictionary<Guid, IReadOnlyList<ExtractedAspect>> _cache = new();
+
+    public AspectExtractor(CompanyClassifier classifier)
+    {
+        _classifier = classifier;
+    }
 
     public IReadOnlyList<ExtractedAspect> Extract(JobDescription job)
         => _cache.GetOrAdd(job.JobId, _ => ExtractCore(job));
 
-    private static IReadOnlyList<ExtractedAspect> ExtractCore(JobDescription job)
+    private IReadOnlyList<ExtractedAspect> ExtractCore(JobDescription job)
     {
         var results = new List<ExtractedAspect>();
         // Use a (type, normalised-value) set for deduplication; value is already lowercased before Add
@@ -57,18 +63,16 @@ public sealed class AspectExtractor
                 Add(AspectType.Industry, industry, "Title/RawText");
         }
 
-        // CompanyType — first definitive match wins (a company is one type)
-        var descText = job.RawText.ToLowerInvariant();
-        if (ContainsAny(descText, "startup", "start-up", "seed", "series a", "series b"))
-            Add(AspectType.CompanyType, "Startup", "RawText");
-        else if (ContainsAny(descText, "scale-up", "scaleup", "growth stage"))
-            Add(AspectType.CompanyType, "Scale-up", "RawText");
-        else if (ContainsAny(descText, "enterprise", "corporate", "ftse", "fortune"))
-            Add(AspectType.CompanyType, "Enterprise", "RawText");
-        else if (ContainsAny(descText, "agency", "consultancy"))
-            Add(AspectType.CompanyType, "Agency", "RawText");
+        // CompanyType — use persisted value if already classified, otherwise classify now
+        var companyType = job.CompanyType != CompanyType.Unknown
+            ? job.CompanyType
+            : _classifier.Classify(job);
+
+        if (companyType != CompanyType.Unknown)
+            Add(AspectType.CompanyType, companyType.ToString(), "CompanyType");
 
         // CultureSignals — all that match
+        var descText = job.RawText.ToLowerInvariant();
         foreach (var (keywords, signal) in JobKeywords.CultureSignals)
         {
             if (keywords.Any(k => descText.Contains(k, StringComparison.OrdinalIgnoreCase)))
@@ -86,7 +90,4 @@ public sealed class AspectExtractor
         < 100_000m => "£80-100k",
         _          => "£100k+"
     };
-
-    private static bool ContainsAny(string text, params string[] terms)
-        => terms.Any(t => text.Contains(t, StringComparison.OrdinalIgnoreCase));
 }

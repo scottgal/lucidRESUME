@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Quality;
@@ -21,6 +22,13 @@ public sealed record JobListItem(
     // Carry the full job so aspect extraction and tailoring have structured fields
     JobDescription FullJob);
 
+/// <summary>A single required-skill coverage row in the job detail panel.</summary>
+public sealed record CoverageItemViewModel(
+    string Requirement,
+    bool IsCovered,
+    string? Evidence,
+    string StatusColor);
+
 /// <summary>A single votable aspect shown in the job detail panel.</summary>
 public sealed record AspectVoteItem(
     AspectType Type,
@@ -34,6 +42,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private readonly IMatchingService _matchingService;
     private readonly VoteService _voteService;
     private readonly IJobQualityAnalyser _jobQualityAnalyser;
+    private readonly ICoverageAnalyser _coverageAnalyser;
     private readonly IAppStore _store;
     private readonly ApplyPageViewModel _applyPage;
 
@@ -63,11 +72,17 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     [ObservableProperty] private int _jdQualityScore;
     [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _jdQualityFindings = [];
 
+    // Coverage panel
+    [ObservableProperty] private bool _hasCoverageReport;
+    [ObservableProperty] private int _coveragePercent;
+    [ObservableProperty] private IReadOnlyList<CoverageItemViewModel> _coverageItems = [];
+
     public JobsPageViewModel(
         JobSearchService jobSearchService,
         IMatchingService matchingService,
         VoteService voteService,
         IJobQualityAnalyser jobQualityAnalyser,
+        ICoverageAnalyser coverageAnalyser,
         IAppStore store,
         ApplyPageViewModel applyPage)
     {
@@ -75,6 +90,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _matchingService = matchingService;
         _voteService = voteService;
         _jobQualityAnalyser = jobQualityAnalyser;
+        _coverageAnalyser = coverageAnalyser;
         _store = store;
         _applyPage = applyPage;
     }
@@ -88,6 +104,8 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         SelectedJobDescription = value?.FullJob.RawText ?? "";
         HasJdQualityReport = false;
         JdQualityFindings = [];
+        HasCoverageReport = false;
+        CoverageItems = [];
         TailorSelectedJobCommand.NotifyCanExecuteChanged();
 
         // Cancel previous refresh and start a fresh one
@@ -97,7 +115,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _ = RefreshAspectsAsync(_refreshCts.Token);
 
         if (value is not null)
+        {
             _ = RunJdQualityAsync(value.FullJob);
+            _ = RunCoverageAsync(value.FullJob);
+        }
     }
 
     private Task RunJdQualityAsync(JobDescription job)
@@ -124,6 +145,33 @@ public sealed partial class JobsPageViewModel : ViewModelBase
             // Non-critical — silently skip if JD quality fails
         }
         return Task.CompletedTask;
+    }
+
+    private async Task RunCoverageAsync(JobDescription job)
+    {
+        try
+        {
+            var state = await _store.LoadAsync();
+            if (state.Resume is null) return;
+
+            var report = await _coverageAnalyser.AnalyseAsync(state.Resume, job);
+            CoveragePercent = report.CoveragePercent;
+            CoverageItems = report.Entries
+                .Where(e => e.Requirement.Priority == RequirementPriority.Required)
+                .OrderByDescending(e => e.IsCovered)
+                .Select(e => new CoverageItemViewModel(
+                    e.Requirement.Text,
+                    e.IsCovered,
+                    e.Evidence,
+                    e.IsCovered ? "#A6E3A1" : "#F38BA8"))
+                .ToList()
+                .AsReadOnly();
+            HasCoverageReport = true;
+        }
+        catch
+        {
+            // Non-critical — silently skip
+        }
     }
 
     private async Task RefreshAspectsAsync(CancellationToken ct)

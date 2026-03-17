@@ -1,12 +1,24 @@
 using lucidRESUME.Core.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace lucidRESUME.Matching;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddMatching(this IServiceCollection services)
+    public static IServiceCollection AddMatching(this IServiceCollection services, IConfiguration? config = null)
     {
+        if (config is not null)
+        {
+            services.Configure<CoverageOptions>(config.GetSection("Coverage"));
+            services.Configure<CompanyClassifierOptions>(config.GetSection("CompanyClassifier"));
+        }
+        else
+        {
+            services.AddOptions<CoverageOptions>();
+            services.AddOptions<CompanyClassifierOptions>();
+        }
+
         services.AddSingleton<CompanyClassifier>();
         services.AddSingleton<AspectExtractor>();
         services.AddSingleton<VoteService>();
@@ -21,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICoverageAnalyser>(sp =>
             new ResumeCoverageAnalyser(
                 sp.GetRequiredService<CompanyClassifier>(),
+                sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoverageOptions>>(),
                 sp.GetService<IEmbeddingService>()));
         return services;
     }

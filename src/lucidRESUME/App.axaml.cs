@@ -201,7 +201,7 @@ public partial class App : Application
         services.AddExtraction(config);
         services.AddJobSpec(config);
         services.AddJobSearch(config);
-        services.AddMatching();
+        services.AddMatching(config);
         services.AddAiTailoring(config);
         services.AddExport();
         services.AddCollabora(config);

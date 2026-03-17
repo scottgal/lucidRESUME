@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAiTailoring(this IServiceCollection services, IConfiguration config)
     {
         services.Configure<OllamaOptions>(config.GetSection("Ollama"));
+        services.Configure<TailoringOptions>(config.GetSection("Tailoring"));
         services.AddHttpClient<IAiTailoringService, OllamaTailoringService>()
             .AddStandardResilienceHandler();
         services.AddHttpClient<ILlmExtractionService, OllamaExtractionService>(client =>

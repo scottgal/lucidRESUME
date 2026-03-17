@@ -2,12 +2,16 @@ using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Matching;
+using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.Matching.Tests;
 
 public class VoteServiceTests
 {
-    private readonly VoteService _service = new(new AspectExtractor());
+    private static AspectExtractor CreateExtractor() =>
+        new(new CompanyClassifier(Options.Create(new CompanyClassifierOptions())));
+
+    private readonly VoteService _service = new(CreateExtractor());
 
     // ── BuildAutoFilters ────────────────────────────────────────────────────
 

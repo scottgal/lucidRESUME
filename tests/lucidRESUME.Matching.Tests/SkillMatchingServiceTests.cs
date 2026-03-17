@@ -3,12 +3,16 @@ using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Matching;
+using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.Matching.Tests;
 
 public class SkillMatchingServiceTests
 {
-    private readonly SkillMatchingService _service = new(new AspectExtractor());
+    private static AspectExtractor CreateExtractor() =>
+        new(new CompanyClassifier(Options.Create(new CompanyClassifierOptions())));
+
+    private readonly SkillMatchingService _service = new(CreateExtractor());
 
     [Fact]
     public async Task Match_HighOverlap_ReturnsHighScore()

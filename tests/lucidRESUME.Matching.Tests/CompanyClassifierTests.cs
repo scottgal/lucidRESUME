@@ -1,11 +1,15 @@
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Matching;
+using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.Matching.Tests;
 
 public class CompanyClassifierTests
 {
-    private readonly CompanyClassifier _sut = new();
+    private static CompanyClassifier CreateSut() =>
+        new(Options.Create(new CompanyClassifierOptions()));
+
+    private readonly CompanyClassifier _sut = CreateSut();
 
     [Theory]
     [InlineData("We are a Series B startup disrupting the lending space", CompanyType.Startup)]

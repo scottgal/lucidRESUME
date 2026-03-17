@@ -1,5 +1,9 @@
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
@@ -12,8 +16,10 @@ public sealed class OllamaTailoringService : IAiTailoringService
 {
     private readonly HttpClient _http;
     private readonly OllamaOptions _options;
+    private readonly TailoringOptions _tailoringOptions;
     private readonly ILogger<OllamaTailoringService> _logger;
     private readonly ITermNormalizer _termNormalizer;
+    private readonly ICoverageAnalyser _coverageAnalyser;
 
     // volatile: written by CheckAvailabilityAsync (potentially background thread),
     // read by UI thread — ensures visibility without locking.
@@ -21,12 +27,16 @@ public sealed class OllamaTailoringService : IAiTailoringService
     public bool IsAvailable => _isAvailable;
 
     public OllamaTailoringService(HttpClient http, IOptions<OllamaOptions> options,
-        ILogger<OllamaTailoringService> logger, ITermNormalizer termNormalizer)
+        IOptions<TailoringOptions> tailoringOptions,
+        ILogger<OllamaTailoringService> logger, ITermNormalizer termNormalizer,
+        ICoverageAnalyser coverageAnalyser)
     {
         _http = http;
         _options = options.Value;
+        _tailoringOptions = tailoringOptions.Value;
         _logger = logger;
         _termNormalizer = termNormalizer;
+        _coverageAnalyser = coverageAnalyser;
     }
 
     public async Task<ResumeDocument> TailorAsync(ResumeDocument resume, JobDescription job,
@@ -51,7 +61,7 @@ public sealed class OllamaTailoringService : IAiTailoringService
             try
             {
                 termMappings = await _termNormalizer.FindMatchesAsync(jdTerms, resumeTerms,
-                    minSimilarity: 0.85f, ct: ct);
+                    minSimilarity: _tailoringOptions.TermNormalizationMinSimilarity, ct: ct);
             }
             catch (Exception ex)
             {
@@ -59,17 +69,54 @@ public sealed class OllamaTailoringService : IAiTailoringService
             }
         }
 
-        var prompt = TailoringPromptBuilder.Build(resume, job, profile, termMappings);
+        CoverageReport? coverage = null;
+        try
+        {
+            coverage = await _coverageAnalyser.AnalyseAsync(resume, job, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Coverage analysis failed; continuing without it");
+        }
 
-        _logger.LogInformation("Tailoring resume for {Title} at {Company} using {Model}",
-            job.Title, job.Company, _options.Model);
+        var prompt = TailoringPromptBuilder.Build(resume, job, profile, termMappings, coverage, _tailoringOptions);
 
-        var request = new { model = _options.Model, prompt, stream = false };
-        var response = await _http.PostAsJsonAsync($"{_options.BaseUrl}/api/generate", request, ct);
+        _logger.LogInformation("Tailoring resume for {Title} at {Company} using {Model} (ctx={NumCtx})",
+            job.Title, job.Company, _options.Model, _options.NumCtx);
+
+        // stream=true avoids buffering long think tokens before any output arrives.
+        // think=false disables Qwen3 chain-of-thought — we want the final answer directly.
+        // num_ctx is tuned in appsettings to fit resume + JD without truncation.
+        var request = new
+        {
+            model = _options.Model,
+            prompt,
+            stream = true,
+            think = false,
+            options = new { num_ctx = _options.NumCtx }
+        };
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(_options.TimeoutSeconds));
+
+        var response = await _http.PostAsJsonAsync($"{_options.BaseUrl}/api/generate", request, cts.Token);
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<OllamaGenerateResponse>(cancellationToken: ct);
-        var tailoredMarkdown = result?.Response ?? resume.RawMarkdown ?? "";
+        var sb = new StringBuilder();
+        await using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
+        using var reader = new StreamReader(stream);
+        string? line;
+        while ((line = await reader.ReadLineAsync(cts.Token)) is not null)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            var chunk = JsonSerializer.Deserialize<OllamaStreamChunk>(line);
+            if (chunk is null) continue;
+            if (!string.IsNullOrEmpty(chunk.Response))
+                sb.Append(chunk.Response);
+            if (chunk.Done) break;
+        }
+
+        var tailoredMarkdown = sb.Length > 0 ? sb.ToString().Trim() : resume.RawMarkdown ?? "";
 
         // Create a new tailored document — original is preserved
         var tailored = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
@@ -98,5 +145,7 @@ public sealed class OllamaTailoringService : IAiTailoringService
         }
     }
 
-    private record OllamaGenerateResponse(string Response);
+    private record OllamaStreamChunk(
+        [property: JsonPropertyName("response")] string? Response,
+        [property: JsonPropertyName("done")] bool Done);
 }

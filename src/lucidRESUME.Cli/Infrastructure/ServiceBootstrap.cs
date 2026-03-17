@@ -31,7 +31,7 @@ public static class ServiceBootstrap
         services.AddIngestion(config);
         services.AddExtraction(config);
         services.AddJobSpec(config);
-        services.AddMatching();
+        services.AddMatching(config);
         services.AddExport();
         services.AddJobSearch(config);
         services.AddAiTailoring(config);

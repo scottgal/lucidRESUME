@@ -19,8 +19,11 @@ public static class TailoringPromptBuilder
     /// </summary>
     public static string Build(ResumeDocument resume, JobDescription job, UserProfile profile,
         IReadOnlyList<TermMatch>? termMappings = null,
-        CoverageReport? coverage = null)
+        CoverageReport? coverage = null,
+        TailoringOptions? options = null)
     {
+        options ??= new TailoringOptions();
+
         var sb = new StringBuilder();
         sb.AppendLine("You are a professional CV editor. Your task is to tailor the candidate's resume for a specific job.");
         sb.AppendLine("CRITICAL RULES:");
@@ -32,10 +35,10 @@ public static class TailoringPromptBuilder
         // Company-type tone guidance
         if (coverage is not null)
         {
-            var tone = CompanyTypeTone(coverage.CompanyType);
-            if (tone is not null)
+            var typeName = coverage.CompanyType.ToString();
+            if (options.CompanyTones.TryGetValue(typeName, out var tone))
             {
-                sb.AppendLine($"## Company Type: {coverage.CompanyType}");
+                sb.AppendLine($"## Company Type: {typeName}");
                 sb.AppendLine(tone);
                 sb.AppendLine();
             }
@@ -111,24 +114,4 @@ public static class TailoringPromptBuilder
 
         return sb.ToString();
     }
-
-    private static string? CompanyTypeTone(CompanyType type) => type switch
-    {
-        CompanyType.Startup     => "Tone: emphasise ownership, breadth, speed of delivery, and shipped outcomes. " +
-                                   "De-emphasise process-heavy corporate language.",
-        CompanyType.ScaleUp     => "Tone: emphasise building systems at scale, repeatability, and team/function growth. " +
-                                   "Show you can take things from scrappy to structured.",
-        CompanyType.Enterprise  => "Tone: emphasise process adherence, risk management, stakeholder communication, " +
-                                   "and delivery within constraints. Use precise, professional language.",
-        CompanyType.Agency      => "Tone: emphasise speed, client communication, multi-project delivery, " +
-                                   "and breadth of domain exposure.",
-        CompanyType.Consultancy => "Tone: emphasise structured problem-solving, stakeholder management, " +
-                                   "frameworks, and on-time delivery across engagements.",
-        CompanyType.Finance     => "Tone: emphasise accuracy, compliance awareness, quantified impact, " +
-                                   "and regulated-environment experience. Every bullet should have a number.",
-        CompanyType.Public      => "Tone: emphasise service delivery, accessibility, stakeholder diversity, " +
-                                   "and policy/compliance alignment.",
-        CompanyType.Academic    => "Tone: emphasise research rigour, publications, teaching, and methodological depth.",
-        _                       => null
-    };
 }

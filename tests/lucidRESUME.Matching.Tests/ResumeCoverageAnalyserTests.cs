@@ -2,13 +2,15 @@ using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Matching;
+using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.Matching.Tests;
 
 public class ResumeCoverageAnalyserTests
 {
     private static ResumeCoverageAnalyser CreateSut() =>
-        new(new CompanyClassifier());
+        new(new CompanyClassifier(Options.Create(new CompanyClassifierOptions())),
+            Options.Create(new CoverageOptions()));
 
     private static ResumeDocument ResumeWith(params string[] skills)
     {

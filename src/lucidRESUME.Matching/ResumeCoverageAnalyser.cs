@@ -2,6 +2,7 @@ using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Resume;
+using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.Matching;
 
@@ -9,11 +10,14 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
 {
     private readonly CompanyClassifier _classifier;
     private readonly IEmbeddingService? _embedder;
+    private readonly CoverageOptions _options;
 
     public ResumeCoverageAnalyser(CompanyClassifier classifier,
+        IOptions<CoverageOptions> options,
         IEmbeddingService? embedder = null)
     {
         _classifier = classifier;
+        _options = options.Value;
         _embedder = embedder;
     }
 
@@ -21,6 +25,7 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
         CancellationToken ct = default)
     {
         var companyType = _classifier.Classify(job);
+        job.CompanyType = companyType;
 
         var skillEvidence = resume.Skills
             .Select((s, i) => (Text: s.Name, Section: $"Skills[{i}]"))
@@ -82,7 +87,7 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
                     if (score > bestScore) { bestScore = score; bestMatch = e; }
                 }
 
-                if (bestScore >= 0.82f)
+                if (bestScore >= _options.SkillSemanticThreshold)
                     return new CoverageEntry(req, bestMatch.Text, bestMatch.Section, bestScore);
             }
             catch
@@ -101,9 +106,10 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
     {
         var req = new JdRequirement(responsibility, RequirementPriority.Responsibility);
 
+        var stopWords = _options.StopWords.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var keywords = responsibility.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Select(w => w.Trim('.', ',', ';', '(', ')').ToLowerInvariant())
-            .Where(w => w.Length > 4 && !StopWords.Contains(w))
+            .Where(w => w.Length > _options.MinKeywordLength && !stopWords.Contains(w))
             .ToHashSet();
 
         (string Text, string Section) bestMatch = default;
@@ -114,11 +120,11 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
             var achLower = ach.Text.ToLowerInvariant();
             int overlap = keywords.Count(k =>
                 achLower.Contains(k) ||
-                (k.EndsWith('s') && k.Length > 4 && achLower.Contains(k[..^1])));
+                (k.EndsWith('s') && k.Length > _options.MinKeywordLength && achLower.Contains(k[..^1])));
             if (overlap > bestOverlap) { bestOverlap = overlap; bestMatch = ach; }
         }
 
-        if (bestOverlap >= 2)
+        if (bestOverlap >= _options.MinKeywordOverlap)
         {
             var score = Math.Min(1f, bestOverlap / (float)Math.Max(keywords.Count, 1));
             return new CoverageEntry(req, bestMatch.Text, bestMatch.Section, score);
@@ -139,7 +145,7 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
                     if (score > bestScore) { bestScore = score; bestMatch = ach; }
                 }
 
-                if (bestScore >= 0.75f)
+                if (bestScore >= _options.ResponsibilitySemanticThreshold)
                     return new CoverageEntry(req, bestMatch.Text, bestMatch.Section, bestScore);
             }
             catch { /* fall through */ }
@@ -147,12 +153,4 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
 
         return new CoverageEntry(req, null, null, 0f);
     }
-
-    private static readonly HashSet<string> StopWords =
-    [
-        "about", "above", "after", "also", "among", "being", "between",
-        "their", "there", "these", "those", "through", "using", "where",
-        "which", "while", "will", "with", "working", "within", "would",
-        "experience", "ability", "knowledge", "skills", "strong", "across"
-    ];
 }
