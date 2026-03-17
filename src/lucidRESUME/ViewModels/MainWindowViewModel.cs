@@ -18,7 +18,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ApplyPageViewModel applyPage,
         ProfilePageViewModel profilePage)
     {
-        _pages = new Dictionary<string, ViewModelBase>
+        _pages = new Dictionary<string, ViewModelBase>(StringComparer.OrdinalIgnoreCase)
         {
             ["Resume"] = resumePage,
             ["Jobs"] = jobsPage,

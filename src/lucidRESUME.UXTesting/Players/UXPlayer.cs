@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.IO;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.VisualTree;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
@@ -111,6 +113,9 @@ public sealed class UXPlayer
                 case ActionType.PressKey:
                     await ExecutePressKeyAsync(action);
                     break;
+                case ActionType.Scroll:
+                    await ExecuteScrollAsync(action);
+                    break;
                 case ActionType.Wait:
                     await ExecuteWaitAsync(action);
                     break;
@@ -151,11 +156,16 @@ public sealed class UXPlayer
 
     private async Task ExecuteNavigateAsync(UXAction action)
     {
-        if (_navigateAction != null && action.Value != null)
+        if (_navigateAction == null || action.Value == null) return;
+
+        var tcs = new TaskCompletionSource();
+        Dispatcher.UIThread.Post(() =>
         {
             _navigateAction(action.Value);
-            await Task.Delay(100);
-        }
+            tcs.SetResult();
+        }, DispatcherPriority.Normal);
+        await tcs.Task;
+        await Task.Delay(300);
     }
 
     private async Task ExecuteClickAsync(UXAction action)
@@ -217,6 +227,39 @@ public sealed class UXPlayer
         });
         
         await Task.Delay(50);
+    }
+
+    private async Task ExecuteScrollAsync(UXAction action)
+    {
+        var tcs = new TaskCompletionSource();
+        Dispatcher.UIThread.Post(() =>
+        {
+            // Find named or first ScrollViewer
+            ScrollViewer? sv = action.Target != null
+                ? _window?.FindControl<ScrollViewer>(action.Target)
+                : FindFirstScrollViewer(_window);
+
+            if (sv != null)
+            {
+                var value = action.Value?.ToLowerInvariant() ?? "down";
+                switch (value)
+                {
+                    case "top":    sv.ScrollToHome(); break;
+                    case "bottom": sv.ScrollToEnd(); break;
+                    case "up":     sv.LineUp(); break;
+                    default:       sv.LineDown(); break;
+                }
+            }
+            tcs.SetResult();
+        }, DispatcherPriority.Normal);
+        await tcs.Task;
+        await Task.Delay(100);
+    }
+
+    private static ScrollViewer? FindFirstScrollViewer(Control? root)
+    {
+        if (root is null) return null;
+        return root.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
     }
 
     private async Task ExecuteWaitAsync(UXAction action)

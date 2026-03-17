@@ -1,0 +1,46 @@
+name: all-pages
+description: Screenshot every page in the app for UX review
+default_delay: 400
+
+actions:
+  - type: Wait
+    value: "1000"
+
+  # Resume / My CV page
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "800"
+    
+  - type: Screenshot
+    value: page-resume
+
+  # Jobs page
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-jobs
+
+  # Apply page
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-apply
+
+  # Profile page
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-profile-top
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: page-profile-bottom

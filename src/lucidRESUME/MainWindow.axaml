@@ -1,28 +1,79 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:lucidRESUME.ViewModels"
+        xmlns:local="using:lucidRESUME"
         x:DataType="vm:MainWindowViewModel"
         x:Class="lucidRESUME.MainWindow"
         Title="lucidRESUME" Width="1200" Height="800"
         MinWidth="900" MinHeight="600">
 
+  <Window.Styles>
+    <Style Selector="Button.nav-btn">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="8,7"/>
+      <Setter Property="Foreground" Value="#A6ADC8"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="Button.nav-btn:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#313244"/>
+    </Style>
+  </Window.Styles>
+
+  <Window.Resources>
+    <local:NavIsActiveConverter x:Key="NavIsActive"/>
+  </Window.Resources>
+
   <Grid ColumnDefinitions="200,*">
 
     <!-- Sidebar -->
     <Border Grid.Column="0" Background="#1E1E2E" Padding="8">
-      <StackPanel Spacing="4">
+      <StackPanel Spacing="2">
         <TextBlock Text="lucidRESUME" FontSize="18" FontWeight="Bold"
                    Foreground="#CDD6F4" Margin="8,16,8,24"/>
-        <Button Content="My CV" Command="{Binding NavigateCommand}" CommandParameter="Resume"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
-        <Button Content="Jobs" Command="{Binding NavigateCommand}" CommandParameter="Jobs"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
-        <Button Content="Search" Command="{Binding NavigateCommand}" CommandParameter="Search"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
-        <Button Content="Apply" Command="{Binding NavigateCommand}" CommandParameter="Apply"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
-        <Button Content="Profile" Command="{Binding NavigateCommand}" CommandParameter="Profile"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
+
+        <!-- Each nav item: accent border + transparent button in a Panel -->
+        <Panel>
+          <Border CornerRadius="4" Background="#313244"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Resume}"/>
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Resume}"/>
+          <Button Classes="nav-btn" Content="My CV"
+                  Command="{Binding NavigateCommand}" CommandParameter="Resume"/>
+        </Panel>
+        <Panel>
+          <Border CornerRadius="4" Background="#313244"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Jobs}"/>
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Jobs}"/>
+          <Button Classes="nav-btn" Content="Jobs"
+                  Command="{Binding NavigateCommand}" CommandParameter="Jobs"/>
+        </Panel>
+        <Panel>
+          <Border CornerRadius="4" Background="#313244"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Search}"/>
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Search}"/>
+          <Button Classes="nav-btn" Content="Search"
+                  Command="{Binding NavigateCommand}" CommandParameter="Search"/>
+        </Panel>
+        <Panel>
+          <Border CornerRadius="4" Background="#313244"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Apply}"/>
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Apply}"/>
+          <Button Classes="nav-btn" Content="Apply"
+                  Command="{Binding NavigateCommand}" CommandParameter="Apply"/>
+        </Panel>
+        <Panel>
+          <Border CornerRadius="4" Background="#313244"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Profile}"/>
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Profile}"/>
+          <Button Classes="nav-btn" Content="Profile"
+                  Command="{Binding NavigateCommand}" CommandParameter="Profile"/>
+        </Panel>
       </StackPanel>
     </Border>
 
