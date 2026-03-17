@@ -21,6 +21,7 @@
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True"
                    Width="100" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#A6ADC8"
+                 MaxWidth="260" TextTrimming="CharacterEllipsis"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </StackPanel>
 

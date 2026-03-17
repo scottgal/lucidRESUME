@@ -8,7 +8,7 @@
 
     <!-- Top input panel -->
     <ScrollViewer Grid.Row="0" MaxHeight="420">
-      <StackPanel Margin="24,16" Spacing="16" MaxWidth="720">
+      <StackPanel Margin="24,16" Spacing="16">
 
         <TextBlock Text="Add Job" FontSize="22" FontWeight="Bold" Foreground="#CDD6F4"/>
 

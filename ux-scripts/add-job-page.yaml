@@ -1,0 +1,28 @@
+name: add-job-page
+description: Screenshot the new Add Job page
+default_delay: 400
+
+actions:
+  - type: Wait
+    value: "1000"
+
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-add-job-top
+
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: page-add-job-bottom
+
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-jobs-saved

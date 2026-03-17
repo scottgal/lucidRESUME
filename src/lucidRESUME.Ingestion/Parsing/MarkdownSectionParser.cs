@@ -88,6 +88,10 @@ public static class MarkdownSectionParser
         // ── 8. Last-resort: scan ALL lines for inline "Professional Experience:" labels ──
         if (resume.Experience.Count == 0)
             ExtractExperienceFromInlineLabel(resume, lines);
+
+        // ── 9. Education inline-label fallback ────────────────────────────────
+        if (resume.Education.Count == 0)
+            ExtractEducationFromInlineLabel(resume, lines);
     }
 
     // ── Structured path (template-hint driven) ────────────────────────────────
@@ -159,6 +163,13 @@ public static class MarkdownSectionParser
         {
             var allLines = sections.SelectMany(s => new[] { s.Heading }.Concat(s.Body.Split('\n'))).ToArray();
             ExtractExperienceFromInlineLabel(resume, allLines);
+        }
+
+        // Education inline-label fallback
+        if (resume.Education.Count == 0)
+        {
+            var allLines = sections.SelectMany(s => new[] { s.Heading }.Concat(s.Body.Split('\n'))).ToArray();
+            ExtractEducationFromInlineLabel(resume, allLines);
         }
     }
 
@@ -240,6 +251,64 @@ public static class MarkdownSectionParser
     private static bool IsExperienceLabel(string label) =>
         label.Contains("experience") || label == "employment" || label == "career"
         || label.Contains("work history") || label.Contains("professional history");
+
+    private static bool IsEducationLabel(string label) =>
+        label.Contains("education") || label.Contains("academic") || label.Contains("qualific")
+        || label.Contains("degree") || label.Contains("university") || label.Contains("college");
+
+    /// <summary>
+    /// Scans all lines for inline education labels like "Education:" that appear as plain text.
+    /// </summary>
+    private static void ExtractEducationFromInlineLabel(ResumeDocument resume, string[] lines)
+    {
+        bool inBlock = false;
+        var blockLines = new List<string>();
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            if (line.StartsWith('#'))
+            {
+                var sectionType = SectionClassifier.ClassifyHeading(line);
+                if (sectionType != null && sectionType != "Education")
+                    inBlock = false;
+                continue;
+            }
+
+            if (!inBlock)
+            {
+                var colonIdx = line.IndexOf(':');
+                if (colonIdx > 0 && colonIdx < 50)
+                {
+                    var label = line[..colonIdx].Trim().ToLowerInvariant();
+                    if (IsEducationLabel(label))
+                    {
+                        inBlock = true;
+                        var rest = line[(colonIdx + 1)..].Trim();
+                        if (!string.IsNullOrWhiteSpace(rest))
+                            blockLines.Add(rest);
+                        continue;
+                    }
+                }
+                // No-colon pattern: "EDUCATION 2017 – 2019 | Saint Petersburg..." on a single line
+                var firstWord = line.Split(' ')[0].ToLowerInvariant().TrimEnd(':');
+                if (firstWord.Length >= 5 && IsEducationLabel(firstWord) && line.Length > firstWord.Length + 1)
+                {
+                    blockLines.Add(line[(firstWord.Length + 1)..].Trim());
+                    inBlock = true;
+                    continue;
+                }
+                continue;
+            }
+
+            blockLines.Add(line);
+        }
+
+        if (blockLines.Count > 0)
+            ParseEducation(resume, blockLines);
+    }
 
     /// <summary>
     /// Scans all lines for inline experience labels like "Professional Experience:" /
