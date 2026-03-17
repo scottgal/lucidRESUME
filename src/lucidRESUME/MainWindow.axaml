@@ -55,7 +55,7 @@
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Search}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Search}"/>
-          <Button Classes="nav-btn" Content="Search"
+          <Button Classes="nav-btn" Content="Add Job"
                   Command="{Binding NavigateCommand}" CommandParameter="Search"/>
         </Panel>
         <Panel>
