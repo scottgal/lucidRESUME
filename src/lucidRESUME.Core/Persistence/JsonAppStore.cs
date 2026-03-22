@@ -60,6 +60,18 @@ public sealed class JsonAppStore : IAppStore
         }
     }
 
+    public async Task ExportJsonAsync(Stream output, CancellationToken ct = default)
+    {
+        var state = await LoadAsync(ct);
+        await JsonSerializer.SerializeAsync(output, state, Options, ct);
+    }
+
+    public async Task ImportJsonAsync(Stream input, CancellationToken ct = default)
+    {
+        var state = await JsonSerializer.DeserializeAsync<AppState>(input, Options, ct) ?? new AppState();
+        await SaveAsync(state, ct);
+    }
+
     private async Task<AppState> LoadCoreAsync(CancellationToken ct)
     {
         if (!File.Exists(_filePath))

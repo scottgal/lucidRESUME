@@ -5,7 +5,7 @@ using lucidRESUME.Core.Models.Resume;
 
 namespace lucidRESUME.Core.Persistence;
 
-/// Single-user local store — all data lives in one JSON file.
+/// Single-user local store.
 public interface IAppStore
 {
     Task<AppState> LoadAsync(CancellationToken ct = default);
@@ -16,6 +16,12 @@ public interface IAppStore
     /// under a single lock — prevents concurrent callers from overwriting each other.
     /// </summary>
     Task MutateAsync(Action<AppState> mutate, CancellationToken ct = default);
+
+    /// <summary>Export full app state as JSON to a stream.</summary>
+    Task ExportJsonAsync(Stream output, CancellationToken ct = default);
+
+    /// <summary>Import app state from a JSON stream, replacing current state.</summary>
+    Task ImportJsonAsync(Stream input, CancellationToken ct = default);
 }
 
 public sealed class AppState

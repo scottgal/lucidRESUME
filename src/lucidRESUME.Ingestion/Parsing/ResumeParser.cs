@@ -10,7 +10,7 @@ namespace lucidRESUME.Ingestion.Parsing;
 
 public sealed class ResumeParser : IResumeParser
 {
-    private readonly IDoclingClient _docling;
+    private readonly IDoclingClient? _docling;
     private readonly ExtractionPipeline _extraction;
     private readonly IDocumentImageCache _imageCache;
     private readonly ParserSelector _parserSelector;
@@ -19,12 +19,12 @@ public sealed class ResumeParser : IResumeParser
     private readonly ILogger<ResumeParser> _logger;
 
     public ResumeParser(
-        IDoclingClient docling,
         ExtractionPipeline extraction,
         IDocumentImageCache imageCache,
         ParserSelector parserSelector,
         TemplateRegistry templateRegistry,
         ILogger<ResumeParser> logger,
+        IDoclingClient? docling = null,
         ILlmExtractionService? llm = null)
     {
         _docling = docling;
@@ -36,9 +36,20 @@ public sealed class ResumeParser : IResumeParser
         _logger = logger;
     }
 
+    private static readonly HashSet<string> SupportedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".pdf", ".docx", ".doc", ".txt"
+    };
+
     public async Task<ResumeDocument> ParseAsync(string filePath, CancellationToken ct = default)
     {
         var fileInfo = new FileInfo(filePath);
+        var ext = fileInfo.Extension.ToLowerInvariant();
+
+        if (!SupportedExtensions.Contains(ext))
+            throw new NotSupportedException(
+                $"Unsupported file type '{ext}'. Supported formats: {string.Join(", ", SupportedExtensions.Order())}");
+
         var resume = ResumeDocument.Create(fileInfo.Name, GetContentType(fileInfo.Extension), fileInfo.Length);
 
         // ── 1. Try direct parse (no Docling round-trip) ───────────────────
@@ -67,9 +78,9 @@ public sealed class ResumeParser : IResumeParser
                     _ = _templateRegistry.LearnAsync(fingerprint, fileInfo.Name, ct);
             }
         }
-        else
+        else if (_docling is not null)
         {
-            // ── 2. Docling fallback ───────────────────────────────────────
+            // ── 2a. Docling fallback (when enabled) ──────────────────────
             _logger.LogInformation("Converting {File} via Docling", fileInfo.Name);
             var docling = await _docling.ConvertAsync(filePath, ct);
             resume.SetDoclingOutput(docling.Markdown, docling.Json, docling.PlainText);
@@ -88,6 +99,12 @@ public sealed class ResumeParser : IResumeParser
                 if (docling.PageImages.Count > 1)
                     _ = CacheRemainingPagesAsync(cacheKey, docling.PageImages, ct);
             }
+        }
+        else
+        {
+            // ── 2b. No Docling, no direct parser — unsupported ───────────
+            throw new NotSupportedException(
+                $"Cannot parse '{fileInfo.Name}' without Docling. Enable Docling in settings or use a PDF/DOCX file.");
         }
 
         // ── 3. Entity extraction ──────────────────────────────────────────

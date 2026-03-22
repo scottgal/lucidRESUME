@@ -206,10 +206,13 @@ public partial class App : Application
         services.AddExport();
         services.AddCollabora(config);
 
-        var appDataPath = Path.Combine(
+        var appDataDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "lucidRESUME", "data.json");
-        services.AddSingleton<IAppStore>(_ => new JsonAppStore(appDataPath));
+            "lucidRESUME");
+        var dbPath = Path.Combine(appDataDir, "data.db");
+        var jsonPath = Path.Combine(appDataDir, "data.json");
+        services.AddSingleton<IAppStore>(_ => new SqliteAppStore(dbPath,
+            jsonMigrationPath: File.Exists(jsonPath) ? jsonPath : null));
 
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ResumePageViewModel>();

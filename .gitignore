@@ -35,3 +35,8 @@ artifacts/
 ## Claude Code
 .claude/settings.local.json
 nul
+
+## ONNX model files (download separately)
+models/*.onnx
+models/*.txt
+models/*.json

@@ -12,9 +12,15 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddIngestion(this IServiceCollection services, IConfiguration config)
     {
-        services.Configure<DoclingOptions>(config.GetSection("Docling"));
-        services.AddHttpClient<IDoclingClient, DoclingClient>()
-            .AddStandardResilienceHandler();
+        var doclingSection = config.GetSection("Docling");
+        services.Configure<DoclingOptions>(doclingSection);
+
+        if (doclingSection.GetValue<bool>("Enabled"))
+        {
+            services.AddHttpClient<IDoclingClient, DoclingClient>()
+                .AddStandardResilienceHandler();
+        }
+
         services.AddSingleton<IDocumentImageCache>(_ => new FileSystemImageCache());
         services.AddDirectParsing();
         services.AddTransient<IResumeParser, ResumeParser>();

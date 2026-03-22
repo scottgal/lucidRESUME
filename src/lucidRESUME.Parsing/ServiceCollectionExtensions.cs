@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
             new DocxDirectParser(sp.GetRequiredService<TemplateRegistry>()));
 
         services.AddSingleton<IDocumentParser, PdfTextParser>();
+        services.AddSingleton<IDocumentParser, TxtParser>();
         services.AddSingleton<ParserSelector>();
         return services;
     }

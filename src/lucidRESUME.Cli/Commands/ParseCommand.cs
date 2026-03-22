@@ -41,6 +41,13 @@ public static class ParseCommand
                 return;
             }
 
+            var ext = file.Extension.ToLowerInvariant();
+            if (ext is not ".pdf" and not ".docx" and not ".doc" and not ".txt")
+            {
+                Console.Error.WriteLine($"Unsupported file type '{ext}'. Supported formats: .doc, .docx, .pdf, .txt");
+                return;
+            }
+
             var services = ServiceBootstrap.Build(config?.FullName);
             var parser = services.GetRequiredService<IResumeParser>();
 

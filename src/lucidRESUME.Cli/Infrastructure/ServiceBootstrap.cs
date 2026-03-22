@@ -1,4 +1,6 @@
 using lucidRESUME.AI;
+using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Persistence;
 using lucidRESUME.Export;
 using lucidRESUME.Extraction;
 using lucidRESUME.Ingestion;
@@ -35,6 +37,14 @@ public static class ServiceBootstrap
         services.AddExport();
         services.AddJobSearch(config);
         services.AddAiTailoring(config);
+
+        var appDataDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "lucidRESUME");
+        var dbPath = Path.Combine(appDataDir, "data.db");
+        var jsonPath = Path.Combine(appDataDir, "data.json");
+        services.AddSingleton<IAppStore>(_ => new SqliteAppStore(dbPath,
+            jsonMigrationPath: File.Exists(jsonPath) ? jsonPath : null));
 
         return services.BuildServiceProvider();
     }
