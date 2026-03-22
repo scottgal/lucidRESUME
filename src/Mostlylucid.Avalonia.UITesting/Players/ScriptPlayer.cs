@@ -163,6 +163,9 @@ public sealed class ScriptPlayer
                 case ActionType.StopVideo:
                     await ExecuteStopVideoAsync(action, result);
                     break;
+                case ActionType.Svg:
+                    await ExecuteSvgAsync(action, result);
+                    break;
                 default:
                     throw new NotSupportedException($"Action type {action.Type} not supported");
             }
@@ -424,6 +427,27 @@ public sealed class ScriptPlayer
         result.ScreenshotPath = gifPath;
         await _videoRecorder.DisposeAsync();
         _videoRecorder = null;
+    }
+
+    private async Task ExecuteSvgAsync(UIAction action, UIActionResult result)
+    {
+        var name = action.Value ?? $"svg_{DateTime.UtcNow:HHmmss_fff}";
+        var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.svg");
+        var window = GetTargetWindow(action.WindowId);
+        if (window == null) return;
+
+        var svgContent = await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            window.UpdateLayout();
+            var exporter = new Svg.SvgExporter();
+            return exporter.Export(window);
+        });
+
+        await File.WriteAllTextAsync(filePath, svgContent);
+        var sizeKb = new FileInfo(filePath).Length / 1024;
+        Log?.Invoke(this, $"    SVG saved: {filePath} ({sizeKb}KB)");
+        result.ScreenshotPath = filePath;
     }
 
     private Window? GetTargetWindow(string? windowId)

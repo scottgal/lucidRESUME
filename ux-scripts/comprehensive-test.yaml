@@ -1,0 +1,90 @@
+name: comprehensive-test
+description: Full UI test - all pages, interactions, empty states, and before/after screenshots
+default_delay: 300
+
+actions:
+  # === RESUME PAGE ===
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 01-resume-page
+
+  # === JOBS PAGE - Empty State ===
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 02-jobs-empty-state
+
+  # === ADD JOB PAGE ===
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 03-add-job-page
+
+  # === APPLY PAGE - Empty State ===
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 04-apply-empty-state
+
+  # === APPLY PAGE - Fill Form ===
+  - type: TypeText
+    target: JobTitleInput
+    value: "Senior C# Developer"
+  - type: Wait
+    value: "200"
+  - type: TypeText
+    target: CompanyInput
+    value: "Anthropic"
+  - type: Wait
+    value: "200"
+  - type: TypeText
+    target: JobDescriptionInput
+    value: "We are looking for a Senior C# Developer with experience in .NET, Avalonia UI, and cloud services. Must have 5+ years experience."
+  - type: Wait
+    value: "200"
+  - type: Screenshot
+    value: 05-apply-form-filled
+
+  # === PROFILE PAGE - Top ===
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 06-profile-top
+
+  # === PROFILE PAGE - Scroll through sections ===
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "300"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 07-profile-middle
+
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 08-profile-bottom
+
+  # === Back to Resume ===
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 09-resume-final

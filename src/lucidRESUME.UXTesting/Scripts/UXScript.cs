@@ -12,7 +12,8 @@ public enum ActionType
     Wait,
     Navigate,
     Screenshot,
-    Assert
+    Assert,
+    Svg
 }
 
 public class UXAction

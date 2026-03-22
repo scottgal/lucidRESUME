@@ -190,6 +190,25 @@ public sealed class UITestSession : IAsyncDisposable
         return filePath;
     }
 
+    public async Task<string> SvgAsync(string? name = null, string? windowId = null)
+    {
+        var safeName = name ?? $"svg_{DateTime.UtcNow:HHmmss_fff}";
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.svg");
+
+        var svgContent = await RunOnUIThreadAsync(() =>
+        {
+            var window = _context.FindWindow(windowId) ?? _window;
+            window.UpdateLayout();
+            var exporter = new Svg.SvgExporter();
+            return exporter.Export(window);
+        });
+
+        await File.WriteAllTextAsync(filePath, svgContent);
+
+        _log?.Invoke($"SVG: {filePath}");
+        return filePath;
+    }
+
     public async Task<GifRecorder> StartVideoAsync(int fps = 5, string? windowId = null)
     {
         var window = _context.FindWindow(windowId) ?? _window;

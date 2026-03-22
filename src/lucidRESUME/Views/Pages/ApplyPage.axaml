@@ -66,15 +66,16 @@
 
       <!-- Tailor button -->
       <Button Grid.Row="6"
-              Content="Tailor Resume"
+              Content="✨ Tailor Resume"
               Command="{Binding TailorCommand}"
               IsEnabled="{Binding !IsTailoring}"
-              Background="#1E3A5F" Foreground="#89B4FA"
-              FontSize="15" FontWeight="SemiBold"
-              Padding="20,10"
+              Background="#89B4FA" Foreground="#1E1E2E"
+              FontSize="15" FontWeight="Bold"
+              Padding="20,12"
               HorizontalAlignment="Stretch"
               HorizontalContentAlignment="Center"
-              Margin="0,0,0,8"/>
+              CornerRadius="6"
+              Margin="0,4,0,8"/>
 
       <!-- Progress bar -->
       <ProgressBar Grid.Row="7" IsVisible="{Binding IsTailoring}"
@@ -99,12 +100,14 @@
                  Foreground="#CDD6F4" Margin="0,0,0,16"/>
 
       <!-- Empty state -->
-      <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6"
+      <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                   IsVisible="{Binding !HasResult}">
-        <TextBlock Text="Tailored resume will appear here." Foreground="#6C7086"
-                   FontSize="14" HorizontalAlignment="Center"/>
-        <TextBlock Text="Fill in the form and click Tailor Resume." Foreground="#45475A"
-                   FontSize="12" HorizontalAlignment="Center"/>
+        <TextBlock Text="📝" FontSize="28" HorizontalAlignment="Center"
+                   FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
+        <TextBlock Text="Tailored resume will appear here." Foreground="#A6ADC8"
+                   FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+        <TextBlock Text="Fill in the form and click Tailor Resume." Foreground="#6C7086"
+                   FontSize="13" HorizontalAlignment="Center"/>
       </StackPanel>
 
       <!-- Result -->

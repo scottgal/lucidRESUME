@@ -156,6 +156,10 @@ public sealed class UITestMcpServer
                 ("name", "string", "Optional filename", false),
                 ("window", "string", "Window name/title (optional)", false)),
 
+            Tool("ui_svg", "Export the current UI as an SVG file by walking the visual tree. Produces a scalable vector representation of the UI layout, text, shapes, and colors — no Skia dependency.",
+                ("name", "string", "Optional filename", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
             Tool("ui_screenshot_base64", "Capture a screenshot and return it as base64-encoded PNG data for direct image analysis",
                 ("name", "string", "Optional filename", false),
                 ("window", "string", "Window name/title (optional)", false)),
@@ -242,6 +246,7 @@ public sealed class UITestMcpServer
                 "ui_mouse_click" => TextResult(await MouseClickAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "window"))),
                 "ui_see" => await SeeAsync(GetArg(args, "name"), GetArg(args, "window"), GetInt(args, "max_width", 120), GetInt(args, "max_height", 40)),
                 "ui_screenshot" => TextResult(await CaptureScreenshotAsync(GetArg(args, "name"), GetArg(args, "window"))),
+                "ui_svg" => TextResult(await CaptureSvgAsync(GetArg(args, "name"), GetArg(args, "window"))),
                 "ui_screenshot_base64" => await ScreenshotBase64Async(GetArg(args, "name"), GetArg(args, "window")),
                 "ui_tree" => TextResult(await GetTreeAsync(GetArg(args, "window"))),
                 "ui_controls" => TextResult(await GetControlsAsync(GetArg(args, "window"))),
@@ -750,6 +755,23 @@ public sealed class UITestMcpServer
         });
 
         return filePath;
+    }
+
+    private async Task<string> CaptureSvgAsync(string name, string? windowId = null)
+    {
+        var safeName = string.Join("_", (name.Length > 0 ? name : $"svg_{DateTime.UtcNow:HHmmss}").Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.svg");
+
+        var svgContent = await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow!;
+            window.UpdateLayout();
+            var exporter = new Svg.SvgExporter();
+            return exporter.Export(window);
+        });
+
+        await File.WriteAllTextAsync(filePath, svgContent);
+        return $"SVG saved: {filePath}";
     }
 
     private static string BuildTree(Control control, int depth)

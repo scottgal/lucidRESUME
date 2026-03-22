@@ -6,7 +6,7 @@
              x:Class="lucidRESUME.Views.Pages.ProfilePage">
 
   <ScrollViewer Background="#1E1E2E">
-    <StackPanel Margin="24,16" Spacing="16" MaxWidth="720">
+    <StackPanel Margin="24,16" Spacing="20" MaxWidth="720">
 
       <!-- Page heading -->
       <TextBlock Text="Profile" FontSize="22" FontWeight="Bold"

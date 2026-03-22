@@ -17,7 +17,8 @@ public enum ActionType
     MouseDown,
     MouseUp,
     StartVideo,
-    StopVideo
+    StopVideo,
+    Svg
 }
 
 public class UIAction

@@ -167,7 +167,14 @@
       "Bash(CLI=\"/e/source/lucidRESUME/lucidRESUME/src/lucidRESUME.Cli/bin/Debug/net10.0/lucidRESUME.Cli.exe\"\n\"$CLI\" --help 2>&1 | head -20)",
       "Bash(CLI=\"/e/source/lucidRESUME/lucidRESUME/src/lucidRESUME.Cli/bin/Debug/net10.0/lucidRESUME.Cli.exe\"\n\"$CLI\" parse --help 2>&1)",
       "Bash(CLI=\"/e/source/lucidRESUME/lucidRESUME/src/lucidRESUME.Cli/bin/Debug/net10.0/lucidRESUME.Cli.exe\"\ncv=\"/e/source/lucidRESUME/lucidRESUME/samples/vacancy-cv-docx/8.docx\"\nout=\"/tmp/cv8_test.json\"\n\"$CLI\" parse -f \"$cv\" -o \"$out\" > /dev/null\ncat \"$out\" | node -e \"\nconst d = JSON.parse\\(require\\('fs'\\).readFileSync\\('/tmp/cv8_test.json'\\)\\);\nconsole.log\\('Skills:', d.skills?.length, 'Exp:', d.experience?.length, 'Edu:', d.education?.length\\);\nd.education?.forEach\\(e => console.log\\('  EDU:', e.institution, '|', e.degree\\)\\);\n\")",
-      "Bash(CLI=\"/e/source/lucidRESUME/lucidRESUME/src/lucidRESUME.Cli/bin/Debug/net10.0/lucidRESUME.Cli.exe\"\nSAMPLES=\"/e/source/lucidRESUME/lucidRESUME/samples/vacancy-cv-docx\"\nOUT=\"C:/Users/scott/AppData/Local/Temp/cv_test\"\nmkdir -p \"$OUT\" 2>/dev/null || true\n\n\"$CLI\" parse -f \"$SAMPLES/8.docx\" -o \"$OUT/8.json\" > /dev/null\nnode -e \"\nconst d = JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/Users/scott/AppData/Local/Temp/cv_test/8.json'\\)\\);\nconsole.log\\('Skills:', d.skills?.length, 'Exp:', d.experience?.length, 'Edu:', d.education?.length\\);\nd.education?.forEach\\(e => console.log\\('  EDU:', e.institution, '|', e.degree\\)\\);\n\")"
+      "Bash(CLI=\"/e/source/lucidRESUME/lucidRESUME/src/lucidRESUME.Cli/bin/Debug/net10.0/lucidRESUME.Cli.exe\"\nSAMPLES=\"/e/source/lucidRESUME/lucidRESUME/samples/vacancy-cv-docx\"\nOUT=\"C:/Users/scott/AppData/Local/Temp/cv_test\"\nmkdir -p \"$OUT\" 2>/dev/null || true\n\n\"$CLI\" parse -f \"$SAMPLES/8.docx\" -o \"$OUT/8.json\" > /dev/null\nnode -e \"\nconst d = JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/Users/scott/AppData/Local/Temp/cv_test/8.json'\\)\\);\nconsole.log\\('Skills:', d.skills?.length, 'Exp:', d.experience?.length, 'Edu:', d.education?.length\\);\nd.education?.forEach\\(e => console.log\\('  EDU:', e.institution, '|', e.degree\\)\\);\n\")",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "Read(//e/source/lucidRESUME/lucidRESUME/$APPDATA/lucidRESUME/**)",
+      "Bash(sqlite3 \"$APPDATA/lucidRESUME/data.db\" \".tables\")",
+      "Bash(sqlite3 \"$APPDATA/lucidRESUME/data.db\" \"SELECT key, value FROM app_meta;\")",
+      "Bash(sqlite3 \"$APPDATA/lucidRESUME/data.db\" \"SELECT count\\(*\\) as job_count FROM jobs;\")",
+      "Bash(for pdf:*)",
+      "Bash(git config:*)"
     ]
   }
 }

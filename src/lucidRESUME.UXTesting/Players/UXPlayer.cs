@@ -125,6 +125,9 @@ public sealed class UXPlayer
                 case ActionType.Assert:
                     await ExecuteAssertAsync(action);
                     break;
+                case ActionType.Svg:
+                    await ExecuteSvgAsync(action, result);
+                    break;
                 default:
                     throw new NotSupportedException($"Action type {action.Type} not supported");
             }
@@ -311,6 +314,36 @@ public sealed class UXPlayer
         }
         
         await Task.CompletedTask;
+    }
+
+    private async Task ExecuteSvgAsync(UXAction action, UXActionResult result)
+    {
+        if (_window == null) return;
+        var name = action.Value ?? $"svg_{DateTime.UtcNow:HHmmss_fff}";
+        var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.svg");
+
+        var tcs = new TaskCompletionSource<string>();
+        Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                _window!.UpdateLayout();
+                var exporter = new Mostlylucid.Avalonia.UITesting.Svg.SvgExporter();
+                var svgContent = exporter.Export(_window);
+                File.WriteAllText(filePath, svgContent);
+                var fileInfo = new FileInfo(filePath);
+                Log?.Invoke(this, $"    SVG {fileInfo.Length / 1024}KB");
+                tcs.SetResult(filePath);
+            }
+            catch (Exception ex)
+            {
+                Log?.Invoke(this, $"    SVG failed: {ex.Message}");
+                tcs.SetException(ex);
+            }
+        }, DispatcherPriority.Render);
+
+        result.ScreenshotPath = await tcs.Task;
     }
 
     private Control? FindControl(string? name)

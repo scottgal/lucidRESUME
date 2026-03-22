@@ -33,11 +33,13 @@
         <Panel>
 
           <!-- Empty state -->
-          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6"
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                       IsVisible="{Binding !Jobs.Count}">
-            <TextBlock Text="No jobs yet." Foreground="#6C7086" FontSize="14"
+            <TextBlock Text="📋" FontSize="28" HorizontalAlignment="Center"
+                       FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
+            <TextBlock Text="No jobs yet." Foreground="#A6ADC8" FontSize="15" FontWeight="SemiBold"
                        HorizontalAlignment="Center"/>
-            <TextBlock Text="Run a search above." Foreground="#45475A" FontSize="12"
+            <TextBlock Text="Run a search above." Foreground="#6C7086" FontSize="13"
                        HorizontalAlignment="Center"/>
           </StackPanel>
 
@@ -78,9 +80,12 @@
       <Panel Grid.Column="1">
 
         <!-- No selection placeholder -->
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6"
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                     IsVisible="{Binding SelectedJob, Converter={x:Static ObjectConverters.IsNull}}">
-          <TextBlock Text="Select a job to view details." Foreground="#6C7086" FontSize="14"/>
+          <TextBlock Text="👈" FontSize="28" HorizontalAlignment="Center"
+                     FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
+          <TextBlock Text="Select a job to view details." Foreground="#A6ADC8" FontSize="15"
+                     HorizontalAlignment="Center"/>
         </StackPanel>
 
         <!-- Job detail -->

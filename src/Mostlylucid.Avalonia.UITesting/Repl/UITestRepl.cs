@@ -74,6 +74,7 @@ public sealed class UITestRepl
             "list" => await ListAsync(args),
             "tree" => await TreeAsync(args),
             "screenshot" or "shot" => await ScreenshotAsync(args),
+            "svg" => await SvgAsync(args),
             "wait" => await WaitAsync(args),
             "assert" => await AssertAsync(args),
             "run" => await RunScriptAsync(args),
@@ -106,6 +107,7 @@ public sealed class UITestRepl
               tree                    Show visual tree
               vm                      Show current VM properties
               screenshot [name]       Capture screenshot
+              svg [name]              Export SVG from visual tree
               describe [name]         Capture + consoleimage describe (for LLM vision)
               wait <ms>               Wait for milliseconds
               waitfor <path> <value>  Wait until property equals value
@@ -361,6 +363,24 @@ public sealed class UITestRepl
         var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
         var result = await CaptureScreenshotAsync(filePath);
         return $"Screenshot saved: {result}";
+    }
+
+    private async Task<string> SvgAsync(string[] args)
+    {
+        if (_ctx.MainWindow == null) return "No window";
+        var name = args.Length > 0 ? args[0] : $"svg_{DateTime.UtcNow:HHmmss}";
+        var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.svg");
+
+        var svgContent = await _ctx.RunOnUIThreadAsync(() =>
+        {
+            _ctx.MainWindow!.UpdateLayout();
+            var exporter = new Svg.SvgExporter();
+            return exporter.Export(_ctx.MainWindow);
+        });
+
+        await File.WriteAllTextAsync(filePath, svgContent);
+        return $"SVG saved: {filePath}";
     }
 
     private async Task<string> WaitAsync(string[] args)

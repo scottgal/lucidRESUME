@@ -1,0 +1,56 @@
+# Smoke test - verifies the app launches and all pages render.
+# Run: dotnet run -- --ux-test --script examples/smoke-test.yaml --output smoke-results
+#
+# This is the minimum test you should run in CI. It catches:
+# - Startup crashes
+# - Missing view registrations
+# - Broken XAML bindings that prevent page rendering
+# - Navigation failures
+
+name: smoke-test
+description: Verify all pages load without errors
+default_delay: 300
+
+actions:
+  # Wait for app to fully initialize
+  - type: Wait
+    value: "1500"
+    description: Wait for startup
+
+  # Resume / My CV page (default landing page)
+  - type: Screenshot
+    value: smoke-resume
+    description: Capture landing page
+
+  # Navigate through every page
+  - type: Navigate
+    value: jobs
+    description: Jobs page
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: smoke-jobs
+
+  - type: Navigate
+    value: search
+    description: Add Job / Search page
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: smoke-search
+
+  - type: Navigate
+    value: apply
+    description: Apply / Tailor page
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: smoke-apply
+
+  - type: Navigate
+    value: profile
+    description: Profile page
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: smoke-profile

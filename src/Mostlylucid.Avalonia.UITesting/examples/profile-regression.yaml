@@ -1,0 +1,49 @@
+# Profile page regression test.
+# Verifies that profile data is loaded and displayed correctly.
+# Run after data import to catch binding/persistence regressions.
+
+name: profile-regression
+description: Verify profile data renders correctly after load
+default_delay: 200
+
+actions:
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+
+  # Capture the Identity card
+  - type: Screenshot
+    value: profile-identity
+
+  # Scroll to Work Preferences
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: profile-work-prefs
+
+  # Scroll to Skills section
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: profile-skills
+
+  # Scroll to AI Context section
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: profile-ai-context
+
+  # Scroll back to top to verify no visual glitches
+  - type: Scroll
+    value: top
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: profile-top-after-scroll

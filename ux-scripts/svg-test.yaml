@@ -1,0 +1,39 @@
+name: svg-export-test
+description: Navigate pages and capture SVGs for inspection
+default_delay: 500
+
+actions:
+  - type: Wait
+    value: "1000"
+
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "800"
+  - type: Svg
+    value: svg-resume
+  - type: Screenshot
+    value: svg-test-resume
+
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "800"
+  - type: Svg
+    value: svg-jobs
+
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "800"
+  - type: Svg
+    value: svg-search
+
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+  - type: Svg
+    value: svg-profile
+  - type: Screenshot
+    value: svg-test-profile

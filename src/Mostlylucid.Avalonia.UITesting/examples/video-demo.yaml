@@ -1,0 +1,61 @@
+# Video demo - records an animated GIF of navigating the app.
+# Great for README screenshots, PR descriptions, and demo reels.
+# The GIF captures at 5fps and shows page transitions.
+
+name: video-demo
+description: Record an animated GIF tour of the app
+default_delay: 200
+
+actions:
+  - type: Wait
+    value: "1000"
+
+  # Start video recording at 5fps
+  - type: StartVideo
+    value: "5"
+
+  # Resume page
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "1500"
+
+  # Jobs page
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "1500"
+
+  # Apply page
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "1500"
+
+  # Profile page with scroll
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "1000"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "800"
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "800"
+  - type: Scroll
+    value: top
+  - type: Wait
+    value: "800"
+
+  # Back to resume
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "1000"
+
+  # Stop and save
+  - type: StopVideo
+    value: app-tour

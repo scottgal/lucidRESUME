@@ -1,0 +1,39 @@
+# Empty state verification.
+# Tests that empty states are properly styled and visible.
+# This catches a common UX issue: text too faint against dark backgrounds.
+
+name: empty-states
+description: Verify empty state messaging on all pages
+default_delay: 300
+
+actions:
+  # Jobs page - should show "No jobs yet" prominently
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: empty-jobs-left-panel
+    description: Left panel empty state
+
+  - type: Screenshot
+    value: empty-jobs-right-panel
+    description: Right panel empty state
+
+  # Apply page - should show "Tailored resume will appear here"
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: empty-apply-result
+    description: Right panel empty state
+
+  # Resume page - import prompt
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: empty-resume
+    description: No resume imported state
