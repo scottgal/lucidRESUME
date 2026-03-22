@@ -181,22 +181,13 @@ public sealed class ResumeParser : IResumeParser
     {
         if (resume.Personal.FullName is not null) return;
 
+        // First non-empty line of a resume is the person's name. Always.
         foreach (var rawLine in markdown.Split('\n'))
         {
-            var line = rawLine.Trim('\r', ' ');
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            if (line.StartsWith('#')) continue; // skip heading markers
-
-            // Heuristic: name is typically 2-5 words, no digits, no special chars like @/:
-            var words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (words.Length >= 2 && words.Length <= 5
-                && !line.Any(c => c is '@' or ':' or '/' or '(' or ')')
-                && !line.Any(char.IsDigit)
-                && words.All(w => w.Length <= 30))
-            {
-                resume.Personal.FullName = line;
-            }
-            break; // only check the very first non-empty, non-heading line
+            var text = rawLine.Trim('\r', ' ').TrimStart('#').Trim();
+            if (string.IsNullOrWhiteSpace(text)) continue;
+            resume.Personal.FullName = text;
+            break;
         }
     }
 

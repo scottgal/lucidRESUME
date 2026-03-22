@@ -34,27 +34,30 @@
       <!-- Status at bottom of sidebar -->
       <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="#313244"
               Margin="0,8,0,0" Padding="8,8,8,4">
-        <StackPanel Spacing="2">
-          <TextBlock Text="Services" FontSize="10" Foreground="#6C7086" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <StackPanel Spacing="3">
+          <TextBlock Text="Services" FontSize="10" Foreground="#6C7086" FontWeight="SemiBold" Margin="0,0,0,2"/>
           <StackPanel Orientation="Horizontal" Spacing="4">
             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
-                     Fill="{Binding EmbeddingStatus, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding EmbeddingStatus, StringFormat='Embed: {0}'}" FontSize="10" Foreground="#A6ADC8"/>
+                     Fill="{Binding EmbeddingColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
+            <TextBlock Text="{Binding EmbeddingLabel}" FontSize="10" Foreground="#A6ADC8"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="4">
             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
-                     Fill="{Binding OllamaStatus, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding OllamaStatus, StringFormat='Ollama: {0}'}" FontSize="10" Foreground="#A6ADC8"/>
+                     Fill="{Binding OllamaColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
+            <TextBlock Text="{Binding OllamaLabel}" FontSize="10" Foreground="#A6ADC8"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="4">
             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
-                     Fill="{Binding DoclingStatus, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding DoclingStatus, StringFormat='Docling: {0}'}" FontSize="10" Foreground="#A6ADC8"/>
+                     Fill="{Binding DoclingColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
+            <TextBlock Text="{Binding DoclingLabel}" FontSize="10" Foreground="#A6ADC8"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="4">
             <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="#A6E3A1"/>
-            <TextBlock Text="{Binding StoreStatus, StringFormat='Store: {0}'}" FontSize="10" Foreground="#A6ADC8"/>
+            <TextBlock Text="{Binding StoreLabel}" FontSize="10" Foreground="#A6ADC8"/>
           </StackPanel>
+          <TextBlock Text="{Binding WarningMessage}" FontSize="9" Foreground="#F9E2AF"
+                     TextWrapping="Wrap" IsVisible="{Binding WarningMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     Margin="0,4,0,0"/>
         </StackPanel>
       </Border>
 

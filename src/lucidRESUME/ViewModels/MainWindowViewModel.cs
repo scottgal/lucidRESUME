@@ -10,11 +10,14 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private ViewModelBase _currentPage;
     [ObservableProperty] private string _selectedNav = "Resume";
 
-    // Service status indicators
-    [ObservableProperty] private string _embeddingStatus = "...";
-    [ObservableProperty] private string _ollamaStatus = "...";
-    [ObservableProperty] private string _doclingStatus = "Disabled";
-    [ObservableProperty] private string _storeStatus = "SQLite";
+    // Service status indicators — full display strings for sidebar
+    [ObservableProperty] private string _embeddingLabel = "Embeddings: checking...";
+    [ObservableProperty] private string _embeddingColor = "...";
+    [ObservableProperty] private string _ollamaLabel = "Ollama: checking...";
+    [ObservableProperty] private string _ollamaColor = "...";
+    [ObservableProperty] private string _doclingLabel = "Docling: disabled";
+    [ObservableProperty] private string _doclingColor = "Disabled";
+    [ObservableProperty] private string _storeLabel = "Store: SQLite";
     [ObservableProperty] private string? _warningMessage;
 
     private readonly Dictionary<string, ViewModelBase> _pages;
@@ -46,14 +49,32 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
         await _healthCheck.RunAsync();
 
-        EmbeddingStatus = _healthCheck.IsOnnxEmbedding
-            ? (_healthCheck.OnnxModelReady ? "ONNX (local)" : "ONNX (no model)")
-            : "Ollama";
+        if (_healthCheck.IsOnnxEmbedding)
+        {
+            EmbeddingLabel = _healthCheck.OnnxModelReady ? "Embeddings: ONNX (local)" : "Embeddings: no model!";
+            EmbeddingColor = _healthCheck.OnnxModelReady ? "Connected" : "Offline";
+        }
+        else
+        {
+            EmbeddingLabel = "Embeddings: Ollama";
+            EmbeddingColor = _healthCheck.OllamaAvailable ? "Connected" : "Offline";
+        }
 
-        OllamaStatus = _healthCheck.OllamaAvailable ? "Connected" : "Offline";
-        DoclingStatus = _healthCheck.DoclingEnabled
-            ? (_healthCheck.DoclingAvailable ? "Connected" : "Offline")
-            : "Disabled";
+        OllamaLabel = _healthCheck.OllamaAvailable
+            ? $"Ollama: connected ({_healthCheck.OllamaUrl})"
+            : $"Ollama: offline";
+        OllamaColor = _healthCheck.OllamaAvailable ? "Connected" : "Offline";
+
+        if (_healthCheck.DoclingEnabled)
+        {
+            DoclingLabel = _healthCheck.DoclingAvailable ? "Docling: connected" : "Docling: offline";
+            DoclingColor = _healthCheck.DoclingAvailable ? "Connected" : "Offline";
+        }
+        else
+        {
+            DoclingLabel = "OCR: not needed (direct parse)";
+            DoclingColor = "Disabled";
+        }
 
         if (_healthCheck.Warnings.Count > 0)
             WarningMessage = string.Join("\n", _healthCheck.Warnings);
