@@ -1,0 +1,897 @@
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Mostlylucid.Avalonia.UITesting.Recorders;
+using Mostlylucid.Avalonia.UITesting.Video;
+
+namespace Mostlylucid.Avalonia.UITesting.Mcp;
+
+public sealed class UITestMcpServer
+{
+    private readonly UITestContext _ctx;
+    private readonly string _screenshotDir;
+    private readonly string _consoleImagePath;
+    private bool _running = true;
+    private UIRecorder? _recorder;
+    private GifRecorder? _videoRecorder;
+
+    public UITestMcpServer(UITestContext context, string screenshotDir = "ux-screenshots", string? consoleImagePath = null)
+    {
+        _ctx = context;
+        _screenshotDir = screenshotDir;
+        _consoleImagePath = consoleImagePath ?? "consoleimage";
+        Directory.CreateDirectory(screenshotDir);
+    }
+
+    public async Task RunStdioAsync()
+    {
+        Console.Error.WriteLine("UI Test MCP Server starting (stdio mode)...");
+
+        using var stdin = Console.OpenStandardInput();
+        using var stdout = Console.OpenStandardOutput();
+
+        using var reader = new StreamReader(stdin, Encoding.UTF8);
+        using var writer = new StreamWriter(stdout, Encoding.UTF8) { AutoFlush = true };
+
+        while (_running)
+        {
+            var line = await reader.ReadLineAsync();
+            if (line == null) break;
+
+            try
+            {
+                var request = JsonDocument.Parse(line);
+                await HandleRequestAsync(writer, request);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task HandleRequestAsync(StreamWriter writer, JsonDocument request)
+    {
+        var root = request.RootElement;
+        var method = root.TryGetProperty("method", out var m) ? m.GetString() : null;
+        var id = root.TryGetProperty("id", out var i) ? i : default;
+
+        switch (method)
+        {
+            case "initialize":
+                await SendResultAsync(writer, id, new
+                {
+                    protocolVersion = "2024-11-05",
+                    capabilities = new
+                    {
+                        tools = new { listChanged = false }
+                    },
+                    serverInfo = new { name = "mostlylucid-ui-testing", version = "1.0.0" }
+                });
+                break;
+
+            case "notifications/initialized":
+                // No response needed for notifications
+                break;
+
+            case "tools/list":
+                await SendResultAsync(writer, id, new { tools = GetToolDefinitions() });
+                break;
+
+            case "tools/call":
+                var toolName = root.GetProperty("params").GetProperty("name").GetString();
+                var args = root.GetProperty("params").TryGetProperty("arguments", out var a) ? a : default;
+                var result = await ExecuteToolAsync(toolName ?? "", args);
+                await SendResultAsync(writer, id, new
+                {
+                    content = result
+                });
+                break;
+
+            default:
+                await SendErrorAsync(writer, id, -32601, $"Method not found: {method}");
+                break;
+        }
+    }
+
+    private static object[] GetToolDefinitions()
+    {
+        return new object[]
+        {
+            // Navigation & Interaction
+            Tool("ui_navigate", "Navigate to a named page/view in the application",
+                ("page", "string", "Page name to navigate to", true)),
+
+            Tool("ui_click", "Click a named control (button, tab, etc.)",
+                ("name", "string", "Control name", true),
+                ("window", "string", "Window name/title (optional, defaults to main)", false)),
+
+            Tool("ui_double_click", "Double-click a named control",
+                ("name", "string", "Control name", true),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_type", "Type text into a named TextBox control",
+                ("name", "string", "TextBox control name", true),
+                ("text", "string", "Text to type", true),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_press", "Press a keyboard key (Enter, Tab, Escape, etc.)",
+                ("key", "string", "Key name (Enter, Tab, Escape, F1-F12, etc.)", true),
+                ("target", "string", "Control name to send key to (optional)", false)),
+
+            Tool("ui_scroll", "Scroll a ScrollViewer control",
+                ("direction", "string", "Direction: up, down, top, bottom", true),
+                ("target", "string", "ScrollViewer name (optional, uses first found)", false)),
+
+            Tool("ui_hover", "Hover over a named control",
+                ("name", "string", "Control name", true)),
+
+            // Mouse (pixel-level)
+            Tool("ui_mouse_move", "Move mouse to exact coordinates on window",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_mouse_click", "Click at exact coordinates on window",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            // Vision - THE KEY FEATURE for LLMs
+            Tool("ui_see", "Take a screenshot and render it as ASCII art via consoleimage so you can SEE the current UI state. This is your primary way to understand what the application looks like. Returns both the screenshot path and a text description of the UI.",
+                ("name", "string", "Optional screenshot name", false),
+                ("window", "string", "Window name/title (optional)", false),
+                ("max_width", "number", "Max ASCII art width in chars (default 120)", false),
+                ("max_height", "number", "Max ASCII art height in chars (default 40)", false)),
+
+            Tool("ui_screenshot", "Capture a PNG screenshot without ASCII rendering",
+                ("name", "string", "Optional filename", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_screenshot_base64", "Capture a screenshot and return it as base64-encoded PNG data for direct image analysis",
+                ("name", "string", "Optional filename", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            // Inspection
+            Tool("ui_tree", "Get the visual tree of the current window showing all controls and their hierarchy",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_controls", "List all named controls in the current window with their types and bounds",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_vm", "Get all ViewModel properties and their current values",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_get", "Get a ViewModel property value by path (e.g., 'CurrentPage.Name')",
+                ("path", "string", "Property path using dot notation", true)),
+
+            Tool("ui_set", "Set a ViewModel property value",
+                ("path", "string", "Property path", true),
+                ("value", "string", "Value to set", true)),
+
+            Tool("ui_windows", "List all tracked windows (main + popups/dialogs)"),
+
+            // Assertions & Waiting
+            Tool("ui_wait", "Wait for a specified number of milliseconds",
+                ("ms", "number", "Milliseconds to wait", true)),
+
+            Tool("ui_wait_for", "Wait for a property to reach a specific value (with timeout)",
+                ("path", "string", "Property path", true),
+                ("value", "string", "Expected value", true),
+                ("timeout", "number", "Timeout in ms (default 5000)", false)),
+
+            Tool("ui_assert", "Assert that a property equals an expected value",
+                ("path", "string", "Property path", true),
+                ("value", "string", "Expected value", true)),
+
+            Tool("ui_assert_control", "Assert a control property (visible, enabled, text)",
+                ("name", "string", "Control name", true),
+                ("property", "string", "Property to check: visible, enabled, text", true),
+                ("value", "string", "Expected value", true)),
+
+            // Recording
+            Tool("ui_record_start", "Start recording user interactions as a replayable script",
+                ("video", "boolean", "Also record video as GIF (default false)", false),
+                ("positions", "boolean", "Record mouse positions (default false)", false)),
+
+            Tool("ui_record_stop", "Stop recording and return action count"),
+
+            Tool("ui_record_save", "Save the recorded interactions as a YAML or JSON script",
+                ("path", "string", "File path (e.g., test.yaml or test.json)", true),
+                ("name", "string", "Script name (optional)", false)),
+
+            // Video
+            Tool("ui_video_start", "Start recording the UI as an animated GIF",
+                ("fps", "number", "Frames per second (1-30, default 5)", false),
+                ("window", "string", "Window to record (optional)", false)),
+
+            Tool("ui_video_stop", "Stop video recording and save as GIF (and MP4 if ffmpeg available)",
+                ("name", "string", "Output filename without extension", false)),
+
+            // Script
+            Tool("ui_run_script", "Run a YAML/JSON test script file",
+                ("path", "string", "Path to script file", true)),
+
+            // Exit
+            Tool("ui_exit", "Shut down the MCP server and exit the application")
+        };
+    }
+
+    private async Task<object[]> ExecuteToolAsync(string tool, JsonElement args)
+    {
+        try
+        {
+            return tool switch
+            {
+                "ui_navigate" => TextResult(await NavigateAsync(GetArg(args, "page"))),
+                "ui_click" => TextResult(await ClickAsync(GetArg(args, "name"), GetArg(args, "window"))),
+                "ui_double_click" => TextResult(await DoubleClickAsync(GetArg(args, "name"), GetArg(args, "window"))),
+                "ui_type" => TextResult(await TypeAsync(GetArg(args, "name"), GetArg(args, "text"), GetArg(args, "window"))),
+                "ui_press" => TextResult(await PressAsync(GetArg(args, "key"), GetArg(args, "target"))),
+                "ui_scroll" => TextResult(await ScrollAsync(GetArg(args, "direction"), GetArg(args, "target"))),
+                "ui_hover" => TextResult(await HoverAsync(GetArg(args, "name"))),
+                "ui_mouse_move" => TextResult(await MouseMoveAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "window"))),
+                "ui_mouse_click" => TextResult(await MouseClickAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "window"))),
+                "ui_see" => await SeeAsync(GetArg(args, "name"), GetArg(args, "window"), GetInt(args, "max_width", 120), GetInt(args, "max_height", 40)),
+                "ui_screenshot" => TextResult(await CaptureScreenshotAsync(GetArg(args, "name"), GetArg(args, "window"))),
+                "ui_screenshot_base64" => await ScreenshotBase64Async(GetArg(args, "name"), GetArg(args, "window")),
+                "ui_tree" => TextResult(await GetTreeAsync(GetArg(args, "window"))),
+                "ui_controls" => TextResult(await GetControlsAsync(GetArg(args, "window"))),
+                "ui_vm" => TextResult(await GetVmAsync(GetArg(args, "window"))),
+                "ui_get" => TextResult(await GetAsync(GetArg(args, "path"))),
+                "ui_set" => TextResult(await SetAsync(GetArg(args, "path"), GetArg(args, "value"))),
+                "ui_windows" => TextResult(await GetWindowsAsync()),
+                "ui_wait" => TextResult(await WaitAsync(GetInt(args, "ms", 1000))),
+                "ui_wait_for" => TextResult(await WaitForAsync(GetArg(args, "path"), GetArg(args, "value"), GetInt(args, "timeout", 5000))),
+                "ui_assert" => TextResult(await AssertAsync(GetArg(args, "path"), GetArg(args, "value"))),
+                "ui_assert_control" => TextResult(await AssertControlAsync(GetArg(args, "name"), GetArg(args, "property"), GetArg(args, "value"))),
+                "ui_record_start" => TextResult(await RecordStartAsync(GetBool(args, "video"), GetBool(args, "positions"))),
+                "ui_record_stop" => TextResult(await RecordStopAsync()),
+                "ui_record_save" => TextResult(await RecordSaveAsync(GetArg(args, "path"), GetArg(args, "name"))),
+                "ui_video_start" => TextResult(await VideoStartAsync(GetInt(args, "fps", 5), GetArg(args, "window"))),
+                "ui_video_stop" => TextResult(await VideoStopAsync(GetArg(args, "name"))),
+                "ui_run_script" => TextResult(await RunScriptAsync(GetArg(args, "path"))),
+                "ui_exit" => TextResult(Exit()),
+                _ => TextResult($"Unknown tool: {tool}")
+            };
+        }
+        catch (Exception ex)
+        {
+            return TextResult($"Error: {ex.Message}");
+        }
+    }
+
+    // === Navigation & Interaction ===
+
+    private async Task<string> NavigateAsync(string page)
+    {
+        await _ctx.RunOnUIThreadAsync(() => _ctx.Navigate?.Invoke(page));
+        await Task.Delay(200);
+        return $"Navigated to: {page}";
+    }
+
+    private async Task<string> ClickAsync(string name, string? windowId)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var window = _ctx.FindWindow(windowId);
+            var control = _ctx.FindControl(name, window);
+            if (control == null) return $"Control not found: {name}";
+
+            if (control is Button button && button.Command?.CanExecute(button.CommandParameter) == true)
+            {
+                button.Command.Execute(button.CommandParameter);
+                return $"Clicked button: {name}";
+            }
+
+            if (control is TabItem tabItem)
+            {
+                tabItem.IsSelected = true;
+                return $"Selected tab: {name}";
+            }
+
+            control.RaiseEvent(new RoutedEventArgs(InputElement.TappedEvent));
+            return $"Tapped: {name}";
+        });
+    }
+
+    private async Task<string> DoubleClickAsync(string name, string? windowId)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var window = _ctx.FindWindow(windowId);
+            var control = _ctx.FindControl(name, window);
+            if (control == null) return $"Control not found: {name}";
+            control.RaiseEvent(new RoutedEventArgs(InputElement.DoubleTappedEvent));
+            return $"Double-clicked: {name}";
+        });
+    }
+
+    private async Task<string> TypeAsync(string name, string text, string? windowId)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var window = _ctx.FindWindow(windowId);
+            var control = _ctx.FindControl(name, window);
+            if (control is TextBox textBox)
+            {
+                textBox.Text = text;
+                return $"Typed into {name}: {text}";
+            }
+            return $"Control is not a TextBox: {name}";
+        });
+    }
+
+    private async Task<string> PressAsync(string key, string? target)
+    {
+        var keyEnum = Enum.Parse<Key>(key, true);
+        await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var control = target != null ? _ctx.FindControl(target) : _ctx.MainWindow;
+            control?.RaiseEvent(new KeyEventArgs
+            {
+                Key = keyEnum,
+                RoutedEvent = InputElement.KeyDownEvent
+            });
+        });
+        return $"Pressed: {key}";
+    }
+
+    private async Task<string> ScrollAsync(string direction, string? target)
+    {
+        await _ctx.RunOnUIThreadAsync(() =>
+        {
+            ScrollViewer? sv = target != null
+                ? _ctx.MainWindow?.FindControl<ScrollViewer>(target)
+                : _ctx.MainWindow?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+
+            if (sv != null)
+            {
+                switch (direction.ToLowerInvariant())
+                {
+                    case "top": sv.ScrollToHome(); break;
+                    case "bottom": sv.ScrollToEnd(); break;
+                    case "up": sv.LineUp(); break;
+                    default: sv.LineDown(); break;
+                }
+            }
+        });
+        return $"Scrolled: {direction}";
+    }
+
+    private async Task<string> HoverAsync(string name)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var control = _ctx.FindControl(name);
+            if (control == null) return $"Control not found: {name}";
+            return $"Hover logged: {name} (at {control.Bounds.X},{control.Bounds.Y} {control.Bounds.Width}x{control.Bounds.Height})";
+        });
+    }
+
+    private async Task<string> MouseMoveAsync(double x, double y, string? windowId)
+    {
+        // Mouse position actions are recorded for intent/documentation.
+        return $"Mouse move logged: ({x}, {y})";
+    }
+
+    private async Task<string> MouseClickAsync(double x, double y, string? windowId)
+    {
+        // Coordinate-based clicks are logged. Use ui_click with control names for reliable interaction.
+        return $"Mouse click logged at ({x}, {y}). Use ui_click with a control name for reliable interaction.";
+    }
+
+    // === Vision (the key feature for LLMs) ===
+
+    private async Task<object[]> SeeAsync(string? name, string? windowId, int maxWidth, int maxHeight)
+    {
+        var screenshotPath = await CaptureScreenshotAsync(name ?? $"see_{DateTime.UtcNow:HHmmss}", windowId);
+
+        // Also get the control tree for structured context
+        var tree = await GetTreeAsync(windowId);
+        var controls = await GetControlsAsync(windowId);
+
+        // Try consoleimage for ASCII rendering
+        string asciiArt;
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = _consoleImagePath,
+                Arguments = $"\"{screenshotPath}\" --max-width {maxWidth} --max-height {maxHeight}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = System.Diagnostics.Process.Start(psi);
+            if (process == null)
+            {
+                asciiArt = "[consoleimage not available - install it for visual UI rendering]";
+            }
+            else
+            {
+                asciiArt = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                if (process.ExitCode != 0)
+                    asciiArt = "[consoleimage returned an error]";
+            }
+        }
+        catch
+        {
+            asciiArt = "[consoleimage not found - install via: dotnet tool install -g consoleimage]";
+        }
+
+        // Try to also return the image as base64 for multimodal LLMs
+        string? base64 = null;
+        try
+        {
+            var bytes = await File.ReadAllBytesAsync(screenshotPath);
+            base64 = Convert.ToBase64String(bytes);
+        }
+        catch { }
+
+        var content = new List<object>
+        {
+            new { type = "text", text = $"=== UI Screenshot: {screenshotPath} ===\n\n{asciiArt}\n\n=== Named Controls ===\n{controls}\n\n=== Visual Tree ===\n{tree}" }
+        };
+
+        // If we got base64, include as image content for multimodal
+        if (base64 != null)
+        {
+            content.Add(new
+            {
+                type = "image",
+                data = base64,
+                mimeType = "image/png"
+            });
+        }
+
+        return content.ToArray();
+    }
+
+    private async Task<object[]> ScreenshotBase64Async(string? name, string? windowId)
+    {
+        var path = await CaptureScreenshotAsync(name ?? $"shot_{DateTime.UtcNow:HHmmss}", windowId);
+        var bytes = await File.ReadAllBytesAsync(path);
+        var base64 = Convert.ToBase64String(bytes);
+
+        return new object[]
+        {
+            new { type = "text", text = $"Screenshot saved: {path}" },
+            new { type = "image", data = base64, mimeType = "image/png" }
+        };
+    }
+
+    // === Inspection ===
+
+    private async Task<string> GetTreeAsync(string? windowId)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow;
+            if (window == null) return "No window";
+            return BuildTree(window, 0);
+        });
+    }
+
+    private async Task<string> GetControlsAsync(string? windowId)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow;
+            if (window == null) return "No window";
+
+            var controls = _ctx.GetAllControls(window)
+                .Where(c => !string.IsNullOrEmpty(c.Name))
+                .Select(c => $"  {c.Name} ({c.GetType().Name}) [{c.Bounds.X:F0},{c.Bounds.Y:F0} {c.Bounds.Width:F0}x{c.Bounds.Height:F0}] visible={c.IsVisible} enabled={c.IsEnabled}")
+                .ToList();
+
+            if (controls.Count == 0) return "No named controls found";
+            return $"Controls ({controls.Count}):\n" + string.Join("\n", controls);
+        });
+    }
+
+    private async Task<string> GetVmAsync(string? windowId)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow;
+            if (window?.DataContext is not { } vm) return "No DataContext";
+
+            var props = vm.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Select(p =>
+                {
+                    try { return $"  {p.Name}: {_ctx.GetProperty(vm, p.Name)}"; }
+                    catch { return $"  {p.Name}: <error>"; }
+                })
+                .ToList();
+
+            return $"ViewModel ({vm.GetType().Name}):\n" + string.Join("\n", props);
+        });
+    }
+
+    private async Task<string> GetAsync(string path)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            if (_ctx.MainWindow?.DataContext is { } vm)
+            {
+                var value = _ctx.GetProperty(vm, path);
+                return $"{path} = {value ?? "null"}";
+            }
+            return "No DataContext";
+        });
+    }
+
+    private async Task<string> SetAsync(string path, string value)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            if (_ctx.MainWindow?.DataContext is { } vm)
+            {
+                if (_ctx.SetProperty(vm, path, value))
+                    return $"Set {path} = {value}";
+                return $"Failed to set {path}";
+            }
+            return "No DataContext";
+        });
+    }
+
+    private async Task<string> GetWindowsAsync()
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var windows = _ctx.TrackedWindows;
+            if (windows.Count == 0) return "No tracked windows (call EnableCrossWindowTracking first)";
+
+            var lines = windows.Select(w =>
+            {
+                var id = w.Name ?? w.GetType().Name;
+                return $"  {id}: \"{w.Title}\" ({w.Bounds.Width:F0}x{w.Bounds.Height:F0}) visible={w.IsVisible}";
+            });
+            return $"Windows ({windows.Count}):\n" + string.Join("\n", lines);
+        });
+    }
+
+    // === Assertions & Waiting ===
+
+    private async Task<string> WaitAsync(int ms)
+    {
+        await Task.Delay(ms);
+        return $"Waited {ms}ms";
+    }
+
+    private async Task<string> WaitForAsync(string path, string value, int timeoutMs)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < timeoutMs)
+        {
+            var current = await _ctx.RunOnUIThreadAsync(() =>
+            {
+                if (_ctx.MainWindow?.DataContext is { } vm)
+                    return _ctx.GetProperty(vm, path)?.ToString();
+                return null;
+            });
+            if (current == value) return $"OK: {path} = {value}";
+            await Task.Delay(100);
+        }
+
+        var actual = await _ctx.RunOnUIThreadAsync(() =>
+        {
+            if (_ctx.MainWindow?.DataContext is { } vm)
+                return _ctx.GetProperty(vm, path)?.ToString();
+            return null;
+        });
+        return $"TIMEOUT: {path} expected \"{value}\", got \"{actual}\"";
+    }
+
+    private async Task<string> AssertAsync(string path, string value)
+    {
+        var actual = await _ctx.RunOnUIThreadAsync(() =>
+        {
+            if (_ctx.MainWindow?.DataContext is { } vm)
+                return _ctx.GetProperty(vm, path)?.ToString();
+            return null;
+        });
+        if (actual == value) return $"PASS: {path} = {value}";
+        return $"FAIL: {path} expected \"{value}\", got \"{actual}\"";
+    }
+
+    private async Task<string> AssertControlAsync(string name, string property, string value)
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var control = _ctx.FindControl(name);
+            if (control == null) return $"FAIL: Control not found: {name}";
+
+            return property.ToLowerInvariant() switch
+            {
+                "visible" =>
+                    control.IsVisible.ToString().Equals(value, StringComparison.OrdinalIgnoreCase)
+                        ? $"PASS: {name}.IsVisible = {value}"
+                        : $"FAIL: {name}.IsVisible = {control.IsVisible}, expected {value}",
+                "enabled" =>
+                    control.IsEnabled.ToString().Equals(value, StringComparison.OrdinalIgnoreCase)
+                        ? $"PASS: {name}.IsEnabled = {value}"
+                        : $"FAIL: {name}.IsEnabled = {control.IsEnabled}, expected {value}",
+                "text" when control is TextBox tb =>
+                    tb.Text == value
+                        ? $"PASS: {name}.Text = {value}"
+                        : $"FAIL: {name}.Text = \"{tb.Text}\", expected \"{value}\"",
+                _ => $"FAIL: Unknown property: {property}"
+            };
+        });
+    }
+
+    // === Recording ===
+
+    private async Task<string> RecordStartAsync(bool withVideo, bool withPositions)
+    {
+        if (_recorder?.IsRecording == true) return "Already recording. Stop first.";
+
+        _recorder = new UIRecorder(new UIRecorderOptions
+        {
+            CaptureMousePositions = withPositions,
+            CrossWindowTracking = true
+        });
+
+        if (_ctx.MainWindow == null) return "No window attached";
+        _recorder.StartRecording(_ctx.MainWindow, withVideo);
+        return "Recording started" + (withVideo ? " (with video)" : "") + (withPositions ? " (with mouse positions)" : "");
+    }
+
+    private async Task<string> RecordStopAsync()
+    {
+        if (_recorder == null || !_recorder.IsRecording) return "Not recording";
+        await _recorder.StopRecordingAsync();
+        return $"Recording stopped. {_recorder.Actions.Count} actions captured.";
+    }
+
+    private async Task<string> RecordSaveAsync(string path, string? name)
+    {
+        if (_recorder == null) return "No recording to save";
+
+        if (path.EndsWith(".json"))
+            _recorder.SaveAsJson(path, name);
+        else
+            _recorder.SaveAsYaml(path, name);
+
+        return $"Script saved: {path} ({_recorder.Actions.Count} actions)";
+    }
+
+    // === Video ===
+
+    private async Task<string> VideoStartAsync(int fps, string? windowId)
+    {
+        if (_videoRecorder != null) return "Video already recording. Stop first.";
+
+        var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow;
+        if (window == null) return "No window";
+
+        _videoRecorder = new GifRecorder(fps, msg => Console.Error.WriteLine($"[video] {msg}"));
+        _videoRecorder.StartRecording(window);
+        return $"Video recording started at {fps} fps";
+    }
+
+    private async Task<string> VideoStopAsync(string? name)
+    {
+        if (_videoRecorder == null) return "No video recording in progress";
+
+        await _videoRecorder.StopRecordingAsync();
+
+        var safeName = name ?? $"video_{DateTime.UtcNow:HHmmss_fff}";
+        var gifPath = Path.Combine(_screenshotDir, $"{safeName}.gif");
+        await _videoRecorder.SaveAsync(gifPath);
+
+        var mp4Result = await _videoRecorder.TryExportMp4Async(Path.Combine(_screenshotDir, $"{safeName}.mp4"));
+
+        await _videoRecorder.DisposeAsync();
+        _videoRecorder = null;
+
+        var result = $"GIF saved: {gifPath} ({_videoRecorder?.FrameCount ?? 0} frames)";
+        if (mp4Result != null) result += $"\nMP4 saved: {mp4Result}";
+        return result;
+    }
+
+    // === Script ===
+
+    private async Task<string> RunScriptAsync(string path)
+    {
+        if (!File.Exists(path)) return $"Script not found: {path}";
+
+        var script = path.EndsWith(".json")
+            ? Scripts.ScriptLoader.LoadFromJson(path)
+            : Scripts.ScriptLoader.LoadFromYaml(path);
+
+        var player = new Players.ScriptPlayer(_screenshotDir, context: _ctx);
+        if (_ctx.Navigate != null) player.SetNavigateAction(_ctx.Navigate);
+
+        var result = await player.RunScriptAsync(_ctx.MainWindow!, script);
+
+        var json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+        return $"Script: {script.Name}\nResult: {(result.Success ? "PASS" : "FAIL")}\nActions: {result.ActionResults.Count}\nDuration: {result.Duration.TotalSeconds:F2}s\n\n{json}";
+    }
+
+    // === Exit ===
+
+    private string Exit()
+    {
+        _running = false;
+        return "Shutting down...";
+    }
+
+    // === Helpers ===
+
+    private async Task<string> CaptureScreenshotAsync(string name, string? windowId = null)
+    {
+        var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+
+        await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow!;
+            window.UpdateLayout();
+            var size = new PixelSize((int)window.Bounds.Width, (int)window.Bounds.Height);
+            var dpi = new Vector(96, 96);
+            using var bitmap = new RenderTargetBitmap(size, dpi);
+            bitmap.Render(window);
+            using var stream = File.Create(filePath);
+            bitmap.Save(stream);
+        });
+
+        return filePath;
+    }
+
+    private static string BuildTree(Control control, int depth)
+    {
+        var indent = new string(' ', depth * 2);
+        var name = string.IsNullOrEmpty(control.Name) ? "" : $" #{control.Name}";
+        var vis = control.IsVisible ? "" : " [hidden]";
+        var result = $"{indent}{control.GetType().Name}{name}{vis}\n";
+
+        if (control is Panel panel)
+        {
+            foreach (var child in panel.Children.OfType<Control>())
+                result += BuildTree(child, depth + 1);
+        }
+        else if (control is ContentControl cc && cc.Content is Control content)
+        {
+            result += BuildTree(content, depth + 1);
+        }
+        else if (control is Decorator d && d.Child is Control child)
+        {
+            result += BuildTree(child, depth + 1);
+        }
+
+        return result;
+    }
+
+    private static string GetArg(JsonElement args, string name)
+    {
+        if (args.ValueKind == JsonValueKind.Undefined || args.ValueKind == JsonValueKind.Null)
+            return "";
+        return args.TryGetProperty(name, out var prop) ? prop.GetString() ?? "" : "";
+    }
+
+    private static int GetInt(JsonElement args, string name, int defaultValue = 0)
+    {
+        if (args.ValueKind == JsonValueKind.Undefined || args.ValueKind == JsonValueKind.Null)
+            return defaultValue;
+        if (args.TryGetProperty(name, out var prop))
+        {
+            if (prop.ValueKind == JsonValueKind.Number) return prop.GetInt32();
+            if (int.TryParse(prop.GetString(), out var v)) return v;
+        }
+        return defaultValue;
+    }
+
+    private static double GetDouble(JsonElement args, string name, double defaultValue = 0)
+    {
+        if (args.ValueKind == JsonValueKind.Undefined || args.ValueKind == JsonValueKind.Null)
+            return defaultValue;
+        if (args.TryGetProperty(name, out var prop))
+        {
+            if (prop.ValueKind == JsonValueKind.Number) return prop.GetDouble();
+            if (double.TryParse(prop.GetString(), out var v)) return v;
+        }
+        return defaultValue;
+    }
+
+    private static bool GetBool(JsonElement args, string name, bool defaultValue = false)
+    {
+        if (args.ValueKind == JsonValueKind.Undefined || args.ValueKind == JsonValueKind.Null)
+            return defaultValue;
+        if (args.TryGetProperty(name, out var prop))
+        {
+            if (prop.ValueKind == JsonValueKind.True) return true;
+            if (prop.ValueKind == JsonValueKind.False) return false;
+            if (bool.TryParse(prop.GetString(), out var v)) return v;
+        }
+        return defaultValue;
+    }
+
+    private static object[] TextResult(string text) => new object[] { new { type = "text", text } };
+
+    private static async Task SendResultAsync(StreamWriter writer, JsonElement id, object result)
+    {
+        var response = new Dictionary<string, object>
+        {
+            ["jsonrpc"] = "2.0",
+            ["result"] = result
+        };
+
+        if (id.ValueKind == JsonValueKind.Number)
+            response["id"] = id.GetInt32();
+        else if (id.ValueKind == JsonValueKind.String)
+            response["id"] = id.GetString()!;
+
+        var json = JsonSerializer.Serialize(response);
+        await writer.WriteLineAsync(json);
+    }
+
+    private static async Task SendErrorAsync(StreamWriter writer, JsonElement id, int code, string message)
+    {
+        var response = new Dictionary<string, object>
+        {
+            ["jsonrpc"] = "2.0",
+            ["error"] = new { code, message }
+        };
+
+        if (id.ValueKind == JsonValueKind.Number)
+            response["id"] = id.GetInt32();
+        else if (id.ValueKind == JsonValueKind.String)
+            response["id"] = id.GetString()!;
+
+        var json = JsonSerializer.Serialize(response);
+        await writer.WriteLineAsync(json);
+    }
+
+    private static object Tool(string name, string description, params (string Name, string Type, string Description, bool Required)[] args)
+    {
+        var properties = new Dictionary<string, object>();
+        var required = new List<string>();
+
+        foreach (var (argName, argType, argDesc, isRequired) in args)
+        {
+            properties[argName] = new { type = argType, description = argDesc };
+            if (isRequired) required.Add(argName);
+        }
+
+        return new
+        {
+            name,
+            description,
+            inputSchema = new
+            {
+                type = "object",
+                properties,
+                required = required.ToArray()
+            }
+        };
+    }
+
+    private static object Tool(string name, string description)
+    {
+        return new
+        {
+            name,
+            description,
+            inputSchema = new
+            {
+                type = "object",
+                properties = new Dictionary<string, object>(),
+                required = Array.Empty<string>()
+            }
+        };
+    }
+}

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- NuGet metadata -->
+    <PackageId>Mostlylucid.Avalonia.UITesting</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Scott Galloway</Authors>
+    <Description>UI testing, screenshot snapshots, script playback, recording, video capture, REPL, and MCP server for Avalonia desktop apps.</Description>
+    <PackageTags>avalonia;ui-testing;screenshots;snapshots;automation;desktop;mcp</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/scottgal/Mostlylucid.Avalonia.UITesting</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/scottgal/Mostlylucid.Avalonia.UITesting</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" Condition="Exists('README.md')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Headless" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.0" />
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
+  </ItemGroup>
+
+</Project>

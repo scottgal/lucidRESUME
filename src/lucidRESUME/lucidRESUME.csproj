@@ -42,5 +42,6 @@
     <ProjectReference Include="..\lucidRESUME.Export\lucidRESUME.Export.csproj" />
     <ProjectReference Include="..\lucidRESUME.Collabora\lucidRESUME.Collabora.csproj" />
     <ProjectReference Include="..\lucidRESUME.UXTesting\lucidRESUME.UXTesting.csproj" />
+    <ProjectReference Include="..\Mostlylucid.Avalonia.UITesting\Mostlylucid.Avalonia.UITesting.csproj" />
   </ItemGroup>
 </Project>
