@@ -214,6 +214,7 @@ public partial class App : Application
         services.AddSingleton<IAppStore>(_ => new SqliteAppStore(dbPath,
             jsonMigrationPath: File.Exists(jsonPath) ? jsonPath : null));
 
+        services.AddHttpClient<Services.StartupHealthCheck>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ResumePageViewModel>();
         services.AddSingleton<JobsPageViewModel>();

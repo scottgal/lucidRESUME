@@ -114,6 +114,7 @@ public sealed class ResumeParser : IResumeParser
             resume.AddEntity(entity);
 
         MapEntitiesToSchema(resume, entities);
+        InferNameIfMissing(resume, markdown);
 
         // ── 4. Section parsing ────────────────────────────────────────────
         MarkdownSectionParser.PopulateSections(resume, markdown, structuredSections);
@@ -170,6 +171,33 @@ public sealed class ResumeParser : IResumeParser
         resume.Personal.FullName = entities.FirstOrDefault(e => e.Classification == "PersonName" && e.Confidence > 0.85)?.Value;
         resume.Personal.LinkedInUrl = entities.FirstOrDefault(e => e.Classification == "LinkedInUrl")?.Value;
         resume.Personal.GitHubUrl = entities.FirstOrDefault(e => e.Classification == "GitHubUrl")?.Value;
+    }
+
+    /// <summary>
+    /// Fallback: if NER didn't find a name, use the first non-empty line of the markdown
+    /// (before any heading marker) as the person's name. Most resumes start with the name.
+    /// </summary>
+    private static void InferNameIfMissing(ResumeDocument resume, string markdown)
+    {
+        if (resume.Personal.FullName is not null) return;
+
+        foreach (var rawLine in markdown.Split('\n'))
+        {
+            var line = rawLine.Trim('\r', ' ');
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (line.StartsWith('#')) continue; // skip heading markers
+
+            // Heuristic: name is typically 2-5 words, no digits, no special chars like @/:
+            var words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length >= 2 && words.Length <= 5
+                && !line.Any(c => c is '@' or ':' or '/' or '(' or ')')
+                && !line.Any(char.IsDigit)
+                && words.All(w => w.Length <= 30))
+            {
+                resume.Personal.FullName = line;
+            }
+            break; // only check the very first non-empty, non-heading line
+        }
     }
 
     private static string GetContentType(string ext) => ext.ToLowerInvariant() switch

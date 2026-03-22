@@ -148,21 +148,34 @@ public sealed class DocxDirectParser : IDocumentParser
     private static IEnumerable<string> GetParagraphLines(Paragraph para)
     {
         var current = new StringBuilder();
-        foreach (var run in para.Elements<Run>())
+
+        // Iterate all child elements — Runs contain plain text, Hyperlinks contain linked text
+        foreach (var element in para.ChildElements)
         {
-            foreach (var child in run.ChildElements)
+            IEnumerable<Run> runs = element switch
             {
-                if (child is Text t)
-                    current.Append(t.InnerText);
-                else if (child is Break)
+                Run r => [r],
+                Hyperlink h => h.Elements<Run>(),
+                _ => []
+            };
+
+            foreach (var run in runs)
+            {
+                foreach (var child in run.ChildElements)
                 {
-                    var seg = current.ToString().Trim();
-                    if (!string.IsNullOrWhiteSpace(seg))
-                        yield return seg;
-                    current.Clear();
+                    if (child is Text t)
+                        current.Append(t.InnerText);
+                    else if (child is Break)
+                    {
+                        var seg = current.ToString().Trim();
+                        if (!string.IsNullOrWhiteSpace(seg))
+                            yield return seg;
+                        current.Clear();
+                    }
                 }
             }
         }
+
         var last = current.ToString().Trim();
         if (!string.IsNullOrWhiteSpace(last))
             yield return last;

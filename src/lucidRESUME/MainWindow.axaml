@@ -29,6 +29,35 @@
 
     <!-- Sidebar -->
     <Border Grid.Column="0" Background="#1E1E2E" Padding="8">
+      <DockPanel>
+
+      <!-- Status at bottom of sidebar -->
+      <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="#313244"
+              Margin="0,8,0,0" Padding="8,8,8,4">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Services" FontSize="10" Foreground="#6C7086" FontWeight="SemiBold" Margin="0,0,0,4"/>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                     Fill="{Binding EmbeddingStatus, Converter={x:Static local:StatusColorConverter.Instance}}"/>
+            <TextBlock Text="{Binding EmbeddingStatus, StringFormat='Embed: {0}'}" FontSize="10" Foreground="#A6ADC8"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                     Fill="{Binding OllamaStatus, Converter={x:Static local:StatusColorConverter.Instance}}"/>
+            <TextBlock Text="{Binding OllamaStatus, StringFormat='Ollama: {0}'}" FontSize="10" Foreground="#A6ADC8"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                     Fill="{Binding DoclingStatus, Converter={x:Static local:StatusColorConverter.Instance}}"/>
+            <TextBlock Text="{Binding DoclingStatus, StringFormat='Docling: {0}'}" FontSize="10" Foreground="#A6ADC8"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="#A6E3A1"/>
+            <TextBlock Text="{Binding StoreStatus, StringFormat='Store: {0}'}" FontSize="10" Foreground="#A6ADC8"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
       <StackPanel Spacing="2">
         <TextBlock Text="lucidRESUME" FontSize="18" FontWeight="Bold"
                    Foreground="#CDD6F4" Margin="8,16,8,24"/>
@@ -75,6 +104,7 @@
                   Command="{Binding NavigateCommand}" CommandParameter="Profile"/>
         </Panel>
       </StackPanel>
+      </DockPanel>
     </Border>
 
     <!-- Main content area -->
