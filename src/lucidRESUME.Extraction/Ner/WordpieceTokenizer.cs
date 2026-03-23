@@ -18,9 +18,11 @@ internal sealed class WordpieceTokenizer
     private const int SepId = 102;
 
     private readonly Dictionary<string, int> _vocab;
+    private readonly bool _lowerCase;
 
-    public WordpieceTokenizer(string vocabPath)
+    public WordpieceTokenizer(string vocabPath, bool lowerCase = true)
     {
+        _lowerCase = lowerCase;
         var lines = File.ReadAllLines(vocabPath);
         _vocab = new Dictionary<string, int>(lines.Length, StringComparer.Ordinal);
         for (int i = 0; i < lines.Length; i++)
@@ -37,8 +39,8 @@ internal sealed class WordpieceTokenizer
     /// </summary>
     public BertEncoding Encode(string text, int maxLength = 512)
     {
-        var lower = text.ToLowerInvariant();
-        var wordTokens = BasicTokenize(lower);
+        var normalized = _lowerCase ? text.ToLowerInvariant() : text;
+        var wordTokens = BasicTokenize(normalized);
 
         var ids = new List<int>(maxLength) { ClsId };
         var offsets = new List<(int Start, int End)>(maxLength) { (-1, -1) };

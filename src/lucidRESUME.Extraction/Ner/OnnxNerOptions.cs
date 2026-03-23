@@ -17,6 +17,9 @@ public sealed class OnnxNerOptions
     /// <summary>Maximum BERT sequence length (must match model's max_position_embeddings).</summary>
     public int MaxSequenceLength { get; set; } = 512;
 
+    /// <summary>Whether to lowercase text before tokenization. Set false for cased models (e.g. bert-base-NER).</summary>
+    public bool LowerCase { get; set; } = true;
+
     /// <summary>
     /// Ordered list of label strings matching the model's id2label config.
     /// Defaults to labels from yashpwr/resume-ner-bert-v2.
@@ -32,22 +35,42 @@ public sealed class OnnxNerOptions
         null;
 
     /// <summary>
+    /// Entity type mapping: BIO entity name → internal classification.
+    /// If null, uses the default mapping for the model type.
+    /// </summary>
+    public Dictionary<string, string>? EntityTypeMap { get; set; }
+
+    /// <summary>
     /// Default BIO label list for yashpwr/resume-ner-bert-v2 (25 labels).
     /// </summary>
-    public static readonly string[] DefaultLabels =
+    public static readonly string[] ResumeNerLabels =
     [
         "O",
-        "B-Name", "I-Name",
-        "B-Degree", "I-Degree",
-        "B-Graduation Year", "I-Graduation Year",
-        "B-Years of Experience", "I-Years of Experience",
-        "B-Companies worked at", "I-Companies worked at",
         "B-College Name", "I-College Name",
+        "B-Companies worked at", "I-Companies worked at",
+        "B-Degree", "I-Degree",
         "B-Designation", "I-Designation",
-        "B-Skills", "I-Skills",
-        "B-Location", "I-Location",
-        "B-Links", "I-Links",
         "B-Email Address", "I-Email Address",
-        "B-Worked as", "I-Worked as",
+        "B-Graduation Year", "I-Graduation Year",
+        "B-Location", "I-Location",
+        "B-Name", "I-Name",
+        "B-Phone", "I-Phone",
+        "B-Skills", "I-Skills",
+        "B-UNKNOWN", "I-UNKNOWN",
+        "B-Years of Experience", "I-Years of Experience",
     ];
+
+    /// <summary>
+    /// Default BIO label list for dslim/bert-base-NER (9 labels).
+    /// </summary>
+    public static readonly string[] GeneralNerLabels =
+    [
+        "O",
+        "B-MISC", "I-MISC",
+        "B-PER", "I-PER",
+        "B-ORG", "I-ORG",
+        "B-LOC", "I-LOC",
+    ];
+
+    public static readonly string[] DefaultLabels = ResumeNerLabels;
 }

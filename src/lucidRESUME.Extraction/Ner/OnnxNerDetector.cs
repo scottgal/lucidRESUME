@@ -23,11 +23,12 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
     public string DetectorId => "onnx_ner";
     public int Priority => 300;
 
-    // Maps BIO entity type names → our internal ExtractedEntity classification
-    private static readonly Dictionary<string, string> EntityTypeMap = new(StringComparer.OrdinalIgnoreCase)
+    // Default mapping for resume NER models (yashpwr/resume-ner-bert-v2)
+    private static readonly Dictionary<string, string> DefaultResumeEntityTypeMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Name"]               = "PersonName",
         ["Email Address"]      = "Email",
+        ["Phone"]              = "PhoneNumber",
         ["Skills"]             = "NerSkill",
         ["Designation"]        = "JobTitle",
         ["Worked as"]          = "JobTitle",
@@ -40,31 +41,54 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
         ["Links"]              = "Url",
     };
 
+    // Default mapping for general NER models (dslim/bert-base-NER)
+    private static readonly Dictionary<string, string> DefaultGeneralEntityTypeMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["PER"]  = "PersonName",
+        ["ORG"]  = "Organization",
+        ["LOC"]  = "Address",
+        ["MISC"] = "Miscellaneous",
+    };
+
     private readonly OnnxNerOptions _options;
     private readonly ILogger<OnnxNerDetector> _logger;
     private readonly string[] _labels;
+    private readonly Dictionary<string, string> _entityTypeMap;
     private InferenceSession? _session;
     private WordpieceTokenizer? _tokenizer;
 
     public bool IsAvailable => _session is not null && _tokenizer is not null;
 
     public OnnxNerDetector(IOptions<OnnxNerOptions> options, ILogger<OnnxNerDetector> logger)
+        : this(options.Value, logger) { }
+
+    public OnnxNerDetector(OnnxNerOptions options, ILogger<OnnxNerDetector> logger)
     {
-        _options = options.Value;
+        _options = options;
         _logger = logger;
         _labels = _options.Labels ?? OnnxNerOptions.DefaultLabels;
+
+        // Pick entity type map: explicit config > auto-detect from labels
+        if (_options.EntityTypeMap is { Count: > 0 })
+            _entityTypeMap = new Dictionary<string, string>(_options.EntityTypeMap, StringComparer.OrdinalIgnoreCase);
+        else if (_labels.Any(l => l.Contains("PER")))
+            _entityTypeMap = DefaultGeneralEntityTypeMap;
+        else
+            _entityTypeMap = DefaultResumeEntityTypeMap;
+
         TryLoadModel();
     }
 
     private void TryLoadModel()
     {
-        if (string.IsNullOrWhiteSpace(_options.ModelPath) || !File.Exists(_options.ModelPath))
+        var modelPath = ResolvePath(_options.ModelPath);
+        if (string.IsNullOrWhiteSpace(modelPath) || !File.Exists(modelPath))
         {
             _logger.LogInformation("OnnxNerDetector: no model configured — NER disabled");
             return;
         }
 
-        var vocabPath = _options.ResolvedVocabPath;
+        var vocabPath = ResolvePath(_options.ResolvedVocabPath);
         if (string.IsNullOrEmpty(vocabPath) || !File.Exists(vocabPath))
         {
             _logger.LogWarning("OnnxNerDetector: vocab.txt not found at {Path} — NER disabled", vocabPath);
@@ -79,16 +103,25 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
                 InterOpNumThreads = 1,
                 IntraOpNumThreads = Environment.ProcessorCount,
             };
-            _session = new InferenceSession(_options.ModelPath, sessionOptions);
-            _tokenizer = new WordpieceTokenizer(vocabPath);
+            _session = new InferenceSession(modelPath, sessionOptions);
+            _tokenizer = new WordpieceTokenizer(vocabPath, _options.LowerCase);
             _logger.LogInformation(
                 "OnnxNerDetector: loaded model from {Path} ({Labels} labels)",
-                _options.ModelPath, _labels.Length);
+                modelPath, _labels.Length);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "OnnxNerDetector: failed to load model from {Path}", _options.ModelPath);
+            _logger.LogWarning(ex, "OnnxNerDetector: failed to load model from {Path}", modelPath);
         }
+    }
+
+    private static string? ResolvePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return path;
+        if (Path.IsPathRooted(path)) return path;
+        // Try relative to AppContext.BaseDirectory first (where the built DLLs are)
+        var resolved = Path.Combine(AppContext.BaseDirectory, path);
+        return File.Exists(resolved) ? resolved : path;
     }
 
     public Task<IReadOnlyList<ExtractedEntity>> DetectAsync(
@@ -167,7 +200,7 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
                 var entityText = originalText[entityCharStart..entityCharEnd].Trim();
                 if (entityText.Length > 0)
                 {
-                    var classification = EntityTypeMap.TryGetValue(currentType, out var mapped)
+                    var classification = _entityTypeMap.TryGetValue(currentType, out var mapped)
                         ? mapped : currentType;
                     entities.Add(ExtractedEntity.Create(
                         entityText, classification, DetectionSource.Ner, avgScore, pageNumber));
