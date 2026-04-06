@@ -28,32 +28,38 @@ public sealed class JdSkillLedgerBuilder
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Required skills — explicit
-        foreach (var skill in jd.RequiredSkills.Where(s => s.Length > 1))
+        // Required skills — extract individual skill terms from requirement sentences
+        foreach (var rawSkill in jd.RequiredSkills.Where(s => s.Length > 1))
         {
-            var normalized = skill.Trim();
-            if (!seen.Add(normalized)) continue;
-            ledger.Requirements.Add(new JdSkillRequirement
+            var terms = ExtractSkillTerms(rawSkill);
+            foreach (var term in terms)
             {
-                SkillName = normalized,
-                Importance = SkillImportance.Required,
-                SourceText = skill,
-                Embedding = await _embedder.EmbedAsync(normalized, ct),
-            });
+                if (!seen.Add(term)) continue;
+                ledger.Requirements.Add(new JdSkillRequirement
+                {
+                    SkillName = term,
+                    Importance = SkillImportance.Required,
+                    SourceText = rawSkill,
+                    Embedding = await _embedder.EmbedAsync(term, ct),
+                });
+            }
         }
 
-        // Preferred skills — nice-to-have
-        foreach (var skill in jd.PreferredSkills.Where(s => s.Length > 1))
+        // Preferred skills
+        foreach (var rawSkill in jd.PreferredSkills.Where(s => s.Length > 1))
         {
-            var normalized = skill.Trim();
-            if (!seen.Add(normalized)) continue;
-            ledger.Requirements.Add(new JdSkillRequirement
+            var terms = ExtractSkillTerms(rawSkill);
+            foreach (var term in terms)
             {
-                SkillName = normalized,
-                Importance = SkillImportance.Preferred,
-                SourceText = skill,
-                Embedding = await _embedder.EmbedAsync(normalized, ct),
-            });
+                if (!seen.Add(term)) continue;
+                ledger.Requirements.Add(new JdSkillRequirement
+                {
+                    SkillName = term,
+                    Importance = SkillImportance.Preferred,
+                    SourceText = rawSkill,
+                    Embedding = await _embedder.EmbedAsync(term, ct),
+                });
+            }
         }
 
         // Inferred from description — skills mentioned in responsibilities/benefits
@@ -75,6 +81,86 @@ public sealed class JdSkillLedgerBuilder
         }
 
         return ledger;
+    }
+
+    /// <summary>
+    /// Extract individual skill terms from a requirement sentence.
+    /// "Production experience with Azure (AKS, Functions, Service Bus, Cosmos DB)"
+    /// → ["Azure", "AKS", "Functions", "Service Bus", "Cosmos DB"]
+    /// "10+ years software engineering" → [] (years requirement, not a skill)
+    /// </summary>
+    private static List<string> ExtractSkillTerms(string requirement)
+    {
+        var terms = new List<string>();
+        var text = requirement.Trim();
+
+        // Skip years-of-experience lines
+        if (System.Text.RegularExpressions.Regex.IsMatch(text, @"^\d+\+?\s*years"))
+            return terms;
+
+        // If it's short enough to be a single skill/term (< 40 chars, no verbs), keep as-is
+        if (text.Length < 40 && !ContainsVerbPhrase(text))
+        {
+            terms.Add(text);
+            return terms;
+        }
+
+        // Extract parenthetical content as separate skills
+        // "Azure (AKS, Functions, Service Bus)" → "Azure" + "AKS" + "Functions" + "Service Bus"
+        var parenMatch = System.Text.RegularExpressions.Regex.Match(text, @"(\w[\w\s.#/+-]*?)\s*\(([^)]+)\)");
+        if (parenMatch.Success)
+        {
+            var mainTerm = parenMatch.Groups[1].Value.Trim();
+            if (mainTerm.Length > 1) terms.Add(mainTerm);
+            var inner = parenMatch.Groups[2].Value;
+            foreach (var part in inner.Split([',', ';'], StringSplitOptions.TrimEntries))
+            {
+                var clean = part.Trim();
+                if (clean.Length > 1) terms.Add(clean);
+            }
+        }
+
+        // Extract terms joined by "and" / "or"
+        // "Kubernetes and Docker" → ["Kubernetes", "Docker"]
+        foreach (var segment in text.Split([" and ", " or ", " / "], StringSplitOptions.TrimEntries))
+        {
+            // Strip common prefixes: "Deep expertise in", "Production experience with", "Strong"
+            var stripped = StripQualifiers(segment);
+            if (stripped.Length > 1 && stripped.Length < 50 && !terms.Any(t => t.Equals(stripped, StringComparison.OrdinalIgnoreCase)))
+                terms.Add(stripped);
+        }
+
+        // If nothing extracted, use the whole thing (better than nothing)
+        if (terms.Count == 0 && text.Length < 80)
+            terms.Add(text);
+
+        return terms;
+    }
+
+    private static string StripQualifiers(string text)
+    {
+        ReadOnlySpan<string> prefixes =
+        [
+            "deep expertise in", "production experience with", "strong",
+            "experience with", "proficiency in", "knowledge of",
+            "experience in", "familiarity with", "understanding of",
+        ];
+        var lower = text.ToLowerInvariant().Trim();
+        foreach (var prefix in prefixes)
+        {
+            if (lower.StartsWith(prefix))
+                return text[prefix.Length..].TrimStart(' ', ',');
+        }
+        return text.Trim();
+    }
+
+    private static bool ContainsVerbPhrase(string text)
+    {
+        var lower = text.ToLowerInvariant();
+        ReadOnlySpan<string> verbs = ["experience", "expertise", "proficiency", "knowledge", "understanding", "years"];
+        foreach (var v in verbs)
+            if (lower.Contains(v)) return true;
+        return false;
     }
 
     /// <summary>

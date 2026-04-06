@@ -35,7 +35,7 @@ public sealed class SkillLedgerMatcher
         }
 
         // Match each JD requirement to the best resume skill
-        // Uses hybrid: substring match (fast, exact) + embedding similarity (semantic)
+        // JD ledger now provides clean skill names (not full sentences)
         var matches = new List<SkillMatch>();
         foreach (var req in jdLedger.Requirements)
         {
@@ -50,9 +50,8 @@ public sealed class SkillLedgerMatcher
             {
                 var nameLower = name.ToLowerInvariant();
 
-                // Fast path: substring match (resume skill name appears in JD requirement or vice versa)
-                // "C#" in "Deep expertise in C#" → match
-                // "Microsoft Azure" contains "Azure" → match
+                // Fast path: substring match (works well now that JD terms are clean)
+                // "C#" == "C#", "Azure" in "Microsoft Azure", "Docker" == "Docker"
                 if (reqLower.Contains(nameLower) || nameLower.Contains(reqLower))
                 {
                     var entry = resumeLedger.Find(name);
