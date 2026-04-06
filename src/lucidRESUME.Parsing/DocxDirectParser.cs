@@ -48,6 +48,13 @@ public sealed class DocxDirectParser : IDocumentParser
 
             // ── Content extraction ────────────────────────────────────────
             var hints = matchedTemplate?.Hints;
+
+            // Build style lookup once (avoids O(p*s) per-paragraph scan)
+            var styleMap = styles?.Elements<Style>()
+                .Where(s => s.StyleId?.Value != null)
+                .ToDictionary(s => s.StyleId!.Value!, s => s.StyleName?.Val?.Value ?? "")
+                ?? new Dictionary<string, string>();
+
             var sb = new StringBuilder();
             var plain = new StringBuilder();
             var sections = new List<DocumentSection>();
@@ -81,7 +88,7 @@ public sealed class DocxDirectParser : IDocumentParser
                     else
                     {
                         headingLevel = firstLine
-                            ? DetectHeadingLevel(para, styles, text)
+                            ? DetectHeadingLevel(para, styleMap, text)
                             : DetectHeadingLevelTextOnly(text);
                     }
 
@@ -388,7 +395,7 @@ public sealed class DocxDirectParser : IDocumentParser
 
     // ── Heuristic heading detection ──────────────────────────────────────────
 
-    private static int DetectHeadingLevel(Paragraph para, Styles? styles, string text)
+    private static int DetectHeadingLevel(Paragraph para, Dictionary<string, string> styleMap, string text)
     {
         var styleId = para.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
         if (styleId != null)
@@ -398,11 +405,8 @@ public sealed class DocxDirectParser : IDocumentParser
             if (lower == "heading2" || lower == "2") return 2;
             if (lower == "heading3" || lower == "3") return 3;
 
-            if (styles != null)
+            if (styleMap.TryGetValue(styleId, out var styleName))
             {
-                var styleName = styles.Elements<Style>()
-                    .FirstOrDefault(s => s.StyleId?.Value == styleId)
-                    ?.StyleName?.Val?.Value ?? "";
                 var sn = styleName.ToLowerInvariant();
                 if (sn.Contains("heading") || sn.Contains("title") || sn.Contains("section"))
                     return sn.Contains("2") || sn.Contains("sub") ? 2 : 1;

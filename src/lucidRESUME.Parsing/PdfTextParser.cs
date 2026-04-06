@@ -85,8 +85,9 @@ public sealed class PdfTextParser : IDocumentParser
                 Confidence = confidence
             });
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"PdfTextParser failed for {filePath}: {ex.Message}");
             return Task.FromResult<ParsedDocument?>(null);
         }
     }

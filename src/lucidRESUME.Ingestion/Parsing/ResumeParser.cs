@@ -171,11 +171,20 @@ public sealed class ResumeParser : IResumeParser
 
     private static void MapEntitiesToSchema(ResumeDocument resume, IReadOnlyList<ExtractedEntity> entities)
     {
-        resume.Personal.Email = entities.FirstOrDefault(e => e.Classification == "Email")?.Value;
-        resume.Personal.Phone = entities.FirstOrDefault(e => e.Classification == "PhoneNumber")?.Value;
-        resume.Personal.FullName = entities.FirstOrDefault(e => e.Classification == "PersonName" && e.Confidence > 0.85)?.Value;
-        resume.Personal.LinkedInUrl = entities.FirstOrDefault(e => e.Classification == "LinkedInUrl")?.Value;
-        resume.Personal.GitHubUrl = entities.FirstOrDefault(e => e.Classification == "GitHubUrl")?.Value;
+        // Single pass: build lookup by classification (avoids 5x linear scans)
+        var byClass = new Dictionary<string, ExtractedEntity>();
+        foreach (var e in entities)
+        {
+            if (!byClass.ContainsKey(e.Classification) || e.Confidence > byClass[e.Classification].Confidence)
+                byClass[e.Classification] = e;
+        }
+
+        resume.Personal.Email = byClass.GetValueOrDefault("Email")?.Value;
+        resume.Personal.Phone = byClass.GetValueOrDefault("PhoneNumber")?.Value;
+        if (byClass.TryGetValue("PersonName", out var nameEntity) && nameEntity.Confidence > 0.85)
+            resume.Personal.FullName = nameEntity.Value;
+        resume.Personal.LinkedInUrl = byClass.GetValueOrDefault("LinkedInUrl")?.Value;
+        resume.Personal.GitHubUrl = byClass.GetValueOrDefault("GitHubUrl")?.Value;
     }
 
     /// <summary>

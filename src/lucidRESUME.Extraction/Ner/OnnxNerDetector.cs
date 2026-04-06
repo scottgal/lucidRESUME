@@ -55,6 +55,7 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
     private readonly string[] _labels;
     private readonly Dictionary<string, string> _entityTypeMap;
     private InferenceSession? _session;
+    private readonly object _sessionLock = new();
     private WordpieceTokenizer? _tokenizer;
 
     public bool IsAvailable => _session is not null && _tokenizer is not null;
@@ -163,12 +164,15 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
             NamedOnnxValue.CreateFromTensor("token_type_ids", typeIdsTensor),
         };
 
-        using var outputs = _session!.Run(inputs);
+        // Thread-safety: ONNX Runtime sessions are not thread-safe
+        DenseTensor<float> logitsTensor;
+        lock (_sessionLock)
+        {
+            using var outputs = _session!.Run(inputs);
+            logitsTensor = outputs.First(o => o.Name == "logits").AsTensor<float>().ToDenseTensor();
+        }
 
-        // logits shape: [1, seqLen, numLabels]
-        var logitsTensor = outputs.First(o => o.Name == "logits").AsTensor<float>();
         int numLabels = _labels.Length;
-
         return DecodeEntities(text, logitsTensor, seqLen, numLabels,
             encoding.CharOffsets, encoding.RealTokenCount, context.PageNumber);
     }
