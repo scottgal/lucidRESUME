@@ -33,36 +33,40 @@
 
       <!-- Status at bottom of sidebar -->
       <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource LrBorderBrush}"
-              Margin="0,8,0,0" Padding="8,8,8,4">
-        <StackPanel Spacing="3">
-          <TextBlock Text="Services" FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}" FontWeight="SemiBold" Margin="0,0,0,2"/>
-          <StackPanel Orientation="Horizontal" Spacing="4">
-            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+              Margin="0,4,0,0" Padding="6,6,6,4">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Services" FontSize="9" Foreground="{DynamicResource LrSubtleTextBrush}" FontWeight="SemiBold" Margin="0,0,0,1"/>
+          <StackPanel Orientation="Horizontal" Spacing="3">
+            <Ellipse Width="5" Height="5" VerticalAlignment="Center"
                      Fill="{Binding EmbeddingColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding EmbeddingLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
+            <TextBlock Text="{Binding EmbeddingLabel}" FontSize="9" Foreground="{DynamicResource LrNavTextBrush}"
+                       TextTrimming="CharacterEllipsis" MaxWidth="165"/>
           </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="4">
-            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+          <StackPanel Orientation="Horizontal" Spacing="3">
+            <Ellipse Width="5" Height="5" VerticalAlignment="Center"
                      Fill="{Binding NerColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding NerLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
+            <TextBlock Text="{Binding NerLabel}" FontSize="9" Foreground="{DynamicResource LrNavTextBrush}"
+                       TextTrimming="CharacterEllipsis" MaxWidth="165"/>
           </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="4">
-            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+          <StackPanel Orientation="Horizontal" Spacing="3">
+            <Ellipse Width="5" Height="5" VerticalAlignment="Center"
                      Fill="{Binding OllamaColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding OllamaLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
+            <TextBlock Text="{Binding OllamaLabel}" FontSize="9" Foreground="{DynamicResource LrNavTextBrush}"
+                       TextTrimming="CharacterEllipsis" MaxWidth="165"/>
           </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="4">
-            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+          <StackPanel Orientation="Horizontal" Spacing="3">
+            <Ellipse Width="5" Height="5" VerticalAlignment="Center"
                      Fill="{Binding DoclingColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding DoclingLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
+            <TextBlock Text="{Binding DoclingLabel}" FontSize="9" Foreground="{DynamicResource LrNavTextBrush}"
+                       TextTrimming="CharacterEllipsis" MaxWidth="165"/>
           </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="4">
-            <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{DynamicResource LrStatusGreenBrush}"/>
-            <TextBlock Text="{Binding StoreLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
+          <StackPanel Orientation="Horizontal" Spacing="3">
+            <Ellipse Width="5" Height="5" VerticalAlignment="Center" Fill="{DynamicResource LrStatusGreenBrush}"/>
+            <TextBlock Text="{Binding StoreLabel}" FontSize="9" Foreground="{DynamicResource LrNavTextBrush}"/>
           </StackPanel>
-          <TextBlock Text="{Binding WarningMessage}" FontSize="9" Foreground="{DynamicResource LrAccentYellowBrush}"
+          <TextBlock Text="{Binding WarningMessage}" FontSize="8" Foreground="{DynamicResource LrAccentYellowBrush}"
                      TextWrapping="Wrap" IsVisible="{Binding WarningMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                     Margin="0,4,0,0"/>
+                     Margin="0,2,0,0"/>
         </StackPanel>
       </Border>
 

@@ -10,7 +10,7 @@ namespace lucidRESUME.Matching;
 public sealed class SkillLedgerMatcher
 {
     private readonly IEmbeddingService _embedder;
-    private const float SemanticMatchThreshold = 0.80f;
+    private const float SemanticMatchThreshold = 0.70f; // lowered from 0.80 — JD requirements are sentences, resume skills are keywords
 
     public SkillLedgerMatcher(IEmbeddingService embedder)
     {
@@ -35,27 +35,51 @@ public sealed class SkillLedgerMatcher
         }
 
         // Match each JD requirement to the best resume skill
+        // Uses hybrid: substring match (fast, exact) + embedding similarity (semantic)
         var matches = new List<SkillMatch>();
         foreach (var req in jdLedger.Requirements)
         {
-            if (req.Embedding is null) continue;
-
             SkillLedgerEntry? bestEntry = null;
             float bestSim = 0;
             string? bestResumeName = null;
+            bool substringMatch = false;
+
+            var reqLower = req.SkillName.ToLowerInvariant();
 
             foreach (var (name, emb) in resumeEmbeddings)
             {
-                var sim = _embedder.CosineSimilarity(req.Embedding, emb);
-                if (sim > bestSim)
+                var nameLower = name.ToLowerInvariant();
+
+                // Fast path: substring match (resume skill name appears in JD requirement or vice versa)
+                // "C#" in "Deep expertise in C#" → match
+                // "Microsoft Azure" contains "Azure" → match
+                if (reqLower.Contains(nameLower) || nameLower.Contains(reqLower))
                 {
-                    bestSim = sim;
-                    bestResumeName = name;
-                    bestEntry = resumeLedger.Find(name);
+                    var entry = resumeLedger.Find(name);
+                    if (entry is not null && (bestEntry is null || !substringMatch || entry.Strength > bestEntry.Strength))
+                    {
+                        bestSim = Math.Max(bestSim, 0.85f);
+                        bestResumeName = name;
+                        bestEntry = entry;
+                        substringMatch = true;
+                    }
+                    continue;
+                }
+
+                // Semantic path: embedding similarity
+                if (req.Embedding is not null)
+                {
+                    var sim = _embedder.CosineSimilarity(req.Embedding, emb);
+                    if (sim > bestSim && !substringMatch)
+                    {
+                        bestSim = sim;
+                        bestResumeName = name;
+                        bestEntry = resumeLedger.Find(name);
+                    }
                 }
             }
 
-            var isMatch = bestSim >= SemanticMatchThreshold && bestEntry is not null;
+            var isMatch = (substringMatch || bestSim >= SemanticMatchThreshold) && bestEntry is not null;
 
             matches.Add(new SkillMatch
             {
