@@ -199,7 +199,9 @@
       "Bash(docker pull:*)",
       "Bash(docker run:*)",
       "Bash(git status:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)"
     ]
   }
 }

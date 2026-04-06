@@ -49,17 +49,18 @@ Everything depends inward on `Core`. `Core` depends only on `Microsoft.Data.Sqli
 
 ```
 lucidRESUME (Avalonia app shell — DI wiring, Views, ViewModels)
-  ├── Ingestion      Resume file import, optional Docling client, image cache
-  ├── Extraction     ONNX NER + Microsoft.Recognizers pipeline
-  ├── Parsing        DOCX/PDF/TXT text extraction, section classification
-  ├── JobSpec        Job description parsing (URL scrape + text parse)
+  ├── Ingestion      Resume parsing, Docling client (Docker), image cache
+  ├── Extraction     ONNX NER (2 models: general + resume) + Microsoft.Recognizers
+  ├── Parsing        DOCX/PDF/TXT extraction, ATS patterns (YAML), template learning
+  ├── JobSpec        JD parsing (RRF fusion: Structural + NER + LLM), URL scraping
   ├── JobSearch      7 job board adapters + orchestrator + deduplicator
-  ├── Matching       Skill scoring, coverage analysis, aspect voting
-  ├── AI             ONNX embeddings (local), Ollama tailoring + extraction (optional)
+  ├── Matching       Skill ledger, skill graph, career planner, coverage, aspect voting
+  ├── AI             Ollama/Anthropic/OpenAI, AI detection (5 signals), de-AI, translation
+  ├── EmailTracker   IMAP scanning (MailKit), email classification, application matching
   ├── Export         JSON Resume + Markdown exporters
-  ├── Collabora      LibreOffice/editor integration, document openers
-  ├── UXTesting      UI automation framework (REPL, MCP, script runner)
-  └── Core           Domain models, interfaces, persistence (IAppStore)
+  ├── Collabora      LibreOffice/editor integration, macOS native openers
+  ├── UXTesting      UI automation (REPL, MCP, scripts, ImportFile, PasteJob)
+  └── Core           Domain models, interfaces, persistence (SQLite + sqlite-vec)
 ```
 
 ### MVVM Pattern
