@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SkillLedgerMatcher>();
         services.AddSingleton<Graph.CareerPlanner>();
         services.AddSingleton<Graph.SearchQueryGenerator>();
+        services.AddSingleton<Graph.AdaptiveQueryWidener>();
 
         return services;
     }
