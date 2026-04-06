@@ -12,8 +12,14 @@ public sealed class SkillLedgerMatcher
     private readonly IEmbeddingService _embedder;
     private const float SemanticMatchThreshold = 0.58f; // catches "NoSQL" ↔ "MongoDB" (0.59), "AI/ML" ↔ "ML.NET"
 
-    // Cache: raw resume experience for evidence-text fallback search
-    private Core.Models.Resume.ResumeDocument? _resumeDoc;
+    // Stop words for achievement-text keyword matching — filtered before searching
+    // TODO: externalise to config file
+    private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "with", "and", "the", "for", "from", "that", "this", "have", "been",
+        "experience", "strong", "production", "deep", "expertise", "knowledge",
+        "understanding", "proficiency", "familiarity", "years", "plus",
+    };
 
     public SkillLedgerMatcher(IEmbeddingService embedder)
     {
@@ -87,7 +93,7 @@ public sealed class SkillLedgerMatcher
             if (!substringMatch && bestSim < SemanticMatchThreshold && resumeDoc is not null)
             {
                 var reqWords = reqLower.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                    .Where(w => w.Length > 3 && w != "with" && w != "experience" && w != "strong" && w != "production")
+                    .Where(w => w.Length > 3 && !StopWords.Contains(w))
                     .ToList();
 
                 foreach (var exp in resumeDoc.Experience)
