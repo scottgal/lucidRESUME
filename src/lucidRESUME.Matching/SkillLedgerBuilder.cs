@@ -23,7 +23,7 @@ public sealed class SkillLedgerBuilder
         var ledger = new SkillLedger();
         var entries = new Dictionary<string, SkillLedgerEntry>(StringComparer.OrdinalIgnoreCase);
 
-        // 1. Collect all skills from the Skills section
+        // 1a. Collect skills from the Skills section
         foreach (var skill in resume.Skills)
         {
             var entry = GetOrCreate(entries, skill.Name);
@@ -36,7 +36,23 @@ public sealed class SkillLedgerBuilder
             });
         }
 
-        // Pre-embed all known skill names for semantic matching
+        // 1b. Add NER-extracted skills BEFORE experience scanning
+        // so experience evidence gets attached to NER-discovered skills too
+        foreach (var entity in resume.Entities.Where(e => e.Classification is "NerSkill" && e.Value.Length >= 2))
+        {
+            var entry = GetOrCreate(entries, entity.Value);
+            if (!entry.Evidence.Any(e => e.Source == EvidenceSource.NerExtracted))
+            {
+                entry.Evidence.Add(new SkillEvidence
+                {
+                    SourceText = entity.Value,
+                    Source = EvidenceSource.NerExtracted,
+                    Confidence = entity.Confidence
+                });
+            }
+        }
+
+        // Pre-embed all known skill names (from Skills section + NER) for semantic matching
         var skillEmbeddings = new Dictionary<string, float[]>();
         foreach (var skillName in entries.Keys.ToList())
         {
@@ -104,17 +120,7 @@ public sealed class SkillLedgerBuilder
             }
         }
 
-        // 4. NER-extracted skills
-        foreach (var entity in resume.Entities.Where(e => e.Classification is "NerSkill"))
-        {
-            var entry = GetOrCreate(entries, entity.Value);
-            entry.Evidence.Add(new SkillEvidence
-            {
-                SourceText = entity.Value,
-                Source = EvidenceSource.NerExtracted,
-                Confidence = entity.Confidence
-            });
-        }
+        // 4. (NER skills already added in step 1b — no duplicate needed)
 
         // 5. Calculate years and dates for each skill
         foreach (var entry in entries.Values)
