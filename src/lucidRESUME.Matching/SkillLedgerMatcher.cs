@@ -12,14 +12,24 @@ public sealed class SkillLedgerMatcher
     private readonly IEmbeddingService _embedder;
     private const float SemanticMatchThreshold = 0.58f; // catches "NoSQL" ↔ "MongoDB" (0.59), "AI/ML" ↔ "ML.NET"
 
-    // Stop words for achievement-text keyword matching — filtered before searching
-    // TODO: externalise to config file
-    private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
+    // Stop words loaded from Resources/stopwords.txt
+    private static readonly Lazy<HashSet<string>> StopWords = new(() =>
     {
-        "with", "and", "the", "for", "from", "that", "this", "have", "been",
-        "experience", "strong", "production", "deep", "expertise", "knowledge",
-        "understanding", "proficiency", "familiarity", "years", "plus",
-    };
+        var path = Path.Combine(AppContext.BaseDirectory, "Resources", "stopwords.txt");
+        if (!File.Exists(path))
+            path = Path.Combine(Path.GetDirectoryName(typeof(SkillLedgerMatcher).Assembly.Location)!, "Resources", "stopwords.txt");
+        if (File.Exists(path))
+        {
+            return new HashSet<string>(
+                File.ReadAllLines(path)
+                    .Where(l => !string.IsNullOrWhiteSpace(l) && !l.TrimStart().StartsWith('#'))
+                    .Select(l => l.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+        }
+        // Fallback if file not found
+        return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        { "with", "and", "the", "for", "from", "that", "this", "have", "been", "experience", "strong" };
+    });
 
     public SkillLedgerMatcher(IEmbeddingService embedder)
     {
@@ -93,7 +103,7 @@ public sealed class SkillLedgerMatcher
             if (!substringMatch && bestSim < SemanticMatchThreshold && resumeDoc is not null)
             {
                 var reqWords = reqLower.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                    .Where(w => w.Length > 3 && !StopWords.Contains(w))
+                    .Where(w => w.Length > 3 && !StopWords.Value.Contains(w))
                     .ToList();
 
                 foreach (var exp in resumeDoc.Experience)
