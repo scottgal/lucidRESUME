@@ -91,7 +91,7 @@
       <ScrollViewer Grid.Column="1" Margin="8,8,16,16">
         <StackPanel Spacing="16">
 
-          <!-- Quality Score Banner -->
+          <!-- Resume Quality — Synthesized Suggestions -->
           <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
                   IsVisible="{Binding HasQualityReport}">
             <StackPanel Spacing="8">
@@ -106,16 +106,39 @@
                   </TextBlock>
                 </Border>
               </Grid>
-              <ItemsControl ItemsSource="{Binding QualityFindings}">
+
+              <!-- Strengths -->
+              <ItemsControl ItemsSource="{Binding ResumeStrengths}">
                 <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:QualityFindingViewModel">
-                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                      <Border Width="8" Height="8" CornerRadius="4"
-                              Background="{Binding SeverityColor}"
-                              VerticalAlignment="Center"/>
-                      <TextBlock Text="{Binding Message}" FontSize="11"
-                                 Foreground="{DynamicResource LrTertiaryTextBrush}" TextWrapping="Wrap"/>
+                  <DataTemplate x:DataType="x:String">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,1">
+                      <TextBlock Text="+" FontWeight="Bold" Foreground="{DynamicResource LrAccentGreenBrush}" FontSize="11"/>
+                      <TextBlock Text="{Binding}" FontSize="11" Foreground="{DynamicResource LrAccentGreenBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <!-- Grouped Suggestions -->
+              <ItemsControl ItemsSource="{Binding QualitySuggestions}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:QualitySuggestionViewModel">
+                    <Border Background="{DynamicResource LrPageBgBrush}" CornerRadius="4" Padding="8,5" Margin="0,0,0,3">
+                      <Grid ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0" Background="{Binding SeverityColor}" CornerRadius="4"
+                                Padding="5,1" Margin="0,0,8,0" VerticalAlignment="Top" MinWidth="60"
+                                HorizontalAlignment="Center">
+                          <TextBlock Text="{Binding Category}" FontSize="9" FontWeight="SemiBold"
+                                     Foreground="White" HorizontalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="1">
+                          <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold"
+                                     Foreground="{DynamicResource LrPrimaryTextBrush}" TextWrapping="Wrap"/>
+                          <TextBlock Text="{Binding Summary}" FontSize="10"
+                                     Foreground="{DynamicResource LrTertiaryTextBrush}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                      </Grid>
+                    </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>

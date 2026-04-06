@@ -8,6 +8,7 @@ using lucidRESUME.Collabora.DocumentOpeners;
 using lucidRESUME.Collabora.Services;
 using lucidRESUME.AI;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Matching;
 using lucidRESUME.Core.Models.Quality;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
@@ -25,6 +26,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly AiDetectionScorer _aiDetectionScorer;
     private readonly DeAiRewriter _deAiRewriter;
     private readonly ResumeTranslator _translator;
+    private readonly QualitySynthesizer _synthesizer;
+    private readonly SkillLedgerBuilder _ledgerBuilder;
     private readonly IResumeExporter? _jsonExporter;
     private readonly IResumeExporter? _markdownExporter;
     private string? _loadedFilePath;
@@ -57,9 +60,12 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private IReadOnlyList<SkillGroup> _skillGroups = [];
     [ObservableProperty] private bool _hasResume;
 
-    // Quality analysis
+    // Quality analysis — synthesized suggestions (not raw findings)
     [ObservableProperty] private int _qualityScore;
     [ObservableProperty] private bool _hasQualityReport;
+    [ObservableProperty] private IReadOnlyList<QualitySuggestionViewModel> _qualitySuggestions = [];
+    [ObservableProperty] private IReadOnlyList<string> _resumeStrengths = [];
+    // Keep raw findings for backward compat (used in AI detection too)
     [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _qualityFindings = [];
 
     // AI detection
@@ -85,6 +91,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         AiDetectionScorer aiDetectionScorer,
         DeAiRewriter deAiRewriter,
         ResumeTranslator translator,
+        QualitySynthesizer synthesizer,
+        SkillLedgerBuilder ledgerBuilder,
         IEnumerable<IResumeExporter> exporters)
     {
         _parser = parser;
@@ -96,6 +104,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         _aiDetectionScorer = aiDetectionScorer;
         _deAiRewriter = deAiRewriter;
         _translator = translator;
+        _synthesizer = synthesizer;
+        _ledgerBuilder = ledgerBuilder;
         var exporterList = exporters.ToList();
         _jsonExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.JsonResume);
         _markdownExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.Markdown);
@@ -369,8 +379,33 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         var report = await _qualityAnalyser.AnalyseAsync(Resume);
         QualityScore = report.OverallScore;
         HasQualityReport = true;
+
+        // Build skill ledger for richer insights
+        Core.Models.Skills.SkillLedger? ledger = null;
+        try { ledger = await _ledgerBuilder.BuildAsync(Resume); }
+        catch { /* non-blocking */ }
+
+        // Synthesize grouped suggestions instead of raw findings
+        var synthesis = _synthesizer.Synthesize(report, ledger);
+        QualitySuggestions = synthesis.Suggestions
+            .Select(s => new QualitySuggestionViewModel(
+                s.Category,
+                s.Title,
+                s.Summary,
+                s.Severity switch
+                {
+                    SuggestionSeverity.Important => "#F38BA8",
+                    SuggestionSeverity.Moderate => "#F9E2AF",
+                    _ => "#A6E3A1"
+                },
+                s.AffectedCount))
+            .ToList();
+        ResumeStrengths = synthesis.Strengths;
+
+        // Keep raw findings for backward compat (AI detection panel uses same format)
         QualityFindings = report.AllFindings
             .OrderByDescending(f => f.Severity)
+            .Take(5) // only show top 5 raw findings
             .Select(f => new QualityFindingViewModel(
                 f.Severity.ToString(),
                 f.Severity switch {
@@ -500,3 +535,10 @@ public record EducationItemViewModel(
 public record OpenerItem(string Name, ICommand Command);
 
 public record QualityFindingViewModel(string Severity, string SeverityColor, string Code, string Message, string Section);
+
+public record QualitySuggestionViewModel(
+    string Category,
+    string Title,
+    string Summary,
+    string SeverityColor,
+    int AffectedCount);
