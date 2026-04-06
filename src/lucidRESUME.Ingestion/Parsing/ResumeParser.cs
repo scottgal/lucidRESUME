@@ -128,7 +128,7 @@ public sealed class ResumeParser : IResumeParser
         // Non-blocking: doesn't slow down parse return, updates resume in background.
         // Results are available if the caller awaits resume.LlmEnhancementTask.
         if (_llm != null && (resume.Skills.Count == 0 || resume.Experience.Count == 0))
-            resume.LlmEnhancementTask = LlmFillMissingAsync(resume, plainText ?? markdown, CancellationToken.None);
+            resume.LlmEnhancementTask = LlmFillMissingAsync(resume, plainText ?? markdown, ct);
 
         return resume;
     }
@@ -206,28 +206,30 @@ public sealed class ResumeParser : IResumeParser
             return;
         }
 
-        // Strategy 2: First non-heading, non-section line that looks like a name
-        // (short, no numbers, not a known section keyword, no URLs)
-        foreach (var rawLine in markdown.Split('\n'))
+        // Strategies 2+3: scan markdown lines once
+        var lines = markdown.Split('\n');
+        string? fallback = null;
+
+        foreach (var rawLine in lines)
         {
             var text = rawLine.Trim('\r', ' ').TrimStart('#').Trim();
             if (string.IsNullOrWhiteSpace(text)) continue;
+
+            // Track first non-empty line as last-resort fallback
+            fallback ??= text;
+
+            // Strategy 2: non-heading, non-section, name-like line
             if (text.Length > 60 || text.Length < 3) continue;
-            if (text.Any(char.IsDigit)) continue; // skip addresses, phone numbers
+            if (text.Any(char.IsDigit)) continue;
             if (text.Contains('@') || text.Contains("http")) continue;
             if (Ingestion.Parsing.SectionClassifier.ClassifyHeading(text) is not null) continue;
             resume.Personal.FullName = text;
             return;
         }
 
-        // Strategy 3: Fall back to first non-empty line (last resort)
-        foreach (var rawLine in markdown.Split('\n'))
-        {
-            var text = rawLine.Trim('\r', ' ').TrimStart('#').Trim();
-            if (string.IsNullOrWhiteSpace(text)) continue;
-            resume.Personal.FullName = text;
-            break;
-        }
+        // Strategy 3: first non-empty line (last resort)
+        if (fallback is not null)
+            resume.Personal.FullName = fallback;
     }
 
     private static string GetContentType(string ext) => ext.ToLowerInvariant() switch
