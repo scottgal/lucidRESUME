@@ -35,6 +35,12 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<CompanyClassifier>(),
                 sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoverageOptions>>(),
                 sp.GetService<IEmbeddingService>()));
+
+        // Skill ledger builders + matcher
+        services.AddSingleton<SkillLedgerBuilder>();
+        services.AddSingleton<JdSkillLedgerBuilder>();
+        services.AddSingleton<SkillLedgerMatcher>();
+
         return services;
     }
 }
