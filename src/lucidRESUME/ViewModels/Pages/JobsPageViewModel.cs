@@ -155,7 +155,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
                 try
                 {
                     var jdLedger = await _jdLedgerBuilder.BuildAsync(j);
-                    var match = await _ledgerMatcher.MatchAsync(resumeLedger, jdLedger);
+                    var match = await _ledgerMatcher.MatchAsync(resumeLedger, jdLedger, resumeDoc: state.Resume);
                     score = match.OverallFit;
                     j.SetMatchScore(score);
                 }

@@ -55,7 +55,7 @@ public static class MatchCommand
                 Console.WriteLine($"  [{req.Importance}] {req.SkillName}");
 
             Console.WriteLine("\nMatching...");
-            var matchResult = await matcher.MatchAsync(resumeLedger, jdLedger, ct);
+            var matchResult = await matcher.MatchAsync(resumeLedger, jdLedger, ct, resumeDoc: resume);
 
             Console.WriteLine("\n=== MATCH RESULTS ===");
             Console.WriteLine($"Overall Fit: {matchResult.OverallFit:P0}");

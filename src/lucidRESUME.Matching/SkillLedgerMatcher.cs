@@ -12,13 +12,17 @@ public sealed class SkillLedgerMatcher
     private readonly IEmbeddingService _embedder;
     private const float SemanticMatchThreshold = 0.58f; // catches "NoSQL" ↔ "MongoDB" (0.59), "AI/ML" ↔ "ML.NET"
 
+    // Cache: raw resume experience for evidence-text fallback search
+    private Core.Models.Resume.ResumeDocument? _resumeDoc;
+
     public SkillLedgerMatcher(IEmbeddingService embedder)
     {
         _embedder = embedder;
     }
 
     public async Task<LedgerMatchResult> MatchAsync(
-        SkillLedger resumeLedger, JdSkillLedger jdLedger, CancellationToken ct = default)
+        SkillLedger resumeLedger, JdSkillLedger jdLedger, CancellationToken ct = default,
+        Core.Models.Resume.ResumeDocument? resumeDoc = null)
     {
         // Embed all resume skills
         var resumeEmbeddings = new Dictionary<string, float[]>();
@@ -75,6 +79,36 @@ public sealed class SkillLedgerMatcher
                         bestResumeName = name;
                         bestEntry = resumeLedger.Find(name);
                     }
+                }
+            }
+
+            // Fallback: search raw resume experience achievements for JD requirement words
+            // "payment systems" → found in "Stripe Connect and Hyperwallet payment systems"
+            if (!substringMatch && bestSim < SemanticMatchThreshold && resumeDoc is not null)
+            {
+                var reqWords = reqLower.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => w.Length > 3 && w != "with" && w != "experience" && w != "strong" && w != "production")
+                    .ToList();
+
+                foreach (var exp in resumeDoc.Experience)
+                {
+                    foreach (var ach in exp.Achievements)
+                    {
+                        var achLower = ach.ToLowerInvariant();
+                        var hits = reqWords.Count(w => achLower.Contains(w));
+
+                        if (hits >= 2 || (reqWords.Count == 1 && hits >= 1))
+                        {
+                            var snippet = ach.Length > 60 ? ach[..57] + "..." : ach;
+                            bestSim = 0.65f;
+                            bestResumeName = $"(evidence: {snippet})";
+                            // Find or create a ledger entry for context
+                            bestEntry = resumeLedger.Entries.FirstOrDefault() ?? new SkillLedgerEntry { SkillName = "?" };
+                            substringMatch = true;
+                            break;
+                        }
+                    }
+                    if (substringMatch) break;
                 }
             }
 
