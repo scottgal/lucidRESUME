@@ -36,7 +36,22 @@ artifacts/
 .claude/settings.local.json
 nul
 
-## ONNX model files (download separately)
-models/*.onnx
-models/*.txt
-models/*.json
+## ONNX model files (download separately — auto-downloaded on first run)
+models/**/*.onnx
+models/**/*.txt
+models/**/*.json
+models/**/merges.txt
+models/**/tokenizer*.json
+models/**/config.json
+models/**/special_tokens_map.json
+
+## Test output (regenerated, not source)
+test-data/results/
+test-data/results-docling/
+test-data/resumes/output-*.json
+test-data/e2e-*.json
+test-data/e2e-*.md
+
+## UX test screenshots (regenerated)
+ux-screenshots/*.png
+ux-screenshots/result.json
