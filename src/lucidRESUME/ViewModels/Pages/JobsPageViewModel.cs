@@ -50,6 +50,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private readonly PipelinePageViewModel _pipelinePage;
     private readonly SkillLedgerBuilder _ledgerBuilder;
     private readonly JdSkillLedgerBuilder _jdLedgerBuilder;
+    private readonly SkillLedgerMatcher _ledgerMatcher;
     private readonly CareerPlanner _careerPlanner;
     private readonly SearchQueryGenerator _searchQueryGenerator;
 
@@ -104,6 +105,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         PipelinePageViewModel pipelinePage,
         SkillLedgerBuilder ledgerBuilder,
         JdSkillLedgerBuilder jdLedgerBuilder,
+        SkillLedgerMatcher ledgerMatcher,
         CareerPlanner careerPlanner,
         SearchQueryGenerator searchQueryGenerator)
     {
@@ -117,6 +119,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _pipelinePage = pipelinePage;
         _ledgerBuilder = ledgerBuilder;
         _jdLedgerBuilder = jdLedgerBuilder;
+        _ledgerMatcher = ledgerMatcher;
         _careerPlanner = careerPlanner;
         _searchQueryGenerator = searchQueryGenerator;
         _ = LoadSavedAsync();
@@ -133,19 +136,44 @@ public sealed partial class JobsPageViewModel : ViewModelBase
             return;
         }
 
-        Jobs = state.Jobs
-            .OrderByDescending(j => j.CreatedAt)
-            .Select(j => new JobListItem(
+        // Compute match scores using skill ledger if resume is available
+        Core.Models.Skills.SkillLedger? resumeLedger = null;
+        if (state.Resume is not null)
+        {
+            try { resumeLedger = await _ledgerBuilder.BuildAsync(state.Resume); }
+            catch { /* non-blocking */ }
+        }
+
+        var jobItems = new List<JobListItem>();
+        foreach (var j in state.Jobs.OrderByDescending(j => j.CreatedAt))
+        {
+            var score = j.MatchScore ?? 0.0;
+
+            // Compute match score from skill ledger if not already set
+            if (score < 0.01 && resumeLedger is not null)
+            {
+                try
+                {
+                    var jdLedger = await _jdLedgerBuilder.BuildAsync(j);
+                    var match = await _ledgerMatcher.MatchAsync(resumeLedger, jdLedger);
+                    score = match.OverallFit;
+                    j.SetMatchScore(score);
+                }
+                catch { /* non-blocking */ }
+            }
+
+            jobItems.Add(new JobListItem(
                 j.JobId,
                 j.Title ?? "(No title)",
                 j.Company ?? "(Unknown)",
                 j.Location ?? "",
                 j.IsRemote ?? false,
-                j.MatchScore ?? 0.0,
+                score,
                 j.Source?.Url ?? "",
-                j))
-            .ToList()
-            .AsReadOnly();
+                j));
+        }
+
+        Jobs = jobItems.AsReadOnly();
         StatusMessage = $"{state.Jobs.Count} saved job(s).";
 
         // Generate search suggestions from skill communities
