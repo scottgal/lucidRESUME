@@ -1,6 +1,8 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Persistence;
 
@@ -27,11 +29,19 @@ public sealed partial class SearchPageViewModel : ViewModelBase
     [ObservableProperty] private string _manualUrl = "";
     [ObservableProperty] private IReadOnlyList<SavedJobItem> _savedJobs = [];
 
+    // Search watches
+    [ObservableProperty] private ObservableCollection<WatchItem> _watches = [];
+    [ObservableProperty] private string _newWatchQuery = "";
+    [ObservableProperty] private bool _newWatchRequireSalary;
+    [ObservableProperty] private bool _newWatchRequireRemote;
+    [ObservableProperty] private int _newWatchPollMinutes = 60;
+
     public SearchPageViewModel(IJobSpecParser parser, IAppStore store)
     {
         _parser = parser;
         _store = store;
         _ = LoadSavedJobsAsync();
+        _ = LoadWatchesAsync();
     }
 
     [RelayCommand]
@@ -161,4 +171,72 @@ public sealed partial class SearchPageViewModel : ViewModelBase
             return uri.Host.Replace("www.", "");
         return "URL";
     }
+
+    // ── Search Watches ──────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task CreateWatchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewWatchQuery)) return;
+
+        var watch = new SearchWatch
+        {
+            Name = NewWatchQuery.Length > 30 ? NewWatchQuery[..27] + "..." : NewWatchQuery,
+            Query = NewWatchQuery,
+            PollIntervalMinutes = NewWatchPollMinutes,
+            Filters = new SearchHardFilter
+            {
+                RequireSalary = NewWatchRequireSalary,
+                RequireRemote = NewWatchRequireRemote,
+            }
+        };
+
+        await _store.MutateAsync(state => state.SearchWatches.Add(watch));
+        NewWatchQuery = "";
+        StatusMessage = $"Watch created: polling every {NewWatchPollMinutes}min";
+        await LoadWatchesAsync();
+    }
+
+    [RelayCommand]
+    private async Task DeleteWatchAsync(WatchItem item)
+    {
+        await _store.MutateAsync(state =>
+            state.SearchWatches.RemoveAll(w => w.WatchId == item.WatchId));
+        await LoadWatchesAsync();
+        StatusMessage = "Watch removed.";
+    }
+
+    [RelayCommand]
+    private async Task ToggleWatchAsync(WatchItem item)
+    {
+        await _store.MutateAsync(state =>
+        {
+            var w = state.SearchWatches.FirstOrDefault(sw => sw.WatchId == item.WatchId);
+            if (w is not null) w.IsActive = !w.IsActive;
+        });
+        await LoadWatchesAsync();
+    }
+
+    private async Task LoadWatchesAsync()
+    {
+        var state = await _store.LoadAsync();
+        Watches = new ObservableCollection<WatchItem>(
+            state.SearchWatches.Select(w => new WatchItem(
+                w.WatchId,
+                w.Name,
+                w.Query,
+                w.IsActive,
+                w.PollIntervalMinutes,
+                w.LastPolledAt?.ToString("g") ?? "never",
+                w.LastNewMatches)));
+    }
 }
+
+public sealed record WatchItem(
+    Guid WatchId,
+    string Name,
+    string Query,
+    bool IsActive,
+    int PollMinutes,
+    string LastPolled,
+    int LastMatches);
