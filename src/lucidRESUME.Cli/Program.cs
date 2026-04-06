@@ -5,6 +5,7 @@ var root = new RootCommand("lucidRESUME — AI-powered resume & job hunting assi
 root.Subcommands.Add(ParseCommand.Build());
 root.Subcommands.Add(AnalyseCommand.Build());
 root.Subcommands.Add(ExportCommand.Build());
+root.Subcommands.Add(MatchCommand.Build());
 root.Subcommands.Add(TrainCommand.Build());
 root.Subcommands.Add(TuneCommand.Build());
 

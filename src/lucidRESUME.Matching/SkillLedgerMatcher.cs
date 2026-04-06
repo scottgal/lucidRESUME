@@ -10,7 +10,7 @@ namespace lucidRESUME.Matching;
 public sealed class SkillLedgerMatcher
 {
     private readonly IEmbeddingService _embedder;
-    private const float SemanticMatchThreshold = 0.70f; // lowered from 0.80 — JD requirements are sentences, resume skills are keywords
+    private const float SemanticMatchThreshold = 0.58f; // catches "NoSQL" ↔ "MongoDB" (0.59), "AI/ML" ↔ "ML.NET"
 
     public SkillLedgerMatcher(IEmbeddingService embedder)
     {
