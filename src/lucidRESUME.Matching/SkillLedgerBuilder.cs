@@ -36,6 +36,14 @@ public sealed class SkillLedgerBuilder
             });
         }
 
+        // Pre-embed all known skill names for semantic matching
+        var skillEmbeddings = new Dictionary<string, float[]>();
+        foreach (var skillName in entries.Keys.ToList())
+        {
+            try { skillEmbeddings[skillName] = await _embedder.EmbedAsync(skillName, ct); }
+            catch { /* embedding failure is non-fatal */ }
+        }
+
         // 2. Scan experience entries for skill mentions
         foreach (var exp in resume.Experience)
         {
@@ -56,11 +64,12 @@ public sealed class SkillLedgerBuilder
                 });
             }
 
-            // Achievement bullets — check each skill against each bullet
+            // Achievement bullets — semantic + substring matching
             foreach (var achievement in exp.Achievements)
             {
-                var matchedSkills = FindSkillMentions(achievement, entries.Keys.ToList());
-                foreach (var skillName in matchedSkills)
+                var matchedSkills = await FindSkillMentionsAsync(
+                    achievement, entries.Keys.ToList(), skillEmbeddings, ct);
+                foreach (var (skillName, confidence) in matchedSkills)
                 {
                     var entry = GetOrCreate(entries, skillName);
                     entry.Evidence.Add(new SkillEvidence
@@ -72,17 +81,18 @@ public sealed class SkillLedgerBuilder
                         StartDate = exp.StartDate,
                         EndDate = exp.IsCurrent ? null : exp.EndDate,
                         Source = EvidenceSource.AchievementBullet,
-                        Confidence = 0.7
+                        Confidence = confidence
                     });
                 }
             }
         }
 
-        // 3. Scan summary for skill mentions
+        // 3. Scan summary for skill mentions (semantic)
         if (!string.IsNullOrEmpty(resume.Personal.Summary))
         {
-            var summarySkills = FindSkillMentions(resume.Personal.Summary, entries.Keys.ToList());
-            foreach (var skillName in summarySkills)
+            var summaryMatches = await FindSkillMentionsAsync(
+                resume.Personal.Summary, entries.Keys.ToList(), skillEmbeddings, ct);
+            foreach (var (skillName, _) in summaryMatches)
             {
                 var entry = GetOrCreate(entries, skillName);
                 entry.Evidence.Add(new SkillEvidence
@@ -137,13 +147,44 @@ public sealed class SkillLedgerBuilder
         return entry;
     }
 
-    /// <summary>Simple substring matching for skill mentions in text. Fast, not semantic.</summary>
-    private static List<string> FindSkillMentions(string text, List<string> knownSkills)
+    /// <summary>
+    /// Hybrid skill matching: substring (fast, exact) + embedding similarity (semantic).
+    /// Returns matched skills with confidence scores.
+    /// "K8s" in text matches "Kubernetes" in skills via embedding similarity.
+    /// </summary>
+    private async Task<List<(string skill, double confidence)>> FindSkillMentionsAsync(
+        string text, List<string> knownSkills,
+        Dictionary<string, float[]> skillEmbeddings, CancellationToken ct)
     {
+        var matches = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         var lower = text.ToLowerInvariant();
-        return knownSkills
-            .Where(s => s.Length >= 2 && lower.Contains(s.ToLowerInvariant()))
-            .ToList();
+
+        // Fast pass: exact substring matching (high confidence)
+        foreach (var skill in knownSkills.Where(s => s.Length >= 2))
+        {
+            if (lower.Contains(skill.ToLowerInvariant()))
+                matches.TryAdd(skill, 0.85);
+        }
+
+        // Semantic pass: embed the text and compare against skill embeddings
+        // Only for skills NOT already matched by substring
+        if (skillEmbeddings.Count > 0 && text.Length > 20)
+        {
+            try
+            {
+                var textEmb = await _embedder.EmbedAsync(text, ct);
+                foreach (var (skill, emb) in skillEmbeddings)
+                {
+                    if (matches.ContainsKey(skill)) continue; // already matched
+                    var sim = _embedder.CosineSimilarity(textEmb, emb);
+                    if (sim >= 0.75f) // semantic match threshold
+                        matches.TryAdd(skill, sim * 0.8); // slightly lower confidence than exact
+                }
+            }
+            catch { /* embedding failure non-fatal */ }
+        }
+
+        return matches.Select(kv => (kv.Key, kv.Value)).ToList();
     }
 
     private static void CalculateYears(SkillLedgerEntry entry)

@@ -20,26 +20,32 @@ public sealed class QualitySynthesizer
             OverallScore = rawReport.OverallScore,
         };
 
-        // Group findings by category
-        var byCode = rawReport.AllFindings
-            .GroupBy(f => f.Code.Split('.')[0]) // e.g. "BULLET.NO_METRIC" → "BULLET"
-            .ToList();
-
-        foreach (var group in byCode)
+        // Group findings by broad category (map codes to groups)
+        var grouped = new Dictionary<string, List<QualityFinding>>();
+        foreach (var f in rawReport.AllFindings)
         {
-            var category = group.Key;
-            var findings = group.ToList();
+            var cat = ClassifyFindingCategory(f.Code, f.Section);
+            if (!grouped.TryGetValue(cat, out var list))
+                grouped[cat] = list = [];
+            list.Add(f);
+        }
+
+        foreach (var (category, findings) in grouped)
+        {
             var errorCount = findings.Count(f => f.Severity == FindingSeverity.Error);
             var warningCount = findings.Count(f => f.Severity == FindingSeverity.Warning);
 
-            // Synthesize a single actionable suggestion per category
+            // Skip categories with no actual issues
+            if (errorCount + warningCount == 0 && findings.All(f => f.Severity == FindingSeverity.Info))
+                continue;
+
             var suggestion = category switch
             {
-                "BULLET" => SynthesizeBulletAdvice(findings),
-                "SECTION" => SynthesizeSectionAdvice(findings),
-                "FORMAT" => SynthesizeFormatAdvice(findings),
-                "CONTACT" => SynthesizeContactAdvice(findings),
-                "LENGTH" => SynthesizeLengthAdvice(findings),
+                "Achievements" => SynthesizeBulletAdvice(findings),
+                "Sections" => SynthesizeSectionAdvice(findings),
+                "Formatting" => SynthesizeFormatAdvice(findings),
+                "Contact" => SynthesizeContactAdvice(findings),
+                "Length" => SynthesizeLengthAdvice(findings),
                 _ => new QualitySuggestion
                 {
                     Category = category,
@@ -50,7 +56,9 @@ public sealed class QualitySynthesizer
                 }
             };
 
-            synthesis.Suggestions.Add(suggestion);
+            // Don't show suggestions with 0 affected items
+            if (suggestion.AffectedCount > 0)
+                synthesis.Suggestions.Add(suggestion);
         }
 
         // Add skill ledger insights if available
@@ -66,6 +74,24 @@ public sealed class QualitySynthesizer
             .ToList();
 
         return synthesis;
+    }
+
+    private static string ClassifyFindingCategory(string code, string? section)
+    {
+        var lower = code.ToLowerInvariant();
+        if (lower.Contains("bullet") || lower.Contains("metric") || lower.Contains("verb") ||
+            lower.Contains("achievement") || lower.Contains("quantity"))
+            return "Achievements";
+        if (lower.Contains("section") || lower.Contains("missing"))
+            return "Sections";
+        if (lower.Contains("format") || lower.Contains("length") || lower.Contains("long") ||
+            lower.Contains("short"))
+            return section?.Contains("format", StringComparison.OrdinalIgnoreCase) == true ? "Formatting" : "Length";
+        if (lower.Contains("contact") || lower.Contains("email") || lower.Contains("phone"))
+            return "Contact";
+        if (lower.Contains("grad") || lower.Contains("edu"))
+            return "Education";
+        return "Other";
     }
 
     private static QualitySuggestion SynthesizeBulletAdvice(List<QualityFinding> findings)

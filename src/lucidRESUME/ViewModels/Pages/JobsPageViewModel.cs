@@ -51,6 +51,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private readonly SkillLedgerBuilder _ledgerBuilder;
     private readonly JdSkillLedgerBuilder _jdLedgerBuilder;
     private readonly CareerPlanner _careerPlanner;
+    private readonly SearchQueryGenerator _searchQueryGenerator;
 
     // Cancels any in-flight RefreshAspectsAsync when the selected job changes
     private CancellationTokenSource? _refreshCts;
@@ -88,6 +89,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     [ObservableProperty] private int _careerFitPercent;
     [ObservableProperty] private IReadOnlyList<CareerAdviceItem> _careerAdvice = [];
 
+    // Search suggestions from skill communities
+    [ObservableProperty] private IReadOnlyList<SearchSuggestionItem> _searchSuggestions = [];
+    [ObservableProperty] private bool _hasSearchSuggestions;
+
     public JobsPageViewModel(
         JobSearchService jobSearchService,
         IMatchingService matchingService,
@@ -99,7 +104,8 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         PipelinePageViewModel pipelinePage,
         SkillLedgerBuilder ledgerBuilder,
         JdSkillLedgerBuilder jdLedgerBuilder,
-        CareerPlanner careerPlanner)
+        CareerPlanner careerPlanner,
+        SearchQueryGenerator searchQueryGenerator)
     {
         _jobSearchService = jobSearchService;
         _matchingService = matchingService;
@@ -112,6 +118,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _ledgerBuilder = ledgerBuilder;
         _jdLedgerBuilder = jdLedgerBuilder;
         _careerPlanner = careerPlanner;
+        _searchQueryGenerator = searchQueryGenerator;
         _ = LoadSavedAsync();
     }
 
@@ -140,6 +147,56 @@ public sealed partial class JobsPageViewModel : ViewModelBase
             .ToList()
             .AsReadOnly();
         StatusMessage = $"{state.Jobs.Count} saved job(s).";
+
+        // Generate search suggestions from skill communities
+        _ = GenerateSearchSuggestionsAsync(state);
+    }
+
+    private async Task GenerateSearchSuggestionsAsync(Core.Persistence.AppState state)
+    {
+        try
+        {
+            if (state.Resume is null) return;
+            var ledger = await _ledgerBuilder.BuildAsync(state.Resume);
+            var graph = new SkillGraph();
+            graph.AddResumeLedger(ledger);
+
+            // Also add saved JD ledgers to enrich the graph
+            foreach (var job in state.Jobs)
+            {
+                var jdLedger = await _jdLedgerBuilder.BuildAsync(job);
+                graph.AddJdLedger(jdLedger);
+            }
+
+            graph.DetectCommunities();
+            var suggestions = _searchQueryGenerator.Generate(graph, ledger);
+
+            SearchSuggestions = suggestions
+                .Take(5)
+                .Select(s => new SearchSuggestionItem(
+                    s.Query,
+                    s.Description,
+                    s.QueryType switch
+                    {
+                        QueryType.StrongFit => "Strong Fit",
+                        QueryType.GrowthTarget => "Growth",
+                        QueryType.StretchGoal => "Stretch",
+                        QueryType.BridgeRole => "Bridge",
+                        _ => "?"
+                    },
+                    s.QueryType switch
+                    {
+                        QueryType.StrongFit => "#A6E3A1",
+                        QueryType.GrowthTarget => "#89B4FA",
+                        QueryType.StretchGoal => "#F9E2AF",
+                        QueryType.BridgeRole => "#CBA6F7",
+                        _ => "#6C7086"
+                    },
+                    $"{s.EvidencedSkillCount}/{s.TotalSkillCount} skills"))
+                .ToList();
+            HasSearchSuggestions = SearchSuggestions.Count > 0;
+        }
+        catch { /* non-blocking */ }
     }
 
     partial void OnSelectedJobChanged(JobListItem? value)
@@ -423,6 +480,13 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _                        => type.ToString()
     };
 }
+
+public sealed record SearchSuggestionItem(
+    string Query,
+    string Description,
+    string TypeLabel,
+    string BadgeColor,
+    string SkillCoverage);
 
 public sealed record CareerAdviceItem(
     string Skill,
