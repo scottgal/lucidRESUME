@@ -78,7 +78,7 @@
                      HorizontalAlignment="Center"/>
         </StackPanel>
 
-        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" Margin="20,16"
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="20,16"
               IsVisible="{Binding SelectedJob, Converter={x:Static ObjectConverters.IsNotNull}}">
 
           <!-- Header -->
@@ -154,14 +154,50 @@
             </StackPanel>
           </Border>
 
+          <!-- Career Plan -->
+          <Border Grid.Row="3" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,10"
+                  IsVisible="{Binding HasCareerPlan}">
+            <StackPanel Spacing="6">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Career Plan" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource LrAccentPurpleBrush}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource LrSecondaryTextBrush}">
+                  <Run Text="Fit: "/>
+                  <Run Text="{Binding CareerFitPercent}"/>
+                  <Run Text="%"/>
+                </TextBlock>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding CareerAdvice}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:CareerAdviceItem">
+                    <Border Background="{DynamicResource LrPageBgBrush}" CornerRadius="4" Padding="8,5" Margin="0,0,0,3">
+                      <Grid ColumnDefinitions="Auto,Auto,*">
+                        <Border Grid.Column="0" Background="{Binding BadgeColor}" CornerRadius="4"
+                                Padding="5,1" Margin="0,0,6,0" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding ActionType}" FontSize="9" FontWeight="SemiBold" Foreground="White"/>
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="{Binding Skill}" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource LrPrimaryTextBrush}" VerticalAlignment="Center"
+                                   Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Advice}" FontSize="10"
+                                   Foreground="{DynamicResource LrTertiaryTextBrush}" TextWrapping="Wrap"
+                                   VerticalAlignment="Center"/>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
           <!-- Description -->
-          <ScrollViewer Grid.Row="3">
+          <ScrollViewer Grid.Row="4">
             <TextBlock Text="{Binding SelectedJobDescription}"
                        TextWrapping="Wrap" Foreground="{DynamicResource LrTertiaryTextBrush}" FontSize="12" LineHeight="18"/>
           </ScrollViewer>
 
           <!-- Aspect voting panel -->
-          <StackPanel Grid.Row="4" Spacing="4" Margin="0,12,0,4"
+          <StackPanel Grid.Row="5" Spacing="4" Margin="0,12,0,4"
                       IsVisible="{Binding SelectedJobAspects.Count}">
             <TextBlock Text="Rate Aspects" FontSize="12" FontWeight="SemiBold"
                        Foreground="{DynamicResource LrAccentBlueBrush}" Margin="0,0,0,4"/>
@@ -208,7 +244,7 @@
           </StackPanel>
 
           <!-- Actions -->
-          <StackPanel Grid.Row="5" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+          <StackPanel Grid.Row="6" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
             <Button Content="Apply / Tailor Resume"
                     Command="{Binding TailorSelectedJobCommand}"
                     Padding="16,8"/>

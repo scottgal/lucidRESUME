@@ -36,10 +36,12 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoverageOptions>>(),
                 sp.GetService<IEmbeddingService>()));
 
-        // Skill ledger builders + matcher
+        // Skill ledger builders + matcher + career planner
         services.AddSingleton<SkillLedgerBuilder>();
         services.AddSingleton<JdSkillLedgerBuilder>();
         services.AddSingleton<SkillLedgerMatcher>();
+        services.AddSingleton<Graph.CareerPlanner>();
+        services.AddSingleton<Graph.SearchQueryGenerator>();
 
         return services;
     }

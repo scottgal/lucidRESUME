@@ -5,9 +5,11 @@ using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Quality;
+using lucidRESUME.Core.Models.Skills;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.JobSearch;
 using lucidRESUME.Matching;
+using lucidRESUME.Matching.Graph;
 
 namespace lucidRESUME.ViewModels.Pages;
 
@@ -46,6 +48,9 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private readonly IAppStore _store;
     private readonly ApplyPageViewModel _applyPage;
     private readonly PipelinePageViewModel _pipelinePage;
+    private readonly SkillLedgerBuilder _ledgerBuilder;
+    private readonly JdSkillLedgerBuilder _jdLedgerBuilder;
+    private readonly CareerPlanner _careerPlanner;
 
     // Cancels any in-flight RefreshAspectsAsync when the selected job changes
     private CancellationTokenSource? _refreshCts;
@@ -78,6 +83,11 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     [ObservableProperty] private int _coveragePercent;
     [ObservableProperty] private IReadOnlyList<CoverageItemViewModel> _coverageItems = [];
 
+    // Career plan
+    [ObservableProperty] private bool _hasCareerPlan;
+    [ObservableProperty] private int _careerFitPercent;
+    [ObservableProperty] private IReadOnlyList<CareerAdviceItem> _careerAdvice = [];
+
     public JobsPageViewModel(
         JobSearchService jobSearchService,
         IMatchingService matchingService,
@@ -86,7 +96,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         ICoverageAnalyser coverageAnalyser,
         IAppStore store,
         ApplyPageViewModel applyPage,
-        PipelinePageViewModel pipelinePage)
+        PipelinePageViewModel pipelinePage,
+        SkillLedgerBuilder ledgerBuilder,
+        JdSkillLedgerBuilder jdLedgerBuilder,
+        CareerPlanner careerPlanner)
     {
         _jobSearchService = jobSearchService;
         _matchingService = matchingService;
@@ -96,6 +109,9 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _store = store;
         _applyPage = applyPage;
         _pipelinePage = pipelinePage;
+        _ledgerBuilder = ledgerBuilder;
+        _jdLedgerBuilder = jdLedgerBuilder;
+        _careerPlanner = careerPlanner;
         _ = LoadSavedAsync();
     }
 
@@ -145,10 +161,14 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _refreshCts = new CancellationTokenSource();
         _ = RefreshAspectsAsync(_refreshCts.Token);
 
+        HasCareerPlan = false;
+        CareerAdvice = [];
+
         if (value is not null)
         {
             _ = RunJdQualityAsync(value.FullJob);
             _ = RunCoverageAsync(value.FullJob);
+            _ = RunCareerPlanAsync(value.FullJob);
         }
     }
 
@@ -341,6 +361,57 @@ public sealed partial class JobsPageViewModel : ViewModelBase
 
     private bool HasSelectedJob() => SelectedJob is not null;
 
+    private async Task RunCareerPlanAsync(JobDescription job)
+    {
+        try
+        {
+            var state = await _store.LoadAsync();
+            if (state.Resume is null) return;
+
+            var resumeLedger = await _ledgerBuilder.BuildAsync(state.Resume);
+            var jdLedger = await _jdLedgerBuilder.BuildAsync(job);
+            var graph = new SkillGraph();
+            graph.AddResumeLedger(resumeLedger);
+            graph.AddJdLedger(jdLedger);
+            graph.DetectCommunities();
+
+            var plan = await _careerPlanner.PlanAsync(resumeLedger, jdLedger, graph);
+
+            CareerFitPercent = (int)(plan.CurrentFit * 100);
+            CareerAdvice = plan.Recommendations
+                .Take(8)
+                .Select(r => new CareerAdviceItem(
+                    r.SkillName,
+                    r.GapType switch
+                    {
+                        GapType.PresentationGap => "Reword",
+                        GapType.WeakEvidence => "Strengthen",
+                        GapType.AdjacentSkill => "Bridge",
+                        GapType.TrueGap => "Learn",
+                        _ => "?"
+                    },
+                    r.Effort switch
+                    {
+                        EffortLevel.Low => "Low",
+                        EffortLevel.Medium => "Medium",
+                        EffortLevel.High => "High",
+                        _ => "?"
+                    },
+                    r.Advice,
+                    r.GapType switch
+                    {
+                        GapType.PresentationGap => "#A6E3A1",
+                        GapType.WeakEvidence => "#F9E2AF",
+                        GapType.AdjacentSkill => "#89B4FA",
+                        GapType.TrueGap => "#F38BA8",
+                        _ => "#6C7086"
+                    }))
+                .ToList();
+            HasCareerPlan = true;
+        }
+        catch { /* non-blocking */ }
+    }
+
     private static string AspectLabel(AspectType type) => type switch
     {
         AspectType.Skill         => "Skill",
@@ -352,3 +423,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _                        => type.ToString()
     };
 }
+
+public sealed record CareerAdviceItem(
+    string Skill,
+    string ActionType,  // "Reword", "Strengthen", "Bridge", "Learn"
+    string Effort,      // "Low", "Medium", "High"
+    string Advice,
+    string BadgeColor);
