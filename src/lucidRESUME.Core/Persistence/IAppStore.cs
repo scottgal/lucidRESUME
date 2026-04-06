@@ -34,6 +34,7 @@ public sealed class AppState
     public List<SavedSearch> SavedSearches { get; set; } = [];
     public List<SearchPreset> CustomPresets { get; set; } = [];
     public List<JobApplication> Applications { get; set; } = [];
+    public List<SearchWatch> SearchWatches { get; set; } = [];
 
     // Returns built-ins + custom presets merged
     public IReadOnlyList<SearchPreset> AllPresets =>

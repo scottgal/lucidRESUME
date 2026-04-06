@@ -45,6 +45,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             CREATE TABLE IF NOT EXISTS saved_searches (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS search_presets (id TEXT PRIMARY KEY, data TEXT NOT NULL, is_custom INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS applications (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS search_watches (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings USING vec0(embedding float[384]);
             CREATE TABLE IF NOT EXISTS vec_meta (
                 rowid INTEGER PRIMARY KEY,
@@ -169,6 +170,17 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
 
         using (var cmd = _conn.CreateCommand())
         {
+            cmd.CommandText = "SELECT data FROM search_watches";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var watch = JsonSerializer.Deserialize<Models.Filters.SearchWatch>(reader.GetString(0), JsonOpts);
+                if (watch is not null) state.SearchWatches.Add(watch);
+            }
+        }
+
+        using (var cmd = _conn.CreateCommand())
+        {
             cmd.CommandText = "SELECT value FROM app_meta WHERE key = 'last_saved'";
             if (cmd.ExecuteScalar() is string ts && DateTimeOffset.TryParse(ts, out var dt))
                 state.LastSaved = dt;
@@ -232,6 +244,17 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             cmd.CommandText = "INSERT INTO applications (id, data) VALUES ($id, $data)";
             cmd.Parameters.AddWithValue("$id", app.ApplicationId.ToString());
             cmd.Parameters.AddWithValue("$data", JsonSerializer.Serialize(app, JsonOpts));
+            cmd.ExecuteNonQuery();
+        }
+
+        // Search watches
+        Execute("DELETE FROM search_watches");
+        foreach (var watch in state.SearchWatches)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO search_watches (id, data) VALUES ($id, $data)";
+            cmd.Parameters.AddWithValue("$id", watch.WatchId.ToString());
+            cmd.Parameters.AddWithValue("$data", JsonSerializer.Serialize(watch, JsonOpts));
             cmd.ExecuteNonQuery();
         }
 
