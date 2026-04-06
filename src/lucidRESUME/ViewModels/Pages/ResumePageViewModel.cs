@@ -26,6 +26,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly AiDetectionScorer _aiDetectionScorer;
     private readonly DeAiRewriter _deAiRewriter;
     private readonly ResumeTranslator _translator;
+    private readonly EmbeddingIndexer _embeddingIndexer;
     private readonly QualitySynthesizer _synthesizer;
     private readonly SkillLedgerBuilder _ledgerBuilder;
     private readonly IResumeExporter? _jsonExporter;
@@ -91,6 +92,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         AiDetectionScorer aiDetectionScorer,
         DeAiRewriter deAiRewriter,
         ResumeTranslator translator,
+        EmbeddingIndexer embeddingIndexer,
         QualitySynthesizer synthesizer,
         SkillLedgerBuilder ledgerBuilder,
         IEnumerable<IResumeExporter> exporters)
@@ -104,6 +106,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         _aiDetectionScorer = aiDetectionScorer;
         _deAiRewriter = deAiRewriter;
         _translator = translator;
+        _embeddingIndexer = embeddingIndexer;
         _synthesizer = synthesizer;
         _ledgerBuilder = ledgerBuilder;
         var exporterList = exporters.ToList();
@@ -190,6 +193,10 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             StatusMessage = $"Imported {Path.GetFileName(path)}";
 
             await _store.MutateAsync(state => state.Resume = Resume);
+
+            // Index embeddings in background (non-blocking)
+            if (_store is Core.Persistence.SqliteAppStore sqlStore)
+                _ = _embeddingIndexer.IndexResumeAsync(Resume, sqlStore.Vectors);
         }
         catch (Exception ex)
         {

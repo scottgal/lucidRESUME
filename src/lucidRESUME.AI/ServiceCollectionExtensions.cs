@@ -43,7 +43,8 @@ public static class ServiceCollectionExtensions
         // Model discovery for settings UI
         services.AddHttpClient<ModelDiscoveryService>();
 
-        // Semantic compressor + AI detection + de-AI rewriter + translator
+        // Embedding indexer + semantic compressor + AI detection + de-AI rewriter + translator
+        services.AddSingleton<EmbeddingIndexer>();
         services.AddSingleton<SemanticCompressor>();
         services.AddSingleton<OnnxAiTextDetector>();
         services.AddSingleton<AiDetectionScorer>();

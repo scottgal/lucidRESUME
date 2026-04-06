@@ -201,7 +201,8 @@
       "Bash(git status:*)",
       "Bash(git commit:*)",
       "Bash(git remote:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(matches this JD requirement?\" without re-computing embeddings.:*)"
     ]
   }
 }
