@@ -52,7 +52,8 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         _compressor = compressor;
         _coverageAnalyser = coverageAnalyser;
         _store = store;
-        IsOllamaUnavailable = !tailoringService.IsAvailable;
+        // Don't check at construction — service may not have pinged Ollama yet.
+        // Rechecked in SetContext() and before each tailor operation.
     }
 
     /// <summary>Called by JobsPage or ResumePageViewModel to pre-populate the form.</summary>
@@ -98,6 +99,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         ErrorMessage = null;
         IsTailoring = true;
         HasResult = false;
+        IsOllamaUnavailable = !_tailoringService.IsAvailable;
         StatusMessage = "Tailoring resume…";
 
         try

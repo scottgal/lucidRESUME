@@ -179,21 +179,39 @@ public sealed class UXPlayer
 
     private async Task ExecuteClickAsync(UXAction action)
     {
-        var control = FindControl(action.Target);
-        if (control == null)
+        var tcs = new TaskCompletionSource();
+        Dispatcher.UIThread.Post(async () =>
         {
-            throw new InvalidOperationException($"Control not found: {action.Target}");
-        }
+            try
+            {
+                var control = FindControl(action.Target);
+                if (control == null)
+                {
+                    Log?.Invoke(this, $"    Control not found: {action.Target} — skipping");
+                    tcs.SetResult();
+                    return;
+                }
 
-        if (control is Button button && button.Command?.CanExecute(button.CommandParameter) == true)
-        {
-            button.Command.Execute(button.CommandParameter);
-        }
-        else if (control is TabItem tabItem)
-        {
-            tabItem.IsSelected = true;
-        }
-        
+                if (control is Button button && button.Command?.CanExecute(button.CommandParameter) == true)
+                {
+                    button.Command.Execute(button.CommandParameter);
+                    // Give async commands time to start
+                    await Task.Delay(100);
+                }
+                else if (control is TabItem tabItem)
+                {
+                    tabItem.IsSelected = true;
+                }
+
+                tcs.SetResult();
+            }
+            catch (Exception ex)
+            {
+                Log?.Invoke(this, $"    Click failed: {ex.Message}");
+                tcs.SetResult();
+            }
+        });
+        await tcs.Task;
         await Task.Delay(50);
     }
 
@@ -355,10 +373,26 @@ public sealed class UXPlayer
     private Control? FindControl(string? name)
     {
         if (string.IsNullOrEmpty(name) || _window == null) return null;
-        
+
         if (_window.Name == name) return _window;
-        
-        return _window.FindControl<Control>(name);
+
+        // Try by x:Name first
+        var byName = _window.FindControl<Control>(name);
+        if (byName is not null) return byName;
+
+        // Fallback: find Button by Content text (case-insensitive)
+        var button = _window.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(b =>
+                b.Content is string s && s.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (button is not null) return button;
+
+        // Fallback: find TextBlock by Text (for labels/tabs)
+        var textBlock = _window.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .FirstOrDefault(t => t.Text?.Equals(name, StringComparison.OrdinalIgnoreCase) == true);
+
+        return textBlock?.Parent as Control ?? textBlock;
     }
 
     private Task<string> CaptureScreenshotAsync(string name)

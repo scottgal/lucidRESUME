@@ -1,0 +1,156 @@
+name: comprehensive-e2e
+description: "Exercise EVERY feature: import, quality, AI detection, add job, jobs+career plan, apply, pipeline, profile, watches"
+default_delay: 500
+
+actions:
+  # ═══════════════════════════════════════════════
+  # STARTUP — wait for health checks
+  # ═══════════════════════════════════════════════
+  - type: Wait
+    value: "3000"
+  - type: Screenshot
+    value: 00-startup
+
+  # ═══════════════════════════════════════════════
+  # STEP 1: IMPORT RESUME
+  # ═══════════════════════════════════════════════
+  - type: ImportFile
+    value: test-data/resumes/Scott_Galloway_CTO.docx
+  - type: Wait
+    value: "4000"
+  - type: Screenshot
+    value: 01-resume-imported
+
+  # ═══════════════════════════════════════════════
+  # STEP 2: RESUME PAGE — quality panel, AI detection
+  # ═══════════════════════════════════════════════
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "1000"
+  - type: Screenshot
+    value: 02-resume-quality
+
+  # Click Export JSON button
+  - type: Click
+    target: Export JSON
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 03-export-json-clicked
+
+  # Click Export Markdown button
+  - type: Click
+    target: Export Markdown
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 04-export-md-clicked
+
+  # ═══════════════════════════════════════════════
+  # STEP 3: ADD JOB — paste JD
+  # ═══════════════════════════════════════════════
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 05-add-job-empty
+
+  - type: PasteJob
+    value: "@test-data/job-cto.txt"
+  - type: Wait
+    value: "3000"
+  - type: Screenshot
+    value: 06-job-added
+
+  # ═══════════════════════════════════════════════
+  # STEP 4: JOBS PAGE — match scores, career plan
+  # ═══════════════════════════════════════════════
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "3000"
+  - type: Screenshot
+    value: 07-jobs-with-score
+
+  # Click Saved button to reload
+  - type: Click
+    target: Saved
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 08-jobs-saved
+
+  # ═══════════════════════════════════════════════
+  # STEP 5: APPLY PAGE — Smart Compress + Full Tailor buttons
+  # ═══════════════════════════════════════════════
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 09-apply-empty
+
+  # ═══════════════════════════════════════════════
+  # STEP 6: PIPELINE — empty state
+  # ═══════════════════════════════════════════════
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 10-pipeline-empty
+
+  # ═══════════════════════════════════════════════
+  # STEP 7: PROFILE — top section
+  # ═══════════════════════════════════════════════
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 11-profile-top
+
+  # Scroll to see AI settings
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "300"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 12-profile-middle
+
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 13-profile-ai-settings
+
+  # ═══════════════════════════════════════════════
+  # STEP 8: BACK TO ADD JOB — check watches section
+  # ═══════════════════════════════════════════════
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "400"
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 14-search-watches
+
+  # ═══════════════════════════════════════════════
+  # STEP 9: FINAL — back to resume, verify state persisted
+  # ═══════════════════════════════════════════════
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "1000"
+  - type: Screenshot
+    value: 15-final-resume
