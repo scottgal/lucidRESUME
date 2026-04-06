@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\lucidRESUME.Core\lucidRESUME.Core.csproj" />
+    <ProjectReference Include="..\lucidRESUME.Matching\lucidRESUME.Matching.csproj" />
   </ItemGroup>
 
   <ItemGroup>

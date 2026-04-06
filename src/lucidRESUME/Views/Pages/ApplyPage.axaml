@@ -64,17 +64,29 @@
                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
       </StackPanel>
 
-      <!-- Tailor button -->
-      <Button Grid.Row="6"
-              Content="Tailor Resume"
-              Command="{Binding TailorCommand}"
-              IsEnabled="{Binding !IsTailoring}"
-              FontSize="15" FontWeight="Bold"
-              Padding="20,12"
-              HorizontalAlignment="Stretch"
-              HorizontalContentAlignment="Center"
-              CornerRadius="6"
-              Margin="0,4,0,8"/>
+      <!-- Tailor buttons -->
+      <Grid Grid.Row="6" ColumnDefinitions="*,8,*" Margin="0,4,0,8">
+        <Button Grid.Column="0"
+                Content="Smart Compress"
+                Command="{Binding SmartCompressCommand}"
+                IsEnabled="{Binding !IsTailoring}"
+                FontSize="14" FontWeight="Bold"
+                Padding="16,12"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                CornerRadius="6"
+                ToolTip.Tip="Compress resume to only relevant evidence, then polish with AI"/>
+        <Button Grid.Column="2"
+                Content="Full Tailor"
+                Command="{Binding TailorCommand}"
+                IsEnabled="{Binding !IsTailoring}"
+                FontSize="14" FontWeight="Bold"
+                Padding="16,12"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                CornerRadius="6"
+                ToolTip.Tip="Send full resume to AI for tailoring"/>
+      </Grid>
 
       <!-- Progress bar -->
       <ProgressBar Grid.Row="7" IsVisible="{Binding IsTailoring}"
@@ -82,6 +94,9 @@
 
       <!-- Status / Error -->
       <StackPanel Grid.Row="8" Spacing="4">
+        <TextBlock Text="{Binding CompressionStats}" Foreground="{DynamicResource LrAccentPurpleBrush}" FontSize="11"
+                   IsVisible="{Binding CompressionStats, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                   TextWrapping="Wrap"/>
         <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"
                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
         <Border Background="{DynamicResource LrAccentRedBgBrush}" Padding="10,6" CornerRadius="4"
