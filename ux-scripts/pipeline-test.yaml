@@ -1,0 +1,55 @@
+name: pipeline-test
+description: Screenshot the Pipeline page and all other pages with the new nav
+default_delay: 400
+
+actions:
+  - type: Wait
+    value: "1000"
+
+  # Resume page
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 01-resume
+
+  # Jobs page
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 02-jobs
+
+  # Add Job page
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 03-add-job
+
+  # Apply page
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 04-apply
+
+  # Pipeline page (new!)
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 05-pipeline-empty
+
+  # Profile page
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 06-profile

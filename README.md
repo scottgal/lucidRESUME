@@ -1,8 +1,8 @@
-# lucidRESUME
+# ***lucid*RESUME**
 
 **Your job search. Your data. Your machine.**
 
-lucidRESUME is a free, open-source desktop app that helps you find jobs, tailor your resume, and track applications — entirely on your own computer. No accounts. No subscriptions. No data leaving your machine unless you want it to.
+***lucid*RESUME** is a free, open-source desktop app that helps you find jobs, tailor your resume, and track applications — entirely on your own computer. No accounts. No subscriptions. No data leaving your machine unless you want it to.
 
 > Built with .NET 10 + Avalonia. Runs on Windows, macOS, and Linux.
 

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
@@ -16,15 +17,13 @@ public sealed class NavIsActiveConverter : IValueConverter
         throw new NotSupportedException();
 }
 
-/// <summary>Converts status text to a traffic-light color for the status dot.</summary>
+/// <summary>Converts status text to a traffic-light color for the status dot, using theme resources.</summary>
 public sealed class StatusColorConverter : IValueConverter
 {
     public static readonly StatusColorConverter Instance = new();
 
-    private static readonly IBrush Green = new SolidColorBrush(Color.Parse("#A6E3A1"));
-    private static readonly IBrush Yellow = new SolidColorBrush(Color.Parse("#F9E2AF"));
-    private static readonly IBrush Red = new SolidColorBrush(Color.Parse("#F38BA8"));
-    private static readonly IBrush Grey = new SolidColorBrush(Color.Parse("#6C7086"));
+    private static IBrush Resolve(string key, IBrush fallback) =>
+        Application.Current?.FindResource(key) is IBrush b ? b : fallback;
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -32,15 +31,15 @@ public sealed class StatusColorConverter : IValueConverter
         if (s.Contains("Connected", StringComparison.OrdinalIgnoreCase) ||
             s.Contains("local", StringComparison.OrdinalIgnoreCase) ||
             s.Contains("SQLite", StringComparison.OrdinalIgnoreCase))
-            return Green;
+            return Resolve("LrStatusGreenBrush", Brushes.Green);
         if (s.Contains("Offline", StringComparison.OrdinalIgnoreCase) ||
             s.Contains("no model", StringComparison.OrdinalIgnoreCase))
-            return Red;
+            return Resolve("LrStatusRedBrush", Brushes.Red);
         if (s.Contains("Disabled", StringComparison.OrdinalIgnoreCase))
-            return Grey;
+            return Resolve("LrStatusGreyBrush", Brushes.Gray);
         if (s == "...")
-            return Yellow;
-        return Yellow;
+            return Resolve("LrStatusYellowBrush", Brushes.Yellow);
+        return Resolve("LrStatusYellowBrush", Brushes.Yellow);
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>

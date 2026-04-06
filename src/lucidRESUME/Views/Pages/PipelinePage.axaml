@@ -1,0 +1,248 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:local="using:lucidRESUME.Views.Pages"
+             x:DataType="vm:PipelinePageViewModel"
+             x:Class="lucidRESUME.Views.Pages.PipelinePage">
+  <UserControl.Resources>
+    <local:StageToBrushConverter x:Key="StageBrush"/>
+  </UserControl.Resources>
+
+  <Grid RowDefinitions="Auto,Auto,*">
+
+    <!-- Funnel stats bar -->
+    <Border Grid.Row="0" Padding="16,10" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource LrBorderBrush}">
+      <StackPanel Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="16">
+          <TextBlock FontSize="18" FontWeight="Bold" Foreground="{DynamicResource LrPrimaryTextBrush}">
+            <Run Text="Pipeline" FontStyle="Italic" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+          </TextBlock>
+          <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12">
+            <Run Text="{Binding TotalApplications}"/>
+            <Run Text=" tracked"/>
+          </TextBlock>
+          <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource LrAccentGreenBrush}" FontSize="12">
+            <Run Text="Response: "/>
+            <Run Text="{Binding ResponseRate}" FontWeight="SemiBold"/>
+          </TextBlock>
+          <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="12">
+            <Run Text="Interview: "/>
+            <Run Text="{Binding InterviewRate}" FontWeight="SemiBold"/>
+          </TextBlock>
+          <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource LrAccentPurpleBrush}" FontSize="12">
+            <Run Text="Offer: "/>
+            <Run Text="{Binding OfferRate}" FontWeight="SemiBold"/>
+          </TextBlock>
+          <Button Content="All" Command="{Binding FilterByStageCommand}" CommandParameter="{x:Null}"
+                  Padding="8,3" FontSize="11"/>
+          <Button Content="Scan Email" Command="{Binding ScanEmailCommand}"
+                  IsEnabled="{Binding !IsScanning}"
+                  Padding="8,3" FontSize="11"
+                  IsVisible="{Binding IsEmailConfigured}"/>
+          <ProgressBar IsVisible="{Binding IsScanning}" IsIndeterminate="True" Width="60" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Funnel bar -->
+        <ItemsControl ItemsSource="{Binding FunnelData}" IsVisible="{Binding TotalApplications}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="2"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:FunnelStageData">
+              <Button Command="{Binding $parent[ItemsControl].((vm:PipelinePageViewModel)DataContext).FilterByStageCommand}"
+                      CommandParameter="{Binding Label}"
+                      Background="{Binding Stage, Converter={StaticResource StageBrush}}"
+                      BorderThickness="0" CornerRadius="3"
+                      Padding="8,4" MinWidth="40"
+                      HorizontalContentAlignment="Center"
+                      ToolTip.Tip="{Binding Label}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <TextBlock Text="{Binding Count}" FontWeight="Bold" FontSize="11" Foreground="White"/>
+                  <TextBlock Text="{Binding Label}" FontSize="9" Foreground="White" Opacity="0.8"/>
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <!-- Status -->
+    <StackPanel Grid.Row="1" Margin="16,4" Spacing="2">
+      <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}"
+                 FontSize="11"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+      <TextBlock Text="{Binding ScanResult}" Foreground="{DynamicResource LrAccentBlueBrush}"
+                 FontSize="11" TextWrapping="Wrap"
+                 IsVisible="{Binding ScanResult, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+    </StackPanel>
+
+    <!-- Main content: master-detail -->
+    <Grid Grid.Row="2" ColumnDefinitions="300,*">
+
+      <!-- LEFT: application list -->
+      <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource LrBorderBrush}">
+        <Panel>
+          <!-- Empty state -->
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                      IsVisible="{Binding !Applications.Count}">
+            <TextBlock Text="No tracked applications." Foreground="{DynamicResource LrSecondaryTextBrush}"
+                       FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+            <TextBlock Text="Go to Jobs and click 'Track' on a job." Foreground="{DynamicResource LrSubtleTextBrush}"
+                       FontSize="13" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="250"/>
+          </StackPanel>
+
+          <!-- List -->
+          <ScrollViewer IsVisible="{Binding Applications.Count}">
+            <ItemsControl ItemsSource="{Binding Applications}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ApplicationCardViewModel">
+                  <Button Command="{Binding $parent[ItemsControl].((vm:PipelinePageViewModel)DataContext).SelectApplicationCommand}"
+                          CommandParameter="{Binding}"
+                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                          Background="Transparent" BorderThickness="0"
+                          Padding="12,8" Margin="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="{Binding JobTitle}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Company}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <Border Background="{Binding Stage, Converter={StaticResource StageBrush}}"
+                                  CornerRadius="8" Padding="6,1">
+                            <TextBlock Text="{Binding StageBadge}" FontSize="9" Foreground="White" FontWeight="SemiBold"/>
+                          </Border>
+                          <TextBlock Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="10"
+                                     IsVisible="{Binding IsStale}">
+                            <Run Text="{Binding DaysSinceActivity}"/><Run Text="d stale"/>
+                          </TextBlock>
+                        </StackPanel>
+                      </StackPanel>
+                      <TextBlock Grid.Column="1" FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}"
+                                 VerticalAlignment="Top">
+                        <Run Text="{Binding TimelineEventCount}"/><Run Text=" events"/>
+                      </TextBlock>
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Panel>
+      </Border>
+
+      <!-- RIGHT: detail panel -->
+      <Panel Grid.Column="1">
+
+        <!-- No selection -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                    IsVisible="{Binding SelectedApplication, Converter={x:Static ObjectConverters.IsNull}}">
+          <TextBlock Text="Select an application to view details." Foreground="{DynamicResource LrSecondaryTextBrush}"
+                     FontSize="15" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Detail -->
+        <ScrollViewer IsVisible="{Binding SelectedApplication, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <StackPanel Margin="20,16" Spacing="16">
+
+            <!-- Header -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="{Binding SelectedApplication.JobTitle}" FontSize="20" FontWeight="Bold"
+                         Foreground="{DynamicResource LrPrimaryTextBrush}" TextWrapping="Wrap"/>
+              <TextBlock Text="{Binding SelectedApplication.Company}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="14"/>
+            </StackPanel>
+
+            <!-- Stage controls -->
+            <StackPanel Spacing="6">
+              <TextBlock Text="Stage" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+              <WrapPanel Orientation="Horizontal">
+                <Button Content="Applied" Command="{Binding SetStageCommand}" CommandParameter="Applied"
+                        Padding="8,4" FontSize="11" Margin="0,0,4,4"/>
+                <Button Content="Screening" Command="{Binding SetStageCommand}" CommandParameter="Screening"
+                        Padding="8,4" FontSize="11" Margin="0,0,4,4"/>
+                <Button Content="Interview" Command="{Binding SetStageCommand}" CommandParameter="Interview"
+                        Padding="8,4" FontSize="11" Margin="0,0,4,4"/>
+                <Button Content="Offer" Command="{Binding SetStageCommand}" CommandParameter="Offer"
+                        Padding="8,4" FontSize="11" Margin="0,0,4,4"/>
+                <Button Content="Accepted" Command="{Binding SetStageCommand}" CommandParameter="Accepted"
+                        Padding="8,4" FontSize="11" Margin="0,0,4,4"/>
+                <Button Content="Rejected" Command="{Binding SetStageCommand}" CommandParameter="Rejected"
+                        Padding="8,4" FontSize="11" Margin="0,0,4,4"/>
+                <Button Content="Withdrawn" Command="{Binding SetStageCommand}" CommandParameter="Withdrawn"
+                        Padding="8,4" FontSize="11" Margin="0,0,4,4"/>
+                <Button Content="Ghosted" Command="{Binding SetStageCommand}" CommandParameter="Ghosted"
+                        Padding="8,4" FontSize="11" Margin="0,0,4,4"/>
+              </WrapPanel>
+            </StackPanel>
+
+            <!-- Contact info -->
+            <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Contact" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                <Grid ColumnDefinitions="*,12,*" RowDefinitions="Auto,Auto">
+                  <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding RecruiterName}"
+                           Watermark="Recruiter name" CornerRadius="4" Padding="8,4" FontSize="12"/>
+                  <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding RecruiterEmail}"
+                           Watermark="Recruiter email" CornerRadius="4" Padding="8,4" FontSize="12"/>
+                </Grid>
+                <Button Content="Save Contact" Command="{Binding SaveContactCommand}"
+                        Padding="8,3" FontSize="11" HorizontalAlignment="Left"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Add note -->
+            <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Add Note" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                <Grid ColumnDefinitions="*,8,Auto">
+                  <TextBox Grid.Column="0" Text="{Binding SelectedNoteText}"
+                           Watermark="Type a note…" CornerRadius="4" Padding="8,4" FontSize="12"/>
+                  <Button Grid.Column="2" Content="Add" Command="{Binding AddNoteCommand}"
+                          Padding="12,4" FontSize="11"/>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <!-- Timeline -->
+            <StackPanel Spacing="6">
+              <TextBlock Text="Timeline" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+              <TextBlock Text="No events yet." Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="12"
+                         IsVisible="{Binding !SelectedTimeline.Count}"/>
+              <ItemsControl ItemsSource="{Binding SelectedTimeline}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:TimelineEventViewModel">
+                    <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,0,0,4">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                          <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}">
+                            <Run Text="{Binding Title}"/>
+                            <Run Text=" (auto)" Foreground="{DynamicResource LrAccentYellowBrush}" FontSize="10"
+                                 BaselineAlignment="Superscript"/>
+                          </TextBlock>
+                          <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource LrTertiaryTextBrush}"
+                                     TextWrapping="Wrap"
+                                     IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding Timestamp}" FontSize="10"
+                                   Foreground="{DynamicResource LrSubtleTextBrush}" VerticalAlignment="Top"/>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+
+            <!-- Remove -->
+            <Button Content="Remove from Pipeline" Command="{Binding RemoveApplicationCommand}"
+                    Foreground="{DynamicResource LrAccentRedBrush}" Background="Transparent"
+                    Padding="8,4" FontSize="11" HorizontalAlignment="Left"/>
+
+          </StackPanel>
+        </ScrollViewer>
+      </Panel>
+
+    </Grid>
+  </Grid>
+</UserControl>

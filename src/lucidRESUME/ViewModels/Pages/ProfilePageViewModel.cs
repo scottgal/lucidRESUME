@@ -1,13 +1,19 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using lucidRESUME.AI;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Persistence;
+using lucidRESUME.Services;
 
 namespace lucidRESUME.ViewModels.Pages;
 
 public sealed partial class ProfilePageViewModel : ViewModelBase
 {
     private readonly IAppStore _store;
+    private readonly ModelDiscoveryService _modelDiscovery;
+    private readonly AiSettingsPath _aiSettingsPath;
     private CancellationTokenSource? _saveCts;
     private bool _isLoading;
 
@@ -38,13 +44,27 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     // ── Toast ─────────────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isSaved;
 
-    public ProfilePageViewModel(IAppStore store)
+    // ── AI Provider Settings ────────────────────────────────────────────────
+    public IReadOnlyList<string> AiProviders { get; } = ["ollama", "anthropic", "openai"];
+    [ObservableProperty] private string _aiProvider = "ollama";
+    [ObservableProperty] private string _anthropicApiKey = "";
+    [ObservableProperty] private string _openAiApiKey = "";
+    [ObservableProperty] private string _selectedModel = "";
+    [ObservableProperty] private ObservableCollection<string> _availableModelIds = [];
+    [ObservableProperty] private ObservableCollection<ModelInfo> _availableModels = [];
+    [ObservableProperty] private bool _isLoadingModels;
+    [ObservableProperty] private string? _aiSettingsStatus;
+
+    public ProfilePageViewModel(IAppStore store, ModelDiscoveryService modelDiscovery, AiSettingsPath aiSettingsPath)
     {
         _store = store;
+        _modelDiscovery = modelDiscovery;
+        _aiSettingsPath = aiSettingsPath;
 
         SubscribeCollections();
 
         _ = LoadAsync();
+        _ = LoadAiSettingsAsync();
     }
 
     // ── Collection-change subscriptions ──────────────────────────────────────
@@ -171,6 +191,107 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         {
             // Silently ignore save errors for now
         }
+    }
+
+    // ── AI Provider Settings ───────────────────────────────────────────────────
+
+    private async Task LoadAiSettingsAsync()
+    {
+        try
+        {
+            if (File.Exists(_aiSettingsPath.Path))
+            {
+                var json = await File.ReadAllTextAsync(_aiSettingsPath.Path);
+                var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("Tailoring", out var tailoring) &&
+                    tailoring.TryGetProperty("Provider", out var provider))
+                    AiProvider = provider.GetString() ?? "ollama";
+                if (doc.RootElement.TryGetProperty("Anthropic", out var anthropic) &&
+                    anthropic.TryGetProperty("ApiKey", out var aKey))
+                    AnthropicApiKey = aKey.GetString() ?? "";
+                if (doc.RootElement.TryGetProperty("OpenAi", out var openai) &&
+                    openai.TryGetProperty("ApiKey", out var oKey))
+                    OpenAiApiKey = oKey.GetString() ?? "";
+                if (doc.RootElement.TryGetProperty("Anthropic", out var a2) &&
+                    a2.TryGetProperty("Model", out var model))
+                    SelectedModel = model.GetString() ?? "";
+                else if (doc.RootElement.TryGetProperty("OpenAi", out var o2) &&
+                         o2.TryGetProperty("Model", out var oModel))
+                    SelectedModel = oModel.GetString() ?? "";
+            }
+        }
+        catch { /* use defaults */ }
+
+        await RefreshModelsAsync();
+    }
+
+    [RelayCommand]
+    private async Task RefreshModels()
+    {
+        await RefreshModelsAsync();
+    }
+
+    private async Task RefreshModelsAsync()
+    {
+        IsLoadingModels = true;
+        try
+        {
+            var models = AiProvider.ToLowerInvariant() switch
+            {
+                "anthropic" => await _modelDiscovery.ListAnthropicModelsAsync(),
+                "openai" => await _modelDiscovery.ListOpenAiModelsAsync(),
+                _ => await _modelDiscovery.ListOllamaModelsAsync()
+            };
+            AvailableModels = new ObservableCollection<ModelInfo>(models);
+            AvailableModelIds = new ObservableCollection<string>(models.Select(m => m.Id));
+
+            if (AvailableModelIds.Count > 0 && !AvailableModelIds.Contains(SelectedModel))
+                SelectedModel = AvailableModelIds[0];
+        }
+        catch { AvailableModels = []; }
+        finally { IsLoadingModels = false; }
+    }
+
+    [RelayCommand]
+    private async Task SaveAiSettings()
+    {
+        try
+        {
+            var settings = new Dictionary<string, object>
+            {
+                ["Tailoring"] = new Dictionary<string, string> { ["Provider"] = AiProvider },
+                ["Anthropic"] = new Dictionary<string, string>
+                {
+                    ["ApiKey"] = AnthropicApiKey,
+                    ["Model"] = AiProvider == "anthropic" ? SelectedModel : "",
+                    ["ExtractionModel"] = AiProvider == "anthropic" ? SelectedModel : ""
+                },
+                ["OpenAi"] = new Dictionary<string, string>
+                {
+                    ["ApiKey"] = OpenAiApiKey,
+                    ["Model"] = AiProvider == "openai" ? SelectedModel : "",
+                    ["ExtractionModel"] = AiProvider == "openai" ? SelectedModel : ""
+                },
+                ["Ollama"] = new Dictionary<string, string>
+                {
+                    ["Model"] = AiProvider == "ollama" ? SelectedModel : "",
+                    ["ExtractionModel"] = AiProvider == "ollama" ? SelectedModel : ""
+                }
+            };
+
+            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(_aiSettingsPath.Path, json);
+            AiSettingsStatus = $"Saved. Restart app to apply {AiProvider}/{SelectedModel}.";
+        }
+        catch (Exception ex)
+        {
+            AiSettingsStatus = $"Save failed: {ex.Message}";
+        }
+    }
+
+    partial void OnAiProviderChanged(string value)
+    {
+        if (!_isLoading) _ = RefreshModelsAsync();
     }
 
     // ── Mapping helpers ───────────────────────────────────────────────────────

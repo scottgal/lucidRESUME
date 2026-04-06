@@ -2,6 +2,7 @@ using lucidRESUME.Core.Models.Filters;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.Core.Models.Tracking;
 
 namespace lucidRESUME.Core.Persistence;
 
@@ -32,6 +33,7 @@ public sealed class AppState
     public DateTimeOffset LastSaved { get; set; }
     public List<SavedSearch> SavedSearches { get; set; } = [];
     public List<SearchPreset> CustomPresets { get; set; } = [];
+    public List<JobApplication> Applications { get; set; } = [];
 
     // Returns built-ins + custom presets merged
     public IReadOnlyList<SearchPreset> AllPresets =>

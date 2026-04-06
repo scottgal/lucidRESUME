@@ -1,0 +1,893 @@
+{
+  "ResumeId": "527b9b05-1b4d-44ec-b829-68ada8bcf8b8",
+  "FileName": "hxu296-SDE_May2023_HuanXu.pdf",
+  "ContentType": "application/pdf",
+  "FileSizeBytes": 50756,
+  "CreatedAt": "2026-04-06T15:18:07.628493+00:00",
+  "LastModifiedAt": "2026-04-06T15:18:07.809048+00:00",
+  "RawMarkdown": "ban8B71F202207311326\n## Huan Xu\nMadison, WI | 6086987552 \u4E28hxu296@wisc.edu\ngithub.com/hxu296 | linkedin.com/in/huan-xu-999700169\nSeeking a full-time SDE position\nEducation\nUniversity of Wisconsin-Madison May 2023\nComputer Sciences (honor), Mathematics, Statistics B.S. Madison, WI\nCumulative GPA\uFF1A3.88 / 4.0 | Dean\u0027s List 2019-2021\nAccomplished Coursework: Compilers, Algorithms, Operating Systems, Computer Networks, Database Management Systems, UI/UX\nDesign, Artificial Intelligence, Linear Optimization, Probability Theory, Discrete Mathematics, Linear Algebra, Calculus, etc.\nSkills\nProgramming Languages: JavaScript, Python3, C/C\u002B\u002B, Java, Bash, Batch, R\nFrameworks: React, Redux, Bootstrap, Flask, Node.js, REST, PostgreSQL, MongoDB\nDevelopment Toolchains: Linux, Git, Bash, Tmux, Vim, Jenkins, Docker\nWork Experience\nIntel Corporation, AXG Group May 2022 - Present\nGPU Software Development Engineer Intern\nBuilt the user role infrastructure for an internal graphics workload management tool by implementing SSO authentication, user\nauthorization, and microservice authentication using the MERN stack and the Azure Active Directory.\nAutomate the prevention, detection, resolution, and report of CI incidents by implementing a three-layer Jenkins health matrix,\nPrometheus and Grafana CI health data store and dashboard, and a CI firefighter as a Jenkins daemon.\nUniversity of Wisconsin-Madison, Computer Science Department Jan 2022 - May 2022\nUndergraduate Teaching Assistant for Computer Graphics\nHosted Computer Graphics office hours for 7 hours each week for questions about graphics concepts (e.g. transformations, curves, meshes,\nshaders, ray tracing, etc.) and APIs (e.g. Canvas, SVG, glMatrix, GLSL , WebGL , Three.js , etc.)\nMaintained and routinely updated the course website using the Hugo framework and Github Action\u0027s CI/CD workflow.\nTeradata Corporation Jun 2021 - Aug 2021\nData Engineer Internship\nResponsible for credit card fraud prevention and detection for a world-top commercial bank. Extracted and processed credit card data from\nthe data warehouse using Teradata SQL and DSQL and improved ETL routines using Perl and Bash scripts.\nLed the communication, demand analysis, and SQL development for a complex data extraction task requiring joining more than 20 tables\nacross 2 databases. Wrote peer-reviewed SQL and communicated with the operation team to ship the data in time.\nResearch Experience\nVision-Based Real-Time Motion Capture System on Edge Device Jan 2022 - Present\nResearch Assistant supervised by Prof. Yu Hen Hu Madison, WI\nProposed a real-time 3D motion capture system on edge devices based on the novel optimization technique that 3D temporal consistency\ncan be used to compensate for more noisy 2D information for lower FLOP and higher FPS.\nDeveloped and deployed a lightweight 3D Human Pose Estimation pipeline on Jeston Nano that integrates YOLOv5, HRNet-Lite, and\nVideoPose3D using Docker and TensorRT and improved FPS by weight quantization and CNN channel pruning.\nSynthetic Pretraining for Robust 3D Human Pose Estimation Jan 2021 - Present\nResearch Assistant supervised by Prof. Yin Li Madison, WI\nServed as the 3rd author for the journal paper Learning from Synthetic Humans for Accurate and Generalizable 3D Pose Estimation\ntargeting IEEE Transactions on Image Processing. Synthesized realistic 2D keypoints to pretrain 3D estimators and showed a significant\ndecrease of PA-MPJPE from 68.0 mm to 61.3 mm on the 3DPW dataset compared with the pretrained-with-H36M baseline.\nSpearheaded the development of a graphic rendering pipeline that infers human mesh from 3D human joints and shapes, and calculates\ndense depth maps with respect to sampled camera views by using OpenGL, Pytorch, and Scipy.\nVision-Based Job Risk Assessment System for Manual Material Handling Sep 2020 - Jan 2021\nResearch Volunteer Madison, WI\nServed as the 3rd author for the journal paper A Single-Camera Method for Estimating Lift Asymmetry Angles using Deep Learning\nComputer Vision Algorithms targeting The Journal of the Human Factors and Ergonomics Society. Collaboratively proposed a non-\nintrusive, visioned-based system to estimate the Body Asymmetry Angle by using pre-trained 3D Human Pose Estimators.\nVerified experiment results by setting up and running 6 human pose estimation methods on Unix-based OS with Docker and Anaconda and\nshowed that our method produces statistically more accurate results than the previous SOTA by using the paired t-test.\nProject Experience\nNLP-powered Resume Parser | Apache2, WSGI, Flask, Flask, OpenAI API Feb 2022\nhttps://github.com/hxu296/resume-parser-service\nArchitected a RESTful real-time resume parsing service that leverages OpenAI\u0027s Natural Language Processing engine GPT-3 by using\nFlask, WSGI, and OpenAI API.\nDeveloped and maintained unit and integration tests with GitHub Webhooks and Jenkins Blue Ocean\u0027s CI/CD pipeline to smoothen\ndeployment and improve fault tolerance for the new service.\nStock Drop Notifier | Selenium, BeautifulSoup, Regex, Requests, Python-Telegram-Bot API Dec 2020\nBuilt a customizable stock notifier for Newegg and BestBuy with a Telegram command-line interface that allows users to personalize\nsearch filters, fire up notifiers, and receive notifications all through 1 Telegram bot account by using Scrapy, Selenium, BeautifulSoup,\nRegex, Requests, and the Python-Telegram-Bot API.\n",
+  "RawJson": null,
+  "PlainText": "ban8B71F202207311326\nHuan Xu\nMadison, WI | 6086987552 \u4E28hxu296@wisc.edu\ngithub.com/hxu296 | linkedin.com/in/huan-xu-999700169\nSeeking a full-time SDE position\nEducation\nUniversity of Wisconsin-Madison May 2023\nComputer Sciences (honor), Mathematics, Statistics B.S. Madison, WI\nCumulative GPA\uFF1A3.88 / 4.0 | Dean\u0027s List 2019-2021\nAccomplished Coursework: Compilers, Algorithms, Operating Systems, Computer Networks, Database Management Systems, UI/UX\nDesign, Artificial Intelligence, Linear Optimization, Probability Theory, Discrete Mathematics, Linear Algebra, Calculus, etc.\nSkills\nProgramming Languages: JavaScript, Python3, C/C\u002B\u002B, Java, Bash, Batch, R\nFrameworks: React, Redux, Bootstrap, Flask, Node.js, REST, PostgreSQL, MongoDB\nDevelopment Toolchains: Linux, Git, Bash, Tmux, Vim, Jenkins, Docker\nWork Experience\nIntel Corporation, AXG Group May 2022 - Present\nGPU Software Development Engineer Intern\nBuilt the user role infrastructure for an internal graphics workload management tool by implementing SSO authentication, user\nauthorization, and microservice authentication using the MERN stack and the Azure Active Directory.\nAutomate the prevention, detection, resolution, and report of CI incidents by implementing a three-layer Jenkins health matrix,\nPrometheus and Grafana CI health data store and dashboard, and a CI firefighter as a Jenkins daemon.\nUniversity of Wisconsin-Madison, Computer Science Department Jan 2022 - May 2022\nUndergraduate Teaching Assistant for Computer Graphics\nHosted Computer Graphics office hours for 7 hours each week for questions about graphics concepts (e.g. transformations, curves, meshes,\nshaders, ray tracing, etc.) and APIs (e.g. Canvas, SVG, glMatrix, GLSL , WebGL , Three.js , etc.)\nMaintained and routinely updated the course website using the Hugo framework and Github Action\u0027s CI/CD workflow.\nTeradata Corporation Jun 2021 - Aug 2021\nData Engineer Internship\nResponsible for credit card fraud prevention and detection for a world-top commercial bank. Extracted and processed credit card data from\nthe data warehouse using Teradata SQL and DSQL and improved ETL routines using Perl and Bash scripts.\nLed the communication, demand analysis, and SQL development for a complex data extraction task requiring joining more than 20 tables\nacross 2 databases. Wrote peer-reviewed SQL and communicated with the operation team to ship the data in time.\nResearch Experience\nVision-Based Real-Time Motion Capture System on Edge Device Jan 2022 - Present\nResearch Assistant supervised by Prof. Yu Hen Hu Madison, WI\nProposed a real-time 3D motion capture system on edge devices based on the novel optimization technique that 3D temporal consistency\ncan be used to compensate for more noisy 2D information for lower FLOP and higher FPS.\nDeveloped and deployed a lightweight 3D Human Pose Estimation pipeline on Jeston Nano that integrates YOLOv5, HRNet-Lite, and\nVideoPose3D using Docker and TensorRT and improved FPS by weight quantization and CNN channel pruning.\nSynthetic Pretraining for Robust 3D Human Pose Estimation Jan 2021 - Present\nResearch Assistant supervised by Prof. Yin Li Madison, WI\nServed as the 3rd author for the journal paper Learning from Synthetic Humans for Accurate and Generalizable 3D Pose Estimation\ntargeting IEEE Transactions on Image Processing. Synthesized realistic 2D keypoints to pretrain 3D estimators and showed a significant\ndecrease of PA-MPJPE from 68.0 mm to 61.3 mm on the 3DPW dataset compared with the pretrained-with-H36M baseline.\nSpearheaded the development of a graphic rendering pipeline that infers human mesh from 3D human joints and shapes, and calculates\ndense depth maps with respect to sampled camera views by using OpenGL, Pytorch, and Scipy.\nVision-Based Job Risk Assessment System for Manual Material Handling Sep 2020 - Jan 2021\nResearch Volunteer Madison, WI\nServed as the 3rd author for the journal paper A Single-Camera Method for Estimating Lift Asymmetry Angles using Deep Learning\nComputer Vision Algorithms targeting The Journal of the Human Factors and Ergonomics Society. Collaboratively proposed a non-\nintrusive, visioned-based system to estimate the Body Asymmetry Angle by using pre-trained 3D Human Pose Estimators.\nVerified experiment results by setting up and running 6 human pose estimation methods on Unix-based OS with Docker and Anaconda and\nshowed that our method produces statistically more accurate results than the previous SOTA by using the paired t-test.\nProject Experience\nNLP-powered Resume Parser | Apache2, WSGI, Flask, Flask, OpenAI API Feb 2022\nhttps://github.com/hxu296/resume-parser-service\nArchitected a RESTful real-time resume parsing service that leverages OpenAI\u0027s Natural Language Processing engine GPT-3 by using\nFlask, WSGI, and OpenAI API.\nDeveloped and maintained unit and integration tests with GitHub Webhooks and Jenkins Blue Ocean\u0027s CI/CD pipeline to smoothen\ndeployment and improve fault tolerance for the new service.\nStock Drop Notifier | Selenium, BeautifulSoup, Regex, Requests, Python-Telegram-Bot API Dec 2020\nBuilt a customizable stock notifier for Newegg and BestBuy with a Telegram command-line interface that allows users to personalize\nsearch filters, fire up notifiers, and receive notifications all through 1 Telegram bot account by using Scrapy, Selenium, BeautifulSoup,\nRegex, Requests, and the Python-Telegram-Bot API.\n",
+  "ImageCacheKey": null,
+  "PageCount": 1,
+  "Personal": {
+    "FullName": "Hu",
+    "Email": "hxu296@wisc.edu",
+    "Phone": "6086987552",
+    "Location": null,
+    "LinkedInUrl": "linkedin.com/in/huan-xu-999700169",
+    "GitHubUrl": "github.com/hxu296",
+    "WebsiteUrl": null,
+    "Summary": "Madison, WI | 6086987552 \u4E28hxu296@wisc.edu github.com/hxu296 | linkedin.com/in/huan-xu-999700169 Seeking a full-time SDE position Education University of Wisconsin-Madison May 2023 Computer Sciences (honor), Mathematics, Statistics B.S. Madison, WI Cumulative GPA\uFF1A3.88 / 4.0 | Dean\u0027s List 2019-2021 Accomplished Coursework: Compilers, Algorithms, Operating Systems, Computer Networks, Database Management Systems, UI/UX Design, Artificial Intelligence, Linear Optimization, Probability Theory, Discrete Mathematics, Linear Algebra, Calculus, etc. Skills Programming Languages: JavaScript, Python3, C/C\u002B\u002B, Java, Bash, Batch, R Frameworks: React, Redux, Bootstrap, Flask, Node.js, REST, PostgreSQL, MongoDB Development Toolchains: Linux, Git, Bash, Tmux, Vim, Jenkins, Docker Work Experience Intel Corporation, AXG Group May 2022 - Present"
+  },
+  "Experience": [],
+  "Education": [
+    {
+      "Id": "f2487269-646d-416d-b1b9-ee62e5962c41",
+      "Institution": null,
+      "Degree": "Computer Sciences (honor), Mathematics, Statistics B.S. Madison, WI",
+      "FieldOfStudy": null,
+      "StartDate": "2023-05-01",
+      "EndDate": "2023-06-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": []
+    },
+    {
+      "Id": "35b31e28-4eb8-4847-88c2-2024dff8c033",
+      "Institution": "Cumulative GPA\uFF1A3.88 / 4.0",
+      "Degree": "Dean\u0027s List 2019-2021",
+      "FieldOfStudy": null,
+      "StartDate": "2021-06-01",
+      "EndDate": "2021-08-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "Accomplished Coursework: Compilers, Algorithms, Operating Systems, Computer Networks, Database Management Systems, UI/UX",
+        "Design, Artificial Intelligence, Linear Optimization, Probability Theory, Discrete Mathematics, Linear Algebra, Calculus, etc.",
+        "Skills",
+        "Programming Languages: JavaScript, Python3, C/C\u002B\u002B, Java, Bash, Batch, R",
+        "Frameworks: React, Redux, Bootstrap, Flask, Node.js, REST, PostgreSQL, MongoDB",
+        "Development Toolchains: Linux, Git, Bash, Tmux, Vim, Jenkins, Docker",
+        "Work Experience",
+        "GPU Software Development Engineer Intern",
+        "Built the user role infrastructure for an internal graphics workload management tool by implementing SSO authentication, user",
+        "authorization, and microservice authentication using the MERN stack and the Azure Active Directory.",
+        "Automate the prevention, detection, resolution, and report of CI incidents by implementing a three-layer Jenkins health matrix,",
+        "Prometheus and Grafana CI health data store and dashboard, and a CI firefighter as a Jenkins daemon.",
+        "Undergraduate Teaching Assistant for Computer Graphics",
+        "Hosted Computer Graphics office hours for 7 hours each week for questions about graphics concepts (e.g. transformations, curves, meshes,",
+        "shaders, ray tracing, etc.) and APIs (e.g. Canvas, SVG, glMatrix, GLSL , WebGL , Three.js , etc.)",
+        "Maintained and routinely updated the course website using the Hugo framework and Github Action\u0027s CI/CD workflow.",
+        "Data Engineer Internship",
+        "Responsible for credit card fraud prevention and detection for a world-top commercial bank. Extracted and processed credit card data from",
+        "the data warehouse using Teradata SQL and DSQL and improved ETL routines using Perl and Bash scripts.",
+        "Led the communication, demand analysis, and SQL development for a complex data extraction task requiring joining more than 20 tables"
+      ]
+    },
+    {
+      "Id": "782cf12d-8f84-44e7-9f2b-fdf1ca220754",
+      "Institution": null,
+      "Degree": "across 2 databases. Wrote peer-reviewed SQL and communicated with the operation team to ship the data",
+      "FieldOfStudy": "time.",
+      "StartDate": "2020-09-01",
+      "EndDate": "2021-01-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "Research Experience",
+        "Research Assistant supervised by Prof. Yu Hen Hu Madison, WI",
+        "Proposed a real-time 3D motion capture system on edge devices based on the novel optimization technique that 3D temporal consistency",
+        "can be used to compensate for more noisy 2D information for lower FLOP and higher FPS.",
+        "Developed and deployed a lightweight 3D Human Pose Estimation pipeline on Jeston Nano that integrates YOLOv5, HRNet-Lite, and",
+        "VideoPose3D using Docker and TensorRT and improved FPS by weight quantization and CNN channel pruning.",
+        "Research Assistant supervised by Prof. Yin Li Madison, WI",
+        "Served as the 3rd author for the journal paper Learning from Synthetic Humans for Accurate and Generalizable 3D Pose Estimation",
+        "targeting IEEE Transactions on Image Processing. Synthesized realistic 2D keypoints to pretrain 3D estimators and showed a significant",
+        "decrease of PA-MPJPE from 68.0 mm to 61.3 mm on the 3DPW dataset compared with the pretrained-with-H36M baseline.",
+        "Spearheaded the development of a graphic rendering pipeline that infers human mesh from 3D human joints and shapes, and calculates",
+        "dense depth maps with respect to sampled camera views by using OpenGL, Pytorch, and Scipy.",
+        "Research Volunteer Madison, WI",
+        "Served as the 3rd author for the journal paper A Single-Camera Method for Estimating Lift Asymmetry Angles using Deep Learning",
+        "Computer Vision Algorithms targeting The Journal of the Human Factors and Ergonomics Society. Collaboratively proposed a non-",
+        "intrusive, visioned-based system to estimate the Body Asymmetry Angle by using pre-trained 3D Human Pose Estimators.",
+        "Verified experiment results by setting up and running 6 human pose estimation methods on Unix-based OS with Docker and Anaconda and",
+        "showed that our method produces statistically more accurate results than the previous SOTA by using the paired t-test.",
+        "Project Experience"
+      ]
+    },
+    {
+      "Id": "7646ea13-7c92-465e-b918-1b5ffd0f6ad5",
+      "Institution": "NLP-powered Resume Parser",
+      "Degree": "Apache2, WSGI, Flask, Flask, OpenAI API Feb 2022",
+      "FieldOfStudy": null,
+      "StartDate": "2022-02-01",
+      "EndDate": "2022-03-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "https://github.com/hxu296/resume-parser-service",
+        "Architected a RESTful real-time resume parsing service that leverages OpenAI\u0027s Natural Language Processing engine GPT-3 by using",
+        "Flask, WSGI, and OpenAI API.",
+        "Developed and maintained unit and integration tests with GitHub Webhooks and Jenkins Blue Ocean\u0027s CI/CD pipeline to smoothen",
+        "deployment and improve fault tolerance for the new service."
+      ]
+    },
+    {
+      "Id": "bf69a9a2-6de6-4f81-b3d9-e5578936f9f6",
+      "Institution": "Stock Drop Notifier",
+      "Degree": "Selenium, BeautifulSoup, Regex, Requests, Python-Telegram-Bot API Dec 2020",
+      "FieldOfStudy": null,
+      "StartDate": "2020-12-01",
+      "EndDate": "2021-01-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "Built a customizable stock notifier for Newegg and BestBuy with a Telegram command-line interface that allows users to personalize",
+        "search filters, fire up notifiers, and receive notifications all through 1 Telegram bot account by using Scrapy, Selenium, BeautifulSoup,",
+        "Regex, Requests, and the Python-Telegram-Bot API."
+      ]
+    }
+  ],
+  "Skills": [
+    {
+      "Name": "programming languages: bash",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "batch",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "c\u002B\u002B",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "java",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "javascript",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "jenkins",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "python3",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "postgresql",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "rust",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "sql",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "vim",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "docker",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "tensorflow",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "torch",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "development tools: docker",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "git",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "github-actions",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "docker-compose",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "terraform",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "helm",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "golang",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "databases: mongodb",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "frameworks: flask",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "node",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "react",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "redux",
+      "Category": null,
+      "YearsExperience": null
+    }
+  ],
+  "Certifications": [],
+  "Projects": [],
+  "Entities": [
+    {
+      "EntityId": "af714cf1-024f-4f0b-a124-6ac25150999d",
+      "Value": "hxu296@wisc.edu",
+      "NormalizedValue": "hxu296@wisc.edu",
+      "Classification": "Email",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7ad693b0-9429-44f9-ae29-de4c875faf52",
+      "Value": "6086987552",
+      "NormalizedValue": "6086987552",
+      "Classification": "PhoneNumber",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "8b61e62b-72d9-4571-870b-6509fd331508",
+      "Value": "may 2023",
+      "NormalizedValue": "may 2023",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "bb54023c-d39d-4d72-9be6-4f7c00a9de03",
+      "Value": "2019-2021",
+      "NormalizedValue": "2019-2021",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "55f3d17a-3324-4378-a79f-f699a0879fc3",
+      "Value": "may 2022",
+      "NormalizedValue": "may 2022",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "cdd9cca9-2c4d-4487-82e2-4146197e4bbd",
+      "Value": "jan 2022 - may 2022",
+      "NormalizedValue": "jan 2022 - may 2022",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "29b3d618-f890-4f05-b113-408f1c2e52e9",
+      "Value": "jun 2021 - aug 2021",
+      "NormalizedValue": "jun 2021 - aug 2021",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "2bfd74e8-73c4-4102-a1a7-e69ba2d2f802",
+      "Value": "jan 2022",
+      "NormalizedValue": "jan 2022",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6f6b38dc-b2fb-44ad-bf4c-b2f06c383311",
+      "Value": "jan 2021",
+      "NormalizedValue": "jan 2021",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6d6e8af8-01c5-4b8f-b763-3402ea9c9c34",
+      "Value": "sep 2020 - jan 2021",
+      "NormalizedValue": "sep 2020 - jan 2021",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "8fb560d9-c33d-4ff8-9e60-070638299dad",
+      "Value": "feb 2022",
+      "NormalizedValue": "feb 2022",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "cc6f9815-b66e-4398-a686-9f75e3b67616",
+      "Value": "dec 2020",
+      "NormalizedValue": "dec 2020",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "92a3cd34-b590-4495-a081-1e6db57d6c05",
+      "Value": "linkedin.com/in/huan-xu-999700169",
+      "NormalizedValue": "linkedin.com/in/huan-xu-999700169",
+      "Classification": "LinkedInUrl",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "f3d02b88-73b3-441f-9d19-2ae1904348d3",
+      "Value": "github.com/hxu296",
+      "NormalizedValue": "github.com/hxu296",
+      "Classification": "GitHubUrl",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "30a87cb8-cf76-4139-979f-ef13913fc614",
+      "Value": "github.com/hxu296",
+      "NormalizedValue": "github.com/hxu296",
+      "Classification": "GitHubUrl",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a4afb4dc-50fb-4fa2-80d6-3da5910b2b8c",
+      "Value": "Hu",
+      "NormalizedValue": "hu",
+      "Classification": "PersonName",
+      "Confidence": 0.9989297986030579,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "77cbf0c3-afec-426c-9d41-cf2ee758562c",
+      "Value": "an Xu\nMadison",
+      "NormalizedValue": "an xu\nmadison",
+      "Classification": "PersonName",
+      "Confidence": 0.994379997253418,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "fc539915-7ea9-44c0-b4a0-cfa323383d1e",
+      "Value": "Education\nUniversity of Wisconsin",
+      "NormalizedValue": "education\nuniversity of wisconsin",
+      "Classification": "Organization",
+      "Confidence": 0.9691265821456909,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "fa98b359-df27-432e-910b-248a2c0517c9",
+      "Value": "Madison",
+      "NormalizedValue": "madison",
+      "Classification": "Address",
+      "Confidence": 0.8981105089187622,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "e5d5f4e7-fcc6-40a5-84c4-beccfe34b709",
+      "Value": "B.S",
+      "NormalizedValue": "b.s",
+      "Classification": "Organization",
+      "Confidence": 0.8259669542312622,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "aa085185-951b-44f7-a5e1-069052c4d61d",
+      "Value": "Madison",
+      "NormalizedValue": "madison",
+      "Classification": "Organization",
+      "Confidence": 0.922307014465332,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "0c128bc7-3c52-4b05-8a23-c9cf88821a1f",
+      "Value": "\u0027s",
+      "NormalizedValue": "\u0027s",
+      "Classification": "Organization",
+      "Confidence": 0.819923996925354,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "df0ffa8a-c21f-40b9-a292-64a485f1797b",
+      "Value": "Operating Systems",
+      "NormalizedValue": "operating systems",
+      "Classification": "Organization",
+      "Confidence": 0.8323394060134888,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "27de370f-e6fc-4d77-8a0e-09944a84dbcc",
+      "Value": "Computer Networks",
+      "NormalizedValue": "computer networks",
+      "Classification": "Organization",
+      "Confidence": 0.9793397188186646,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "5b910f45-cd40-40ca-9497-5c83344691d5",
+      "Value": "Database Management Systems",
+      "NormalizedValue": "database management systems",
+      "Classification": "Organization",
+      "Confidence": 0.983776330947876,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "630a4814-59bb-43d8-b738-19e86a47a252",
+      "Value": "Design",
+      "NormalizedValue": "design",
+      "Classification": "Organization",
+      "Confidence": 0.832721471786499,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "2b8cc2ab-1b18-4ba1-a7d5-fc89a6c8d3ed",
+      "Value": "Artificial Intelligence",
+      "NormalizedValue": "artificial intelligence",
+      "Classification": "Organization",
+      "Confidence": 0.905508279800415,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "d4085e5d-0d3f-433c-96e4-d99985922647",
+      "Value": "zation",
+      "NormalizedValue": "zation",
+      "Classification": "Organization",
+      "Confidence": 0.8381433486938477,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "b74a6bef-efe4-4919-9d36-c2f1100b4f54",
+      "Value": "JavaScript",
+      "NormalizedValue": "javascript",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9636202454566956,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "09775b2d-b2c1-42b5-a4c6-47b3d8c83d99",
+      "Value": "Python3",
+      "NormalizedValue": "python3",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.831030011177063,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "9a403154-6a70-4757-b174-faab115fa37e",
+      "Value": "C",
+      "NormalizedValue": "c",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.84627366065979,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "53873fd0-2ea4-4b54-b5b2-a6cae7ed16b7",
+      "Value": "Bootstra",
+      "NormalizedValue": "bootstra",
+      "Classification": "Organization",
+      "Confidence": 0.9428420066833496,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7aac0bdc-8263-49be-88cd-d2246b26e33e",
+      "Value": "F",
+      "NormalizedValue": "f",
+      "Classification": "Organization",
+      "Confidence": 0.8049448728561401,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "3f958ed1-4f27-44cc-a032-50d30930c2c5",
+      "Value": "j",
+      "NormalizedValue": "j",
+      "Classification": "Organization",
+      "Confidence": 0.8864654898643494,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "05759b37-6a49-472b-922f-7b6e8c6c64c3",
+      "Value": "Jenkins",
+      "NormalizedValue": "jenkins",
+      "Classification": "Organization",
+      "Confidence": 0.8540893793106079,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "e0305e1a-e19f-4fd0-8b5d-93023e30f2bd",
+      "Value": "Intel Corporation",
+      "NormalizedValue": "intel corporation",
+      "Classification": "Organization",
+      "Confidence": 0.9982860088348389,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "df73517f-56c8-4597-806b-64fb5091c625",
+      "Value": "AXG Group",
+      "NormalizedValue": "axg group",
+      "Classification": "Organization",
+      "Confidence": 0.962184488773346,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6101a741-bf78-4eba-a621-15e4c41d5e10",
+      "Value": "GP",
+      "NormalizedValue": "gp",
+      "Classification": "Organization",
+      "Confidence": 0.835843563079834,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c9c0027b-4f6c-486b-896c-6cee4b1d29a7",
+      "Value": "Development Engineer",
+      "NormalizedValue": "development engineer",
+      "Classification": "Organization",
+      "Confidence": 0.8194407224655151,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "ea5ae41e-bc0c-48de-815c-13847c952720",
+      "Value": "ME",
+      "NormalizedValue": "me",
+      "Classification": "Organization",
+      "Confidence": 0.8738240599632263,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c1c2ba9f-6fe8-4867-9fe8-4324988d3a5e",
+      "Value": "A",
+      "NormalizedValue": "a",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9887362122535706,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "d6603520-9f58-4321-8d64-05237421ee0b",
+      "Value": "zure Active Directory",
+      "NormalizedValue": "zure active directory",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9747238755226135,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "42d4f40a-4f8a-4328-8b81-211fa9cb836b",
+      "Value": "Graf",
+      "NormalizedValue": "graf",
+      "Classification": "Organization",
+      "Confidence": 0.8562635183334351,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "2ef09a61-fa11-43b9-9fe2-e8b57c92d7c8",
+      "Value": "Jenkins",
+      "NormalizedValue": "jenkins",
+      "Classification": "Organization",
+      "Confidence": 0.9678843021392822,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "2d5f8839-c8ec-4fdc-a4f8-a68126696f99",
+      "Value": "Hugo",
+      "NormalizedValue": "hugo",
+      "Classification": "Organization",
+      "Confidence": 0.8076997995376587,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6e1798e3-0183-40f6-b849-3faf7070d91b",
+      "Value": "hxu296@wisc.edu",
+      "NormalizedValue": "hxu296@wisc.edu",
+      "Classification": "Email",
+      "Confidence": 0.8419432640075684,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "d26bf733-9058-476c-a376-54e1d65e6a11",
+      "Value": ".com",
+      "NormalizedValue": ".com",
+      "Classification": "Email",
+      "Confidence": 0.7903673648834229,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7df49c25-2e6e-4c82-bbcf-414664807e4f",
+      "Value": "Management",
+      "NormalizedValue": "management",
+      "Classification": "Degree",
+      "Confidence": 0.9104539155960083,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    }
+  ],
+  "TailoredForJobId": null
+}

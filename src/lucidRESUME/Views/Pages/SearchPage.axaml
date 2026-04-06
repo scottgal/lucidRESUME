@@ -4,28 +4,27 @@
              x:DataType="vm:SearchPageViewModel"
              x:Class="lucidRESUME.Views.Pages.SearchPage">
 
-  <Grid RowDefinitions="Auto,*" Background="#181825">
+  <Grid RowDefinitions="Auto,*" Background="{DynamicResource LrPageBgBrush}">
 
     <!-- Top input panel -->
     <ScrollViewer Grid.Row="0" MaxHeight="420">
       <StackPanel Margin="24,16" Spacing="16">
 
-        <TextBlock Text="Add Job" FontSize="22" FontWeight="Bold" Foreground="#CDD6F4"/>
+        <TextBlock Text="Add Job" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
 
         <!-- URL fetch card -->
-        <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+        <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
                 CornerRadius="8" Padding="0">
           <Grid ColumnDefinitions="3,*">
-            <Border Grid.Column="0" Background="#89B4FA" CornerRadius="3,0,0,3" MinHeight="1"/>
+            <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
             <StackPanel Grid.Column="1" Margin="20,16" Spacing="10">
-              <TextBlock Text="Paste a Job URL" FontSize="13" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+              <TextBlock Text="Paste a Job URL" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
               <TextBlock Text="The app will fetch and parse the job description automatically."
-                         FontSize="11" Foreground="#6C7086" TextWrapping="Wrap"/>
+                         FontSize="11" Foreground="{DynamicResource LrSubtleTextBrush}" TextWrapping="Wrap"/>
               <Grid ColumnDefinitions="*,8,Auto">
                 <TextBox Grid.Column="0" Text="{Binding JobUrl}"
                          Watermark="https://example.com/jobs/123"
-                         Background="#1E1E2E" BorderBrush="#45475A"
-                         Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
+                         CornerRadius="6" Padding="10,8"/>
                 <Button Grid.Column="2" Content="Fetch"
                         Command="{Binding FetchUrlCommand}"
                         IsEnabled="{Binding !IsLoading}"
@@ -33,15 +32,15 @@
               </Grid>
 
               <!-- Manual paste fallback banner -->
-              <Border Background="#2A2020" CornerRadius="6" Padding="12,8"
+              <Border Background="{DynamicResource LrWarningBannerBgBrush}" CornerRadius="6" Padding="12,8"
                       IsVisible="{Binding NeedsManualText}">
                 <StackPanel Spacing="4">
                   <TextBlock Text="⚠  This site requires manual paste"
-                             FontSize="12" FontWeight="SemiBold" Foreground="#FAB387"
+                             FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentPeachBrush}"
                              FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
-                  <TextBlock FontSize="11" Foreground="#A6ADC8" TextWrapping="Wrap">
+                  <TextBlock FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}" TextWrapping="Wrap">
                     <Run Text="Open"/>
-                    <Run Text="{Binding ManualUrl}" Foreground="#89B4FA" TextDecorations="Underline"/>
+                    <Run Text="{Binding ManualUrl}" Foreground="{DynamicResource LrAccentBlueBrush}" TextDecorations="Underline"/>
                     <Run Text="in your browser, copy the job description, and paste it in the text box below."/>
                   </TextBlock>
                 </StackPanel>
@@ -51,19 +50,18 @@
         </Border>
 
         <!-- Paste text card -->
-        <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+        <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
                 CornerRadius="8" Padding="0">
           <Grid ColumnDefinitions="3,*">
-            <Border Grid.Column="0" Background="#CBA6F7" CornerRadius="3,0,0,3" MinHeight="1"/>
+            <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
             <StackPanel Grid.Column="1" Margin="20,16" Spacing="10">
-              <TextBlock Text="Paste Job Description Text" FontSize="13" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+              <TextBlock Text="Paste Job Description Text" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
               <TextBlock Text="Copy the full job posting text and paste it here."
-                         FontSize="11" Foreground="#6C7086" TextWrapping="Wrap"/>
+                         FontSize="11" Foreground="{DynamicResource LrSubtleTextBrush}" TextWrapping="Wrap"/>
               <TextBox Text="{Binding PastedText}"
                        Watermark="Paste job description here…"
                        AcceptsReturn="True" TextWrapping="Wrap" Height="120"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"
+                       CornerRadius="6" Padding="10,8"
                        ScrollViewer.VerticalScrollBarVisibility="Auto"/>
               <Button Content="Add Job" Command="{Binding AddTextCommand}"
                       IsEnabled="{Binding !IsLoading}"
@@ -73,7 +71,7 @@
         </Border>
 
         <!-- Status -->
-        <TextBlock Text="{Binding StatusMessage}" Foreground="#A6ADC8" FontSize="12"
+        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"
                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
       </StackPanel>
@@ -83,11 +81,11 @@
     <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24,0,24,16">
 
       <TextBlock Grid.Row="0" Text="Saved Jobs" FontSize="14" FontWeight="SemiBold"
-                 Foreground="#89B4FA" Margin="0,0,0,8"/>
+                 Foreground="{DynamicResource LrAccentBlueBrush}" Margin="0,0,0,8"/>
 
       <!-- Empty state -->
       <TextBlock Grid.Row="1" Text="No jobs saved yet — fetch a URL or paste a job description above."
-                 Foreground="#45475A" FontSize="13"
+                 Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="13"
                  HorizontalAlignment="Center" VerticalAlignment="Center"
                  IsVisible="{Binding !SavedJobs.Count}"/>
 
@@ -96,20 +94,20 @@
         <ItemsControl ItemsSource="{Binding SavedJobs}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:SavedJobItem">
-              <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+              <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
                       CornerRadius="6" Padding="12,8" Margin="0,0,0,6">
                 <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Grid.Column="0" Spacing="2">
-                    <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4" FontSize="13">
+                    <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="13">
                       <Run Text="{Binding Title}"/>
-                      <Run Text=" — " Foreground="#6C7086"/>
+                      <Run Text=" — " Foreground="{DynamicResource LrSubtleTextBrush}"/>
                       <Run Text="{Binding Company}"/>
                     </TextBlock>
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                      <TextBlock Text="{Binding Location}" Foreground="#6C7086" FontSize="11"
+                      <TextBlock Text="{Binding Location}" Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="11"
                                  IsVisible="{Binding Location, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                      <Border Background="#1E1E2E" CornerRadius="4" Padding="5,1">
-                        <TextBlock Text="{Binding Source}" Foreground="#89B4FA" FontSize="10"/>
+                      <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="5,1">
+                        <TextBlock Text="{Binding Source}" Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="10"/>
                       </Border>
                     </StackPanel>
                   </StackPanel>
@@ -117,7 +115,7 @@
                           Command="{Binding $parent[UserControl].((vm:SearchPageViewModel)DataContext).RemoveJobCommand}"
                           CommandParameter="{Binding}"
                           Width="28" Height="28" Padding="0"
-                          Foreground="#6C7086" Background="Transparent"
+                          Foreground="{DynamicResource LrSubtleTextBrush}" Background="Transparent"
                           BorderThickness="0" VerticalAlignment="Top"/>
                 </Grid>
               </Border>

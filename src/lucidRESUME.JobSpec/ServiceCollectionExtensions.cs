@@ -1,4 +1,5 @@
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.JobSpec.Extraction;
 using lucidRESUME.JobSpec.Scrapers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,10 @@ public static class ServiceCollectionExtensions
 
         // Strategy selector
         services.AddTransient<ScrapeStrategySelector>();
+
+        // --- Fusion options ---
+        if (configuration is not null)
+            services.Configure<FusionOptions>(configuration.GetSection("JdFusion"));
 
         // --- Main parser ---
         services.AddTransient<IJobSpecParser, JobSpecParser>();

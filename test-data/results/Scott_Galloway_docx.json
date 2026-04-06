@@ -1,0 +1,1183 @@
+{
+  "ResumeId": "5f9bdc78-b3ad-412a-b03b-600a898d9794",
+  "FileName": "Scott Galloway.docx",
+  "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "FileSizeBytes": 22105,
+  "CreatedAt": "2026-04-06T15:18:28.082937+00:00",
+  "LastModifiedAt": "2026-04-06T15:18:28.242867+00:00",
+  "RawMarkdown": "## Scott Galloway\nEmail: scott.galloway@gmail.com\nPhone: 07498479614 (please email in the first instance)\nBlog: mostlylucid.net\nGitHub: github.com/scottgal/mostlylucidweb\n## Professional Summary\nFrom Perl CGI scripts to cloud platforms, I\u2019ve spent over two decades building and running software that holds up under pressure. I\u2019ve worked across ASP, .NET, and today\u2019s Core/Azure/Kubernetes stack, leading teams and reworking legacy systems along the way. I add AI when it\u2019s useful, not because it\u2019s trendy. The thread through it all is simple: make things work properly and make them last.\n## Core Competencies\nTechnology Leadership: CTO, Engineering Management, Agile/Scrum, Cross-functional Collaboration, Team Building, Mentorship, Stakeholder Communication\nSoftware Development: ASP.NET Core, .NET Framework / .NET 6/7/8/9, C#, RESTful APIs, Microservices Architecture, Domain-Driven Design (DDD)\nCloud Infrastructure: Microsoft Azure, Azure Functions, Azure DevOps, Docker, Kubernetes, Infrastructure-as-Code (IaC), Bicep, CI/CD Pipelines\nAI \u0026 Data Engineering: ML.NET, scikit-learn, LLMs, Natural Language Processing (NLP), EasyNMT, Vector Embeddings, OpenAI, Azure AI Services, orchestration of LLM driven RAG pipelines.\nFrontend Engineering: HTMX, Alpine.js, React, Vue.js, Blazor, Tailwind CSS, Responsive Design\nDatabase Technologies: SQL Server, PostgreSQL, MySQL, Cosmos DB, MongoDB, OpenSearch, RavenDB\nTools \u0026 Project Management: Jira, Azure Boards, GitHub Actions, GitLab CI/CD, Trello\n## Professional Experience\n### mostlylucid limited | Freelance Consultant / CTO / Lead Developer\nJan 2012 \u2013 Present | Remote\nDelivered dozens of client solutions across fintech, healthcare, and ecommerce using JavaScript, .NET Core, Azure, and containerized architectures.\nDeveloped and operated a developer bootcamp with 200\u002B graduates and a 90%\u002B placement rate.\nMigrated legacy monoliths to cloud-native architectures, cutting infrastructure costs by 50% and improving time-to-deploy by 80% and reducing runtime errors by \u003E90% in many instances.\nDesigned and deployed ML-based recommendation and lead generation systems using Azure OpenAI and vector embeddings.\nOver the years I\u2019ve worked with various companies \u0026 agencies worldwide on a contract basis including\nLead Architect / Developer for Major Asian Airline developing a novel Knockout \u0026 ASP.NET MVC based booking system\nR\u0026D Developer with an insurance company developing low level socket system using .NET on Azure for telemetry tracking and device development\nResearch Systems Architect on a UK Government National Security project on distributed computing and management of said systems.\nTechnical / Development consultant for 8  UK and international charities.\n### ZenChef Ltd | Lead Contract Developer\nOct 2024 \u2013 Present | Remote\nMigrated large, distributed legacy system to .NET 8, reducing Azure spend \u0026 improving reliability.\nConducted performance optimization and load testing using Application Insights and custom telemetry.\nSupplied rapid support to a complex microservices and event driven system.\n### Very Jane Ltd | Senior Backend Developer\nApr 2024 \u2013 Aug 2024 | Remote\nLed backend development of scalable ecommerce modules including Stripe Connect and Hyperwallet integrations.\nBootstrapped the new platform from scratch, adding realistic test data for customer product import and ensuring high reliability with customer delivered data.\n### Seamcor Ltd | Head of Engineering (Contract)\nDec 2022 \u2013 Apr 2024 | Remote\nManaged a team of 10\u002B engineers to re-architect an enterprise-grade production management system.\nIntegrated Docker Compose and OpenSearch, providing powerful reporting and search functionality along with enabling customer specific deployments.\nCompletely redesigned the system to allow both cloud native and low cost on premises installs with OpenSearch, Postgres etc.\n### GBG Plc (Loqate) | Lead Engineer\nAug 2022 \u2013 Nov 2022 | Remote\nArchitected a high-performance global address validation system using .NET 6 microservices and Kubernetes.\nImplemented extensive testing infrastructure (using K6) to allow the rapid testing of changes and improvements leading to an 80% reduction in the development cadence.\n### WCOM AB | Lead Developer (Contract)\nOct 2021 \u2013 May 2022 | Remote\nDeveloped Blazor Server applications with Azure Functions and SignalR for real-time collaboration tools.\nDelivered screen mirroring and IPC modules using a WPF application improving usability in logistics and remote environments.\n### H3Space Ltd | Lead Engineer\nJun 2021 \u2013 Sep 2021 | Remote\nDesigned backend cloud architecture for Unity-based SaaS platform with React and GraphQL.\nHired and led a global dev team to MVP delivery within 90 days.\n### Huozhi Ltd | Technical Consultant / Dev Lead\nJun 2018 \u2013 Mar 2020 | Remote\nModernized fintech platform, implementing performance profiling and API scalability improvements.\nLed distributed team using Scrum and CI/CD practices to deliver biweekly releases.\n### Interactive Reporting Ltd | Lead Developer (Contract)\nDec 2015 \u2013 Jun 2021 | Remote\nDeveloped a cross-platform reporting engine using ASP.NET MVC and WPF.\nIntegrated multi-database support (SQL Server, MySQL, SQLite) for analytics workloads.\n### Dell | Development Lead\nJan 2011 \u2013 Jul 2011 | Glasgow, UK\nArchitected an internal machine provisioning platform with ASP.NET MVC and SQL Server, reducing setup time by 70%.\n### Microsoft Corp. | Program Manager II\nJan 2007 \u2013 Oct 2009 | Redmond, WA\nOversaw ASP.NET release planning and cross-functional coordination\nDrove the security platform underlying Project Server.\nChampioned new security infrastructure design, improving compliance for enterprise deployments.\n### Microsoft Ltd. | Application Development Consultant II\nJun 2005 \u2013 Jan 2007 | Reading, UK\nConducted enterprise performance audits and delivered architecture improvement plans to FTSE 100 clients.\nStormID | Lead Developer\nFeb 2003 \u2013 Jun 2005 | Edinburgh, UK\nDelivered bespoke  CMS and ecommerce solutions using .NET and SQL Server under fast-paced agency timelines.\n## Education\nUniversity of Stirling \u2013 BSc (Hons) Psychology\nStirling, Scotland, UK\n",
+  "RawJson": null,
+  "PlainText": "Scott Galloway\nEmail: scott.galloway@gmail.com\nPhone: 07498479614 (please email in the first instance)\nBlog: mostlylucid.net\nGitHub: github.com/scottgal/mostlylucidweb\nProfessional Summary\nFrom Perl CGI scripts to cloud platforms, I\u2019ve spent over two decades building and running software that holds up under pressure. I\u2019ve worked across ASP, .NET, and today\u2019s Core/Azure/Kubernetes stack, leading teams and reworking legacy systems along the way. I add AI when it\u2019s useful, not because it\u2019s trendy. The thread through it all is simple: make things work properly and make them last.\nCore Competencies\nTechnology Leadership: CTO, Engineering Management, Agile/Scrum, Cross-functional Collaboration, Team Building, Mentorship, Stakeholder Communication\nSoftware Development: ASP.NET Core, .NET Framework / .NET 6/7/8/9, C#, RESTful APIs, Microservices Architecture, Domain-Driven Design (DDD)\nCloud Infrastructure: Microsoft Azure, Azure Functions, Azure DevOps, Docker, Kubernetes, Infrastructure-as-Code (IaC), Bicep, CI/CD Pipelines\nAI \u0026 Data Engineering: ML.NET, scikit-learn, LLMs, Natural Language Processing (NLP), EasyNMT, Vector Embeddings, OpenAI, Azure AI Services, orchestration of LLM driven RAG pipelines.\nFrontend Engineering: HTMX, Alpine.js, React, Vue.js, Blazor, Tailwind CSS, Responsive Design\nDatabase Technologies: SQL Server, PostgreSQL, MySQL, Cosmos DB, MongoDB, OpenSearch, RavenDB\nTools \u0026 Project Management: Jira, Azure Boards, GitHub Actions, GitLab CI/CD, Trello\nProfessional Experience\nmostlylucid limited | Freelance Consultant / CTO / Lead Developer\nJan 2012 \u2013 Present | Remote\nDelivered dozens of client solutions across fintech, healthcare, and ecommerce using JavaScript, .NET Core, Azure, and containerized architectures.\nDeveloped and operated a developer bootcamp with 200\u002B graduates and a 90%\u002B placement rate.\nMigrated legacy monoliths to cloud-native architectures, cutting infrastructure costs by 50% and improving time-to-deploy by 80% and reducing runtime errors by \u003E90% in many instances.\nDesigned and deployed ML-based recommendation and lead generation systems using Azure OpenAI and vector embeddings.\nOver the years I\u2019ve worked with various companies \u0026 agencies worldwide on a contract basis including\nLead Architect / Developer for Major Asian Airline developing a novel Knockout \u0026 ASP.NET MVC based booking system\nR\u0026D Developer with an insurance company developing low level socket system using .NET on Azure for telemetry tracking and device development\nResearch Systems Architect on a UK Government National Security project on distributed computing and management of said systems.\nTechnical / Development consultant for 8  UK and international charities.\nZenChef Ltd | Lead Contract Developer\nOct 2024 \u2013 Present | Remote\nMigrated large, distributed legacy system to .NET 8, reducing Azure spend \u0026 improving reliability.\nConducted performance optimization and load testing using Application Insights and custom telemetry.\nSupplied rapid support to a complex microservices and event driven system.\nVery Jane Ltd | Senior Backend Developer\nApr 2024 \u2013 Aug 2024 | Remote\nLed backend development of scalable ecommerce modules including Stripe Connect and Hyperwallet integrations.\nBootstrapped the new platform from scratch, adding realistic test data for customer product import and ensuring high reliability with customer delivered data.\nSeamcor Ltd | Head of Engineering (Contract)\nDec 2022 \u2013 Apr 2024 | Remote\nManaged a team of 10\u002B engineers to re-architect an enterprise-grade production management system.\nIntegrated Docker Compose and OpenSearch, providing powerful reporting and search functionality along with enabling customer specific deployments.\nCompletely redesigned the system to allow both cloud native and low cost on premises installs with OpenSearch, Postgres etc.\nGBG Plc (Loqate) | Lead Engineer\nAug 2022 \u2013 Nov 2022 | Remote\nArchitected a high-performance global address validation system using .NET 6 microservices and Kubernetes.\nImplemented extensive testing infrastructure (using K6) to allow the rapid testing of changes and improvements leading to an 80% reduction in the development cadence.\nWCOM AB | Lead Developer (Contract)\nOct 2021 \u2013 May 2022 | Remote\nDeveloped Blazor Server applications with Azure Functions and SignalR for real-time collaboration tools.\nDelivered screen mirroring and IPC modules using a WPF application improving usability in logistics and remote environments.\nH3Space Ltd | Lead Engineer\nJun 2021 \u2013 Sep 2021 | Remote\nDesigned backend cloud architecture for Unity-based SaaS platform with React and GraphQL.\nHired and led a global dev team to MVP delivery within 90 days.\nHuozhi Ltd | Technical Consultant / Dev Lead\nJun 2018 \u2013 Mar 2020 | Remote\nModernized fintech platform, implementing performance profiling and API scalability improvements.\nLed distributed team using Scrum and CI/CD practices to deliver biweekly releases.\nInteractive Reporting Ltd | Lead Developer (Contract)\nDec 2015 \u2013 Jun 2021 | Remote\nDeveloped a cross-platform reporting engine using ASP.NET MVC and WPF.\nIntegrated multi-database support (SQL Server, MySQL, SQLite) for analytics workloads.\nDell | Development Lead\nJan 2011 \u2013 Jul 2011 | Glasgow, UK\nArchitected an internal machine provisioning platform with ASP.NET MVC and SQL Server, reducing setup time by 70%.\nMicrosoft Corp. | Program Manager II\nJan 2007 \u2013 Oct 2009 | Redmond, WA\nOversaw ASP.NET release planning and cross-functional coordination\nDrove the security platform underlying Project Server.\nChampioned new security infrastructure design, improving compliance for enterprise deployments.\nMicrosoft Ltd. | Application Development Consultant II\nJun 2005 \u2013 Jan 2007 | Reading, UK\nConducted enterprise performance audits and delivered architecture improvement plans to FTSE 100 clients.\nStormID | Lead Developer\nFeb 2003 \u2013 Jun 2005 | Edinburgh, UK\nDelivered bespoke  CMS and ecommerce solutions using .NET and SQL Server under fast-paced agency timelines.\nEducation\nUniversity of Stirling \u2013 BSc (Hons) Psychology\nStirling, Scotland, UK\n",
+  "ImageCacheKey": null,
+  "PageCount": 0,
+  "Personal": {
+    "FullName": "Scott Galloway",
+    "Email": "scott.galloway@gmail.com",
+    "Phone": "07498479614",
+    "Location": null,
+    "LinkedInUrl": null,
+    "GitHubUrl": "github.com/scottgal",
+    "WebsiteUrl": null,
+    "Summary": "Email: scott.galloway@gmail.com Phone: 07498479614 (please email in the first instance) Blog: mostlylucid.net GitHub: github.com/scottgal/mostlylucidweb From Perl CGI scripts to cloud platforms, I\u2019ve spent over two decades building and running software that holds up under pressure. I\u2019ve worked across ASP, .NET, and today\u2019s Core/Azure/Kubernetes stack, leading teams and reworking legacy systems along the way. I add AI when it\u2019s useful, not because it\u2019s trendy. The thread through it all is simple: make things work properly and make them last."
+  },
+  "Experience": [
+    {
+      "Id": "28b5d3c3-06d8-4612-883e-d45bf5e82eaa",
+      "Company": "mostlylucid limited",
+      "Title": "Freelance Consultant / CTO / Lead Developer",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "ab2af87d-38c2-4b5f-9bdb-1057ed89c556",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2012-01-01",
+      "EndDate": null,
+      "IsCurrent": true,
+      "Achievements": [
+        "Delivered dozens of client solutions across fintech, healthcare, and ecommerce using JavaScript, .NET Core, Azure, and containerized architectures.",
+        "Developed and operated a developer bootcamp with 200\u002B graduates and a 90%\u002B placement rate.",
+        "Migrated legacy monoliths to cloud-native architectures, cutting infrastructure costs by 50% and improving time-to-deploy by 80% and reducing runtime errors by \u003E90% in many instances.",
+        "Designed and deployed ML-based recommendation and lead generation systems using Azure OpenAI and vector embeddings.",
+        "Over the years I\u2019ve worked with various companies \u0026 agencies worldwide on a contract basis including",
+        "Lead Architect / Developer for Major Asian Airline developing a novel Knockout \u0026 ASP.NET MVC based booking system",
+        "R\u0026D Developer with an insurance company developing low level socket system using .NET on Azure for telemetry tracking and device development",
+        "Research Systems Architect on a UK Government National Security project on distributed computing and management of said systems.",
+        "Technical / Development consultant for 8  UK and international charities."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "3cbbac92-e090-467e-a8f6-f1a55a19b0eb",
+      "Company": "ZenChef Ltd",
+      "Title": "Lead Contract Developer",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "1cf7cf72-414e-4ca9-b84f-be3125e0321b",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2024-10-01",
+      "EndDate": null,
+      "IsCurrent": true,
+      "Achievements": [
+        "Migrated large, distributed legacy system to .NET 8, reducing Azure spend \u0026 improving reliability.",
+        "Conducted performance optimization and load testing using Application Insights and custom telemetry.",
+        "Supplied rapid support to a complex microservices and event driven system."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "3c72be25-ef71-48b7-848d-aa440a2b195a",
+      "Company": "Very Jane Ltd",
+      "Title": "Senior Backend Developer",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "014c3a07-1404-44dc-8b7d-8ee414a93f76",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2024-04-01",
+      "EndDate": "2024-08-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Led backend development of scalable ecommerce modules including Stripe Connect and Hyperwallet integrations.",
+        "Bootstrapped the new platform from scratch, adding realistic test data for customer product import and ensuring high reliability with customer delivered data."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "2c7e32b9-98bc-423e-bf86-852aad95c3c7",
+      "Company": "Seamcor Ltd",
+      "Title": "Head of Engineering (Contract)",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "ab692c76-f0b1-4b77-b1ee-c7b07badbee4",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2022-12-01",
+      "EndDate": "2024-04-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Managed a team of 10\u002B engineers to re-architect an enterprise-grade production management system.",
+        "Integrated Docker Compose and OpenSearch, providing powerful reporting and search functionality along with enabling customer specific deployments.",
+        "Completely redesigned the system to allow both cloud native and low cost on premises installs with OpenSearch, Postgres etc."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "52dc96d6-a48a-4a4e-a3c4-b4d4011ebebd",
+      "Company": "GBG Plc (Loqate)",
+      "Title": "Lead Engineer",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "d7eed95b-a5bf-439b-bc4d-f890f0b6b273",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2022-08-01",
+      "EndDate": "2022-11-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Architected a high-performance global address validation system using .NET 6 microservices and Kubernetes.",
+        "Implemented extensive testing infrastructure (using K6) to allow the rapid testing of changes and improvements leading to an 80% reduction in the development cadence."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "f4f35a20-c3e6-4aac-8d57-8a08a356b725",
+      "Company": "WCOM AB",
+      "Title": "Lead Developer (Contract)",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "1f6772d2-ac18-46d7-bf8c-6dbafff8762c",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2021-10-01",
+      "EndDate": "2022-05-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Developed Blazor Server applications with Azure Functions and SignalR for real-time collaboration tools.",
+        "Delivered screen mirroring and IPC modules using a WPF application improving usability in logistics and remote environments."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "f6f9cb07-a72d-4ccb-9cb8-59d599081c6f",
+      "Company": "H3Space Ltd",
+      "Title": "Lead Engineer",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "b8c00685-4132-4156-b835-8cb86fb2c2f0",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2021-06-01",
+      "EndDate": "2021-09-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Designed backend cloud architecture for Unity-based SaaS platform with React and GraphQL.",
+        "Hired and led a global dev team to MVP delivery within 90 days."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "05659aba-783b-42bb-992c-d2474b88ed0e",
+      "Company": "Huozhi Ltd",
+      "Title": "Technical Consultant / Dev Lead",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "18ddf410-ef23-443d-9262-10c4df8bb2fd",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2018-06-01",
+      "EndDate": "2020-03-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Modernized fintech platform, implementing performance profiling and API scalability improvements.",
+        "Led distributed team using Scrum and CI/CD practices to deliver biweekly releases."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "661e11f8-a4f8-42ac-ad76-e840a60df504",
+      "Company": "Interactive Reporting Ltd",
+      "Title": "Lead Developer (Contract)",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "2348cbcd-115f-4e32-b672-fe5b610f972b",
+      "Company": null,
+      "Title": "| Remote",
+      "Location": null,
+      "StartDate": "2015-12-01",
+      "EndDate": "2021-06-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Developed a cross-platform reporting engine using ASP.NET MVC and WPF.",
+        "Integrated multi-database support (SQL Server, MySQL, SQLite) for analytics workloads."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "9526f8f8-f9ae-4140-bfef-71dddd2b9126",
+      "Company": "Dell",
+      "Title": "Development Lead",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "1630ea83-6a26-4fb9-bcb3-4652505628ec",
+      "Company": "UK",
+      "Title": "| Glasgow",
+      "Location": null,
+      "StartDate": "2011-01-01",
+      "EndDate": "2011-07-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Architected an internal machine provisioning platform with ASP.NET MVC and SQL Server, reducing setup time by 70%."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "81d12bdf-6acb-4bc9-9d49-87d8af4ef197",
+      "Company": "Microsoft Corp.",
+      "Title": "Program Manager II",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "1f35ad00-a7e1-4c9e-b69e-6f851213eded",
+      "Company": "WA",
+      "Title": "| Redmond",
+      "Location": null,
+      "StartDate": "2007-01-01",
+      "EndDate": "2009-10-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Oversaw ASP.NET release planning and cross-functional coordination",
+        "Drove the security platform underlying Project Server.",
+        "Championed new security infrastructure design, improving compliance for enterprise deployments."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "a84b9fdd-1849-4f87-ab76-15333311eda2",
+      "Company": "Microsoft Ltd.",
+      "Title": "Application Development Consultant II",
+      "Location": null,
+      "StartDate": null,
+      "EndDate": null,
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "3c7cf1ae-e4ee-4a4f-a8b7-86588b766115",
+      "Company": "UK",
+      "Title": "| Reading",
+      "Location": null,
+      "StartDate": "2005-06-01",
+      "EndDate": "2007-01-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Conducted enterprise performance audits and delivered architecture improvement plans to FTSE 100 clients."
+      ],
+      "Technologies": []
+    },
+    {
+      "Id": "08af0dd1-a26e-4ff8-b522-53b8e5fb4a2d",
+      "Company": "StormID",
+      "Title": "Lead Developer",
+      "Location": "Edinburgh, UK Feb 2003 \u2013 Jun 2005",
+      "StartDate": "2003-02-01",
+      "EndDate": "2005-06-01",
+      "IsCurrent": false,
+      "Achievements": [
+        "Delivered bespoke  CMS and ecommerce solutions using .NET and SQL Server under fast-paced agency timelines."
+      ],
+      "Technologies": []
+    }
+  ],
+  "Education": [
+    {
+      "Id": "6fcda8d5-69c0-4d79-9fdd-fa76540c2ee4",
+      "Institution": "University of Stirling \u2013 BSc (Hons) Psychology, Stirling, Scotland, UK",
+      "Degree": null,
+      "FieldOfStudy": null,
+      "StartDate": null,
+      "EndDate": null,
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": []
+    }
+  ],
+  "Skills": [
+    {
+      "Name": "CTO",
+      "Category": "Technology Leadership",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Engineering Management",
+      "Category": "Technology Leadership",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Agile/Scrum",
+      "Category": "Technology Leadership",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Cross-functional Collaboration",
+      "Category": "Technology Leadership",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Team Building",
+      "Category": "Technology Leadership",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Mentorship",
+      "Category": "Technology Leadership",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Stakeholder Communication",
+      "Category": "Technology Leadership",
+      "YearsExperience": null
+    },
+    {
+      "Name": "ASP.NET Core",
+      "Category": "Software Development",
+      "YearsExperience": null
+    },
+    {
+      "Name": ".NET Framework / .NET 6/7/8/9",
+      "Category": "Software Development",
+      "YearsExperience": null
+    },
+    {
+      "Name": "C#",
+      "Category": "Software Development",
+      "YearsExperience": null
+    },
+    {
+      "Name": "RESTful APIs",
+      "Category": "Software Development",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Microservices Architecture",
+      "Category": "Software Development",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Domain-Driven Design (DDD)",
+      "Category": "Software Development",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Microsoft Azure",
+      "Category": "Cloud Infrastructure",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Azure Functions",
+      "Category": "Cloud Infrastructure",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Azure DevOps",
+      "Category": "Cloud Infrastructure",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Docker",
+      "Category": "Cloud Infrastructure",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Kubernetes",
+      "Category": "Cloud Infrastructure",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Infrastructure-as-Code (IaC)",
+      "Category": "Cloud Infrastructure",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Bicep",
+      "Category": "Cloud Infrastructure",
+      "YearsExperience": null
+    },
+    {
+      "Name": "CI/CD Pipelines",
+      "Category": "Cloud Infrastructure",
+      "YearsExperience": null
+    },
+    {
+      "Name": "ML.NET",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "scikit-learn",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "LLMs",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Natural Language Processing (NLP)",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "EasyNMT",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Vector Embeddings",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "OpenAI",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Azure AI Services",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "orchestration of LLM driven RAG pipelines.",
+      "Category": "AI \u0026 Data Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "HTMX",
+      "Category": "Frontend Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Alpine.js",
+      "Category": "Frontend Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "React",
+      "Category": "Frontend Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Vue.js",
+      "Category": "Frontend Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Blazor",
+      "Category": "Frontend Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Tailwind CSS",
+      "Category": "Frontend Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Responsive Design",
+      "Category": "Frontend Engineering",
+      "YearsExperience": null
+    },
+    {
+      "Name": "SQL Server",
+      "Category": "Database Technologies",
+      "YearsExperience": null
+    },
+    {
+      "Name": "PostgreSQL",
+      "Category": "Database Technologies",
+      "YearsExperience": null
+    },
+    {
+      "Name": "MySQL",
+      "Category": "Database Technologies",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Cosmos DB",
+      "Category": "Database Technologies",
+      "YearsExperience": null
+    },
+    {
+      "Name": "MongoDB",
+      "Category": "Database Technologies",
+      "YearsExperience": null
+    },
+    {
+      "Name": "OpenSearch",
+      "Category": "Database Technologies",
+      "YearsExperience": null
+    },
+    {
+      "Name": "RavenDB",
+      "Category": "Database Technologies",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Jira",
+      "Category": "Tools \u0026 Project Management",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Azure Boards",
+      "Category": "Tools \u0026 Project Management",
+      "YearsExperience": null
+    },
+    {
+      "Name": "GitHub Actions",
+      "Category": "Tools \u0026 Project Management",
+      "YearsExperience": null
+    },
+    {
+      "Name": "GitLab CI/CD",
+      "Category": "Tools \u0026 Project Management",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Trello",
+      "Category": "Tools \u0026 Project Management",
+      "YearsExperience": null
+    }
+  ],
+  "Certifications": [],
+  "Projects": [],
+  "Entities": [
+    {
+      "EntityId": "3e665781-b959-4c55-974b-0e63fb1b5ea2",
+      "Value": "scott.galloway@gmail.com",
+      "NormalizedValue": "scott.galloway@gmail.com",
+      "Classification": "Email",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7c9b67d7-3f0f-4aec-9a97-9ca060db725d",
+      "Value": "07498479614",
+      "NormalizedValue": "07498479614",
+      "Classification": "PhoneNumber",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "71c76b79-dd52-427c-ad19-47ccde3fb496",
+      "Value": "today",
+      "NormalizedValue": "today",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a9b30e36-288d-45e4-834c-5af0a6897691",
+      "Value": "6/7",
+      "NormalizedValue": "6/7",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "d437c2dc-5a7d-4135-bba1-1701e1f0598d",
+      "Value": "8/9",
+      "NormalizedValue": "8/9",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "3d380d0b-3e1c-410b-a90c-6d77386aab17",
+      "Value": "jan 2012",
+      "NormalizedValue": "jan 2012",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "30a2ce8c-dc77-48f2-a6b4-41d8d498b824",
+      "Value": "oct 2024",
+      "NormalizedValue": "oct 2024",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a771fe7d-cd23-48c2-9fba-f355eab4563d",
+      "Value": "apr 2024 \u2013 aug 2024",
+      "NormalizedValue": "apr 2024 \u2013 aug 2024",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "41050cb4-e502-442b-a5e2-f39778822d34",
+      "Value": "dec 2022 \u2013 apr 2024",
+      "NormalizedValue": "dec 2022 \u2013 apr 2024",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "177f7700-96e1-489f-9830-9ed2e2942337",
+      "Value": "aug 2022 \u2013 nov 2022",
+      "NormalizedValue": "aug 2022 \u2013 nov 2022",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "ce9786bf-7991-428a-adbd-ca9d401d1c27",
+      "Value": "oct 2021 \u2013 may 2022",
+      "NormalizedValue": "oct 2021 \u2013 may 2022",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7983c66f-3dcc-47fb-8064-dbd7e2520e5e",
+      "Value": "jun 2021 \u2013 sep 2021",
+      "NormalizedValue": "jun 2021 \u2013 sep 2021",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "1bb02f36-e51f-4d5d-93d6-6376a395aec5",
+      "Value": "within 90 days",
+      "NormalizedValue": "within 90 days",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "008ec412-1550-441c-acf1-06e2114b065c",
+      "Value": "jun 2018 \u2013 mar 2020",
+      "NormalizedValue": "jun 2018 \u2013 mar 2020",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "ffd06706-86cc-45b4-a8ff-7bedfd4f2f62",
+      "Value": "dec 2015 \u2013 jun 2021",
+      "NormalizedValue": "dec 2015 \u2013 jun 2021",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "4d6e9b79-592a-4ace-9671-a20f22bb12d8",
+      "Value": "jan 2011 \u2013 jul 2011",
+      "NormalizedValue": "jan 2011 \u2013 jul 2011",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c1333822-67f5-4827-9aff-8a90d243b499",
+      "Value": "jan 2007 \u2013 oct 2009",
+      "NormalizedValue": "jan 2007 \u2013 oct 2009",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "cf9022f9-7daa-4cc2-a300-2c5924b312c2",
+      "Value": "jun 2005 \u2013 jan 2007",
+      "NormalizedValue": "jun 2005 \u2013 jan 2007",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7951f490-2ce1-41d0-9313-cd7acbdc6e55",
+      "Value": "feb 2003 \u2013 jun 2005",
+      "NormalizedValue": "feb 2003 \u2013 jun 2005",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "35158972-78fc-4ca4-876c-32d263f8a008",
+      "Value": "mostlylucid.net",
+      "NormalizedValue": "mostlylucid.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "83d655e8-08e8-44c1-9352-0b2086e92c59",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "21149117-00dc-4fc2-a00b-98c384fd3cb5",
+      "Value": "ml.net",
+      "NormalizedValue": "ml.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "181682da-a12b-462f-81fe-bf44eea8866a",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "d0ba1280-c5e3-4cee-96e7-fbf6bbe5d375",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c45f4373-b3e5-4104-9d47-76a169b831cb",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "03db1e8a-14b9-4f98-9615-132664ed3d97",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7994167e-1751-4982-892b-4f00459fc9a1",
+      "Value": "github.com/scottgal",
+      "NormalizedValue": "github.com/scottgal",
+      "Classification": "GitHubUrl",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "43d5deb0-daac-47b3-abd6-1104fbdae6d1",
+      "Value": "Scott Galloway",
+      "NormalizedValue": "scott galloway",
+      "Classification": "PersonName",
+      "Confidence": 0.9975046515464783,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "74bb9b4b-4a47-463e-8fe0-d473a9b792af",
+      "Value": "C",
+      "NormalizedValue": "c",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.89512038230896,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c6d5ee54-1e34-4cff-987d-32716d07c8a6",
+      "Value": "Core",
+      "NormalizedValue": "core",
+      "Classification": "Organization",
+      "Confidence": 0.9273728728294373,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "eac89262-b660-4101-b8b9-9257e22d4a17",
+      "Value": "NE",
+      "NormalizedValue": "ne",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.8599727749824524,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "62de346c-2f3e-4755-a4ed-3312df9b5fce",
+      "Value": "Microsoft Azure",
+      "NormalizedValue": "microsoft azure",
+      "Classification": "Organization",
+      "Confidence": 0.8390707969665527,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "3dc81cfe-e244-42e1-ae7f-eee9e3665427",
+      "Value": "A",
+      "NormalizedValue": "a",
+      "Classification": "Organization",
+      "Confidence": 0.8818134069442749,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7f781bf4-f764-478f-a4a9-d0fee992bc8b",
+      "Value": "B",
+      "NormalizedValue": "b",
+      "Classification": "Organization",
+      "Confidence": 0.8915224075317383,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c9834713-5943-4d8f-b084-6544c7c09d14",
+      "Value": "OpenA",
+      "NormalizedValue": "opena",
+      "Classification": "Organization",
+      "Confidence": 0.9054609537124634,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "9cefb4dc-b2fa-41b5-b155-78c2982642c8",
+      "Value": "Azure AI Services",
+      "NormalizedValue": "azure ai services",
+      "Classification": "Organization",
+      "Confidence": 0.8357670903205872,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a7c7c2c7-30bc-451a-b57c-7ce8e41c731d",
+      "Value": "LL",
+      "NormalizedValue": "ll",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9314689040184021,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "4a55af4e-80fe-4f54-97ae-43d0551abe5f",
+      "Value": "Alpine",
+      "NormalizedValue": "alpine",
+      "Classification": "Organization",
+      "Confidence": 0.9636666178703308,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "310b32e6-dc2a-4cc5-8bad-0a6146519cfc",
+      "Value": "j",
+      "NormalizedValue": "j",
+      "Classification": "Organization",
+      "Confidence": 0.8725787401199341,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "38412dd5-2c44-4300-a31b-df442e403003",
+      "Value": "s",
+      "NormalizedValue": "s",
+      "Classification": "Email",
+      "Confidence": 0.9805707335472107,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "0442179b-e932-47b3-b13c-ec6d1538b09a",
+      "Value": "cott.galloway@gmail.com",
+      "NormalizedValue": "cott.galloway@gmail.com",
+      "Classification": "Email",
+      "Confidence": 0.8953754901885986,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "01e4f4b8-0686-49af-bae0-e3a901eb2b74",
+      "Value": "mostly",
+      "NormalizedValue": "mostly",
+      "Classification": "Email",
+      "Confidence": 0.7050519585609436,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7bf2cd92-8ff0-4402-87c9-ec573a7ad984",
+      "Value": "Management",
+      "NormalizedValue": "management",
+      "Classification": "Degree",
+      "Confidence": 0.9658287167549133,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "919ea628-79a4-409f-986b-266efea479d3",
+      "Value": "Management",
+      "NormalizedValue": "management",
+      "Classification": "Degree",
+      "Confidence": 0.9782519340515137,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    }
+  ],
+  "TailoredForJobId": null
+}

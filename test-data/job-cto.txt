@@ -1,0 +1,41 @@
+Senior Technical Lead / CTO — FinTech Startup
+
+Location: Remote (UK-based preferred)
+Salary: £120,000 - £150,000 + equity
+
+About Us:
+We're a Series A fintech startup building the next generation of payment infrastructure for SMEs across Europe. Our platform processes £50M+ monthly and we're scaling fast. We need a hands-on technical leader who can architect systems AND write code.
+
+What You'll Do:
+- Lead a team of 8 engineers across backend, frontend, and infrastructure
+- Own the technical architecture: microservices on Azure/Kubernetes
+- Drive migration from our monolithic .NET Framework app to .NET 8 microservices
+- Implement CI/CD pipelines and infrastructure-as-code (Bicep/Terraform)
+- Build real-time payment processing with event-driven architecture
+- Integrate AI/ML capabilities for fraud detection and risk scoring
+- Establish engineering best practices: code review, testing, observability
+
+Required Skills:
+- 10+ years software engineering, 3+ years in a leadership role
+- Deep expertise in C#, .NET Core/.NET 8, ASP.NET Core
+- Production experience with Azure (AKS, Functions, Service Bus, Cosmos DB)
+- Kubernetes and Docker in production environments
+- Microservices architecture and domain-driven design
+- Strong SQL (SQL Server/PostgreSQL) and NoSQL experience
+- CI/CD pipelines (Azure DevOps or GitHub Actions)
+- Experience with payment systems or financial services (PCI-DSS awareness)
+
+Nice to Have:
+- AI/ML integration (Azure AI, OpenAI, embeddings)
+- Blazor or modern frontend frameworks
+- Open source contributions
+- Experience scaling teams from 5 to 20+ engineers
+- Startup/scaleup experience
+
+Benefits:
+- Fully remote with quarterly team meetups
+- 28 days holiday + bank holidays
+- Private health insurance
+- EMI share options
+- £3,000 annual learning budget
+- Latest MacBook Pro

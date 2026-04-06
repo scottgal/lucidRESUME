@@ -16,9 +16,28 @@ public static partial class SectionClassifier
     {
         var raw = heading.TrimStart('#').Trim();
         var clean = CollapseSpacedLetters(raw).ToLowerInvariant();
+
+        // Match section keywords that appear as the primary topic of the heading.
+        // Allow one qualifier word before the keyword (e.g. "Professional Experience",
+        // "Technical Skills", "Work History") but reject compound headings where the
+        // keyword is buried (e.g. "Mentorship & Education", "AI Systems & Applied ML").
         foreach (var (keys, section) in SectionMap)
-            if (keys.Any(k => clean.Contains(k)))
-                return section;
+        {
+            foreach (var k in keys)
+            {
+                if (clean.StartsWith(k))
+                    return section;
+
+                var idx = clean.IndexOf(k, StringComparison.Ordinal);
+                if (idx <= 0 || clean[idx - 1] != ' ') continue;
+
+                // Count words before the keyword — allow max 1 qualifying word
+                var prefix = clean[..idx].Trim();
+                var wordsBefore = prefix.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+                if (wordsBefore <= 1)
+                    return section;
+            }
+        }
         return null;
     }
 

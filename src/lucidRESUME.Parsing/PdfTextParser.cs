@@ -95,9 +95,95 @@ public sealed class PdfTextParser : IDocumentParser
 
     private static List<(string text, double fontSize)> GroupWordsIntoLines(Page page)
     {
-        // Group words by their baseline Y position (within 2pt tolerance)
+        var allWords = page.GetWords().ToList();
+        if (allWords.Count == 0) return [];
+
+        // Detect if this is a multi-column layout by looking at word X-position distribution
+        var xPositions = allWords.Select(w => w.BoundingBox.Left).OrderBy(x => x).ToList();
+        var pageWidth = allWords.Max(w => w.BoundingBox.Right) - allWords.Min(w => w.BoundingBox.Left);
+        var columnBoundary = DetectColumnBoundary(allWords, pageWidth);
+
+        // Split words into columns
+        List<List<Word>> columns;
+        if (columnBoundary.HasValue)
+        {
+            columns =
+            [
+                allWords.Where(w => w.BoundingBox.Left < columnBoundary.Value).ToList(),
+                allWords.Where(w => w.BoundingBox.Left >= columnBoundary.Value).ToList()
+            ];
+        }
+        else
+        {
+            columns = [allWords];
+        }
+
+        // Process each column independently: group by Y, sort top-to-bottom
+        var result = new List<(string text, double fontSize)>();
+        foreach (var colWords in columns)
+        {
+            if (colWords.Count == 0) continue;
+            var lines = GroupColumnIntoLines(colWords);
+            result.AddRange(lines);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Detects the X-position boundary between two columns, if present.
+    /// Uses gap analysis: finds the largest horizontal gap in word positions.
+    /// Returns null if the page is single-column.
+    /// </summary>
+    private static double? DetectColumnBoundary(List<Word> words, double pageWidth)
+    {
+        if (words.Count < 10 || pageWidth < 200) return null;
+
+        // Collect all word right-edges and left-edges, find the biggest gap
+        var edges = words
+            .Select(w => (left: w.BoundingBox.Left, right: w.BoundingBox.Right))
+            .OrderBy(e => e.left)
+            .ToList();
+
+        // Group into Y-rows and check if rows consistently have large internal gaps
+        var yGroups = new Dictionary<int, List<(double left, double right)>>();
+        foreach (var w in words)
+        {
+            var bucket = (int)Math.Round(w.BoundingBox.Bottom / 3.0) * 3;
+            if (!yGroups.TryGetValue(bucket, out var list))
+                yGroups[bucket] = list = [];
+            list.Add((w.BoundingBox.Left, w.BoundingBox.Right));
+        }
+
+        // For each row, find the max internal gap
+        var rowGaps = new List<double>();
+        foreach (var row in yGroups.Values.Where(r => r.Count >= 2))
+        {
+            var sorted = row.OrderBy(w => w.left).ToList();
+            for (int i = 1; i < sorted.Count; i++)
+            {
+                var gap = sorted[i].left - sorted[i - 1].right;
+                if (gap > 30) rowGaps.Add((sorted[i].left + sorted[i - 1].right) / 2);
+            }
+        }
+
+        if (rowGaps.Count < 3) return null; // not enough evidence of two columns
+
+        // Find the most common gap position (column boundary)
+        var bucketedGaps = rowGaps.GroupBy(g => Math.Round(g / 10) * 10)
+            .OrderByDescending(g => g.Count())
+            .First();
+
+        // Only declare two columns if >30% of rows have the gap
+        if (bucketedGaps.Count() < yGroups.Count * 0.3) return null;
+
+        return bucketedGaps.Average();
+    }
+
+    private static List<(string text, double fontSize)> GroupColumnIntoLines(List<Word> words)
+    {
         var groups = new Dictionary<int, List<Word>>();
-        foreach (var word in page.GetWords())
+        foreach (var word in words)
         {
             var bucket = (int)Math.Round(word.BoundingBox.Bottom / 2.0) * 2;
             if (!groups.TryGetValue(bucket, out var list))
@@ -106,12 +192,12 @@ public sealed class PdfTextParser : IDocumentParser
         }
 
         return groups
-            .OrderByDescending(g => g.Key) // top of page first
+            .OrderByDescending(g => g.Key)
             .Select(g =>
             {
-                var words = g.Value.OrderBy(w => w.BoundingBox.Left).ToList();
-                var text = string.Join(" ", words.Select(w => w.Text)).Trim();
-                var fontSize = words
+                var lineWords = g.Value.OrderBy(w => w.BoundingBox.Left).ToList();
+                var text = string.Join(" ", lineWords.Select(w => w.Text)).Trim();
+                var fontSize = lineWords
                     .SelectMany(w => w.Letters)
                     .Select(l => l.FontSize)
                     .DefaultIfEmpty(12)

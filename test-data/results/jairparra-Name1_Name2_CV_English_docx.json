@@ -1,0 +1,856 @@
+{
+  "ResumeId": "9a80c116-dcb1-4d6c-adb1-771eebedd11e",
+  "FileName": "jairparra-Name1_Name2_CV_English.docx",
+  "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "FileSizeBytes": 29775,
+  "CreatedAt": "2026-04-06T15:18:44.784877+00:00",
+  "LastModifiedAt": "2026-04-06T15:18:44.937439+00:00",
+  "RawMarkdown": "### NAME1 NAME2\nMonterey,  California, U.S.  Mobile.: 999-999-9999\nEmail: name1.nam2@outlook.com /  name1-name2@gmail.com\nGitHub: https://github.com/Name1Name2\nLinkedIn: https://www.linkedin.com/in/name1-name2 -526ba19b/\nDataCamp: https://www.datacamp.com/profile/name1name2\nPortfolio Blog: https://blog.name1name2.com/\nPorfolio (Building): https://name1name2.com\n### WORK HISTORY\nNLP \u0026 Data Science Research Assistant\nDudTip Lab\n### May 2019 \u2013 February 2020\n-  Perform research and tests on NLP tools with libraries such as Python re, not, spaCy, genism, translator, spellchecker, and R quanteda, spacyR, etc.  for treatment of English, French and Spanish. Perform lab-project-related linguistic research.\n-  Maxicoder Lemmatizer : Create and implement NLP algorithms for lemmatizing, extending and improving lexical sentiment dictionaries in English, French, Spanish and Italian; Perform and implement metrics and testing in R with Quanteda.\nPrivate Tutor\n### Self-Employed\n### September 2016 - Present\n- Tutored Calculus I,II,III, Linear Algebra, Probability \u0026 Statistics, Python, R and Discrete Mathematics.\n- Tutored modern languages such as Mandarin Chinese, Spanish, French and Japanese\n### EDUCATION\nHarvard University\nMonterey, QC\n### September 2016 \u2013 May 2020\n- B.A. Computer Science with triple minor in Statistics, Linguistics and East Asian Languages, CGPA: 3.56.\nComputer Science\nPython; R; SQL; Bash; Git/Github; Java; C;  O-Caml;  OOP;  Algorithms and Data Structures; Theory of Computation; Applied Machine Learning; Natural Language Processing; Database Systems; Introduction to Computer Systems;;  Programming languages \u0026 Paradigms (OOP ,Functional programming),.\nMathematics\nCalculus I, II, III;  Linear Algebra \u0026 Geometry; Honours Applied Linear Algebra; Probability ; Mathematical Statistics;  Discrete Mathematics; Honours Regression \u0026 Analysis of Variance. Stochastic Processes (Self-study); Generalized Linear Models (GLMs); Time Series. Self-study abstract algebra \u0026 analysis.\nLinguistics\nGeneral Linguistics; Phonetics; Phonology; Semantics, Theoretical Syntax \u0026 graduate-level Syntax, Formal Logic.\nStaten College\n### Monterey , QC\n### August 2014 \u2013 Jun 2016\n- DCS / D.E.C. Languages and Cultures , Honour Roll (2014-2016), Dean\u2019s Honour Roll (Winter 2014, Autumn 2014).\n### TECHNICAL SKILLS\n### Programming Languages ,Technologies \u0026 Skills:\n-Proficient: Python (Numpy, Pandas, Matplotlib, Seaborn, re, nltk, spaCy, genism, flair, scikit-learn, Tensorflow, others) ; R/RStudio ( ggplot2, forecast , Quanteda, spacyR) ; SQL (MySQL, PostgreSQL, DB2), Bash/Shell, Git/Github;\n-Familiar: Java; C; C\u002B\u002B (Elementary),  HTML \u0026 CSS (Elementary), OCaml ; Microsoft Office (Word, Excel, Powerpoint).\n- Excellent analytical, communication , problem  solving, collaboration \u0026 team skills. Autodidactic.\n### Human Languages (7-fluent):\n- Spanish (Native), English  (Bilingual), French (Bilingual) , Mandarin Chinese (Intermediate), Japanese (Intermediate), Italian (Intemediate), Portuguese (Intermediate), Russian (Elementary), Cantonese (Elementary), Korean (Elementary).\n### PROJECTS\n- CNN Image Recognition: Build an image recognition system using Convolutional Neural Networks (CNNs).\n- NLP Sentiment Analysis: Perform sentiment analysis on text data using Natural Language Processing (NLP) techniques.\n- Stock Price Prediction: Predict stock prices using time series analysis and machine learning.\n- Reinforcement Learning: Train agents to excel in games using reinforcement learning algorithms.\n- Recommendation System: Create a recommendation system for movies, books, or products.\n- Portfolio Optimization: Optimize investment portfolios using mathematical methods.\n",
+  "RawJson": null,
+  "PlainText": "NAME1 NAME2\nMonterey,  California, U.S.  Mobile.: 999-999-9999\nEmail: name1.nam2@outlook.com /  name1-name2@gmail.com\nGitHub: https://github.com/Name1Name2\nLinkedIn: https://www.linkedin.com/in/name1-name2 -526ba19b/\nDataCamp: https://www.datacamp.com/profile/name1name2\nPortfolio Blog: https://blog.name1name2.com/\nPorfolio (Building): https://name1name2.com\nWORK HISTORY\nNLP \u0026 Data Science Research Assistant\nDudTip Lab\nMay 2019 \u2013 February 2020\n-  Perform research and tests on NLP tools with libraries such as Python re, not, spaCy, genism, translator, spellchecker, and R quanteda, spacyR, etc.  for treatment of English, French and Spanish. Perform lab-project-related linguistic research.\n-  Maxicoder Lemmatizer : Create and implement NLP algorithms for lemmatizing, extending and improving lexical sentiment dictionaries in English, French, Spanish and Italian; Perform and implement metrics and testing in R with Quanteda.\nPrivate Tutor\nSelf-Employed\nSeptember 2016 - Present\n- Tutored Calculus I,II,III, Linear Algebra, Probability \u0026 Statistics, Python, R and Discrete Mathematics.\n- Tutored modern languages such as Mandarin Chinese, Spanish, French and Japanese\nEDUCATION\nHarvard University\nMonterey, QC\nSeptember 2016 \u2013 May 2020\n- B.A. Computer Science with triple minor in Statistics, Linguistics and East Asian Languages, CGPA: 3.56.\nComputer Science\nPython; R; SQL; Bash; Git/Github; Java; C;  O-Caml;  OOP;  Algorithms and Data Structures; Theory of Computation; Applied Machine Learning; Natural Language Processing; Database Systems; Introduction to Computer Systems;;  Programming languages \u0026 Paradigms (OOP ,Functional programming),.\nMathematics\nCalculus I, II, III;  Linear Algebra \u0026 Geometry; Honours Applied Linear Algebra; Probability ; Mathematical Statistics;  Discrete Mathematics; Honours Regression \u0026 Analysis of Variance. Stochastic Processes (Self-study); Generalized Linear Models (GLMs); Time Series. Self-study abstract algebra \u0026 analysis.\nLinguistics\nGeneral Linguistics; Phonetics; Phonology; Semantics, Theoretical Syntax \u0026 graduate-level Syntax, Formal Logic.\nStaten College\nMonterey , QC\nAugust 2014 \u2013 Jun 2016\n- DCS / D.E.C. Languages and Cultures , Honour Roll (2014-2016), Dean\u2019s Honour Roll (Winter 2014, Autumn 2014).\nTECHNICAL SKILLS\nProgramming Languages ,Technologies \u0026 Skills:\n-Proficient: Python (Numpy, Pandas, Matplotlib, Seaborn, re, nltk, spaCy, genism, flair, scikit-learn, Tensorflow, others) ; R/RStudio ( ggplot2, forecast , Quanteda, spacyR) ; SQL (MySQL, PostgreSQL, DB2), Bash/Shell, Git/Github;\n-Familiar: Java; C; C\u002B\u002B (Elementary),  HTML \u0026 CSS (Elementary), OCaml ; Microsoft Office (Word, Excel, Powerpoint).\n- Excellent analytical, communication , problem  solving, collaboration \u0026 team skills. Autodidactic.\nHuman Languages (7-fluent):\n- Spanish (Native), English  (Bilingual), French (Bilingual) , Mandarin Chinese (Intermediate), Japanese (Intermediate), Italian (Intemediate), Portuguese (Intermediate), Russian (Elementary), Cantonese (Elementary), Korean (Elementary).\nPROJECTS\n- CNN Image Recognition: Build an image recognition system using Convolutional Neural Networks (CNNs).\n- NLP Sentiment Analysis: Perform sentiment analysis on text data using Natural Language Processing (NLP) techniques.\n- Stock Price Prediction: Predict stock prices using time series analysis and machine learning.\n- Reinforcement Learning: Train agents to excel in games using reinforcement learning algorithms.\n- Recommendation System: Create a recommendation system for movies, books, or products.\n- Portfolio Optimization: Optimize investment portfolios using mathematical methods.\n",
+  "ImageCacheKey": null,
+  "PageCount": 0,
+  "Personal": {
+    "FullName": "NAME1 NAME2",
+    "Email": "name1.nam2@outlook.com",
+    "Phone": "999-999-9999",
+    "Location": null,
+    "LinkedInUrl": "linkedin.com/in/name1-name2",
+    "GitHubUrl": "github.com/Name1Name2",
+    "WebsiteUrl": null,
+    "Summary": "Monterey,  California, U.S.  Mobile.: 999-999-9999 Email: name1.nam2@outlook.com /  name1-name2@gmail.com GitHub: https://github.com/Name1Name2 LinkedIn: https://www.linkedin.com/in/name1-name2 -526ba19b/ DataCamp: https://www.datacamp.com/profile/name1name2 Portfolio Blog: https://blog.name1name2.com/ Porfolio (Building): https://name1name2.com"
+  },
+  "Experience": [
+    {
+      "Id": "9a3e6d1d-36bf-4fec-8094-0bd2dc7a85ed",
+      "Company": null,
+      "Title": null,
+      "Location": null,
+      "StartDate": "2016-09-01",
+      "EndDate": null,
+      "IsCurrent": true,
+      "Achievements": [
+        "Perform research and tests on NLP tools with libraries such as Python re, not, spaCy, genism, translator, spellchecker, and R quanteda, spacyR, etc.  for treatment of English, French and Spanish. Perform lab-project-related linguistic research.",
+        "Maxicoder Lemmatizer : Create and implement NLP algorithms for lemmatizing, extending and improving lexical sentiment dictionaries in English, French, Spanish and Italian; Perform and implement metrics and testing in R with Quanteda.",
+        "Tutored Calculus I,II,III, Linear Algebra, Probability \u0026 Statistics, Python, R and Discrete Mathematics.",
+        "Tutored modern languages such as Mandarin Chinese, Spanish, French and Japanese"
+      ],
+      "Technologies": []
+    }
+  ],
+  "Education": [
+    {
+      "Id": "75e37ad1-f571-4b19-bce6-6637aef5fbe1",
+      "Institution": "Harvard University, Monterey, QC",
+      "Degree": null,
+      "FieldOfStudy": null,
+      "StartDate": null,
+      "EndDate": null,
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": []
+    },
+    {
+      "Id": "34c90cd7-20fb-499d-b410-62060492a965",
+      "Institution": "",
+      "Degree": null,
+      "FieldOfStudy": null,
+      "StartDate": "2016-09-01",
+      "EndDate": "2020-05-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": []
+    },
+    {
+      "Id": "83ad53d7-c918-4eb7-b69f-5c2c5f089dd0",
+      "Institution": null,
+      "Degree": "- B.A. Computer Science with triple minor",
+      "FieldOfStudy": "Statistics, Linguistics and East Asian Languages, CGPA: 3.56.",
+      "StartDate": null,
+      "EndDate": null,
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "Computer Science",
+        "Python; R; SQL; Bash; Git/Github; Java; C;  O-Caml;  OOP;  Algorithms and Data Structures; Theory of Computation; Applied Machine Learning; Natural Language Processing; Database Systems; Introduction to Computer Systems;;  Programming languages \u0026 Paradigms (OOP ,Functional programming),.",
+        "Mathematics",
+        "Calculus I, II, III;  Linear Algebra \u0026 Geometry; Honours Applied Linear Algebra; Probability ; Mathematical Statistics;  Discrete Mathematics; Honours Regression \u0026 Analysis of Variance. Stochastic Processes (Self-study); Generalized Linear Models (GLMs); Time Series. Self-study abstract algebra \u0026 analysis.",
+        "Linguistics",
+        "General Linguistics; Phonetics; Phonology; Semantics, Theoretical Syntax \u0026 graduate-level Syntax, Formal Logic.",
+        "Staten College"
+      ]
+    },
+    {
+      "Id": "153cf529-077d-4606-a9b8-5b87cb46f2a6",
+      "Institution": "Monterey , QC",
+      "Degree": null,
+      "FieldOfStudy": null,
+      "StartDate": null,
+      "EndDate": null,
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": []
+    },
+    {
+      "Id": "57b01a8f-77bd-467e-9d99-1c9b2aa282f1",
+      "Institution": "",
+      "Degree": null,
+      "FieldOfStudy": null,
+      "StartDate": "2014-01-01",
+      "EndDate": "2016-01-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": []
+    }
+  ],
+  "Skills": [
+    {
+      "Name": "Python (Numpy",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Pandas",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Matplotlib",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Seaborn",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "re",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "nltk",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "spaCy",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "genism",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "flair",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "scikit-learn",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Tensorflow",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "others)",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "R/RStudio ( ggplot2",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "forecast",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Quanteda",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "spacyR)",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "SQL (MySQL",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "PostgreSQL",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "DB2)",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Bash/Shell",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Git/Github",
+      "Category": "-Proficient",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Java",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "C\u002B\u002B (Elementary)",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "HTML \u0026 CSS (Elementary)",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "OCaml",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Microsoft Office (Word",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Excel",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Powerpoint).",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Excellent analytical",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "communication",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "problem  solving",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "collaboration \u0026 team skills. Autodidactic.",
+      "Category": "-Familiar",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Spanish (Native)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "English  (Bilingual)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "French (Bilingual)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Mandarin Chinese (Intermediate)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Japanese (Intermediate)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Italian (Intemediate)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Portuguese (Intermediate)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Russian (Elementary)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Cantonese (Elementary)",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    },
+    {
+      "Name": "Korean (Elementary).",
+      "Category": "Human Languages (7-fluent):",
+      "YearsExperience": null
+    }
+  ],
+  "Certifications": [],
+  "Projects": [],
+  "Entities": [
+    {
+      "EntityId": "b1570b3f-36fb-4fcd-81c8-2df71e26700d",
+      "Value": "name1.nam2@outlook.com",
+      "NormalizedValue": "name1.nam2@outlook.com",
+      "Classification": "Email",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "46c3bd28-21c3-43a3-8d7e-52f1b1feec36",
+      "Value": "name1-name2@gmail.com",
+      "NormalizedValue": "name1-name2@gmail.com",
+      "Classification": "Email",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "f1df5478-637d-4252-b07a-f0b23772765f",
+      "Value": "999-999-9999",
+      "NormalizedValue": "999-999-9999",
+      "Classification": "PhoneNumber",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "e26f7212-b0c2-44b7-8298-4456c5554ade",
+      "Value": "may 2019 \u2013 february 2020",
+      "NormalizedValue": "may 2019 \u2013 february 2020",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "503a7812-ff0f-4d75-8f33-281d66cabf60",
+      "Value": "september 2016",
+      "NormalizedValue": "september 2016",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "86eb529b-0bc1-40ba-8128-29d0eb100f36",
+      "Value": "september 2016 \u2013 may 2020",
+      "NormalizedValue": "september 2016 \u2013 may 2020",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7624c1a0-9e32-4acb-8a12-e89409801d7a",
+      "Value": "august 2014 \u2013 jun 2016",
+      "NormalizedValue": "august 2014 \u2013 jun 2016",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "3190ad8b-e887-4f17-b386-9962b114e02d",
+      "Value": "2014-2016",
+      "NormalizedValue": "2014-2016",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a7ffac72-343b-4a11-aa7e-208ba2086c74",
+      "Value": "winter 2014",
+      "NormalizedValue": "winter 2014",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "b700fcf9-3e6d-45ea-acfd-e1c7787aee6e",
+      "Value": "autumn 2014",
+      "NormalizedValue": "autumn 2014",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "96a10aeb-a5c3-405e-a4cf-db63e91a36a6",
+      "Value": "https://www.datacamp.com/profile/name1name2",
+      "NormalizedValue": "https://www.datacamp.com/profile/name1name2",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "48643510-0cc8-4a46-b7ec-360bce9a16fc",
+      "Value": "https://blog.name1name2.com/",
+      "NormalizedValue": "https://blog.name1name2.com/",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "9593c6d2-1b62-46e7-ae6c-52342e286f38",
+      "Value": "https://name1name2.com",
+      "NormalizedValue": "https://name1name2.com",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "48db6284-5cf4-4381-b574-1aa8ba5e99e5",
+      "Value": "linkedin.com/in/name1-name2",
+      "NormalizedValue": "linkedin.com/in/name1-name2",
+      "Classification": "LinkedInUrl",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "2d0212c8-9ab0-43cd-815f-96af81d69f00",
+      "Value": "github.com/Name1Name2",
+      "NormalizedValue": "github.com/name1name2",
+      "Classification": "GitHubUrl",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "575354ca-b8d7-4d6f-82cb-7334107110c0",
+      "Value": "Monterey",
+      "NormalizedValue": "monterey",
+      "Classification": "Address",
+      "Confidence": 0.9852705001831055,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a631c92e-bec0-4c46-b5d9-2259a214ebeb",
+      "Value": "California",
+      "NormalizedValue": "california",
+      "Classification": "Address",
+      "Confidence": 0.9991055130958557,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "4dbc6207-c36c-4870-aa9a-73229b2bb427",
+      "Value": "U.S.",
+      "NormalizedValue": "u.s.",
+      "Classification": "Address",
+      "Confidence": 0.938879132270813,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "3e83d70d-b2a8-462c-9718-1ce7b4274d8c",
+      "Value": "NLP",
+      "NormalizedValue": "nlp",
+      "Classification": "Organization",
+      "Confidence": 0.8623384833335876,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "2cbf2f53-31a9-4782-b27a-3efb39ebb3ed",
+      "Value": "Data Science",
+      "NormalizedValue": "data science",
+      "Classification": "Organization",
+      "Confidence": 0.8267486691474915,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "3004b6e3-7379-4710-8652-6d1f87384fbb",
+      "Value": "Tip Lab",
+      "NormalizedValue": "tip lab",
+      "Classification": "Organization",
+      "Confidence": 0.8645054697990417,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "2339927d-ca4c-4a1d-9b9b-07b560403c13",
+      "Value": "NL",
+      "NormalizedValue": "nl",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9120945930480957,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "40df3c2a-cf14-4db2-ac50-4e3695a3559b",
+      "Value": "Python",
+      "NormalizedValue": "python",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9745732545852661,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "25e0eb98-f9c7-4f1d-a03d-18a7d1871fe5",
+      "Value": "English",
+      "NormalizedValue": "english",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9985656142234802,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "17a46476-4eab-44f7-9b2d-49d893e7876d",
+      "Value": "French",
+      "NormalizedValue": "french",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9976119995117188,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c7d16ac2-6689-47fd-a1e2-86664f0437b7",
+      "Value": "Spanish",
+      "NormalizedValue": "spanish",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9979974627494812,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "aeab886e-b062-4bf4-9abb-2f1de74bdd27",
+      "Value": "English",
+      "NormalizedValue": "english",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9961167573928833,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "8f240f94-b2f4-4326-8bc5-2b72c63b64df",
+      "Value": "French",
+      "NormalizedValue": "french",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9916045069694519,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "45cb1579-e5c5-455b-90fe-9d787c8423d6",
+      "Value": "Spanish",
+      "NormalizedValue": "spanish",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9928065538406372,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "1f5fbb7a-2595-4c9d-a45a-c45efb2e2725",
+      "Value": "Italian",
+      "NormalizedValue": "italian",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9954639077186584,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "37716a88-ae71-49e0-8604-066b09f8250b",
+      "Value": "Cal",
+      "NormalizedValue": "cal",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.885929524898529,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "fa4a4af8-894d-465c-a1dc-a116ac753f50",
+      "Value": "\u0026",
+      "NormalizedValue": "\u0026",
+      "Classification": "Organization",
+      "Confidence": 0.8264555335044861,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "ce58887d-2537-453c-92f9-d53bc9452e0f",
+      "Value": "Python",
+      "NormalizedValue": "python",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9729730486869812,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a0442735-fdeb-4c30-869e-30990cf28e4f",
+      "Value": "Mandarin Chinese",
+      "NormalizedValue": "mandarin chinese",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9966145753860474,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "b7521457-c9f4-4fec-a1e1-7b69c9e568eb",
+      "Value": "Spanish",
+      "NormalizedValue": "spanish",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9987169504165649,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7efc37df-1e80-44e9-aad6-2e5612fab1ef",
+      "Value": "French",
+      "NormalizedValue": "french",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9982815980911255,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7fd3be54-5a61-4d7c-bceb-1381eede8ad6",
+      "Value": "Japanese",
+      "NormalizedValue": "japanese",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9983149766921997,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "54b69d65-2563-4767-b8e7-40392b827911",
+      "Value": "Java",
+      "NormalizedValue": "java",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.8550559282302856,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "d9564ab7-76bf-4b58-b367-dcd5d64872c4",
+      "Value": "999-999-999",
+      "NormalizedValue": "999-999-999",
+      "Classification": "PhoneNumber",
+      "Confidence": 0.9244097471237183,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6b3b9b74-4023-4a4d-99f7-0a32c8c42844",
+      "Value": "name1.nam2@outlook.com",
+      "NormalizedValue": "name1.nam2@outlook.com",
+      "Classification": "Email",
+      "Confidence": 0.8897255659103394,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "8a67fe35-49e3-4560-b128-be18a2272d40",
+      "Value": "name2@gmail.com",
+      "NormalizedValue": "name2@gmail.com",
+      "Classification": "Email",
+      "Confidence": 0.7740652561187744,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    }
+  ],
+  "TailoredForJobId": null
+}

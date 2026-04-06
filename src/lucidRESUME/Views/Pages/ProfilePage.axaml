@@ -5,269 +5,226 @@
              x:DataType="vm:ProfilePageViewModel"
              x:Class="lucidRESUME.Views.Pages.ProfilePage">
 
-  <ScrollViewer Background="#1E1E2E">
+  <ScrollViewer Background="{DynamicResource LrPageBgBrush}">
     <StackPanel Margin="24,16" Spacing="20" MaxWidth="720">
 
       <!-- Page heading -->
       <TextBlock Text="Profile" FontSize="22" FontWeight="Bold"
-                 Foreground="#CDD6F4" Margin="0,0,0,8"/>
+                 Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,8"/>
 
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <!-- Card 1: Identity                                                    -->
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+      <!-- Card 1: Identity -->
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
               CornerRadius="8" Padding="0">
         <Grid ColumnDefinitions="3,*">
-
-          <!-- Left accent bar: blue -->
-          <Border Grid.Column="0" Background="#89B4FA" CornerRadius="3,0,0,3" MinHeight="1"/>
-
-          <!-- Card content -->
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
           <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
-
-            <!-- Section header -->
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="👤" FontSize="16" FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
-              <TextBlock Text="Identity" FontSize="14" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+              <TextBlock Text="Identity" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
             </StackPanel>
-
-            <!-- Name + Title (two columns), then Years of Experience -->
             <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,Auto,Auto,Auto">
-
-              <!-- Row 0: labels -->
               <TextBlock Grid.Row="0" Grid.Column="0"
-                         Text="Your Name" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+                         Text="Your Name" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBlock Grid.Row="0" Grid.Column="2"
-                         Text="Current Title" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
-
-              <!-- Row 1: inputs -->
+                         Text="Current Title" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Grid.Row="1" Grid.Column="0"
                        Text="{Binding FullName}"
                        Watermark="e.g. Jane Smith"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
+                       CornerRadius="6" Padding="10,8"/>
               <TextBox Grid.Row="1" Grid.Column="2"
                        Text="{Binding CurrentTitle}"
                        Watermark="e.g. Senior Developer"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
-
-              <!-- Row 2: label -->
+                       CornerRadius="6" Padding="10,8"/>
               <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
                          Text="Years of Experience"
-                         Foreground="#A6ADC8" FontSize="12" Margin="0,8,0,4"/>
-
-              <!-- Row 3: input (half width) -->
+                         Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,8,0,4"/>
               <TextBox Grid.Row="3" Grid.Column="0"
                        Text="{Binding YearsOfExperience}"
                        Watermark="e.g. 8"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
-
+                       CornerRadius="6" Padding="10,8"/>
             </Grid>
           </StackPanel>
         </Grid>
       </Border>
 
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <!-- Card 2: Work Preferences                                            -->
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+      <!-- Card 2: Work Preferences -->
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
               CornerRadius="8" Padding="0">
         <Grid ColumnDefinitions="3,*">
-
-          <!-- Left accent bar: purple -->
-          <Border Grid.Column="0" Background="#CBA6F7" CornerRadius="3,0,0,3" MinHeight="1"/>
-
-          <!-- Card content -->
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
           <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
-
-            <!-- Section header -->
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="💼" FontSize="16" FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
-              <TextBlock Text="Work Preferences" FontSize="14" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+              <TextBlock Text="Work Preferences" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
             </StackPanel>
-
-            <!-- Work Style -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Work Style" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Work Style" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <controls:WorkStyleToggleGroup
                   OpenToRemote="{Binding OpenToRemote, Mode=TwoWay}"
                   OpenToHybrid="{Binding OpenToHybrid, Mode=TwoWay}"
                   OpenToOnsite="{Binding OpenToOnsite, Mode=TwoWay}"/>
             </StackPanel>
-
-            <!-- Preferred Locations -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Preferred Locations" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Preferred Locations" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <controls:TagChipEditor Items="{Binding PreferredLocations}"
-                                      Placeholder="Add location…"
-                                      AccentColor="#CBA6F7"/>
+                                      Placeholder="Add location…"/>
             </StackPanel>
-
-            <!-- Target Roles -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Target Roles" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Target Roles" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <controls:TagChipEditor Items="{Binding TargetRoles}"
-                                      Placeholder="Add role…"
-                                      AccentColor="#CBA6F7"/>
+                                      Placeholder="Add role…"/>
             </StackPanel>
-
-            <!-- Min Salary + Currency (two columns) -->
             <Grid ColumnDefinitions="*,16,80" RowDefinitions="Auto,Auto">
               <TextBlock Grid.Row="0" Grid.Column="0"
-                         Text="Min Salary" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+                         Text="Min Salary" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBlock Grid.Row="0" Grid.Column="2"
-                         Text="Currency" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+                         Text="Currency" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Grid.Row="1" Grid.Column="0"
                        Text="{Binding MinSalary}"
                        Watermark="e.g. 80000"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
+                       CornerRadius="6" Padding="10,8"/>
               <TextBox Grid.Row="1" Grid.Column="2"
                        Text="{Binding PreferredCurrency}"
                        Watermark="GBP"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"/>
+                       CornerRadius="6" Padding="10,8"/>
             </Grid>
-
-            <!-- Max Commute -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Max Commute (minutes)" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Max Commute (minutes)" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Text="{Binding MaxCommuteMinutes}"
                        Watermark="e.g. 45"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"
+                       CornerRadius="6" Padding="10,8"
                        HorizontalAlignment="Left" Width="160"/>
             </StackPanel>
-
-            <!-- Target Industries -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Target Industries" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Target Industries" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <controls:TagChipEditor Items="{Binding TargetIndustries}"
-                                      Placeholder="Add industry…"
-                                      AccentColor="#CBA6F7"/>
+                                      Placeholder="Add industry…"/>
             </StackPanel>
-
-            <!-- Blocked Industries -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Blocked Industries" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Blocked Industries" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <controls:TagChipEditor Items="{Binding BlockedIndustries}"
-                                      Placeholder="Add industry…"
-                                      AccentColor="#F38BA8"/>
+                                      Placeholder="Add industry…"/>
             </StackPanel>
-
           </StackPanel>
         </Grid>
       </Border>
 
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <!-- Card 3: Skills                                                      -->
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+      <!-- Card 3: Skills -->
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
               CornerRadius="8" Padding="0">
         <Grid ColumnDefinitions="3,*">
-
-          <!-- Left accent bar: green -->
-          <Border Grid.Column="0" Background="#A6E3A1" CornerRadius="3,0,0,3" MinHeight="1"/>
-
-          <!-- Card content -->
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentGreenBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
           <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
-
-            <!-- Section header -->
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="⚡" FontSize="16" FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
-              <TextBlock Text="Skills" FontSize="14" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+              <TextBlock Text="Skills" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
             </StackPanel>
-
-            <!-- Skills to Emphasise -->
             <StackPanel Spacing="4">
               <TextBlock Text="SKILLS TO EMPHASISE"
-                         Foreground="#A6ADC8" FontSize="11" FontWeight="SemiBold"
+                         Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11" FontWeight="SemiBold"
                          Margin="0,0,0,4"/>
               <controls:TagChipEditor Items="{Binding SkillsToEmphasise}"
                                       Placeholder="Add skill…"
-                                      AccentColor="#A6E3A1"
                                       AllowReasons="True"/>
             </StackPanel>
-
-            <!-- 8px visual spacer between sub-sections -->
-            <Border Height="1" Background="#45475A" Margin="0,4,0,4"/>
-
-            <!-- Skills to Avoid -->
+            <Border Height="1" Background="{DynamicResource LrBorderBrush}" Margin="0,4,0,4"/>
             <StackPanel Spacing="4">
               <TextBlock Text="SKILLS TO AVOID"
-                         Foreground="#A6ADC8" FontSize="11" FontWeight="SemiBold"
+                         Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11" FontWeight="SemiBold"
                          Margin="0,0,0,4"/>
               <controls:TagChipEditor Items="{Binding SkillsToAvoid}"
                                       Placeholder="Add skill…"
-                                      AccentColor="#F38BA8"
                                       AllowReasons="True"/>
             </StackPanel>
-
           </StackPanel>
         </Grid>
       </Border>
 
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <!-- Card 4: AI Context                                                  -->
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <Border Background="#313244" BorderBrush="#45475A" BorderThickness="1"
+      <!-- Card 4: AI Context -->
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
               CornerRadius="8" Padding="0">
         <Grid ColumnDefinitions="3,*">
-
-          <!-- Left accent bar: yellow -->
-          <Border Grid.Column="0" Background="#F9E2AF" CornerRadius="3,0,0,3" MinHeight="1"/>
-
-          <!-- Card content -->
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentYellowBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
           <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
-
-            <!-- Section header -->
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="🤖" FontSize="16" FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
-              <TextBlock Text="AI Context" FontSize="14" FontWeight="SemiBold" Foreground="#CDD6F4"/>
+              <TextBlock Text="AI Context" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
             </StackPanel>
-
-            <!-- Career Goals -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Career Goals" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Career Goals" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Text="{Binding CareerGoals}"
                        Watermark="Describe what you're looking for…"
                        AcceptsReturn="True" TextWrapping="Wrap" Height="80"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"
+                       CornerRadius="6" Padding="10,8"
                        ScrollViewer.VerticalScrollBarVisibility="Auto"/>
             </StackPanel>
-
-            <!-- Additional Context -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Additional Context" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Additional Context" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Text="{Binding AdditionalContext}"
                        Watermark="Anything else for the AI to know…"
                        AcceptsReturn="True" TextWrapping="Wrap" Height="64"
-                       Background="#1E1E2E" BorderBrush="#45475A"
-                       Foreground="#CDD6F4" CornerRadius="6" Padding="10,8"
+                       CornerRadius="6" Padding="10,8"
                        ScrollViewer.VerticalScrollBarVisibility="Auto"/>
             </StackPanel>
-
-            <!-- Blocked Companies -->
             <StackPanel Spacing="4">
-              <TextBlock Text="Blocked Companies" Foreground="#A6ADC8" FontSize="12" Margin="0,0,0,4"/>
+              <TextBlock Text="Blocked Companies" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <controls:TagChipEditor Items="{Binding BlockedCompanies}"
-                                      Placeholder="Add company…"
-                                      AccentColor="#F38BA8"/>
+                                      Placeholder="Add company…"/>
             </StackPanel>
-
           </StackPanel>
         </Grid>
       </Border>
 
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <!-- Toast row                                                           -->
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <Border Background="#1A3A1A" CornerRadius="6" Padding="12,6"
+      <!-- Card 5: AI Provider -->
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
+              CornerRadius="8" Padding="0">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
+            <TextBlock Text="AI Provider" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+
+            <!-- Provider selector -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Provider" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
+              <ComboBox SelectedItem="{Binding AiProvider}" MinWidth="200"
+                        ItemsSource="{Binding AiProviders}"/>
+            </StackPanel>
+
+            <!-- Anthropic API Key -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Anthropic API Key" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
+              <TextBox Text="{Binding AnthropicApiKey}" Watermark="sk-ant-..." PasswordChar="*"
+                       CornerRadius="6" Padding="10,8"/>
+            </StackPanel>
+
+            <!-- OpenAI API Key -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="OpenAI API Key" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
+              <TextBox Text="{Binding OpenAiApiKey}" Watermark="sk-..." PasswordChar="*"
+                       CornerRadius="6" Padding="10,8"/>
+            </StackPanel>
+
+            <!-- Model selector -->
+            <StackPanel Spacing="4">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Model" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" VerticalAlignment="Center"/>
+                <Button Content="Refresh" Command="{Binding RefreshModelsCommand}" Padding="6,2" FontSize="11"/>
+                <ProgressBar IsVisible="{Binding IsLoadingModels}" IsIndeterminate="True" Width="60" VerticalAlignment="Center"/>
+              </StackPanel>
+              <ComboBox ItemsSource="{Binding AvailableModelIds}" SelectedItem="{Binding SelectedModel}" MinWidth="300"/>
+            </StackPanel>
+
+            <!-- Save + status -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Save AI Settings" Command="{Binding SaveAiSettingsCommand}" Padding="12,6"/>
+              <TextBlock Text="{Binding AiSettingsStatus}" Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="11"
+                         VerticalAlignment="Center"
+                         IsVisible="{Binding AiSettingsStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Toast row -->
+      <Border Background="{DynamicResource LrAccentGreenBgBrush}" CornerRadius="6" Padding="12,6"
               IsVisible="{Binding IsSaved}" HorizontalAlignment="Left">
-        <TextBlock Text="✓  Saved" Foreground="#A6E3A1" FontWeight="SemiBold" FontSize="13"/>
+        <TextBlock Text="Saved" Foreground="{DynamicResource LrAccentGreenBrush}" FontWeight="SemiBold" FontSize="13"/>
       </Border>
 
     </StackPanel>

@@ -45,6 +45,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private readonly ICoverageAnalyser _coverageAnalyser;
     private readonly IAppStore _store;
     private readonly ApplyPageViewModel _applyPage;
+    private readonly PipelinePageViewModel _pipelinePage;
 
     // Cancels any in-flight RefreshAspectsAsync when the selected job changes
     private CancellationTokenSource? _refreshCts;
@@ -84,7 +85,8 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         IJobQualityAnalyser jobQualityAnalyser,
         ICoverageAnalyser coverageAnalyser,
         IAppStore store,
-        ApplyPageViewModel applyPage)
+        ApplyPageViewModel applyPage,
+        PipelinePageViewModel pipelinePage)
     {
         _jobSearchService = jobSearchService;
         _matchingService = matchingService;
@@ -93,6 +95,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _coverageAnalyser = coverageAnalyser;
         _store = store;
         _applyPage = applyPage;
+        _pipelinePage = pipelinePage;
         _ = LoadSavedAsync();
     }
 
@@ -326,6 +329,14 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         var state = await _store.LoadAsync();
         _applyPage.SetContext(state.Resume, SelectedJob.FullJob);
         NavigateTo?.Invoke("Apply");
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedJob))]
+    private async Task TrackApplicationAsync()
+    {
+        if (SelectedJob is null) return;
+        await _pipelinePage.TrackJobAsync(SelectedJob.JobId);
+        NavigateTo?.Invoke("Pipeline");
     }
 
     private bool HasSelectedJob() => SelectedJob is not null;

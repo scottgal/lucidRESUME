@@ -19,12 +19,21 @@ public sealed class DocumentOpenerService
 
     private static IReadOnlyList<DocumentOpener> Discover()
     {
-        var openers = new List<DocumentOpener?>(4)
+        var openers = new List<DocumentOpener?>
         {
+            // Cross-platform editors (priority: most capable first)
             DocumentOpener.TryCreateLibreOffice(),
             DocumentOpener.TryCreateMicrosoftWord(),
             DocumentOpener.TryCreateWpsOffice(),
             DocumentOpener.TryCreateOnlyOffice(),
+
+            // macOS native apps
+            DocumentOpener.TryCreateMacApp("Preview", "Preview"),
+            DocumentOpener.TryCreateMacApp("Pages", "Pages"),
+            DocumentOpener.TryCreateMacApp("TextEdit", "TextEdit"),
+
+            // macOS system default (always available on macOS, last resort)
+            DocumentOpener.TryCreateMacDefault(),
         };
 
         return openers.Where(o => o != null).Cast<DocumentOpener>().ToList();

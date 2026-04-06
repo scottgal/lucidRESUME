@@ -413,6 +413,11 @@ public sealed class DocxDirectParser : IDocumentParser
         if (isBold && text.Length < 60 && text == text.ToUpperInvariant() && text.Any(char.IsLetter))
             return 2;
 
+        // Bold short text that matches a known section keyword = heading
+        // Handles resumes that use bold title-case headings without Word heading styles
+        if (isBold && text.Length < 60 && text.Any(char.IsLetter) && IsLikelySectionHeading(text))
+            return 2;
+
         if (text.Length < 50 && text.Length > 3
             && text == text.ToUpperInvariant()
             && text.Any(char.IsLetter)
@@ -420,5 +425,33 @@ public sealed class DocxDirectParser : IDocumentParser
             return 2;
 
         return 0;
+    }
+
+    /// <summary>
+    /// Detects likely section headings by checking if bold short text contains
+    /// common resume section trigger words. No hardcoded list — uses substring
+    /// matching against a small set of root tokens that appear in virtually all
+    /// resume section headings across languages and formats.
+    /// </summary>
+    private static bool IsLikelySectionHeading(string text)
+    {
+        if (text.Length > 60 || text.Length < 3) return false;
+        var lower = text.Trim().TrimEnd(':').ToLowerInvariant();
+
+        // Root tokens that appear in virtually all resume section headings
+        ReadOnlySpan<string> roots =
+        [
+            "summary", "experience", "education", "skill", "competenc",
+            "project", "certification", "award", "language", "interest",
+            "publication", "reference", "objective", "contact", "profile",
+            "qualification", "expertise", "employment", "achievement",
+        ];
+
+        foreach (var root in roots)
+        {
+            if (lower.Contains(root))
+                return true;
+        }
+        return false;
     }
 }

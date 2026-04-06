@@ -4,8 +4,7 @@
              xmlns:models="using:lucidRESUME.Core.Models.Profile"
              x:Class="lucidRESUME.Views.Controls.TagChipEditor">
 
-  <Border Background="#1E1E2E"
-          BorderBrush="#6C7086"
+  <Border BorderBrush="{DynamicResource LrBorderBrush}"
           BorderThickness="1"
           CornerRadius="6"
           MinHeight="36"
@@ -14,13 +13,11 @@
     <WrapPanel x:Name="ChipWrapPanel" Orientation="Horizontal">
 
       <!-- Chips are added programmatically by code-behind -->
-      <!-- This TextBox is the "add tag" input at the end of the chip list -->
       <TextBox x:Name="AddTagBox"
                Watermark="Add..."
                MinWidth="80"
                MaxWidth="160"
                FontSize="12"
-               Foreground="#CDD6F4"
                Background="Transparent"
                BorderThickness="0"
                Padding="4,3"

@@ -13,7 +13,9 @@ public enum ActionType
     Navigate,
     Screenshot,
     Assert,
-    Svg
+    Svg,
+    ImportFile,
+    PasteJob,
 }
 
 public class UXAction

@@ -128,6 +128,12 @@ public sealed class UXPlayer
                 case ActionType.Svg:
                     await ExecuteSvgAsync(action, result);
                     break;
+                case ActionType.ImportFile:
+                    await ExecuteImportFileAsync(action);
+                    break;
+                case ActionType.PasteJob:
+                    await ExecutePasteJobAsync(action);
+                    break;
                 default:
                     throw new NotSupportedException($"Action type {action.Type} not supported");
             }
@@ -402,5 +408,98 @@ public sealed class UXPlayer
         }, DispatcherPriority.Render);
         
         return await tcs.Task;
+    }
+
+    /// <summary>
+    /// ImportFile action: programmatically imports a file (bypasses file picker dialog).
+    /// Value = file path to import. Works with resume pages.
+    /// </summary>
+    private async Task ExecuteImportFileAsync(UXAction action)
+    {
+        if (_window == null || string.IsNullOrEmpty(action.Value)) return;
+
+        var filePath = Path.IsPathRooted(action.Value)
+            ? action.Value
+            : Path.Combine(Directory.GetCurrentDirectory(), action.Value);
+
+        if (!File.Exists(filePath))
+        {
+            Log?.Invoke(this, $"    File not found: {filePath}");
+            return;
+        }
+
+        // Resolve the ResumePageViewModel and call import directly
+        var tcs = new TaskCompletionSource();
+        Dispatcher.UIThread.Post(async () =>
+        {
+            try
+            {
+                _navigateAction?.Invoke("resume");
+                await Task.Delay(200);
+
+                var vm = _window.DataContext;
+                var getPage = vm?.GetType().GetMethod("GetPage");
+                var resumeVm = getPage?.Invoke(vm, ["Resume"]);
+                if (resumeVm != null)
+                {
+                    var method = resumeVm.GetType().GetMethod("ImportFromPathAsync");
+                    if (method != null)
+                    {
+                        await (Task)method.Invoke(resumeVm, [filePath])!;
+                        Log?.Invoke(this, $"    Imported: {Path.GetFileName(filePath)}");
+                    }
+                }
+                tcs.SetResult();
+            }
+            catch (Exception ex)
+            {
+                Log?.Invoke(this, $"    Import failed: {ex.Message}");
+                tcs.SetResult();
+            }
+        });
+        await tcs.Task;
+    }
+
+    /// <summary>
+    /// PasteJob action: programmatically adds a job from text (bypasses UI interaction).
+    /// Value = job description text or @filepath to read from file.
+    /// </summary>
+    private async Task ExecutePasteJobAsync(UXAction action)
+    {
+        if (_window == null || string.IsNullOrEmpty(action.Value)) return;
+
+        var jobText = action.Value.StartsWith('@')
+            ? await File.ReadAllTextAsync(action.Value[1..])
+            : action.Value;
+
+        var tcs = new TaskCompletionSource();
+        Dispatcher.UIThread.Post(async () =>
+        {
+            try
+            {
+                var vm = _window.DataContext;
+                _navigateAction?.Invoke("search");
+                await Task.Delay(300);
+
+                var getPage = vm?.GetType().GetMethod("GetPage");
+                var searchVm = getPage?.Invoke(vm, ["Search"]);
+                if (searchVm != null)
+                {
+                    var method = searchVm.GetType().GetMethod("AddJobFromTextAsync");
+                    if (method != null)
+                    {
+                        await (Task)method.Invoke(searchVm, [jobText])!;
+                        Log?.Invoke(this, $"    Pasted job: {jobText[..Math.Min(60, jobText.Length)]}...");
+                    }
+                }
+                tcs.SetResult();
+            }
+            catch (Exception ex)
+            {
+                Log?.Invoke(this, $"    PasteJob failed: {ex.Message}");
+                tcs.SetResult();
+            }
+        });
+        await tcs.Task;
     }
 }

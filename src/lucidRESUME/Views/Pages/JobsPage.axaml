@@ -20,7 +20,7 @@
               Padding="12,6" FontSize="12"/>
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True"
                    Width="100" VerticalAlignment="Center"/>
-      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#A6ADC8"
+      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}"
                  MaxWidth="260" TextTrimming="CharacterEllipsis"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </StackPanel>
@@ -29,21 +29,16 @@
     <Grid Grid.Row="1" ColumnDefinitions="300,*">
 
       <!-- LEFT: job list -->
-      <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#313244">
+      <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource LrBorderBrush}">
         <Panel>
-
-          <!-- Empty state -->
           <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                       IsVisible="{Binding !Jobs.Count}">
-            <TextBlock Text="📋" FontSize="28" HorizontalAlignment="Center"
-                       FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
-            <TextBlock Text="No jobs yet." Foreground="#A6ADC8" FontSize="15" FontWeight="SemiBold"
+            <TextBlock Text="No jobs yet." Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="15" FontWeight="SemiBold"
                        HorizontalAlignment="Center"/>
-            <TextBlock Text="Run a search above." Foreground="#6C7086" FontSize="13"
+            <TextBlock Text="Run a search above." Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="13"
                        HorizontalAlignment="Center"/>
           </StackPanel>
 
-          <!-- Job list -->
           <ScrollViewer IsVisible="{Binding Jobs.Count}">
             <ItemsControl ItemsSource="{Binding Jobs}">
               <ItemsControl.ItemTemplate>
@@ -58,13 +53,13 @@
                           Margin="0,0,0,1">
                     <StackPanel Spacing="3">
                       <TextBlock Text="{Binding Title}" FontWeight="SemiBold"
-                                 Foreground="#CDD6F4" FontSize="13" TextWrapping="Wrap"/>
-                      <TextBlock FontSize="11" Foreground="#A6ADC8">
+                                 Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="13" TextWrapping="Wrap"/>
+                      <TextBlock FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}">
                         <Run Text="{Binding Company}"/>
                         <Run Text=" · "/>
                         <Run Text="{Binding Location}"/>
                       </TextBlock>
-                      <TextBlock FontSize="10" Foreground="#6C7086"
+                      <TextBlock FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}"
                                  Text="{Binding SkillScore, StringFormat='Match: {0:P0}'}"/>
                     </StackPanel>
                   </Button>
@@ -72,51 +67,45 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
           </ScrollViewer>
-
         </Panel>
       </Border>
 
       <!-- RIGHT: job detail -->
       <Panel Grid.Column="1">
-
-        <!-- No selection placeholder -->
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                     IsVisible="{Binding SelectedJob, Converter={x:Static ObjectConverters.IsNull}}">
-          <TextBlock Text="👈" FontSize="28" HorizontalAlignment="Center"
-                     FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
-          <TextBlock Text="Select a job to view details." Foreground="#A6ADC8" FontSize="15"
+          <TextBlock Text="Select a job to view details." Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="15"
                      HorizontalAlignment="Center"/>
         </StackPanel>
 
-        <!-- Job detail -->
         <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" Margin="20,16"
               IsVisible="{Binding SelectedJob, Converter={x:Static ObjectConverters.IsNotNull}}">
 
           <!-- Header -->
           <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,12">
             <TextBlock Text="{Binding SelectedJobTitle}" FontSize="20" FontWeight="Bold"
-                       Foreground="#CDD6F4" TextWrapping="Wrap"/>
+                       Foreground="{DynamicResource LrPrimaryTextBrush}" TextWrapping="Wrap"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="{Binding SelectedJobCompany}" Foreground="#A6ADC8" FontSize="14"/>
-              <TextBlock Text="·" Foreground="#45475A" FontSize="14"/>
-              <TextBlock Text="{Binding SelectedJobLocation}" Foreground="#A6ADC8" FontSize="14"/>
-              <Border Background="#1E3A5F" CornerRadius="10" Padding="8,2"
+              <TextBlock Text="{Binding SelectedJobCompany}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="14"/>
+              <TextBlock Text="·" Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="14"/>
+              <TextBlock Text="{Binding SelectedJobLocation}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="14"/>
+              <Border Background="{DynamicResource LrAccentBlueBgBrush}" CornerRadius="10" Padding="8,2"
                       IsVisible="{Binding SelectedJobIsRemote}">
-                <TextBlock Text="Remote" Foreground="#89B4FA" FontSize="11"/>
+                <TextBlock Text="Remote" Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="11"/>
               </Border>
             </StackPanel>
           </StackPanel>
 
           <!-- JD Quality Banner -->
-          <Border Grid.Row="1" Background="#1E1E2E" CornerRadius="6" Padding="12,8" Margin="0,0,0,10"
+          <Border Grid.Row="1" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,10"
                   IsVisible="{Binding HasJdQualityReport}">
             <StackPanel Spacing="8">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="JD Quality" FontSize="12" FontWeight="SemiBold"
-                           Foreground="#89B4FA" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource LrAccentBlueBrush}" VerticalAlignment="Center"/>
                 <Border Grid.Column="1" CornerRadius="12" Padding="10,3"
                         Background="{Binding JdQualityScore, Converter={StaticResource ScoreToColorConverter}}">
-                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="#1E1E2E">
+                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="{DynamicResource LrScoreFgBrush}">
                     <Run Text="{Binding JdQualityScore}"/>
                     <Run Text="/100"/>
                   </TextBlock>
@@ -130,7 +119,7 @@
                               Background="{Binding SeverityColor}"
                               VerticalAlignment="Center"/>
                       <TextBlock Text="{Binding Message}" FontSize="11"
-                                 Foreground="#BAC2DE" TextWrapping="Wrap"/>
+                                 Foreground="{DynamicResource LrTertiaryTextBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -139,13 +128,13 @@
           </Border>
 
           <!-- Coverage Panel -->
-          <Border Grid.Row="2" Background="#1E1E2E" CornerRadius="6" Padding="12,8" Margin="0,0,0,10"
+          <Border Grid.Row="2" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,10"
                   IsVisible="{Binding HasCoverageReport}">
             <StackPanel Spacing="6">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Requirements Coverage" FontSize="12" FontWeight="SemiBold"
-                           Foreground="#89B4FA" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" FontSize="12" FontWeight="Bold" Foreground="#A6ADC8">
+                           Foreground="{DynamicResource LrAccentBlueBrush}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource LrSecondaryTextBrush}">
                   <Run Text="{Binding CoveragePercent}"/>
                   <Run Text="%"/>
                 </TextBlock>
@@ -157,7 +146,7 @@
                       <Border Width="8" Height="8" CornerRadius="4"
                               Background="{Binding StatusColor}" VerticalAlignment="Center"/>
                       <TextBlock Text="{Binding Requirement}" FontSize="11"
-                                 Foreground="#BAC2DE" TextWrapping="Wrap"/>
+                                 Foreground="{DynamicResource LrTertiaryTextBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -168,71 +157,63 @@
           <!-- Description -->
           <ScrollViewer Grid.Row="3">
             <TextBlock Text="{Binding SelectedJobDescription}"
-                       TextWrapping="Wrap" Foreground="#BAC2DE" FontSize="12" LineHeight="18"/>
+                       TextWrapping="Wrap" Foreground="{DynamicResource LrTertiaryTextBrush}" FontSize="12" LineHeight="18"/>
           </ScrollViewer>
 
           <!-- Aspect voting panel -->
           <StackPanel Grid.Row="4" Spacing="4" Margin="0,12,0,4"
                       IsVisible="{Binding SelectedJobAspects.Count}">
-
             <TextBlock Text="Rate Aspects" FontSize="12" FontWeight="SemiBold"
-                       Foreground="#89B4FA" Margin="0,0,0,4"/>
-
+                       Foreground="{DynamicResource LrAccentBlueBrush}" Margin="0,0,0,4"/>
             <ItemsControl ItemsSource="{Binding SelectedJobAspects}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:AspectVoteItem">
-                  <Border Background="#1E1E2E" CornerRadius="6" Padding="8,5" Margin="0,0,0,4">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="8,5" Margin="0,0,0,4">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-
-                      <!-- Type badge -->
-                      <Border Grid.Column="0" Background="#2A2A3E" CornerRadius="4"
+                      <Border Grid.Column="0" Background="{DynamicResource LrBadgeBgBrush}" CornerRadius="4"
                               Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
                         <TextBlock Text="{Binding TypeLabel}" FontSize="10"
-                                   Foreground="#6C7086" FontWeight="SemiBold"/>
+                                   Foreground="{DynamicResource LrSubtleTextBrush}" FontWeight="SemiBold"/>
                       </Border>
-
-                      <!-- Value + score -->
                       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
                                   VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Value}" Foreground="#CDD6F4" FontSize="12"
+                        <TextBlock Text="{Binding Value}" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="12"
                                    VerticalAlignment="Center"/>
-                        <Border Background="#2A2A3E" CornerRadius="4" Padding="5,1"
+                        <Border Background="{DynamicResource LrBadgeBgBrush}" CornerRadius="4" Padding="5,1"
                                 VerticalAlignment="Center">
                           <TextBlock Text="{Binding Score}" FontSize="11" FontWeight="Bold"
-                                     Foreground="#6C7086"/>
+                                     Foreground="{DynamicResource LrSubtleTextBrush}"/>
                         </Border>
                       </StackPanel>
-
-                      <!-- Vote buttons -->
                       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4"
                                   VerticalAlignment="Center">
                         <Button Content="▲"
                                 Command="{Binding $parent[ItemsControl].((vm:JobsPageViewModel)DataContext).VoteUpCommand}"
                                 CommandParameter="{Binding}"
-                                Background="Transparent" Foreground="#A6E3A1"
+                                Background="Transparent" Foreground="{DynamicResource LrAccentGreenBrush}"
                                 FontSize="12" Padding="6,2"
                                 ToolTip.Tip="Like — boosts similar jobs"/>
                         <Button Content="▼"
                                 Command="{Binding $parent[ItemsControl].((vm:JobsPageViewModel)DataContext).VoteDownCommand}"
                                 CommandParameter="{Binding}"
-                                Background="Transparent" Foreground="#F38BA8"
+                                Background="Transparent" Foreground="{DynamicResource LrAccentRedBrush}"
                                 FontSize="12" Padding="6,2"
                                 ToolTip.Tip="Dislike — hides at -3"/>
                       </StackPanel>
-
                     </Grid>
                   </Border>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-
           </StackPanel>
 
           <!-- Actions -->
           <StackPanel Grid.Row="5" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
             <Button Content="Apply / Tailor Resume"
                     Command="{Binding TailorSelectedJobCommand}"
-                    Background="#1E3A5F" Foreground="#89B4FA"
+                    Padding="16,8"/>
+            <Button Content="Track Application"
+                    Command="{Binding TrackApplicationCommand}"
                     Padding="16,8"/>
           </StackPanel>
 

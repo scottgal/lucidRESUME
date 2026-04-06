@@ -1,0 +1,768 @@
+{
+  "resume": {
+    "ResumeId": "48f39962-be5d-43c7-b430-47069396502d",
+    "FileName": "Scott-Galloway-AI-Consultant.docx",
+    "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "FileSizeBytes": 20799,
+    "CreatedAt": "2026-04-06T13:57:13.594723+00:00",
+    "LastModifiedAt": "2026-04-06T13:57:13.731498+00:00",
+    "RawMarkdown": "Scott Galloway\nAI Development Consultant / Systems Architect\nEmail: scott.galloway@gmail.com\nPhone: 07498 479614 (email preferred)\nBlog: https://www.mostlylucid.net\nGitHub: https://github.com/scottgal\n### Executive Summary\nAI Development Consultant with 20\u002B years of production engineering experience, specialising in cost-efficient, auditable AI systems for enterprise environments. Expert in designing LLM-augmented systems that scale economically, using Reduced RAG, signal-driven pipelines, and deterministic orchestration rather than token-heavy \u201Cagent theatre\u201D.\nProven track record modernising legacy platforms, architecting cloud-native systems, and delivering AI capabilities that pass security, compliance, and budget scrutiny. Author of 200\u002B technical articles, including 66\u002B on AI architecture, widely read for practical, production-focused guidance.\nParticularly strong at:\nturning vague \u201CAI ideas\u201D into shippable systems\nreducing AI spend while improving reliability\nseparating signal, evidence, memory, and synthesis\n### Core Expertise\nAI Systems \u0026 Applied ML\nLLM system architecture: RAG, Reduced RAG, GraphRAG, multi-stage synthesis\nCost-aware orchestration: bounded context, selective escalation, hybrid pipelines\nLocal \u0026 hybrid inference: ONNX Runtime, Ollama, CPU/GPU routing\nVector search \u0026 retrieval: pgvector, Qdrant, OpenSearch\nNLP: embeddings, semantic search, NER, summarisation\nMulti-modal pipelines: document, image, audio, and video summarisation\nEvaluation \u0026 guardrails: deterministic scoring, provenance, auditability\nPlatform \u0026 Backend Engineering\n.NET (Framework \u2192 .NET 9), ASP.NET Core, C#\nEvent-driven and distributed systems\nREST, gRPC, SignalR\nDomain-Driven Design, pragmatic microservices\nCloud, Infrastructure \u0026 Ops\nAzure (Functions, App Services, AKS)\nDocker \u0026 Kubernetes\nCI/CD (GitHub Actions, Azure DevOps, GitLab)\nInfrastructure-as-Code (Bicep)\nObservability: Application Insights, custom telemetry, K6 load testing\nFrontend \u0026 UX (supporting role)\nHTMX, Alpine.js, Blazor, React, Vue\nTailwind CSS\nSystem-driven UI patterns for operational tools\nWriting \u0026 Thought Leadership\n200\u002B technical articles\n66\u002B AI-focused deep dives on architecture, RAG, OCR, ONNX, and system design\nBlog: https://www.mostlylucid.net (practical examples, demo repos, benchmarks)\n### Professional Experience\nMostlylucid Ltd \u2014 Owner / Principal AI Development Consultant\nJan 2012 \u2013 Present | Remote\nFounded and operate an independent consultancy delivering AI-enabled systems and platform modernisation for startups and enterprise clients. Frequently operate at CTO / Principal Architect level, despite contract titles.\nAI \u0026 LLM Systems\nDesigned and built DiSE (Directed Synthetic Evolution) \u2014 an open-source framework for self-optimising, multi-LLM workflows with automated testing, RAG-backed reuse, and platform-aware deployment (edge \u2192 cloud).\nArchitected multi-agent systems (classifier, planner, generator, evaluator) using local LLMs and external tools, with metric-driven evolution and executable ground-truth nodes.\nBuilt custom RAG pipelines for enterprise semantic search, replacing naive \u201Cstuff the context window\u201D approaches and reducing inference costs by orders of magnitude.\nSystems Architecture \u0026 Modernisation\nLed large-scale modernisation projects across fintech, healthcare, ecommerce, and public sector.\nMigrated legacy monoliths to cloud-native architectures, achieving:\n~50% infrastructure cost reduction\n~80% faster deployment cycles\nDesigned AI-augmented recommendation and discovery systems using embeddings, vector search, and structured evidence pipelines.\n### Mentorship \u0026 Education\nFounded and ran a developer bootcamp; authored curriculum and trained 200\u002B engineers, achieving 90%\u002B industry placement.\nZenChef Ltd \u2014 Lead Contract Developer\nOct 2024 \u2013 Present | Remote\nMigrated distributed legacy platform to .NET 8, improving reliability while reducing Azure costs.\nImplemented deep performance optimisation using telemetry and load testing.\nProvided high-signal technical leadership on a complex, event-driven microservices estate.\nVery Jane Ltd \u2014 Senior Backend Developer\nApr 2024 \u2013 Aug 2024 | Remote\nBuilt scalable ecommerce backend modules with Stripe Connect and Hyperwallet.\nBootstrapped new platform using .NET Core and PostgreSQL.\nDesigned robust data validation and migration pipelines for customer-supplied datasets.\nSeamcor Ltd \u2014 Head of Engineering (Contract)\nDec 2022 \u2013 Apr 2024 | Remote\nLed re-architecture of enterprise production management platform (10\u002B engineers).\nIntroduced Docker Compose orchestration and OpenSearch for analytics.\nDesigned hybrid deployment strategy (Azure \u002B on-prem) to reduce customer costs.\nGBG Plc (Loqate) \u2014 Lead Engineer\nAug 2022 \u2013 Nov 2022 | Remote\nWorked on globally distributed address-lookup platform.\nOptimised Elasticsearch/Kubernetes deployments for sub-second latency at scale.\nBuilt K6-based performance testing infrastructure, cutting feedback cycles by ~80%.\nEarlier Roles (Selected)\nWCOM AB \u2014 Lead Developer (real-time collaboration, Blazor, SignalR)\nH3Space Ltd \u2014 Lead Engineer (Unity SaaS backend, Azure)\nHuozhi Ltd \u2014 Technical Consultant / Dev Lead (fintech modernisation)\nInteractive Reporting Ltd \u2014 Lead Developer (BI/reporting engines)\nDell \u2014 Development Lead (internal automation platforms)\nMicrosoft Corp. \u2014 Program Manager II (ASP.NET, security platforms)\nMicrosoft Ltd. \u2014 Application Development Consultant II\nStormID \u2014 Lead Developer\n### Education\nBSc (Hons) Psychology\nUniversity of Stirling, Scotland\n",
+    "RawJson": null,
+    "PlainText": "Scott Galloway\nAI Development Consultant / Systems Architect\nEmail: scott.galloway@gmail.com\nPhone: 07498 479614 (email preferred)\nBlog: https://www.mostlylucid.net\nGitHub: https://github.com/scottgal\nExecutive Summary\nAI Development Consultant with 20\u002B years of production engineering experience, specialising in cost-efficient, auditable AI systems for enterprise environments. Expert in designing LLM-augmented systems that scale economically, using Reduced RAG, signal-driven pipelines, and deterministic orchestration rather than token-heavy \u201Cagent theatre\u201D.\nProven track record modernising legacy platforms, architecting cloud-native systems, and delivering AI capabilities that pass security, compliance, and budget scrutiny. Author of 200\u002B technical articles, including 66\u002B on AI architecture, widely read for practical, production-focused guidance.\nParticularly strong at:\nturning vague \u201CAI ideas\u201D into shippable systems\nreducing AI spend while improving reliability\nseparating signal, evidence, memory, and synthesis\nCore Expertise\nAI Systems \u0026 Applied ML\nLLM system architecture: RAG, Reduced RAG, GraphRAG, multi-stage synthesis\nCost-aware orchestration: bounded context, selective escalation, hybrid pipelines\nLocal \u0026 hybrid inference: ONNX Runtime, Ollama, CPU/GPU routing\nVector search \u0026 retrieval: pgvector, Qdrant, OpenSearch\nNLP: embeddings, semantic search, NER, summarisation\nMulti-modal pipelines: document, image, audio, and video summarisation\nEvaluation \u0026 guardrails: deterministic scoring, provenance, auditability\nPlatform \u0026 Backend Engineering\n.NET (Framework \u2192 .NET 9), ASP.NET Core, C#\nEvent-driven and distributed systems\nREST, gRPC, SignalR\nDomain-Driven Design, pragmatic microservices\nCloud, Infrastructure \u0026 Ops\nAzure (Functions, App Services, AKS)\nDocker \u0026 Kubernetes\nCI/CD (GitHub Actions, Azure DevOps, GitLab)\nInfrastructure-as-Code (Bicep)\nObservability: Application Insights, custom telemetry, K6 load testing\nFrontend \u0026 UX (supporting role)\nHTMX, Alpine.js, Blazor, React, Vue\nTailwind CSS\nSystem-driven UI patterns for operational tools\nWriting \u0026 Thought Leadership\n200\u002B technical articles\n66\u002B AI-focused deep dives on architecture, RAG, OCR, ONNX, and system design\nBlog: https://www.mostlylucid.net (practical examples, demo repos, benchmarks)\nProfessional Experience\nMostlylucid Ltd \u2014 Owner / Principal AI Development Consultant\nJan 2012 \u2013 Present | Remote\nFounded and operate an independent consultancy delivering AI-enabled systems and platform modernisation for startups and enterprise clients. Frequently operate at CTO / Principal Architect level, despite contract titles.\nAI \u0026 LLM Systems\nDesigned and built DiSE (Directed Synthetic Evolution) \u2014 an open-source framework for self-optimising, multi-LLM workflows with automated testing, RAG-backed reuse, and platform-aware deployment (edge \u2192 cloud).\nArchitected multi-agent systems (classifier, planner, generator, evaluator) using local LLMs and external tools, with metric-driven evolution and executable ground-truth nodes.\nBuilt custom RAG pipelines for enterprise semantic search, replacing naive \u201Cstuff the context window\u201D approaches and reducing inference costs by orders of magnitude.\nSystems Architecture \u0026 Modernisation\nLed large-scale modernisation projects across fintech, healthcare, ecommerce, and public sector.\nMigrated legacy monoliths to cloud-native architectures, achieving:\n~50% infrastructure cost reduction\n~80% faster deployment cycles\nDesigned AI-augmented recommendation and discovery systems using embeddings, vector search, and structured evidence pipelines.\nMentorship \u0026 Education\nFounded and ran a developer bootcamp; authored curriculum and trained 200\u002B engineers, achieving 90%\u002B industry placement.\nZenChef Ltd \u2014 Lead Contract Developer\nOct 2024 \u2013 Present | Remote\nMigrated distributed legacy platform to .NET 8, improving reliability while reducing Azure costs.\nImplemented deep performance optimisation using telemetry and load testing.\nProvided high-signal technical leadership on a complex, event-driven microservices estate.\nVery Jane Ltd \u2014 Senior Backend Developer\nApr 2024 \u2013 Aug 2024 | Remote\nBuilt scalable ecommerce backend modules with Stripe Connect and Hyperwallet.\nBootstrapped new platform using .NET Core and PostgreSQL.\nDesigned robust data validation and migration pipelines for customer-supplied datasets.\nSeamcor Ltd \u2014 Head of Engineering (Contract)\nDec 2022 \u2013 Apr 2024 | Remote\nLed re-architecture of enterprise production management platform (10\u002B engineers).\nIntroduced Docker Compose orchestration and OpenSearch for analytics.\nDesigned hybrid deployment strategy (Azure \u002B on-prem) to reduce customer costs.\nGBG Plc (Loqate) \u2014 Lead Engineer\nAug 2022 \u2013 Nov 2022 | Remote\nWorked on globally distributed address-lookup platform.\nOptimised Elasticsearch/Kubernetes deployments for sub-second latency at scale.\nBuilt K6-based performance testing infrastructure, cutting feedback cycles by ~80%.\nEarlier Roles (Selected)\nWCOM AB \u2014 Lead Developer (real-time collaboration, Blazor, SignalR)\nH3Space Ltd \u2014 Lead Engineer (Unity SaaS backend, Azure)\nHuozhi Ltd \u2014 Technical Consultant / Dev Lead (fintech modernisation)\nInteractive Reporting Ltd \u2014 Lead Developer (BI/reporting engines)\nDell \u2014 Development Lead (internal automation platforms)\nMicrosoft Corp. \u2014 Program Manager II (ASP.NET, security platforms)\nMicrosoft Ltd. \u2014 Application Development Consultant II\nStormID \u2014 Lead Developer\nEducation\nBSc (Hons) Psychology\nUniversity of Stirling, Scotland\n",
+    "ImageCacheKey": null,
+    "PageCount": 0,
+    "Personal": {
+      "FullName": "Scott Galloway",
+      "Email": "scott.galloway@gmail.com",
+      "Phone": "07498 479614",
+      "Location": null,
+      "LinkedInUrl": null,
+      "GitHubUrl": "github.com/scottgal",
+      "WebsiteUrl": null,
+      "Summary": "AI Development Consultant with 20\u002B years of production engineering experience, specialising in cost-efficient, auditable AI systems for enterprise environments. Expert in designing LLM-augmented systems that scale economically, using Reduced RAG, signal-driven pipelines, and deterministic orchestration rather than token-heavy \u201Cagent theatre\u201D. Proven track record modernising legacy platforms, architecting cloud-native systems, and delivering AI capabilities that pass security, compliance, and budget scrutiny. Author of 200\u002B technical articles, including 66\u002B on AI architecture, widely read for practical, production-focused guidance. Particularly strong at: turning vague \u201CAI ideas\u201D into shippable systems reducing AI spend while improving reliability separating signal, evidence, memory, and synthesis"
+    },
+    "Experience": [
+      {
+        "Id": "c11fe77e-664b-4525-ad27-fda1b4b0b5e5",
+        "Company": "Mostlylucid Ltd \u2014 Owner / Principal AI Development Consultant",
+        "Title": "Remote Jan 2012 \u2013 Present",
+        "Location": null,
+        "StartDate": "2012-01-01",
+        "EndDate": null,
+        "IsCurrent": true,
+        "Achievements": [
+          "Founded and operate an independent consultancy delivering AI-enabled systems and platform modernisation for startups and enterprise clients. Frequently operate at CTO / Principal Architect level, despite contract titles.",
+          "Designed and built DiSE (Directed Synthetic Evolution) \u2014 an open-source framework for self-optimising, multi-LLM workflows with automated testing, RAG-backed reuse, and platform-aware deployment (edge \u2192 cloud).",
+          "Architected multi-agent systems (classifier, planner, generator, evaluator) using local LLMs and external tools, with metric-driven evolution and executable ground-truth nodes.",
+          "Built custom RAG pipelines for enterprise semantic search, replacing naive \u201Cstuff the context window\u201D approaches and reducing inference costs by orders of magnitude.",
+          "Systems Architecture \u0026 Modernisation",
+          "Led large-scale modernisation projects across fintech, healthcare, ecommerce, and public sector.",
+          "Migrated legacy monoliths to cloud-native architectures, achieving:",
+          "~50% infrastructure cost reduction",
+          "~80% faster deployment cycles",
+          "Designed AI-augmented recommendation and discovery systems using embeddings, vector search, and structured evidence pipelines.",
+          "Founded and ran a developer bootcamp; authored curriculum and trained 200\u002B engineers, achieving 90%\u002B industry placement."
+        ],
+        "Technologies": []
+      },
+      {
+        "Id": "727f8571-f408-4078-bc68-453cd6c121d0",
+        "Company": "ZenChef Ltd \u2014 Lead Contract Developer",
+        "Title": "Remote Oct 2024 \u2013 Present",
+        "Location": null,
+        "StartDate": "2024-10-01",
+        "EndDate": null,
+        "IsCurrent": true,
+        "Achievements": [
+          "Migrated distributed legacy platform to .NET 8, improving reliability while reducing Azure costs.",
+          "Implemented deep performance optimisation using telemetry and load testing.",
+          "Provided high-signal technical leadership on a complex, event-driven microservices estate."
+        ],
+        "Technologies": []
+      },
+      {
+        "Id": "caaf8ccc-7d72-4d03-bc27-837c702eb788",
+        "Company": "Very Jane Ltd \u2014 Senior Backend Developer",
+        "Title": "Remote Apr 2024 \u2013 Aug 2024",
+        "Location": null,
+        "StartDate": "2024-04-01",
+        "EndDate": "2024-08-01",
+        "IsCurrent": false,
+        "Achievements": [
+          "Built scalable ecommerce backend modules with Stripe Connect and Hyperwallet.",
+          "Bootstrapped new platform using .NET Core and PostgreSQL.",
+          "Designed robust data validation and migration pipelines for customer-supplied datasets."
+        ],
+        "Technologies": []
+      },
+      {
+        "Id": "1e3e079a-f842-4f0c-a373-289618fdcd18",
+        "Company": "Seamcor Ltd \u2014 Head of Engineering (Contract)",
+        "Title": "Remote Dec 2022 \u2013 Apr 2024",
+        "Location": null,
+        "StartDate": "2022-12-01",
+        "EndDate": "2024-04-01",
+        "IsCurrent": false,
+        "Achievements": [
+          "Led re-architecture of enterprise production management platform (10\u002B engineers).",
+          "Introduced Docker Compose orchestration and OpenSearch for analytics.",
+          "Designed hybrid deployment strategy (Azure \u002B on-prem) to reduce customer costs."
+        ],
+        "Technologies": []
+      },
+      {
+        "Id": "b21ae5db-0c81-40de-8d28-7d9efbf236a6",
+        "Company": "GBG Plc (Loqate) \u2014 Lead Engineer",
+        "Title": "Remote Aug 2022 \u2013 Nov 2022",
+        "Location": null,
+        "StartDate": "2022-08-01",
+        "EndDate": "2022-11-01",
+        "IsCurrent": false,
+        "Achievements": [
+          "Worked on globally distributed address-lookup platform.",
+          "Optimised Elasticsearch/Kubernetes deployments for sub-second latency at scale.",
+          "Built K6-based performance testing infrastructure, cutting feedback cycles by ~80%.",
+          "Earlier Roles (Selected)",
+          "WCOM AB \u2014 Lead Developer (real-time collaboration, Blazor, SignalR)",
+          "H3Space Ltd \u2014 Lead Engineer (Unity SaaS backend, Azure)",
+          "Huozhi Ltd \u2014 Technical Consultant / Dev Lead (fintech modernisation)",
+          "Interactive Reporting Ltd \u2014 Lead Developer (BI/reporting engines)",
+          "Dell \u2014 Development Lead (internal automation platforms)",
+          "Microsoft Corp. \u2014 Program Manager II (ASP.NET, security platforms)",
+          "Microsoft Ltd. \u2014 Application Development Consultant II",
+          "StormID \u2014 Lead Developer"
+        ],
+        "Technologies": []
+      }
+    ],
+    "Education": [
+      {
+        "Id": "7df5ac03-1650-4629-9b73-8dae6431eadc",
+        "Institution": "BSc (Hons) Psychology, University of Stirling, Scotland",
+        "Degree": null,
+        "FieldOfStudy": null,
+        "StartDate": null,
+        "EndDate": null,
+        "Gpa": null,
+        "GraduationYear": null,
+        "Highlights": []
+      }
+    ],
+    "Skills": [
+      {
+        "Name": "AI Systems \u0026 Applied ML",
+        "Category": null,
+        "YearsExperience": null
+      },
+      {
+        "Name": "RAG",
+        "Category": "LLM system architecture",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Reduced RAG",
+        "Category": "LLM system architecture",
+        "YearsExperience": null
+      },
+      {
+        "Name": "GraphRAG",
+        "Category": "LLM system architecture",
+        "YearsExperience": null
+      },
+      {
+        "Name": "multi-stage synthesis",
+        "Category": "LLM system architecture",
+        "YearsExperience": null
+      },
+      {
+        "Name": "bounded context",
+        "Category": "Cost-aware orchestration",
+        "YearsExperience": null
+      },
+      {
+        "Name": "selective escalation",
+        "Category": "Cost-aware orchestration",
+        "YearsExperience": null
+      },
+      {
+        "Name": "hybrid pipelines",
+        "Category": "Cost-aware orchestration",
+        "YearsExperience": null
+      },
+      {
+        "Name": "ONNX Runtime",
+        "Category": "Local \u0026 hybrid inference",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Ollama",
+        "Category": "Local \u0026 hybrid inference",
+        "YearsExperience": null
+      },
+      {
+        "Name": "CPU/GPU routing",
+        "Category": "Local \u0026 hybrid inference",
+        "YearsExperience": null
+      },
+      {
+        "Name": "pgvector",
+        "Category": "Vector search \u0026 retrieval",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Qdrant",
+        "Category": "Vector search \u0026 retrieval",
+        "YearsExperience": null
+      },
+      {
+        "Name": "OpenSearch",
+        "Category": "Vector search \u0026 retrieval",
+        "YearsExperience": null
+      },
+      {
+        "Name": "embeddings",
+        "Category": "NLP",
+        "YearsExperience": null
+      },
+      {
+        "Name": "semantic search",
+        "Category": "NLP",
+        "YearsExperience": null
+      },
+      {
+        "Name": "NER",
+        "Category": "NLP",
+        "YearsExperience": null
+      },
+      {
+        "Name": "summarisation",
+        "Category": "NLP",
+        "YearsExperience": null
+      },
+      {
+        "Name": "document",
+        "Category": "Multi-modal pipelines",
+        "YearsExperience": null
+      },
+      {
+        "Name": "image",
+        "Category": "Multi-modal pipelines",
+        "YearsExperience": null
+      },
+      {
+        "Name": "audio",
+        "Category": "Multi-modal pipelines",
+        "YearsExperience": null
+      },
+      {
+        "Name": "and video summarisation",
+        "Category": "Multi-modal pipelines",
+        "YearsExperience": null
+      },
+      {
+        "Name": "deterministic scoring",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "provenance",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "auditability",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Platform \u0026 Backend Engineering",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": ".NET (Framework \u2192 .NET 9)",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "ASP.NET Core",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "C#",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Event-driven and distributed systems",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "REST",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "gRPC",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "SignalR",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Domain-Driven Design",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "pragmatic microservices",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Cloud",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Infrastructure \u0026 Ops",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Azure (Functions",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "App Services",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "AKS)",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Docker \u0026 Kubernetes",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "CI/CD (GitHub Actions",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Azure DevOps",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "GitLab)",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Infrastructure-as-Code (Bicep)",
+        "Category": "Evaluation \u0026 guardrails",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Application Insights",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "custom telemetry",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "K6 load testing",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Frontend \u0026 UX (supporting role)",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "HTMX",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Alpine.js",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Blazor",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "React",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Vue",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Tailwind CSS",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "System-driven UI patterns for operational tools",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "Writing \u0026 Thought Leadership",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "200\u002B technical articles",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "66\u002B AI-focused deep dives on architecture",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "RAG",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "OCR",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "ONNX",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "and system design",
+        "Category": "Observability",
+        "YearsExperience": null
+      },
+      {
+        "Name": "https://www.mostlylucid.net (practical examples",
+        "Category": "Blog",
+        "YearsExperience": null
+      },
+      {
+        "Name": "demo repos",
+        "Category": "Blog",
+        "YearsExperience": null
+      },
+      {
+        "Name": "benchmarks)",
+        "Category": "Blog",
+        "YearsExperience": null
+      }
+    ],
+    "Certifications": [],
+    "Projects": [],
+    "Entities": [
+      {
+        "EntityId": "149edbfc-13ac-4423-aece-28d7535cd72d",
+        "Value": "scott.galloway@gmail.com",
+        "NormalizedValue": "scott.galloway@gmail.com",
+        "Classification": "Email",
+        "Confidence": 0.95,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "3d22762c-5c00-4328-a372-060a9fe518f7",
+        "Value": "07498 479614",
+        "NormalizedValue": "07498 479614",
+        "Classification": "PhoneNumber",
+        "Confidence": 0.88,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "b992cfa6-806c-4b3e-9c4f-4eb1ec7735b5",
+        "Value": "jan 2012",
+        "NormalizedValue": "jan 2012",
+        "Classification": "DateRange",
+        "Confidence": 0.88,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "1adc31d0-720c-411a-9ed1-ec7f88591f9b",
+        "Value": "oct 2024",
+        "NormalizedValue": "oct 2024",
+        "Classification": "DateRange",
+        "Confidence": 0.88,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "e82597ca-4e02-4f2f-be01-aa6b64d78b99",
+        "Value": "apr 2024 \u2013 aug 2024",
+        "NormalizedValue": "apr 2024 \u2013 aug 2024",
+        "Classification": "DateRange",
+        "Confidence": 0.88,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "7a360cdc-e2fc-41b7-84d3-17b17052c3ca",
+        "Value": "dec 2022 \u2013 apr 2024",
+        "NormalizedValue": "dec 2022 \u2013 apr 2024",
+        "Classification": "DateRange",
+        "Confidence": 0.88,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "fdac4a2a-80c5-44cd-b8c0-f6e0873788c6",
+        "Value": "aug 2022 \u2013 nov 2022",
+        "NormalizedValue": "aug 2022 \u2013 nov 2022",
+        "Classification": "DateRange",
+        "Confidence": 0.88,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "cea80b9c-64aa-468e-8bd2-6c288430fdaf",
+        "Value": "https://www.mostlylucid.net",
+        "NormalizedValue": "https://www.mostlylucid.net",
+        "Classification": "Url",
+        "Confidence": 0.9,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "40b96bf8-6192-4735-bfff-332cfa5aae89",
+        "Value": "asp.net",
+        "NormalizedValue": "asp.net",
+        "Classification": "Url",
+        "Confidence": 0.9,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "fb0a2d81-d578-433c-83e7-cb5df6a131d4",
+        "Value": "https://www.mostlylucid.net",
+        "NormalizedValue": "https://www.mostlylucid.net",
+        "Classification": "Url",
+        "Confidence": 0.9,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "5c6e4c53-cbdf-4b62-94c0-36ecaffa8878",
+        "Value": "asp.net",
+        "NormalizedValue": "asp.net",
+        "Classification": "Url",
+        "Confidence": 0.9,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "53308d6e-b0a0-466f-9be3-30e3412f0866",
+        "Value": "github.com/scottgal",
+        "NormalizedValue": "github.com/scottgal",
+        "Classification": "GitHubUrl",
+        "Confidence": 0.95,
+        "Source": 1,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "2589f625-f4c8-4299-97f9-0ff22a1a82b1",
+        "Value": "Scott Galloway",
+        "NormalizedValue": "scott galloway",
+        "Classification": "PersonName",
+        "Confidence": 0.9721445441246033,
+        "Source": 2,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "5d7c31bd-2447-4bf6-a6f2-dc9a30a6a8ed",
+        "Value": "AI",
+        "NormalizedValue": "ai",
+        "Classification": "Miscellaneous",
+        "Confidence": 0.8644701242446899,
+        "Source": 2,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "35c71093-0be1-4196-8235-31d54bf7c956",
+        "Value": "AI",
+        "NormalizedValue": "ai",
+        "Classification": "Miscellaneous",
+        "Confidence": 0.9072431921958923,
+        "Source": 2,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "ae014e73-0145-43c3-90d0-3376b5d052ab",
+        "Value": "AI",
+        "NormalizedValue": "ai",
+        "Classification": "Miscellaneous",
+        "Confidence": 0.9723206758499146,
+        "Source": 2,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "74746696-aa68-4adf-93e4-0a7047f4faf6",
+        "Value": "AI",
+        "NormalizedValue": "ai",
+        "Classification": "Miscellaneous",
+        "Confidence": 0.8354646563529968,
+        "Source": 2,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "7c66e346-8dea-44de-8581-8c79471d5877",
+        "Value": "AI",
+        "NormalizedValue": "ai",
+        "Classification": "Miscellaneous",
+        "Confidence": 0.9232140183448792,
+        "Source": 2,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "4a33512a-7ddc-4cec-9d03-1d62de59d004",
+        "Value": "Platform \u0026 Backend Engineering",
+        "NormalizedValue": "platform \u0026 backend engineering",
+        "Classification": "Organization",
+        "Confidence": 0.845759928226471,
+        "Source": 2,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      },
+      {
+        "EntityId": "68f17224-5cd9-43f6-982a-e3dec5b99f77",
+        "Value": "scott.galloway@gmail.com",
+        "NormalizedValue": "scott.galloway@gmail.com",
+        "Classification": "Email",
+        "Confidence": 0.9461798071861267,
+        "Source": 2,
+        "PageNumber": 1,
+        "CharOffset": null,
+        "CharLength": null,
+        "Label": null,
+        "Section": null
+      }
+    ],
+    "TailoredForJobId": null
+  },
+  "job": {
+    "JobId": "dfa7c11d-ae3e-413f-b403-232d264ddfcc",
+    "CreatedAt": "2026-04-06T13:57:14.64274+00:00",
+    "Source": {
+      "Type": 0,
+      "Url": null,
+      "ApiName": null,
+      "ExternalId": null,
+      "FetchedAt": "2026-04-06T13:57:14.642663+00:00"
+    },
+    "Title": null,
+    "Company": null,
+    "Location": null,
+    "IsRemote": null,
+    "IsHybrid": null,
+    "Salary": null,
+    "RequiredSkills": [],
+    "PreferredSkills": [],
+    "RequiredYearsExperience": null,
+    "RequiredEducation": null,
+    "Responsibilities": [],
+    "Benefits": [],
+    "RawText": "-",
+    "CompanyType": 0,
+    "MatchScore": null,
+    "IsBlocked": false,
+    "BlockReason": null,
+    "NeedsManualInput": false
+  },
+  "summary": {
+    "resumeName": "Scott Galloway",
+    "jobTitle": null,
+    "company": null,
+    "isRemote": null,
+    "isHybrid": null,
+    "salary": null,
+    "requiredSkillCount": 0,
+    "preferredSkillCount": 0
+  }
+}

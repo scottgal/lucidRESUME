@@ -65,7 +65,7 @@ public partial class TagChipEditor : UserControl
 
     // ── DirectProperty: AccentColor ─────────────────────────────────────────
 
-    private IBrush _accentColor = new SolidColorBrush(Color.Parse("#89B4FA"));
+    private IBrush _accentColor = Brushes.CornflowerBlue; // overridden by theme at runtime
 
     public static readonly DirectProperty<TagChipEditor, IBrush> AccentColorProperty =
         AvaloniaProperty.RegisterDirect<TagChipEditor, IBrush>(
@@ -234,10 +234,13 @@ public partial class TagChipEditor : UserControl
         var label = new TextBlock
         {
             Text = tag.Value,
-            Foreground = new SolidColorBrush(Color.Parse("#CDD6F4")),
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center
         };
+        label.Bind(TextBlock.ForegroundProperty, label.GetResourceObservable("LrPrimaryTextBrush"));
+
+        var subtleBrush = this.FindResource("LrSubtleTextBrush") as IBrush ?? Brushes.Gray;
+        var redBrush = this.FindResource("LrAccentRedBrush") as IBrush ?? Brushes.Red;
 
         var deleteBtn = new Button
         {
@@ -245,7 +248,7 @@ public partial class TagChipEditor : UserControl
             FontSize = 14,
             FontWeight = FontWeight.Bold,
             Padding = new Thickness(2, 0),
-            Foreground = new SolidColorBrush(Color.Parse("#6C7086")),
+            Foreground = subtleBrush,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Center,
@@ -253,9 +256,9 @@ public partial class TagChipEditor : UserControl
 
         // Hover: turn delete button red
         deleteBtn.PointerEntered += (_, _) =>
-            deleteBtn.Foreground = new SolidColorBrush(Color.Parse("#F38BA8"));
+            deleteBtn.Foreground = redBrush;
         deleteBtn.PointerExited += (_, _) =>
-            deleteBtn.Foreground = new SolidColorBrush(Color.Parse("#6C7086"));
+            deleteBtn.Foreground = subtleBrush;
         deleteBtn.Click += (_, _) => RemoveTag(tag);
 
         chipInner.Children.Add(label);
@@ -270,8 +273,6 @@ public partial class TagChipEditor : UserControl
 
             var reasonBorder = new Border
             {
-                Background = new SolidColorBrush(Color.Parse("#1E1E2E")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#45475A")),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(6, 3),
@@ -279,13 +280,14 @@ public partial class TagChipEditor : UserControl
                 MaxWidth = 200,
                 IsVisible = isVisible
             };
+            reasonBorder.Bind(Border.BackgroundProperty, reasonBorder.GetResourceObservable("LrCardBgBrush"));
+            reasonBorder.Bind(Border.BorderBrushProperty, reasonBorder.GetResourceObservable("LrBorderBrush"));
 
             var reasonBox = new TextBox
             {
                 Text = tag.Reason,
                 Watermark = "Reason (optional)",
                 FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#CDD6F4")),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
                 Padding = new Thickness(2, 1)

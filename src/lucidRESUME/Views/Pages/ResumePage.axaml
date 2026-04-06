@@ -7,6 +7,7 @@
              x:Class="lucidRESUME.Views.Pages.ResumePage">
   <UserControl.Resources>
     <local:ScoreToColorConverter x:Key="ScoreToColorConverter"/>
+    <local:InverseScoreToColorConverter x:Key="InverseScoreToColorConverter"/>
   </UserControl.Resources>
   <Grid RowDefinitions="Auto,Auto,*">
 
@@ -27,21 +28,27 @@
               IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"/>
       <Button Content="Export Markdown" Command="{Binding ExportMarkdownCommand}"
               IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"/>
+      <TextBox Text="{Binding TranslateLanguage}" Width="80" Watermark="Language" VerticalAlignment="Center"
+               Padding="6,3" FontSize="11"/>
+      <Button Content="Translate" Command="{Binding TranslateResumeCommand}"
+              IsEnabled="{Binding !IsTranslating}" IsVisible="{Binding HasResume}"
+              Padding="8,4" FontSize="12"/>
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
-      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#A6ADC8"
+      <ProgressBar IsVisible="{Binding IsTranslating}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
+      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </StackPanel>
 
     <!-- Error banner -->
-    <Border Grid.Row="1" Background="#3E1E1E" Padding="12,6" Margin="16,0"
+    <Border Grid.Row="1" Background="{DynamicResource LrAccentRedBgBrush}" Padding="12,6" Margin="16,0"
             IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-      <TextBlock Text="{Binding ErrorMessage}" Foreground="#F38BA8"/>
+      <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource LrAccentRedBrush}"/>
     </Border>
 
     <!-- Empty state -->
     <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                 IsVisible="{Binding !HasResume}">
-      <TextBlock Text="No resume imported yet." FontSize="16" HorizontalAlignment="Center" Foreground="#6C7086"/>
+      <TextBlock Text="No resume imported yet." FontSize="16" HorizontalAlignment="Center" Foreground="{DynamicResource LrSubtleTextBrush}"/>
       <Button Content="Import Resume…" Command="{Binding ImportResumeCommand}" HorizontalAlignment="Center"/>
     </StackPanel>
 
@@ -52,16 +59,14 @@
       <Grid Grid.Column="0" RowDefinitions="*,Auto" Margin="16,8,8,16">
 
         <!-- Page image or placeholder -->
-        <Border Grid.Row="0" Background="#181825" CornerRadius="4" ClipToBounds="True">
+        <Border Grid.Row="0" Background="{DynamicResource LrPageBgBrush}" CornerRadius="4" ClipToBounds="True">
           <Panel>
-            <!-- Actual page bitmap -->
             <Image Source="{Binding CurrentPageImage}"
                    Stretch="Uniform"
                    IsVisible="{Binding HasPageImages}"/>
-            <!-- Placeholder when no images available -->
             <TextBlock Text="Page preview not available"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                       Foreground="#45475A" FontSize="13"
+                       Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="13"
                        IsVisible="{Binding !HasPageImages}"/>
           </Panel>
         </Border>
@@ -72,7 +77,7 @@
                     IsVisible="{Binding HasPageImages}">
           <Button Content="‹" Command="{Binding PrevPageCommand}" Width="32" Height="32"
                   IsEnabled="{Binding CanGoToPrevPage}"/>
-          <TextBlock VerticalAlignment="Center" Foreground="#A6ADC8">
+          <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}">
             <Run Text="{Binding CurrentPage}"/>
             <Run Text=" / "/>
             <Run Text="{Binding PageCount}"/>
@@ -87,22 +92,20 @@
         <StackPanel Spacing="16">
 
           <!-- Quality Score Banner -->
-          <Border Background="#1E1E2E" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
+          <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
                   IsVisible="{Binding HasQualityReport}">
             <StackPanel Spacing="8">
-              <!-- Score header -->
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Resume Quality" FontSize="12" FontWeight="SemiBold"
-                           Foreground="#89B4FA" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource LrAccentBlueBrush}" VerticalAlignment="Center"/>
                 <Border Grid.Column="1" CornerRadius="12" Padding="10,3"
                         Background="{Binding QualityScore, Converter={StaticResource ScoreToColorConverter}}">
-                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="#1E1E2E">
+                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="{DynamicResource LrScoreFgBrush}">
                     <Run Text="{Binding QualityScore}"/>
                     <Run Text="/100"/>
                   </TextBlock>
                 </Border>
               </Grid>
-              <!-- Findings list (errors and warnings only, max 5) -->
               <ItemsControl ItemsSource="{Binding QualityFindings}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:QualityFindingViewModel">
@@ -111,7 +114,7 @@
                               Background="{Binding SeverityColor}"
                               VerticalAlignment="Center"/>
                       <TextBlock Text="{Binding Message}" FontSize="11"
-                                 Foreground="#BAC2DE" TextWrapping="Wrap"/>
+                                 Foreground="{DynamicResource LrTertiaryTextBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -119,30 +122,71 @@
             </StackPanel>
           </Border>
 
+          <!-- AI Detection Banner -->
+          <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
+                  IsVisible="{Binding HasAiReport}">
+            <StackPanel Spacing="8">
+              <Grid ColumnDefinitions="*,Auto,8,Auto">
+                <TextBlock Text="AI Detection" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource LrAccentPurpleBrush}" VerticalAlignment="Center"/>
+                <Button Grid.Column="2" Content="De-AI Rewrite"
+                        Command="{Binding DeAiRewriteCommand}"
+                        IsEnabled="{Binding !IsDeAiRunning}"
+                        Padding="8,3" FontSize="11" VerticalAlignment="Center"/>
+                <Border Grid.Column="1" CornerRadius="12" Padding="10,3"
+                        Background="{Binding AiScore, Converter={StaticResource InverseScoreToColorConverter}}">
+                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="{DynamicResource LrScoreFgBrush}">
+                    <Run Text="{Binding AiScore}"/>
+                    <Run Text="/100"/>
+                  </TextBlock>
+                </Border>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding AiFindings}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:QualityFindingViewModel">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                      <Border Width="8" Height="8" CornerRadius="4"
+                              Background="{Binding SeverityColor}"
+                              VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding Message}" FontSize="11"
+                                 Foreground="{DynamicResource LrTertiaryTextBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <ProgressBar IsVisible="{Binding IsDeAiRunning}" IsIndeterminate="True" Width="60"/>
+                <TextBlock Text="{Binding DeAiStatus}" FontSize="10" Foreground="{DynamicResource LrAccentBlueBrush}"
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding DeAiStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
           <!-- Header -->
           <StackPanel Spacing="4">
-            <TextBlock Text="{Binding FullName}" FontSize="22" FontWeight="Bold" Foreground="#CDD6F4"/>
-            <TextBlock Text="{Binding ContactLine}" Foreground="#A6ADC8" TextWrapping="Wrap"
+            <TextBlock Text="{Binding FullName}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <TextBlock Text="{Binding ContactLine}" Foreground="{DynamicResource LrSecondaryTextBrush}" TextWrapping="Wrap"
                        IsVisible="{Binding ContactLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
           </StackPanel>
 
           <!-- Summary -->
           <StackPanel Spacing="4"
                       IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock Text="Summary" FontSize="13" FontWeight="SemiBold" Foreground="#89B4FA"/>
-            <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="#CDD6F4" FontSize="12"/>
+            <TextBlock Text="Summary" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+            <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="12"/>
           </StackPanel>
 
           <!-- Skills -->
           <StackPanel Spacing="4" IsVisible="{Binding SkillGroups.Count}">
-            <TextBlock Text="Skills" FontSize="13" FontWeight="SemiBold" Foreground="#89B4FA"/>
+            <TextBlock Text="Skills" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentBlueBrush}"/>
             <ItemsControl ItemsSource="{Binding SkillGroups}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:SkillGroup">
                   <TextBlock TextWrapping="Wrap" Margin="0,2" FontSize="12">
-                    <Run Text="{Binding Category}" FontWeight="SemiBold" Foreground="#A6E3A1"/>
+                    <Run Text="{Binding Category}" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentGreenBrush}"/>
                     <Run Text=": "/>
-                    <Run Text="{Binding Skills}" Foreground="#CDD6F4"/>
+                    <Run Text="{Binding Skills}" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
                   </TextBlock>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
@@ -151,37 +195,33 @@
 
           <!-- Experience -->
           <StackPanel Spacing="6" IsVisible="{Binding Experience.Count}">
-            <TextBlock Text="Experience" FontSize="13" FontWeight="SemiBold" Foreground="#89B4FA"/>
+            <TextBlock Text="Experience" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentBlueBrush}"/>
             <ItemsControl ItemsSource="{Binding Experience}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:ExperienceItemViewModel">
-                  <Border Background="#1E1E2E" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
                     <StackPanel Spacing="3">
-                      <!-- Title / Company -->
                       <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4" FontSize="12">
+                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="12">
                           <Run Text="{Binding Title}"/>
-                          <Run Text=" — " Foreground="#6C7086"/>
+                          <Run Text=" — " Foreground="{DynamicResource LrSubtleTextBrush}"/>
                           <Run Text="{Binding Company}"/>
                         </TextBlock>
                         <TextBlock Grid.Column="1" Text="{Binding DateRange}"
-                                   Foreground="#6C7086" FontSize="11" VerticalAlignment="Center"/>
+                                   Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="11" VerticalAlignment="Center"/>
                       </Grid>
-                      <!-- Location -->
-                      <TextBlock Text="{Binding Location}" Foreground="#6C7086" FontSize="11"
+                      <TextBlock Text="{Binding Location}" Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="11"
                                  IsVisible="{Binding Location, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                      <!-- Technologies -->
-                      <TextBlock Foreground="#A6E3A1" FontSize="11" TextWrapping="Wrap"
+                      <TextBlock Foreground="{DynamicResource LrAccentGreenBrush}" FontSize="11" TextWrapping="Wrap"
                                  IsVisible="{Binding TechnologiesLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                         <Run Text="Tech: "/>
                         <Run Text="{Binding TechnologiesLine}"/>
                       </TextBlock>
-                      <!-- Achievements -->
                       <ItemsControl ItemsSource="{Binding Achievements}" Margin="0,2,0,0">
                         <ItemsControl.ItemTemplate>
                           <DataTemplate x:DataType="x:String">
                             <TextBlock Text="{Binding}" TextWrapping="Wrap"
-                                       Foreground="#BAC2DE" FontSize="11" Margin="0,1"/>
+                                       Foreground="{DynamicResource LrTertiaryTextBrush}" FontSize="11" Margin="0,1"/>
                           </DataTemplate>
                         </ItemsControl.ItemTemplate>
                       </ItemsControl>
@@ -194,22 +234,22 @@
 
           <!-- Education -->
           <StackPanel Spacing="6" IsVisible="{Binding Education.Count}">
-            <TextBlock Text="Education" FontSize="13" FontWeight="SemiBold" Foreground="#89B4FA"/>
+            <TextBlock Text="Education" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentBlueBrush}"/>
             <ItemsControl ItemsSource="{Binding Education}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:EducationItemViewModel">
-                  <Border Background="#1E1E2E" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
                     <StackPanel Spacing="2">
                       <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock FontWeight="SemiBold" Foreground="#CDD6F4" FontSize="12">
+                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="12">
                           <Run Text="{Binding Degree}"/>
-                          <Run Text=" — " Foreground="#6C7086"/>
+                          <Run Text=" — " Foreground="{DynamicResource LrSubtleTextBrush}"/>
                           <Run Text="{Binding Institution}"/>
                         </TextBlock>
                         <TextBlock Grid.Column="1" Text="{Binding DateRange}"
-                                   Foreground="#6C7086" FontSize="11" VerticalAlignment="Center"/>
+                                   Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="11" VerticalAlignment="Center"/>
                       </Grid>
-                      <TextBlock Text="{Binding FieldOfStudy}" Foreground="#A6ADC8" FontSize="11"
+                      <TextBlock Text="{Binding FieldOfStudy}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"
                                  IsVisible="{Binding FieldOfStudy, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     </StackPanel>
                   </Border>

@@ -1,0 +1,72 @@
+name: everything
+description: Comprehensive screenshot of every page, scrolled states, and status sidebar
+default_delay: 300
+
+actions:
+  # Wait for startup health checks to complete (Ollama, NER, embeddings)
+  - type: Wait
+    value: "3000"
+
+  # Resume page
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 01-resume
+
+  # Jobs page
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 02-jobs
+
+  # Add Job page
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 03-add-job
+
+  # Apply page
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 04-apply
+
+  # Pipeline page
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 05-pipeline
+
+  # Profile page top
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 06-profile-top
+
+  # Profile scroll to bottom
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 07-profile-bottom
+
+  # Back to resume to verify status sidebar final state
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 08-final-status

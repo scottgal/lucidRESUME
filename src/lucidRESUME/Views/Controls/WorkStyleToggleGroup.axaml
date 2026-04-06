@@ -5,36 +5,19 @@
   <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
 
     <CheckBox x:Name="RemoteCheckBox"
-              Content="Remote"
-              Foreground="#CDD6F4"/>
+              Content="Remote"/>
 
     <CheckBox x:Name="HybridCheckBox"
-              Content="Hybrid"
-              Foreground="#CDD6F4"/>
+              Content="Hybrid"/>
 
     <CheckBox x:Name="OnsiteCheckBox"
-              Content="Onsite"
-              Foreground="#CDD6F4"/>
+              Content="Onsite"/>
 
     <Button x:Name="RemoteOnlyButton"
-            Content="Remote Only ↩"
-            Background="#313244"
-            Foreground="#A6ADC8"
-            BorderBrush="#45475A"
-            BorderThickness="1"
+            Content="Remote Only"
             Padding="10,4"
             FontSize="12"
-            VerticalAlignment="Center">
-      <Button.Styles>
-        <Style Selector="Button:pointerover /template/ ContentPresenter">
-          <Setter Property="Background" Value="#3D3F5C"/>
-          <Setter Property="Foreground" Value="#CDD6F4"/>
-        </Style>
-        <Style Selector="Button:pressed /template/ ContentPresenter">
-          <Setter Property="Background" Value="#45475A"/>
-        </Style>
-      </Button.Styles>
-    </Button>
+            VerticalAlignment="Center"/>
 
   </StackPanel>
 

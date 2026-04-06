@@ -12,12 +12,12 @@
       <Setter Property="Background" Value="Transparent"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Padding" Value="8,7"/>
-      <Setter Property="Foreground" Value="#A6ADC8"/>
+      <Setter Property="Foreground" Value="{DynamicResource LrNavTextBrush}"/>
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
       <Setter Property="HorizontalContentAlignment" Value="Left"/>
     </Style>
     <Style Selector="Button.nav-btn:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#313244"/>
+      <Setter Property="Background" Value="{DynamicResource LrNavHoverBgBrush}"/>
     </Style>
   </Window.Styles>
 
@@ -28,80 +28,94 @@
   <Grid ColumnDefinitions="200,*">
 
     <!-- Sidebar -->
-    <Border Grid.Column="0" Background="#1E1E2E" Padding="8">
+    <Border Grid.Column="0" Background="{DynamicResource LrNavBgBrush}" Padding="8">
       <DockPanel>
 
       <!-- Status at bottom of sidebar -->
-      <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="#313244"
+      <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource LrBorderBrush}"
               Margin="0,8,0,0" Padding="8,8,8,4">
         <StackPanel Spacing="3">
-          <TextBlock Text="Services" FontSize="10" Foreground="#6C7086" FontWeight="SemiBold" Margin="0,0,0,2"/>
+          <TextBlock Text="Services" FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}" FontWeight="SemiBold" Margin="0,0,0,2"/>
           <StackPanel Orientation="Horizontal" Spacing="4">
             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                      Fill="{Binding EmbeddingColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding EmbeddingLabel}" FontSize="10" Foreground="#A6ADC8"/>
+            <TextBlock Text="{Binding EmbeddingLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                     Fill="{Binding NerColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
+            <TextBlock Text="{Binding NerLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="4">
             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                      Fill="{Binding OllamaColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding OllamaLabel}" FontSize="10" Foreground="#A6ADC8"/>
+            <TextBlock Text="{Binding OllamaLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="4">
             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                      Fill="{Binding DoclingColor, Converter={x:Static local:StatusColorConverter.Instance}}"/>
-            <TextBlock Text="{Binding DoclingLabel}" FontSize="10" Foreground="#A6ADC8"/>
+            <TextBlock Text="{Binding DoclingLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="4">
-            <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="#A6E3A1"/>
-            <TextBlock Text="{Binding StoreLabel}" FontSize="10" Foreground="#A6ADC8"/>
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{DynamicResource LrStatusGreenBrush}"/>
+            <TextBlock Text="{Binding StoreLabel}" FontSize="10" Foreground="{DynamicResource LrNavTextBrush}"/>
           </StackPanel>
-          <TextBlock Text="{Binding WarningMessage}" FontSize="9" Foreground="#F9E2AF"
+          <TextBlock Text="{Binding WarningMessage}" FontSize="9" Foreground="{DynamicResource LrAccentYellowBrush}"
                      TextWrapping="Wrap" IsVisible="{Binding WarningMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                      Margin="0,4,0,0"/>
         </StackPanel>
       </Border>
 
       <StackPanel Spacing="2">
-        <TextBlock Text="lucidRESUME" FontSize="18" FontWeight="Bold"
-                   Foreground="#CDD6F4" Margin="8,16,8,24"/>
+        <TextBlock FontSize="18" FontWeight="Bold" Margin="8,16,8,24">
+          <Run Text="lucid" FontStyle="Italic" Foreground="{DynamicResource LrAccentBlueBrush}"/><Run Text="RESUME" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+        </TextBlock>
 
         <!-- Each nav item: accent border + transparent button in a Panel -->
         <Panel>
-          <Border CornerRadius="4" Background="#313244"
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Resume}"/>
-          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Resume}"/>
           <Button Classes="nav-btn" Content="My CV"
                   Command="{Binding NavigateCommand}" CommandParameter="Resume"/>
         </Panel>
         <Panel>
-          <Border CornerRadius="4" Background="#313244"
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Jobs}"/>
-          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Jobs}"/>
           <Button Classes="nav-btn" Content="Jobs"
                   Command="{Binding NavigateCommand}" CommandParameter="Jobs"/>
         </Panel>
         <Panel>
-          <Border CornerRadius="4" Background="#313244"
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Search}"/>
-          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Search}"/>
           <Button Classes="nav-btn" Content="Add Job"
                   Command="{Binding NavigateCommand}" CommandParameter="Search"/>
         </Panel>
         <Panel>
-          <Border CornerRadius="4" Background="#313244"
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Apply}"/>
-          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Apply}"/>
           <Button Classes="nav-btn" Content="Apply"
                   Command="{Binding NavigateCommand}" CommandParameter="Apply"/>
         </Panel>
         <Panel>
-          <Border CornerRadius="4" Background="#313244"
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Pipeline}"/>
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Pipeline}"/>
+          <Button Classes="nav-btn" Content="Pipeline"
+                  Command="{Binding NavigateCommand}" CommandParameter="Pipeline"/>
+        </Panel>
+        <Panel>
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Profile}"/>
-          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="#89B4FA"
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Profile}"/>
           <Button Classes="nav-btn" Content="Profile"
                   Command="{Binding NavigateCommand}" CommandParameter="Profile"/>

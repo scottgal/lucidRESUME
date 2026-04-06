@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.Collabora.DocumentOpeners;
 using lucidRESUME.Collabora.Services;
+using lucidRESUME.AI;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Quality;
 using lucidRESUME.Core.Models.Resume;
@@ -21,6 +22,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly LibreOfficeService _libreOffice;
     private readonly DocumentOpenerService _openers;
     private readonly IResumeQualityAnalyser _qualityAnalyser;
+    private readonly AiDetectionScorer _aiDetectionScorer;
+    private readonly DeAiRewriter _deAiRewriter;
+    private readonly ResumeTranslator _translator;
     private readonly IResumeExporter? _jsonExporter;
     private readonly IResumeExporter? _markdownExporter;
     private string? _loadedFilePath;
@@ -58,6 +62,15 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private bool _hasQualityReport;
     [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _qualityFindings = [];
 
+    // AI detection
+    [ObservableProperty] private int _aiScore;
+    [ObservableProperty] private bool _hasAiReport;
+    [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _aiFindings = [];
+    [ObservableProperty] private bool _isDeAiRunning;
+    [ObservableProperty] private string? _deAiStatus;
+    [ObservableProperty] private bool _isTranslating;
+    [ObservableProperty] private string _translateLanguage = "German";
+
     // Page image display
     [ObservableProperty] private Bitmap? _currentPageImage;
     [ObservableProperty] private int _currentPage = 1;
@@ -69,6 +82,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
     public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store,
         LibreOfficeService libreOffice, DocumentOpenerService openers, IResumeQualityAnalyser qualityAnalyser,
+        AiDetectionScorer aiDetectionScorer,
+        DeAiRewriter deAiRewriter,
+        ResumeTranslator translator,
         IEnumerable<IResumeExporter> exporters)
     {
         _parser = parser;
@@ -77,6 +93,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         _libreOffice = libreOffice;
         _openers = openers;
         _qualityAnalyser = qualityAnalyser;
+        _aiDetectionScorer = aiDetectionScorer;
+        _deAiRewriter = deAiRewriter;
+        _translator = translator;
         var exporterList = exporters.ToList();
         _jsonExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.JsonResume);
         _markdownExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.Markdown);
@@ -126,6 +145,41 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             }
 
             StatusMessage = $"Imported {Path.GetFileName(path)}";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Import failed: {ex.Message}";
+            StatusMessage = null;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>Programmatic import for UX testing — bypasses file picker dialog.</summary>
+    public async Task ImportFromPathAsync(string path)
+    {
+        _loadedFilePath = path;
+        _libreOfficePageImages = [];
+        ErrorMessage = null;
+        StatusMessage = $"Parsing {Path.GetFileName(path)}…";
+        IsLoading = true;
+
+        try
+        {
+            Resume = await _parser.ParseAsync(path);
+            PopulateDisplayProperties();
+
+            if (!HasPageImages && _libreOffice.IsAvailable)
+            {
+                StatusMessage = "Generating preview…";
+                await GenerateLibreOfficePreviewAsync(path);
+            }
+
+            StatusMessage = $"Imported {Path.GetFileName(path)}";
+
+            await _store.MutateAsync(state => state.Resume = Resume);
         }
         catch (Exception ex)
         {
@@ -298,6 +352,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         HasPageImages = Resume.ImageCacheKey is not null && PageCount > 0;
         HasResume = true;
         _ = RunQualityAnalysisAsync();
+        _ = RunAiDetectionAsync();
     }
 
     private static string FormatDateRange(DateOnly? start, DateOnly? end, bool isCurrent)
@@ -327,6 +382,101 @@ public sealed partial class ResumePageViewModel : ViewModelBase
                 f.Message,
                 f.Section))
             .ToList();
+    }
+
+    [RelayCommand]
+    private async Task DeAiRewriteAsync()
+    {
+        if (Resume is null) return;
+        IsDeAiRunning = true;
+        DeAiStatus = "Rewriting AI-sounding text...";
+        try
+        {
+            var result = await _deAiRewriter.RewriteAsync(Resume);
+            DeAiStatus = $"Rewrote {result.Rewritten}/{result.TotalBullets} bullets";
+
+            // Save the updated resume
+            await _store.MutateAsync(state => state.Resume = Resume);
+
+            // Re-run AI detection to update the score
+            await RunAiDetectionAsync();
+
+            // Refresh display
+            PopulateFromResume();
+        }
+        catch (Exception ex)
+        {
+            DeAiStatus = $"Rewrite failed: {ex.Message}";
+        }
+        finally
+        {
+            IsDeAiRunning = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task TranslateResumeAsync()
+    {
+        if (Resume is null) return;
+        IsTranslating = true;
+        StatusMessage = $"Translating to {TranslateLanguage}...";
+        try
+        {
+            var result = await _translator.TranslateAsync(Resume, TranslateLanguage);
+            if (result.Error is not null)
+            {
+                ErrorMessage = result.Error;
+            }
+            else if (result.TranslatedDocument is not null)
+            {
+                Resume = result.TranslatedDocument;
+                await _store.MutateAsync(state => state.Resume = Resume);
+                PopulateFromResume();
+                StatusMessage = $"Translated to {TranslateLanguage}" +
+                    (result.Glossary?.Count > 0 ? $" ({result.Glossary.Count} terms in glossary)" : "");
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Translation failed: {ex.Message}";
+        }
+        finally
+        {
+            IsTranslating = false;
+        }
+    }
+
+    private void PopulateFromResume()
+    {
+        if (Resume is null) return;
+        Experience = Resume.Experience
+            .Select(e => new ExperienceItemViewModel(
+                e.Title ?? "", e.Company ?? "", e.Location ?? "",
+                FormatDateRange(e.StartDate, e.EndDate, e.IsCurrent),
+                string.Join(", ", e.Technologies),
+                e.Achievements))
+            .ToList();
+    }
+
+    private async Task RunAiDetectionAsync()
+    {
+        if (Resume is null) return;
+        try
+        {
+            var report = await _aiDetectionScorer.ScoreAsync(Resume);
+            AiScore = report.Score;
+            HasAiReport = report.Score > 0 || report.Findings.Count > 0;
+            AiFindings = report.Findings
+                .OrderByDescending(f => f.SignalScore)
+                .Select(f => new QualityFindingViewModel(
+                    f.Signal,
+                    f.SignalScore > 60 ? "#F38BA8" : f.SignalScore > 30 ? "#FAB387" : "#A6E3A1",
+                    "",
+                    f.Message,
+                    f.Signal))
+                .ToList();
+        }
+        catch { /* non-blocking */ }
     }
 }
 

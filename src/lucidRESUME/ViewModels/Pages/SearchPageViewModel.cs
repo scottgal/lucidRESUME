@@ -109,6 +109,13 @@ public sealed partial class SearchPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Programmatic job add for UX testing — bypasses UI interaction.</summary>
+    public async Task AddJobFromTextAsync(string text)
+    {
+        PastedText = text;
+        await AddTextAsync();
+    }
+
     [RelayCommand]
     private async Task RemoveJobAsync(SavedJobItem item)
     {

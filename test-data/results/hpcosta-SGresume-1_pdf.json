@@ -1,0 +1,435 @@
+{
+  "ResumeId": "afd579d6-43d8-444c-abab-c358432908cd",
+  "FileName": "hpcosta-SGresume-1.pdf",
+  "ContentType": "application/pdf",
+  "FileSizeBytes": 65980,
+  "CreatedAt": "2026-04-06T15:18:02.867166+00:00",
+  "LastModifiedAt": "2026-04-06T15:18:03.068994+00:00",
+  "RawMarkdown": "S\u00E9bastien Genty\n713-301-5648 \u2022 sgenty@me.com 1209 Page St, Apt 7, San Francisco, CA 94117\nWork Experience\nProject Director, Socratic Technologies September 2012 - Present\n\u2022 Collaborate with clients to plan, construct, and execute surveys for collecting\ninsightful data on their business and marketing needs\n\u2022 Explore data using advanced mathematical and statistical methods, in order to\nidentify insights and trends\n\u2022 Visualize data and extract insights for client facing deliverables\n\u2022 Create market simulators using highly customized applications that incorporate post\nsurvey analytical results to predict comparative sales figures and market share\n\u2022 Manage the data collection process by allocating resources, overseeing workflow, and\nverifying quality data collection\n\u2022 Formulated and built a new survey tool that increased statistical variance in\nrespondent data, currently in use for multiple clients\n\u2022 Established a new model to test the reach, appeal and effectiveness of advertisements\nResearch Assistant, Bucknell University Fall 2011 - Spring 2012\n\u2022 Independently designed and built an optical set-up to take pictures of Bose-Einstein\ncondensates\n\u2022 Created a user interface to control a high-end camera using Visual Basic\n\u2022 Coordinated with other research assistants working on different aspects of the same\nexperiment\n\u2022 Computer model and data analysis done using Matlab and ImageJ\nResearch Intern, MD Anderson Cancer Center Summer 2011\n\u2022 Researched CT dosiometry using a relatively new technique involving x-ray sensitive\nfilm\n\u2022 Analyzed data using Matlab and Mathematica\nSkills\nRelevant Projects\nComputer\nNew Product Development Languages\n### R\n\u2022 Computed ideal product configuration by creating a market English\nPython\nFrench\nsimulator using conjoint analysis\n### SPSS\nSpanish\nPurchase Process Identification\nMathematica\nGerman\n\u2022 Identified patterns in the purchase process of mortgages using a\nMatlab\nclient provided database and formed insights about the timing and\nJavascript\neffectiveness of marketing materials\n### C\u002B\u002B\nCustomer Feedback\n### SQL\n\u2022 Analyzed users\u2019 opinions and knowledge of recently released\nUnix\nversion of leading media player and distribution platform\nAdobe Creative Suite\nBay Area Bike Share Open Data Challenge\nMicrosoft Office\n\u2022 Uncovered habits and behavior of riders using an open source\ndataset and currently developing a visualization of bike station\nusage\nEducation Interests\nFilm and digital photography,\nBucknell University \u2013 Lewisburg, PA Graduated May 2012\nB.S. Physics physics, research, reading, video\ngames, solving problems and fixing\nMinor: International Relations\nInternational Leadership Scholarship things\n",
+  "RawJson": null,
+  "PlainText": "S\u00E9bastien Genty\n713-301-5648 \u2022 sgenty@me.com 1209 Page St, Apt 7, San Francisco, CA 94117\nWork Experience\nProject Director, Socratic Technologies September 2012 - Present\n\u2022 Collaborate with clients to plan, construct, and execute surveys for collecting\ninsightful data on their business and marketing needs\n\u2022 Explore data using advanced mathematical and statistical methods, in order to\nidentify insights and trends\n\u2022 Visualize data and extract insights for client facing deliverables\n\u2022 Create market simulators using highly customized applications that incorporate post\nsurvey analytical results to predict comparative sales figures and market share\n\u2022 Manage the data collection process by allocating resources, overseeing workflow, and\nverifying quality data collection\n\u2022 Formulated and built a new survey tool that increased statistical variance in\nrespondent data, currently in use for multiple clients\n\u2022 Established a new model to test the reach, appeal and effectiveness of advertisements\nResearch Assistant, Bucknell University Fall 2011 - Spring 2012\n\u2022 Independently designed and built an optical set-up to take pictures of Bose-Einstein\ncondensates\n\u2022 Created a user interface to control a high-end camera using Visual Basic\n\u2022 Coordinated with other research assistants working on different aspects of the same\nexperiment\n\u2022 Computer model and data analysis done using Matlab and ImageJ\nResearch Intern, MD Anderson Cancer Center Summer 2011\n\u2022 Researched CT dosiometry using a relatively new technique involving x-ray sensitive\nfilm\n\u2022 Analyzed data using Matlab and Mathematica\nSkills\nRelevant Projects\nComputer\nNew Product Development Languages\nR\n\u2022 Computed ideal product configuration by creating a market English\nPython\nFrench\nsimulator using conjoint analysis\nSPSS\nSpanish\nPurchase Process Identification\nMathematica\nGerman\n\u2022 Identified patterns in the purchase process of mortgages using a\nMatlab\nclient provided database and formed insights about the timing and\nJavascript\neffectiveness of marketing materials\nC\u002B\u002B\nCustomer Feedback\nSQL\n\u2022 Analyzed users\u2019 opinions and knowledge of recently released\nUnix\nversion of leading media player and distribution platform\nAdobe Creative Suite\nBay Area Bike Share Open Data Challenge\nMicrosoft Office\n\u2022 Uncovered habits and behavior of riders using an open source\ndataset and currently developing a visualization of bike station\nusage\nEducation Interests\nFilm and digital photography,\nBucknell University \u2013 Lewisburg, PA Graduated May 2012\nB.S. Physics physics, research, reading, video\ngames, solving problems and fixing\nMinor: International Relations\nInternational Leadership Scholarship things\n",
+  "ImageCacheKey": null,
+  "PageCount": 1,
+  "Personal": {
+    "FullName": "S\u00E9bastien Genty",
+    "Email": "sgenty@me.com",
+    "Phone": "713-301-5648",
+    "Location": null,
+    "LinkedInUrl": null,
+    "GitHubUrl": null,
+    "WebsiteUrl": null,
+    "Summary": "\u2022 Computed ideal product configuration by creating a market English Python French simulator using conjoint analysis"
+  },
+  "Experience": [],
+  "Education": [
+    {
+      "Id": "f14d7e70-a1be-490c-ae04-7040bb9fecb1",
+      "Institution": "Interests, Film and digital photography,",
+      "Degree": "B.S. Physics physics, research, reading, video",
+      "FieldOfStudy": null,
+      "StartDate": "2012-05-01",
+      "EndDate": "2012-06-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "games, solving problems and fixing",
+        "Minor: International Relations",
+        "International Leadership Scholarship things"
+      ]
+    }
+  ],
+  "Skills": [
+    {
+      "Name": "c\u002B\u002B",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "computer",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Java",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Javascript",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Matlab",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Mathematica",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "MS Office",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "New Product Development",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Python",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "SQL",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "SPSS",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Unix",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Visual Basic",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Visual Studio",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Windows",
+      "Category": null,
+      "YearsExperience": null
+    }
+  ],
+  "Certifications": [],
+  "Projects": [],
+  "Entities": [
+    {
+      "EntityId": "a550d627-8232-4788-8ca0-5727bf4318ca",
+      "Value": "sgenty@me.com",
+      "NormalizedValue": "sgenty@me.com",
+      "Classification": "Email",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a69e4f51-bd7c-4f54-93d3-f81304e61e63",
+      "Value": "713-301-5648",
+      "NormalizedValue": "713-301-5648",
+      "Classification": "PhoneNumber",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "ee70d5b7-0b25-46d4-9855-b1f5ec9066ab",
+      "Value": "september 2012",
+      "NormalizedValue": "september 2012",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "e3f5db5e-4276-47f7-9dfa-3df99d99d8f3",
+      "Value": "S\u00E9bastien Genty",
+      "NormalizedValue": "s\u00E9bastien genty",
+      "Classification": "Organization",
+      "Confidence": 0.8136134743690491,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "0953ed40-20d6-46f3-91f5-ec6069df7a80",
+      "Value": "San Francisco",
+      "NormalizedValue": "san francisco",
+      "Classification": "Address",
+      "Confidence": 0.9990161657333374,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "92b7745f-fbe9-46ef-8139-b1d05b4f6450",
+      "Value": "CA",
+      "NormalizedValue": "ca",
+      "Classification": "Address",
+      "Confidence": 0.9988709092140198,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6b727929-d5df-45c0-9f08-8e2649075b71",
+      "Value": "So",
+      "NormalizedValue": "so",
+      "Classification": "Organization",
+      "Confidence": 0.9968311190605164,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "d4d1e32c-703d-4f08-a1a8-fdfb2ffa52d5",
+      "Value": "cratic Technologies",
+      "NormalizedValue": "cratic technologies",
+      "Classification": "Organization",
+      "Confidence": 0.994304895401001,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "509c7453-d709-45a0-9da4-527c9f62b7c2",
+      "Value": "Bucknell University",
+      "NormalizedValue": "bucknell university",
+      "Classification": "Organization",
+      "Confidence": 0.9979039430618286,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "9e5a88c3-4791-48e9-9ee5-a14e929e4359",
+      "Value": "Bose",
+      "NormalizedValue": "bose",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.977342963218689,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "195193e8-34f4-4eac-9c1a-2d8eb6183864",
+      "Value": "Einstein",
+      "NormalizedValue": "einstein",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.8362445831298828,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "84711add-3854-40bd-a6e2-4ce7b8a21558",
+      "Value": "Visual Basic",
+      "NormalizedValue": "visual basic",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9607173204421997,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "89b65ea4-10cd-4e9c-a949-ee876ccc49af",
+      "Value": "MD",
+      "NormalizedValue": "md",
+      "Classification": "Organization",
+      "Confidence": 0.9005829691886902,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "848da599-47cf-460a-8847-6f2a53de78f2",
+      "Value": "Mathema",
+      "NormalizedValue": "mathema",
+      "Classification": "Organization",
+      "Confidence": 0.856605052947998,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "36c44247-6fc0-45e5-bba3-74ca8db9739f",
+      "Value": "English\nPython\nFrench",
+      "NormalizedValue": "english\npython\nfrench",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.9366456866264343,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "41f0da02-4554-4f5e-9410-7c9fbf5d0db7",
+      "Value": "Adobe",
+      "NormalizedValue": "adobe",
+      "Classification": "Organization",
+      "Confidence": 0.8538914322853088,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6aa94bd6-6731-48cb-b81d-d8893588433b",
+      "Value": "Microsoft",
+      "NormalizedValue": "microsoft",
+      "Classification": "Organization",
+      "Confidence": 0.9681747555732727,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "15ea7f94-9e68-4701-aa37-aa4f0171c00f",
+      "Value": "S",
+      "NormalizedValue": "s",
+      "Classification": "Email",
+      "Confidence": 0.8964857459068298,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a50b167a-ab3e-40a4-933f-5b7603f7b6f1",
+      "Value": "713-301-5648",
+      "NormalizedValue": "713-301-5648",
+      "Classification": "PhoneNumber",
+      "Confidence": 0.7698796391487122,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "8fc8979c-0be2-4ff4-8d49-3c12f8a3d682",
+      "Value": "sgenty@me.com",
+      "NormalizedValue": "sgenty@me.com",
+      "Classification": "Email",
+      "Confidence": 0.8947655558586121,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "0d916d8a-69ac-4341-a7ad-ab8a8a56a10f",
+      "Value": "marketing needs",
+      "NormalizedValue": "marketing needs",
+      "Classification": "Degree",
+      "Confidence": 0.8943692445755005,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6e9d21d9-7839-42e0-9e3a-f10596dc2e5e",
+      "Value": "Manage the data collection process by allocating resources",
+      "NormalizedValue": "manage the data collection process by allocating resources",
+      "Classification": "Degree",
+      "Confidence": 0.8549439907073975,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "cfc32900-a18b-4714-b267-f6d95c392c17",
+      "Value": "Skills\nRelevant Projects",
+      "NormalizedValue": "skills\nrelevant projects",
+      "Classification": "NerSkill",
+      "Confidence": 0.7088872194290161,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "bacb489e-d872-43d9-913b-04ab6f683209",
+      "Value": "marketing",
+      "NormalizedValue": "marketing",
+      "Classification": "Degree",
+      "Confidence": 0.9662700891494751,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    }
+  ],
+  "TailoredForJobId": null
+}

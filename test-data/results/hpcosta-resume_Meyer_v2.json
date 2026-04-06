@@ -1,0 +1,451 @@
+{
+  "ResumeId": "397ed64a-3576-480d-aac4-6f71238ab172",
+  "FileName": "hpcosta-resume_Meyer.pdf",
+  "ContentType": "application/pdf",
+  "FileSizeBytes": 72526,
+  "CreatedAt": "2026-04-06T15:25:29.815619+00:00",
+  "LastModifiedAt": "2026-04-06T15:25:30.029828+00:00",
+  "RawMarkdown": "## MONICA MEYER\n(415) \u00B7 497 \u00B7 7282 \u0005 monica.meyer@comcast.net\n### EDUCATION\nMaster of Science in Analytics Expected June 2015\nUniversity of San Francisco\nBachelor of Arts in Mathematics July 2012\nUniversity of California, Santa Cruz\nOverall GPA: 3.5\n### COURSE PROJECTS\nBusiness Location Recommendation Sep 2014\n\u00B7 Queried Yelp and Zillow APIs and performed exploratory data analysis necessary for project to help\nbusinesses decide where to open their next establishment.\nText Classi\uFB01cation July 2014\n\u00B7 Classi\uFB01ed movie reviews as positive or negative using Naive Bayes in Python.\n\u00B7 Found most important words in Reuter\u2019s articles through term frequency, inverse document frequency\non XML \uFB01les in Python.\n### WORK EXPERIENCE\nBank of America Dec 2013 - June 2014\nSales and Service Specialist Mill Valley, CA\n\u00B7 Promoted due to proven ability to resolve complex service issues and process transactions accurately\nand e\uFB03ciently to guarantee customer satisfaction and build customer con\uFB01dence and trust. Responsible\nfor establishing, retaining and deepening relationships with customers to achieve team sales goals as\nwell as providing proactive sales activities of basic products while referring more complex requests such\nas mortgages and investment products.\nBank of America Aug 2012 - Dec 2013\nTeller Mill Valley, CA\n\u00B7 Gained pro\uFB01ciency in retail banking operations, including computing \uFB01gures, processing transactions\nwith speed and accuracy and building customer loyalty through exceptional customer service. Learned\nto control large amounts of cash \uFB02ow, work within established policies, procedures and guidelines and\nacquired the ability to advise customers on products and services the bank has to o\uFB00er. Earned a\npromotion to the position of Sales and Service Specialist.\n### SKILLS\nProgramming Python, R\nProtocols \u0026 APIs XML, JSON, REST\nDatabases MySQL, PostgreSQL\n",
+  "RawJson": null,
+  "PlainText": "MONICA MEYER\n(415) \u00B7 497 \u00B7 7282 \u0005 monica.meyer@comcast.net\nEDUCATION\nMaster of Science in Analytics Expected June 2015\nUniversity of San Francisco\nBachelor of Arts in Mathematics July 2012\nUniversity of California, Santa Cruz\nOverall GPA: 3.5\nCOURSE PROJECTS\nBusiness Location Recommendation Sep 2014\n\u00B7 Queried Yelp and Zillow APIs and performed exploratory data analysis necessary for project to help\nbusinesses decide where to open their next establishment.\nText Classi\uFB01cation July 2014\n\u00B7 Classi\uFB01ed movie reviews as positive or negative using Naive Bayes in Python.\n\u00B7 Found most important words in Reuter\u2019s articles through term frequency, inverse document frequency\non XML \uFB01les in Python.\nWORK EXPERIENCE\nBank of America Dec 2013 - June 2014\nSales and Service Specialist Mill Valley, CA\n\u00B7 Promoted due to proven ability to resolve complex service issues and process transactions accurately\nand e\uFB03ciently to guarantee customer satisfaction and build customer con\uFB01dence and trust. Responsible\nfor establishing, retaining and deepening relationships with customers to achieve team sales goals as\nwell as providing proactive sales activities of basic products while referring more complex requests such\nas mortgages and investment products.\nBank of America Aug 2012 - Dec 2013\nTeller Mill Valley, CA\n\u00B7 Gained pro\uFB01ciency in retail banking operations, including computing \uFB01gures, processing transactions\nwith speed and accuracy and building customer loyalty through exceptional customer service. Learned\nto control large amounts of cash \uFB02ow, work within established policies, procedures and guidelines and\nacquired the ability to advise customers on products and services the bank has to o\uFB00er. Earned a\npromotion to the position of Sales and Service Specialist.\nSKILLS\nProgramming Python, R\nProtocols \u0026 APIs XML, JSON, REST\nDatabases MySQL, PostgreSQL\n",
+  "ImageCacheKey": null,
+  "PageCount": 1,
+  "Personal": {
+    "FullName": "Bay",
+    "Email": "monica.meyer@comcast.net",
+    "Phone": null,
+    "Location": null,
+    "LinkedInUrl": null,
+    "GitHubUrl": null,
+    "WebsiteUrl": null,
+    "Summary": "(415) \u00B7 497 \u00B7 7282 \u0005 monica.meyer@comcast.net"
+  },
+  "Experience": [
+    {
+      "Id": "62813525-4a88-40fe-9762-17eb77cf1701",
+      "Company": "Sales",
+      "Title": "Bank of America",
+      "Location": null,
+      "StartDate": "2013-12-01",
+      "EndDate": "2014-06-01",
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "335c3772-3edf-4f86-a513-1369b38decda",
+      "Company": "Teller Mill Valley, CA",
+      "Title": "Bank of America",
+      "Location": null,
+      "StartDate": "2012-08-01",
+      "EndDate": "2013-12-01",
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    }
+  ],
+  "Education": [
+    {
+      "Id": "3987378d-03a2-419d-bf7a-64ed0fb27f06",
+      "Institution": null,
+      "Degree": "Master of Science",
+      "FieldOfStudy": "Analytics Expected June 2015",
+      "StartDate": "2015-06-01",
+      "EndDate": "2015-07-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "University of San Francisco"
+      ]
+    },
+    {
+      "Id": "31c1fd64-c5bc-4fd8-8470-dbc5de8fe9cf",
+      "Institution": null,
+      "Degree": "Bachelor of Arts",
+      "FieldOfStudy": "Mathematics July 2012",
+      "StartDate": "2012-07-01",
+      "EndDate": "2012-08-01",
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "University of California, Santa Cruz",
+        "Overall GPA: 3.5"
+      ]
+    }
+  ],
+  "Skills": [
+    {
+      "Name": "Programming Python",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Protocols \u0026 APIs XML",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "JSON",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "REST",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Databases MySQL",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "PostgreSQL",
+      "Category": null,
+      "YearsExperience": null
+    }
+  ],
+  "Certifications": [],
+  "Projects": [],
+  "Entities": [
+    {
+      "EntityId": "983b5fda-5fd9-487f-84a7-2f97a6b44541",
+      "Value": "monica.meyer@comcast.net",
+      "NormalizedValue": "monica.meyer@comcast.net",
+      "Classification": "Email",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "4234c8c5-6e11-4bc6-8def-a70c65ddaeeb",
+      "Value": "june 2015",
+      "NormalizedValue": "june 2015",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "9d0a841d-98ef-4798-bd75-af0b770bf029",
+      "Value": "july 2012",
+      "NormalizedValue": "july 2012",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "3d6300e5-ae13-4b3e-b0d1-0fd0b083857c",
+      "Value": "sep 2014",
+      "NormalizedValue": "sep 2014",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c130b28d-5a2e-424c-b793-0aff681d81a2",
+      "Value": "july 2014",
+      "NormalizedValue": "july 2014",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "ac2c6bc0-3bfc-445e-8eda-050eaf8750d0",
+      "Value": "dec 2013 - june 2014",
+      "NormalizedValue": "dec 2013 - june 2014",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6a38cee5-65be-482c-a4d6-6351906448be",
+      "Value": "aug 2012 - dec 2013",
+      "NormalizedValue": "aug 2012 - dec 2013",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a100bbea-9f6f-4bfa-951a-05ff95c66646",
+      "Value": "University of San Francisco",
+      "NormalizedValue": "university of san francisco",
+      "Classification": "Organization",
+      "Confidence": 0.9883036613464355,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "77705634-cc6a-45ba-ab6f-b887e5b79ce3",
+      "Value": "University of California",
+      "NormalizedValue": "university of california",
+      "Classification": "Organization",
+      "Confidence": 0.9976806640625,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c7576356-42db-4d8c-8400-bf0ae40af027",
+      "Value": "Bay",
+      "NormalizedValue": "bay",
+      "Classification": "PersonName",
+      "Confidence": 0.9837130308151245,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "d8c712d4-a4f9-47ab-ab53-8e712f30764e",
+      "Value": "Python",
+      "NormalizedValue": "python",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.8084707856178284,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "70f12908-33f6-473e-9da2-af24cec53e71",
+      "Value": "XML",
+      "NormalizedValue": "xml",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.8048033118247986,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "e801344e-af00-44a4-98cf-d34ac2e5991b",
+      "Value": "Bank of America",
+      "NormalizedValue": "bank of america",
+      "Classification": "Organization",
+      "Confidence": 0.9921901226043701,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "db1d4260-d748-4b33-b98c-5d3d4974fe18",
+      "Value": "and Service",
+      "NormalizedValue": "and service",
+      "Classification": "Organization",
+      "Confidence": 0.8856803178787231,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "94c91f45-c6ae-4f11-9552-333f907d3c84",
+      "Value": "Mill Valley",
+      "NormalizedValue": "mill valley",
+      "Classification": "Address",
+      "Confidence": 0.9327430129051208,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "3bdf50ee-35ef-442e-bf35-ad69e17e187e",
+      "Value": "CA",
+      "NormalizedValue": "ca",
+      "Classification": "Address",
+      "Confidence": 0.9989998936653137,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7d9f448c-06e5-4f38-b7f8-eba915dabc17",
+      "Value": "Bank of America",
+      "NormalizedValue": "bank of america",
+      "Classification": "Organization",
+      "Confidence": 0.9985302686691284,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "35079eab-44b6-49cf-9bb5-465d79c1f12e",
+      "Value": "Tell",
+      "NormalizedValue": "tell",
+      "Classification": "Organization",
+      "Confidence": 0.9869780540466309,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6384bc98-e04f-409b-a76f-d6d25eb50b76",
+      "Value": "CA",
+      "NormalizedValue": "ca",
+      "Classification": "Address",
+      "Confidence": 0.9990115165710449,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "1099c767-72ac-4232-a047-810027f9bac9",
+      "Value": "R",
+      "NormalizedValue": "r",
+      "Classification": "Organization",
+      "Confidence": 0.8647098541259766,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "80447bef-18d3-402d-8597-c33d3d1f496f",
+      "Value": "Database",
+      "NormalizedValue": "database",
+      "Classification": "Organization",
+      "Confidence": 0.9440361261367798,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "e8fc4f0e-8e53-4e5c-bb7e-9ee2b2a0e9dd",
+      "Value": "monica.meyer@comcast.net",
+      "NormalizedValue": "monica.meyer@comcast.net",
+      "Classification": "Email",
+      "Confidence": 0.8757988810539246,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c268cd11-20f8-4a99-9a0c-5a47be5cbde5",
+      "Value": "Master of Science in Analytics Expected June 2015\nUniversity of",
+      "NormalizedValue": "master of science in analytics expected june 2015\nuniversity of",
+      "Classification": "Degree",
+      "Confidence": 0.8247719407081604,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a046a0bf-40dd-47e8-a35b-2a78bf7a6ed2",
+      "Value": "Bachelor of Arts in Mathematics July 2012",
+      "NormalizedValue": "bachelor of arts in mathematics july 2012",
+      "Classification": "Degree",
+      "Confidence": 0.7501502633094788,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "25e2b703-4818-413a-98dd-28dbde706179",
+      "Value": "project",
+      "NormalizedValue": "project",
+      "Classification": "Organization",
+      "Confidence": 0.8096553087234497,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "fc328546-5fa2-4f2e-bda5-5913fd8635c2",
+      "Value": "establishing, retaining and deepening relationships with customers",
+      "NormalizedValue": "establishing, retaining and deepening relationships with customers",
+      "Classification": "Organization",
+      "Confidence": 0.7637433409690857,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    }
+  ],
+  "TailoredForJobId": null
+}

@@ -1,0 +1,690 @@
+{
+  "ResumeId": "a6807b0d-f3be-40ee-b832-0a6e5c775112",
+  "FileName": "Scott_Galloway_Startup_Rescue.docx",
+  "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "FileSizeBytes": 31508,
+  "CreatedAt": "2026-04-06T15:18:41.11142+00:00",
+  "LastModifiedAt": "2026-04-06T15:18:41.267865+00:00",
+  "RawMarkdown": "## Scott Galloway\nFractional CTO | Startup Rescue Specialist | Technical Co-Founder\nEmail: scott.galloway@gmail.com | Phone: 07498479614 (please email in the first instance)\nBlog: mostlylucid.net | GitHub: github.com/scottgal/mostlylucidweb\n## What I Do For Startups\nI rescue failing technical initiatives and bootstrap startups from scratch to fundable. With 20\u002B years of full-stack expertise, I can be your entire technical team or fix what you have; whatever gets you to the next funding round fastest and cheapest. My superpower: building production-ready systems that look expensive but cost nothing, then transitioning them to permanent teams / platform when you\u0027re ready to scale.\n## Track Record\n50% infrastructure cost reductions through smart architecture\u2014I make runway last longer\n80% faster time-to-market by cutting through tech debt and over-engineering\n90%\u002B reduction in runtime errors turning broken MVPs into investable products\nMVP to funding-ready in 90 days at H3Space\u2014hired team, built platform, delivered\nBootstrapped platforms from scratch at Very Jane and dozens of client startups\u2014robust, scalable, fundable\nBuilt and operated developer bootcamp with 200\u002B graduates at 90%\u002B placement\u2014I know how to find and train talent\nHired CTOs and built technical teams for clients, then transitioned out when they were stable\n## What You Get\nFull-Stack Capability: I can build everything\u2014backend (ASP.NET Core, .NET 6/7/8/9, C#, microservices, Go, Python, C\u002B\u002B), frontend (HTMX, Alpine.js, React, Blazor), infrastructure (Azure, Kubernetes, Docker, CI/CD), databases (SQL Server, PostgreSQL, MongoDB, OpenSearch), and AI/ML (OpenAI, vector embeddings, RAG pipelines). You don\u0027t need to hire five people when one will do.\nCost-Conscious Architecture: I design systems that start cheap and scale affordably. Serverless where it makes sense, containers where they don\u0027t, and always with an eye on burn rate. I\u0027ve saved clients 50% on cloud costs while improving performance. Want to save on your \u00A35k\u002B Azure / AWS bill\u2026I can get you an equivalent system running on a couple of \u00A340/mo Hetzner boxes.\nSpeed Over Perfection: I know when to cut corners and when not to. I build what you need to get funded, not what looks good on Hacker News. MVPs that actually work, technical debt that\u0027s manageable, and documentation that helps the next team.\nTeam Building \u0026 Transition: I don\u0027t just write code\u2014I hire your permanent CTO, build your technical team, establish processes, and hand everything over cleanly. I\u0027ve done this multiple times. I\u0027m not trying to keep the job; I\u0027m trying to make myself obsolete.\nCrisis Management: Broken MVP? Technical co-founder quit? Failed audit before funding? I\u0027ve seen it all. I come in, assess honestly, fix what\u0027s fixable, rebuild what isn\u0027t, and get you back on track.\n## Technical Stack\nBackend: ASP.NET Core, .NET 6/7/8/9, C#, RESTful APIs, Microservices, SignalR, gRPC | Cloud: Microsoft Azure, Azure Functions, Kubernetes, Docker, Bicep, CI/CD | AI/ML: OpenAI, ML.NET, Vector Embeddings, RAG Pipelines, Azure AI | Frontend: HTMX, Alpine.js, React, Vue.js, Blazor, Tailwind CSS | Data: SQL Server, PostgreSQL, MongoDB, Cosmos DB, OpenSearch, Redis | DevOps: GitHub Actions, Azure DevOps, Application Insights, K6 load testing\n## Relevant Engagements\nH3Space Ltd | Lead Engineer (Unity SaaS Platform)\nJun 2021 \u2013 Sep 2021\nBrought in to rescue stalled startup. Designed complete backend cloud architecture for Unity-based SaaS platform with React frontend and GraphQL API. Hired and led globally distributed team. Delivered MVP within 90 days, enabling successful funding round. Then transitioned out.\nChallenge: No technical leadership, no architecture, approaching funding deadline\nSolution: Built everything from scratch\u2014infrastructure, APIs, team, processes\nOutcome: Fundable MVP in 90 days, permanent team in place, clean handover\nVery Jane Ltd | Senior Backend Developer (Ecommerce Platform)\nApr 2024 \u2013 Aug 2024\nBootstrapped new ecommerce platform from absolute zero. Built scalable backend with Stripe Connect and Hyperwallet payment integrations. Created comprehensive data validation and testing infrastructure for customer imports. Production-ready system in 4 months.\nChallenge: Existing system couldn\u0027t scale, needed complete rebuild on limited budget\nSolution: Architected cost-effective platform with robust payment processing and data validation\nOutcome: Scalable, reliable platform enabling business growth without massive technical team\nSeamcor Ltd | Head of Engineering (Production Management System)\nDec 2022 \u2013 Apr 2024\nBrought in to fix broken enterprise system and build proper engineering team. Re-architected entire platform, managed team of 10\u002B engineers, integrated Docker Compose and OpenSearch. Designed flexible deployment strategy supporting both cloud and on-premises, expanding market reach and reducing customer acquisition cost.\nChallenge: Unreliable system, no team structure, losing customers\nSolution: Complete re-architecture \u002B team building \u002B deployment flexibility\nOutcome: Reliable product, functioning team, new revenue streams from flexible deployment\nZenChef Ltd | Lead Contract Developer (Legacy System Rescue)\nOct 2024 \u2013 Present\nEmergency engagement to save failing distributed system. Migrated to .NET 8, reduced Azure costs, implemented proper observability with Application Insights. Stabilized complex microservices architecture during critical business period. Built a complete, from scratch admin site in a few weeks to reduce support overhead.\nChallenge: Expensive, unreliable legacy system threatening business viability\nSolution: Rapid modernization \u002B cost optimization \u002B stability improvements\nOutcome: Dramatically reduced costs while improving reliability\nGBG Plc (Loqate) | Lead Engineer (Address Validation System)\nAug 2022 \u2013 Nov 2022\nBuilt high-performance global address validation system using .NET 6 microservices on Kubernetes. Implemented K6 testing infrastructure that accelerated development cycles by 80%. Delivered production-ready system in 4 months. Working with a massive k8s based system with components in C#, Go  etc..\nWCOM AB | Lead Developer (Real-time Collaboration Platform)\nOct 2021 \u2013 May 2022\nDeveloped complete real-time collaboration platform using Blazor Server, Azure Functions, and SignalR. Built screen mirroring and IPC modules via WPF. Delivered everything from backend to desktop client as sole developer.\nmostlylucid limited | Fractional CTO / Technical Consultant\nJan 2012 \u2013 Present\nDozens of startup and scale-up engagements across fintech, healthcare, and ecommerce. Consistent pattern: come in during crisis or bootstrap phase, build or fix what\u0027s needed, establish team and processes, transition out. Notable projects:\nLead Architect for major Asian airline\u0027s booking system (Knockout.js \u002B ASP.NET MVC)\nR\u0026D Developer for insurance company\u0027s IoT telemetry platform (.NET \u002B Azure)\nResearch Systems Architect on UK Government National Security distributed computing project\nTechnical consultant for 8 international charities (limited budgets, maximum impact)\nBuilt and operated developer bootcamp: 200\u002B graduates, 90%\u002B placement rate\u2014proving I can build technical teams\n## Earlier Experience\nHuozhi Ltd (Fintech) | Technical Consultant / Dev Lead | Jun 2018 \u2013 Mar 2020\nInteractive Reporting Ltd | Lead Developer | Dec 2015 \u2013 Jun 2021\nDell | Development Lead | Jan 2011 \u2013 Jul 2011\nMicrosoft Corp. | Program Manager II | Jan 2007 \u2013 Oct 2009 (ASP.NET team, Redmond)\nMicrosoft Ltd. | Application Development Consultant II | Jun 2005 \u2013 Jan 2007 (FTSE 100 clients)\nStormID | Lead Developer | Feb 2003 \u2013 Jun 2005\n## Education\nUniversity of Stirling \u2013 BSc (Hons) Psychology\nStirling, Scotland, UK\n## How I Work\nI prefer short-to-medium term engagements (3-18 months) where there\u0027s a clear goal: get to MVP, fix what\u0027s broken, hire permanent team, reach funding milestone. I\u0027m not looking to be your permanent CTO\u2014I\u0027m looking to make you ready for your permanent CTO. My success is when you don\u0027t need me anymore.\nIdeal for: Pre-seed to Series A startups, technical co-founder gaps, failed technical initiatives, funding deadline pressure, legacy system rescues, team bootstrap situations.\nNot ideal for: Established enterprises with bureaucracy, projects requiring political navigation, situations where speed and pragmatism aren\u0027t valued.\n",
+  "RawJson": null,
+  "PlainText": "Scott Galloway\nFractional CTO | Startup Rescue Specialist | Technical Co-Founder\nEmail: scott.galloway@gmail.com | Phone: 07498479614 (please email in the first instance)\nBlog: mostlylucid.net | GitHub: github.com/scottgal/mostlylucidweb\nWhat I Do For Startups\nI rescue failing technical initiatives and bootstrap startups from scratch to fundable. With 20\u002B years of full-stack expertise, I can be your entire technical team or fix what you have; whatever gets you to the next funding round fastest and cheapest. My superpower: building production-ready systems that look expensive but cost nothing, then transitioning them to permanent teams / platform when you\u0027re ready to scale.\nTrack Record\n50% infrastructure cost reductions through smart architecture\u2014I make runway last longer\n80% faster time-to-market by cutting through tech debt and over-engineering\n90%\u002B reduction in runtime errors turning broken MVPs into investable products\nMVP to funding-ready in 90 days at H3Space\u2014hired team, built platform, delivered\nBootstrapped platforms from scratch at Very Jane and dozens of client startups\u2014robust, scalable, fundable\nBuilt and operated developer bootcamp with 200\u002B graduates at 90%\u002B placement\u2014I know how to find and train talent\nHired CTOs and built technical teams for clients, then transitioned out when they were stable\nWhat You Get\nFull-Stack Capability: I can build everything\u2014backend (ASP.NET Core, .NET 6/7/8/9, C#, microservices, Go, Python, C\u002B\u002B), frontend (HTMX, Alpine.js, React, Blazor), infrastructure (Azure, Kubernetes, Docker, CI/CD), databases (SQL Server, PostgreSQL, MongoDB, OpenSearch), and AI/ML (OpenAI, vector embeddings, RAG pipelines). You don\u0027t need to hire five people when one will do.\nCost-Conscious Architecture: I design systems that start cheap and scale affordably. Serverless where it makes sense, containers where they don\u0027t, and always with an eye on burn rate. I\u0027ve saved clients 50% on cloud costs while improving performance. Want to save on your \u00A35k\u002B Azure / AWS bill\u2026I can get you an equivalent system running on a couple of \u00A340/mo Hetzner boxes.\nSpeed Over Perfection: I know when to cut corners and when not to. I build what you need to get funded, not what looks good on Hacker News. MVPs that actually work, technical debt that\u0027s manageable, and documentation that helps the next team.\nTeam Building \u0026 Transition: I don\u0027t just write code\u2014I hire your permanent CTO, build your technical team, establish processes, and hand everything over cleanly. I\u0027ve done this multiple times. I\u0027m not trying to keep the job; I\u0027m trying to make myself obsolete.\nCrisis Management: Broken MVP? Technical co-founder quit? Failed audit before funding? I\u0027ve seen it all. I come in, assess honestly, fix what\u0027s fixable, rebuild what isn\u0027t, and get you back on track.\nTechnical Stack\nBackend: ASP.NET Core, .NET 6/7/8/9, C#, RESTful APIs, Microservices, SignalR, gRPC | Cloud: Microsoft Azure, Azure Functions, Kubernetes, Docker, Bicep, CI/CD | AI/ML: OpenAI, ML.NET, Vector Embeddings, RAG Pipelines, Azure AI | Frontend: HTMX, Alpine.js, React, Vue.js, Blazor, Tailwind CSS | Data: SQL Server, PostgreSQL, MongoDB, Cosmos DB, OpenSearch, Redis | DevOps: GitHub Actions, Azure DevOps, Application Insights, K6 load testing\nRelevant Engagements\nH3Space Ltd | Lead Engineer (Unity SaaS Platform)\nJun 2021 \u2013 Sep 2021\nBrought in to rescue stalled startup. Designed complete backend cloud architecture for Unity-based SaaS platform with React frontend and GraphQL API. Hired and led globally distributed team. Delivered MVP within 90 days, enabling successful funding round. Then transitioned out.\nChallenge: No technical leadership, no architecture, approaching funding deadline\nSolution: Built everything from scratch\u2014infrastructure, APIs, team, processes\nOutcome: Fundable MVP in 90 days, permanent team in place, clean handover\nVery Jane Ltd | Senior Backend Developer (Ecommerce Platform)\nApr 2024 \u2013 Aug 2024\nBootstrapped new ecommerce platform from absolute zero. Built scalable backend with Stripe Connect and Hyperwallet payment integrations. Created comprehensive data validation and testing infrastructure for customer imports. Production-ready system in 4 months.\nChallenge: Existing system couldn\u0027t scale, needed complete rebuild on limited budget\nSolution: Architected cost-effective platform with robust payment processing and data validation\nOutcome: Scalable, reliable platform enabling business growth without massive technical team\nSeamcor Ltd | Head of Engineering (Production Management System)\nDec 2022 \u2013 Apr 2024\nBrought in to fix broken enterprise system and build proper engineering team. Re-architected entire platform, managed team of 10\u002B engineers, integrated Docker Compose and OpenSearch. Designed flexible deployment strategy supporting both cloud and on-premises, expanding market reach and reducing customer acquisition cost.\nChallenge: Unreliable system, no team structure, losing customers\nSolution: Complete re-architecture \u002B team building \u002B deployment flexibility\nOutcome: Reliable product, functioning team, new revenue streams from flexible deployment\nZenChef Ltd | Lead Contract Developer (Legacy System Rescue)\nOct 2024 \u2013 Present\nEmergency engagement to save failing distributed system. Migrated to .NET 8, reduced Azure costs, implemented proper observability with Application Insights. Stabilized complex microservices architecture during critical business period. Built a complete, from scratch admin site in a few weeks to reduce support overhead.\nChallenge: Expensive, unreliable legacy system threatening business viability\nSolution: Rapid modernization \u002B cost optimization \u002B stability improvements\nOutcome: Dramatically reduced costs while improving reliability\nGBG Plc (Loqate) | Lead Engineer (Address Validation System)\nAug 2022 \u2013 Nov 2022\nBuilt high-performance global address validation system using .NET 6 microservices on Kubernetes. Implemented K6 testing infrastructure that accelerated development cycles by 80%. Delivered production-ready system in 4 months. Working with a massive k8s based system with components in C#, Go  etc..\nWCOM AB | Lead Developer (Real-time Collaboration Platform)\nOct 2021 \u2013 May 2022\nDeveloped complete real-time collaboration platform using Blazor Server, Azure Functions, and SignalR. Built screen mirroring and IPC modules via WPF. Delivered everything from backend to desktop client as sole developer.\nmostlylucid limited | Fractional CTO / Technical Consultant\nJan 2012 \u2013 Present\nDozens of startup and scale-up engagements across fintech, healthcare, and ecommerce. Consistent pattern: come in during crisis or bootstrap phase, build or fix what\u0027s needed, establish team and processes, transition out. Notable projects:\nLead Architect for major Asian airline\u0027s booking system (Knockout.js \u002B ASP.NET MVC)\nR\u0026D Developer for insurance company\u0027s IoT telemetry platform (.NET \u002B Azure)\nResearch Systems Architect on UK Government National Security distributed computing project\nTechnical consultant for 8 international charities (limited budgets, maximum impact)\nBuilt and operated developer bootcamp: 200\u002B graduates, 90%\u002B placement rate\u2014proving I can build technical teams\nEarlier Experience\nHuozhi Ltd (Fintech) | Technical Consultant / Dev Lead | Jun 2018 \u2013 Mar 2020\nInteractive Reporting Ltd | Lead Developer | Dec 2015 \u2013 Jun 2021\nDell | Development Lead | Jan 2011 \u2013 Jul 2011\nMicrosoft Corp. | Program Manager II | Jan 2007 \u2013 Oct 2009 (ASP.NET team, Redmond)\nMicrosoft Ltd. | Application Development Consultant II | Jun 2005 \u2013 Jan 2007 (FTSE 100 clients)\nStormID | Lead Developer | Feb 2003 \u2013 Jun 2005\nEducation\nUniversity of Stirling \u2013 BSc (Hons) Psychology\nStirling, Scotland, UK\nHow I Work\nI prefer short-to-medium term engagements (3-18 months) where there\u0027s a clear goal: get to MVP, fix what\u0027s broken, hire permanent team, reach funding milestone. I\u0027m not looking to be your permanent CTO\u2014I\u0027m looking to make you ready for your permanent CTO. My success is when you don\u0027t need me anymore.\nIdeal for: Pre-seed to Series A startups, technical co-founder gaps, failed technical initiatives, funding deadline pressure, legacy system rescues, team bootstrap situations.\nNot ideal for: Established enterprises with bureaucracy, projects requiring political navigation, situations where speed and pragmatism aren\u0027t valued.\n",
+  "ImageCacheKey": null,
+  "PageCount": 0,
+  "Personal": {
+    "FullName": "Scott Galloway",
+    "Email": "scott.galloway@gmail.com",
+    "Phone": "07498479614",
+    "Location": null,
+    "LinkedInUrl": null,
+    "GitHubUrl": "github.com/scottgal",
+    "WebsiteUrl": null,
+    "Summary": "Fractional CTO | Startup Rescue Specialist | Technical Co-Founder Email: scott.galloway@gmail.com | Phone: 07498479614 (please email in the first instance) Blog: mostlylucid.net | GitHub: github.com/scottgal/mostlylucidweb"
+  },
+  "Experience": [
+    {
+      "Id": "909413b4-4f3d-4865-8ef2-3da5138ba5a7",
+      "Company": "Interactive",
+      "Title": "Huozhi Ltd (Fintech) | Technical Consultant / Dev Lead",
+      "Location": null,
+      "StartDate": "2018-06-01",
+      "EndDate": "2020-03-01",
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "ef3fa929-ece9-4270-88bc-8cb91eddf5a4",
+      "Company": "Dell",
+      "Title": "Mar 2020 Interactive Reporting Ltd | Lead Developer",
+      "Location": null,
+      "StartDate": "2015-12-01",
+      "EndDate": "2021-06-01",
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "6776328e-4603-4eac-86ec-2f1e46555c64",
+      "Company": "Microsoft Corp",
+      "Title": "Dec 2015 \u2013 Jun 2021 Dell | Development Lead",
+      "Location": null,
+      "StartDate": "2011-01-01",
+      "EndDate": "2011-07-01",
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "11c844ab-2577-47bc-930b-e7aa85353a8a",
+      "Company": null,
+      "Title": "Program Manager II",
+      "Location": null,
+      "StartDate": "2007-01-01",
+      "EndDate": "2009-10-01",
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "bde405ee-e84b-4c50-8c4a-29d0ebc613ec",
+      "Company": null,
+      "Title": "Application Development Consultant II",
+      "Location": null,
+      "StartDate": "2005-06-01",
+      "EndDate": "2007-01-01",
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    },
+    {
+      "Id": "5a962091-16bb-4003-b387-bf45917a5210",
+      "Company": null,
+      "Title": "Jan 2007 (FTSE 100 clients) StormID | Lead Developer",
+      "Location": null,
+      "StartDate": "2003-02-01",
+      "EndDate": "2005-06-01",
+      "IsCurrent": false,
+      "Achievements": [],
+      "Technologies": []
+    }
+  ],
+  "Education": [
+    {
+      "Id": "ca0da720-e6e9-49e0-8a2c-658d18daccf7",
+      "Institution": "University of Stirling \u2013 BSc (Hons) Psychology, Stirling, Scotland, UK",
+      "Degree": null,
+      "FieldOfStudy": null,
+      "StartDate": null,
+      "EndDate": null,
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": []
+    },
+    {
+      "Id": "a9fd5c1e-99ef-49ba-8658-12c074ed101d",
+      "Institution": "How I Work",
+      "Degree": "I prefer short-to-medium term engagements (3-18 months) where there\u0027s a clear goal: get to MVP, fix what\u0027s broken, hire permanent team, reach funding milestone. I\u0027m not looking to be your permanent CTO\u2014I\u0027m looking to make you ready for your permanent CTO. My success is when you don\u0027t need me anymore.",
+      "FieldOfStudy": null,
+      "StartDate": null,
+      "EndDate": null,
+      "Gpa": null,
+      "GraduationYear": null,
+      "Highlights": [
+        "Ideal for: Pre-seed to Series A startups, technical co-founder gaps, failed technical initiatives, funding deadline pressure, legacy system rescues, team bootstrap situations.",
+        "Not ideal for: Established enterprises with bureaucracy, projects requiring political navigation, situations where speed and pragmatism aren\u0027t valued."
+      ]
+    }
+  ],
+  "Skills": [
+    {
+      "Name": "ASP.NET Core",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": ".NET",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "C#",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "RESTful APIs",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Microservices",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "SignalR",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "gRPC",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "ASP.NET",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": ".NET 6",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Azure",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Azure Functions",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Kubernetes",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Docker",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Bicep",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "CI/CD",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Go",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Python",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "C\u002B\u002B",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "OpenAI",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "ML.NET",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "Vectors",
+      "Category": null,
+      "YearsExperience": null
+    },
+    {
+      "Name": "RAG",
+      "Category": null,
+      "YearsExperience": null
+    }
+  ],
+  "Certifications": [],
+  "Projects": [],
+  "Entities": [
+    {
+      "EntityId": "3f115523-265e-4ddb-9f7d-429df23291da",
+      "Value": "scott.galloway@gmail.com",
+      "NormalizedValue": "scott.galloway@gmail.com",
+      "Classification": "Email",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "b454fb1e-35f3-45f7-ae7b-d440a67a6c4b",
+      "Value": "07498479614",
+      "NormalizedValue": "07498479614",
+      "Classification": "PhoneNumber",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6e0c9e5b-1c39-4f4f-b339-9f38b259a6be",
+      "Value": "in 90 days",
+      "NormalizedValue": "in 90 days",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c7c562e4-cd54-41c1-9870-c91c853d8dfc",
+      "Value": "6/7",
+      "NormalizedValue": "6/7",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "f6195637-2825-424f-a2ea-7fbe37a80148",
+      "Value": "8/9",
+      "NormalizedValue": "8/9",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "b8238c08-43c8-424b-aed8-761d752f9ce0",
+      "Value": "6/7",
+      "NormalizedValue": "6/7",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "8724c19f-d3e3-462a-a1bc-a14f9b68bda8",
+      "Value": "8/9",
+      "NormalizedValue": "8/9",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "2f6f0b4e-6694-446b-80ee-655eaec1f244",
+      "Value": "jun 2021 \u2013 sep 2021",
+      "NormalizedValue": "jun 2021 \u2013 sep 2021",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7498418e-8b8b-4b76-974e-57559dd23053",
+      "Value": "within 90 days",
+      "NormalizedValue": "within 90 days",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "45208fa0-8011-4eef-9a73-34d33437ac31",
+      "Value": "in 90 days",
+      "NormalizedValue": "in 90 days",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "8061bce2-8321-4c71-8bc6-58ebb37797b3",
+      "Value": "apr 2024 \u2013 aug 2024",
+      "NormalizedValue": "apr 2024 \u2013 aug 2024",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "7f8a82df-0169-4d03-a08e-f9e72ee62102",
+      "Value": "in 4 months",
+      "NormalizedValue": "in 4 months",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "170834d7-2d43-4322-966b-c6dcafce9712",
+      "Value": "dec 2022 \u2013 apr 2024",
+      "NormalizedValue": "dec 2022 \u2013 apr 2024",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "0c48feab-127f-4a9a-93a3-c405ef735da2",
+      "Value": "oct 2024",
+      "NormalizedValue": "oct 2024",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "4f7741f9-94fd-461e-973d-f71a8ec4c71a",
+      "Value": "in a few weeks",
+      "NormalizedValue": "in a few weeks",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "b70150ea-4f24-4f5b-97a7-b74f0b2bc437",
+      "Value": "aug 2022 \u2013 nov 2022",
+      "NormalizedValue": "aug 2022 \u2013 nov 2022",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "cd3bdc77-5668-4e15-979c-7d7c7f242269",
+      "Value": "in 4 months",
+      "NormalizedValue": "in 4 months",
+      "Classification": "Date",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "72324043-9af5-44c1-8b31-1eafd3117a9c",
+      "Value": "oct 2021 \u2013 may 2022",
+      "NormalizedValue": "oct 2021 \u2013 may 2022",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "9d3340b6-35d8-4344-9e43-eac83d0b6b6b",
+      "Value": "jan 2012",
+      "NormalizedValue": "jan 2012",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "da266434-8e77-4bd3-aacd-8abd3e8b233c",
+      "Value": "jun 2018 \u2013 mar 2020",
+      "NormalizedValue": "jun 2018 \u2013 mar 2020",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "0ebe12cd-1cee-4fe7-b606-7169e19521fb",
+      "Value": "dec 2015 \u2013 jun 2021",
+      "NormalizedValue": "dec 2015 \u2013 jun 2021",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "efe3f739-5da6-4f45-92af-7b16cc94c4ef",
+      "Value": "jan 2011 \u2013 jul 2011",
+      "NormalizedValue": "jan 2011 \u2013 jul 2011",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "522f4fe6-1492-44d1-801d-3b0c2ee0179d",
+      "Value": "jan 2007 \u2013 oct 2009",
+      "NormalizedValue": "jan 2007 \u2013 oct 2009",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a3c1d225-0306-4733-9966-85a7a95ebdff",
+      "Value": "jun 2005 \u2013 jan 2007",
+      "NormalizedValue": "jun 2005 \u2013 jan 2007",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "e8348a0a-536d-4405-ae60-fc0194861d6b",
+      "Value": "feb 2003 \u2013 jun 2005",
+      "NormalizedValue": "feb 2003 \u2013 jun 2005",
+      "Classification": "DateRange",
+      "Confidence": 0.88,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "404d4659-178a-412d-8bbf-8c2a8bb925dd",
+      "Value": "mostlylucid.net",
+      "NormalizedValue": "mostlylucid.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "a77bddee-f2dd-4c60-90d1-1b578acb7935",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "264d6ba2-7866-421b-bf59-0594690e797d",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "8dadac4a-f6cd-4e70-9c45-cd84b8acb4b5",
+      "Value": "ml.net",
+      "NormalizedValue": "ml.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "6d741fcb-2848-4301-be21-986b94ba80d8",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "c4b704f1-d0f3-4f0a-ae3e-2fd45e7c60eb",
+      "Value": "asp.net",
+      "NormalizedValue": "asp.net",
+      "Classification": "Url",
+      "Confidence": 0.9,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "cb6e36df-1420-40b6-9f19-9db5192de995",
+      "Value": "github.com/scottgal",
+      "NormalizedValue": "github.com/scottgal",
+      "Classification": "GitHubUrl",
+      "Confidence": 0.95,
+      "Source": 1,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "57c54edb-97f7-4347-b7cd-05d530bebcb4",
+      "Value": "Scott Galloway",
+      "NormalizedValue": "scott galloway",
+      "Classification": "PersonName",
+      "Confidence": 0.9904518127441406,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "5e6b94dc-3608-48ee-8d7b-e0efa5e3a56b",
+      "Value": "C",
+      "NormalizedValue": "c",
+      "Classification": "Miscellaneous",
+      "Confidence": 0.8780507445335388,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    },
+    {
+      "EntityId": "44f64173-a146-49ab-acfa-212068ac099c",
+      "Value": "scott.galloway@gmail.com",
+      "NormalizedValue": "scott.galloway@gmail.com",
+      "Classification": "Email",
+      "Confidence": 0.9450759887695312,
+      "Source": 2,
+      "PageNumber": 1,
+      "CharOffset": null,
+      "CharLength": null,
+      "Label": null,
+      "Section": null
+    }
+  ],
+  "TailoredForJobId": null
+}

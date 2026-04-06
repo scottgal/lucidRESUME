@@ -21,7 +21,9 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -43,5 +45,6 @@
     <ProjectReference Include="..\lucidRESUME.Collabora\lucidRESUME.Collabora.csproj" />
     <ProjectReference Include="..\lucidRESUME.UXTesting\lucidRESUME.UXTesting.csproj" />
     <ProjectReference Include="..\Mostlylucid.Avalonia.UITesting\Mostlylucid.Avalonia.UITesting.csproj" />
+    <ProjectReference Include="..\lucidRESUME.EmailTracker\lucidRESUME.EmailTracker.csproj" />
   </ItemGroup>
 </Project>

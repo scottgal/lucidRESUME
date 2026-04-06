@@ -1,0 +1,96 @@
+name: e2e-full-flow
+description: Complete end-to-end flow — import resume, add job, view analysis, screenshot every step
+default_delay: 400
+
+actions:
+  # ═══════════════════════════════════════════════════
+  # STEP 1: Wait for startup (health checks complete)
+  # ═══════════════════════════════════════════════════
+  - type: Wait
+    value: "3000"
+  - type: Screenshot
+    value: 01-startup-status
+
+  # ═══════════════════════════════════════════════════
+  # STEP 2: Import resume (Scott Galloway CTO)
+  # ═══════════════════════════════════════════════════
+  - type: ImportFile
+    value: test-data/resumes/Scott_Galloway_CTO.docx
+  - type: Wait
+    value: "3000"
+  - type: Screenshot
+    value: 02-resume-imported
+
+  # ═══════════════════════════════════════════════════
+  # STEP 3: Navigate to Add Job page and paste a JD
+  # ═══════════════════════════════════════════════════
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 03-add-job-empty
+
+  - type: PasteJob
+    value: "@test-data/job-cto.txt"
+  - type: Wait
+    value: "3000"
+  - type: Screenshot
+    value: 04-job-added
+
+  # ═══════════════════════════════════════════════════
+  # STEP 4: View Jobs page with saved jobs
+  # ═══════════════════════════════════════════════════
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 05-jobs-list
+
+  # ═══════════════════════════════════════════════════
+  # STEP 5: Navigate to Apply page
+  # ═══════════════════════════════════════════════════
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 06-apply-page
+
+  # ═══════════════════════════════════════════════════
+  # STEP 6: Pipeline page (empty — no tracked apps yet)
+  # ═══════════════════════════════════════════════════
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 07-pipeline
+
+  # ═══════════════════════════════════════════════════
+  # STEP 7: Profile page with AI settings
+  # ═══════════════════════════════════════════════════
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 08-profile-top
+
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 09-profile-ai-settings
+
+  # ═══════════════════════════════════════════════════
+  # STEP 8: Back to resume — final state with quality + AI detection
+  # ═══════════════════════════════════════════════════
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "1000"
+  - type: Screenshot
+    value: 10-resume-final

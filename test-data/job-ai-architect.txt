@@ -1,0 +1,19 @@
+AI Solutions Architect — DeepTech Labs
+
+Location: Hybrid (London 2 days/week)
+Salary: £95,000 - £130,000
+
+We're building autonomous agents for enterprise supply chain optimization.
+
+Requirements:
+- Experience designing multi-agent LLM systems
+- Strong Python or C# engineering background
+- Production RAG pipeline experience
+- Vector databases (Pinecone, Qdrant, pgvector)
+- Azure or AWS cloud infrastructure
+- 5+ years of experience
+
+Nice to Have:
+- ONNX Runtime or model optimization
+- Open source contributions
+- PhD in ML/AI

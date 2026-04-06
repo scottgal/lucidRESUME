@@ -59,9 +59,37 @@ public sealed class ResumeParser : IResumeParser
         string? plainText;
         IReadOnlyList<lucidRESUME.Parsing.DocumentSection>? structuredSections = null;
 
-        if (direct is not null)
+        // For PDFs: prefer Docling when available (much better layout detection)
+        // For DOCX: prefer direct parse (already high quality, no need for Docling)
+        var isPdf = ext.Equals(".pdf", StringComparison.OrdinalIgnoreCase);
+        var useDocling = isPdf && _docling is not null;
+
+        if (useDocling)
         {
-            _logger.LogInformation("Using direct parse result for {File} (confidence={Confidence:P0}, template={Template})",
+            // ── PDF + Docling: use ML-based layout detection ──────────────
+            _logger.LogInformation("Converting PDF {File} via Docling (ML layout detection)", fileInfo.Name);
+            var docling = await _docling!.ConvertAsync(filePath, ct);
+            // Docling preserves tab characters from PDF layout — normalize to spaces
+            var doclingMd = docling.Markdown?.Replace('\t', ' ') ?? "";
+            var doclingText = docling.PlainText?.Replace('\t', ' ');
+            resume.SetDoclingOutput(doclingMd, docling.Json, doclingText);
+            markdown = doclingMd;
+            plainText = doclingText;
+
+            if (docling.PageImages.Count > 0)
+            {
+                var cacheKey = _imageCache.ComputeKey(filePath);
+                resume.ImageCacheKey = cacheKey;
+                resume.PageCount = docling.PageImages.Count;
+                await _imageCache.StorePageAsync(cacheKey, 1, docling.PageImages[0], ct);
+                if (docling.PageImages.Count > 1)
+                    _ = CacheRemainingPagesAsync(cacheKey, docling.PageImages, ct);
+            }
+        }
+        else if (direct is not null)
+        {
+            // ── DOCX or PDF without Docling: use direct parse ─────────────
+            _logger.LogInformation("Using direct parse for {File} (confidence={Confidence:P0}, template={Template})",
                 fileInfo.Name, direct.Confidence, direct.TemplateName ?? "unknown");
             markdown = direct.Markdown;
             plainText = direct.PlainText;
@@ -69,35 +97,12 @@ public sealed class ResumeParser : IResumeParser
             resume.SetDoclingOutput(markdown, null, plainText);
             resume.PageCount = direct.PageCount;
 
-            // Learn this template if it was a confident anonymous parse (no prior match)
             if (direct.TemplateName is null && direct.Confidence >= 0.80
                 && Path.GetExtension(filePath).Equals(".docx", StringComparison.OrdinalIgnoreCase))
             {
                 var fingerprint = TemplateFingerprint.FromFile(filePath);
                 if (fingerprint is not null)
                     _ = _templateRegistry.LearnAsync(fingerprint, fileInfo.Name, ct);
-            }
-        }
-        else if (_docling is not null)
-        {
-            // ── 2a. Docling fallback (when enabled) ──────────────────────
-            _logger.LogInformation("Converting {File} via Docling", fileInfo.Name);
-            var docling = await _docling.ConvertAsync(filePath, ct);
-            resume.SetDoclingOutput(docling.Markdown, docling.Json, docling.PlainText);
-            markdown = docling.Markdown;
-            plainText = docling.PlainText;
-
-            // Cache page images — page 1 eagerly, rest fire-and-forget
-            if (docling.PageImages.Count > 0)
-            {
-                var cacheKey = _imageCache.ComputeKey(filePath);
-                resume.ImageCacheKey = cacheKey;
-                resume.PageCount = docling.PageImages.Count;
-
-                await _imageCache.StorePageAsync(cacheKey, 1, docling.PageImages[0], ct);
-
-                if (docling.PageImages.Count > 1)
-                    _ = CacheRemainingPagesAsync(cacheKey, docling.PageImages, ct);
             }
         }
         else
@@ -181,7 +186,32 @@ public sealed class ResumeParser : IResumeParser
     {
         if (resume.Personal.FullName is not null) return;
 
-        // First non-empty line of a resume is the person's name. Always.
+        // Strategy 1: Use NER PersonName entity (most reliable)
+        var nerName = resume.Entities
+            .Where(e => e.Classification == "PersonName" && e.Value.Length > 3)
+            .OrderByDescending(e => e.Confidence)
+            .FirstOrDefault();
+        if (nerName is not null)
+        {
+            resume.Personal.FullName = nerName.Value;
+            return;
+        }
+
+        // Strategy 2: First non-heading, non-section line that looks like a name
+        // (short, no numbers, not a known section keyword, no URLs)
+        foreach (var rawLine in markdown.Split('\n'))
+        {
+            var text = rawLine.Trim('\r', ' ').TrimStart('#').Trim();
+            if (string.IsNullOrWhiteSpace(text)) continue;
+            if (text.Length > 60 || text.Length < 3) continue;
+            if (text.Any(char.IsDigit)) continue; // skip addresses, phone numbers
+            if (text.Contains('@') || text.Contains("http")) continue;
+            if (Ingestion.Parsing.SectionClassifier.ClassifyHeading(text) is not null) continue;
+            resume.Personal.FullName = text;
+            return;
+        }
+
+        // Strategy 3: Fall back to first non-empty line (last resort)
         foreach (var rawLine in markdown.Split('\n'))
         {
             var text = rawLine.Trim('\r', ' ').TrimStart('#').Trim();

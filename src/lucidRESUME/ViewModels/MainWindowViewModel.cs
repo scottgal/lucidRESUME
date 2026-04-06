@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.Services;
@@ -13,6 +14,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     // Service status indicators — full display strings for sidebar
     [ObservableProperty] private string _embeddingLabel = "Embeddings: checking...";
     [ObservableProperty] private string _embeddingColor = "...";
+    [ObservableProperty] private string _nerLabel = "NER: checking...";
+    [ObservableProperty] private string _nerColor = "...";
     [ObservableProperty] private string _ollamaLabel = "Ollama: checking...";
     [ObservableProperty] private string _ollamaColor = "...";
     [ObservableProperty] private string _doclingLabel = "Docling: disabled";
@@ -23,11 +26,16 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly Dictionary<string, ViewModelBase> _pages;
     private readonly StartupHealthCheck? _healthCheck;
 
+    /// <summary>Get a page VM by key. Used by UX testing to bypass UI interactions.</summary>
+    public ViewModelBase? GetPage(string key) =>
+        _pages.TryGetValue(key, out var vm) ? vm : null;
+
     public MainWindowViewModel(
         ResumePageViewModel resumePage,
         JobsPageViewModel jobsPage,
         SearchPageViewModel searchPage,
         ApplyPageViewModel applyPage,
+        PipelinePageViewModel pipelinePage,
         ProfilePageViewModel profilePage,
         StartupHealthCheck? healthCheck = null)
     {
@@ -37,6 +45,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             ["Jobs"] = jobsPage,
             ["Search"] = searchPage,
             ["Apply"] = applyPage,
+            ["Pipeline"] = pipelinePage,
             ["Profile"] = profilePage
         };
         _currentPage = resumePage;
@@ -47,8 +56,32 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     {
         if (_healthCheck is null) return;
 
+        // Wire up live progress updates from downloads
+        _healthCheck.OnStatusChanged += (service, message) =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                switch (service)
+                {
+                    case "embedding":
+                        EmbeddingLabel = message;
+                        EmbeddingColor = "...";
+                        break;
+                    case "ner":
+                        NerLabel = message;
+                        NerColor = "...";
+                        break;
+                    case "ollama":
+                        OllamaLabel = message;
+                        OllamaColor = "...";
+                        break;
+                }
+            });
+        };
+
         await _healthCheck.RunAsync();
 
+        // Final status after all checks complete
         if (_healthCheck.IsOnnxEmbedding)
         {
             EmbeddingLabel = _healthCheck.OnnxModelReady ? "Embeddings: ONNX (local)" : "Embeddings: no model!";
@@ -60,9 +93,26 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             EmbeddingColor = _healthCheck.OllamaAvailable ? "Connected" : "Offline";
         }
 
+        // NER status — both models must be ready for full extraction
+        if (_healthCheck.GeneralNerReady && _healthCheck.ResumeNerReady)
+        {
+            NerLabel = "NER: ready (2 models)";
+            NerColor = "Connected";
+        }
+        else if (_healthCheck.GeneralNerReady)
+        {
+            NerLabel = "NER: partial (general only)";
+            NerColor = "..."; // yellow — functional but limited
+        }
+        else
+        {
+            NerLabel = "NER: no models!";
+            NerColor = "Offline";
+        }
+
         OllamaLabel = _healthCheck.OllamaAvailable
             ? $"Ollama: connected ({_healthCheck.OllamaUrl})"
-            : $"Ollama: offline";
+            : "Ollama: offline";
         OllamaColor = _healthCheck.OllamaAvailable ? "Connected" : "Offline";
 
         if (_healthCheck.DoclingEnabled)

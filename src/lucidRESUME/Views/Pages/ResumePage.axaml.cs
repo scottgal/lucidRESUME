@@ -12,7 +12,22 @@ public sealed class ScoreToColorConverter : IValueConverter
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         int score = value is int i ? i : 0;
-        return score >= 80 ? "#A6E3A1" : score >= 60 ? "#FAB387" : "#F38BA8";
+        var key = score >= 80 ? "LrAccentGreen" : score >= 60 ? "LrAccentYellow" : "LrAccentRed";
+        return Application.Current?.FindResource(key) is Avalonia.Media.Color c ? c.ToString() : "#808080";
+    }
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Inverted score: low = green (good/human), high = red (bad/AI).</summary>
+public sealed class InverseScoreToColorConverter : IValueConverter
+{
+    public static readonly InverseScoreToColorConverter Instance = new();
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        int score = value is int i ? i : 0;
+        var key = score <= 25 ? "LrAccentGreen" : score <= 50 ? "LrAccentYellow" : "LrAccentRed";
+        return Application.Current?.FindResource(key) is Avalonia.Media.Color c ? c.ToString() : "#808080";
     }
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();

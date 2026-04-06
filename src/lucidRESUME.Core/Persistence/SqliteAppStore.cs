@@ -40,6 +40,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS saved_searches (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS search_presets (id TEXT PRIMARY KEY, data TEXT NOT NULL, is_custom INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS applications (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings USING vec0(embedding float[384]);
             CREATE TABLE IF NOT EXISTS vec_meta (
                 rowid INTEGER PRIMARY KEY,
@@ -153,6 +154,17 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
 
         using (var cmd = _conn.CreateCommand())
         {
+            cmd.CommandText = "SELECT data FROM applications";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var app = JsonSerializer.Deserialize<Models.Tracking.JobApplication>(reader.GetString(0), JsonOpts);
+                if (app is not null) state.Applications.Add(app);
+            }
+        }
+
+        using (var cmd = _conn.CreateCommand())
+        {
             cmd.CommandText = "SELECT value FROM app_meta WHERE key = 'last_saved'";
             if (cmd.ExecuteScalar() is string ts && DateTimeOffset.TryParse(ts, out var dt))
                 state.LastSaved = dt;
@@ -205,6 +217,17 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             cmd.CommandText = "INSERT INTO search_presets (id, data, is_custom) VALUES ($id, $data, 1)";
             cmd.Parameters.AddWithValue("$id", p.PresetId);
             cmd.Parameters.AddWithValue("$data", JsonSerializer.Serialize(p, JsonOpts));
+            cmd.ExecuteNonQuery();
+        }
+
+        // Applications
+        Execute("DELETE FROM applications");
+        foreach (var app in state.Applications)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO applications (id, data) VALUES ($id, $data)";
+            cmd.Parameters.AddWithValue("$id", app.ApplicationId.ToString());
+            cmd.Parameters.AddWithValue("$data", JsonSerializer.Serialize(app, JsonOpts));
             cmd.ExecuteNonQuery();
         }
 

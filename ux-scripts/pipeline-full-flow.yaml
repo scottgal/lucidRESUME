@@ -1,0 +1,60 @@
+name: pipeline-full-flow
+description: Full pipeline flow - add job, track it, view pipeline with funnel
+default_delay: 300
+
+actions:
+  # Start on Add Job page
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 01-add-job-page
+
+  # Navigate to Pipeline (empty)
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 02-pipeline-empty
+
+  # Go to Jobs page
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 03-jobs-page
+
+  # Apply page
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 04-apply-page
+
+  # Back to Pipeline
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 05-pipeline-final
+
+  # Profile page (check nav still works)
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 06-profile
+
+  # Resume page
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 07-resume-final

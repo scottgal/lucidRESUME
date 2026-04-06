@@ -8,15 +8,46 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddAiTailoring(this IServiceCollection services, IConfiguration config)
     {
+        // Configure all provider options
         services.Configure<OllamaOptions>(config.GetSection("Ollama"));
+        services.Configure<AnthropicOptions>(config.GetSection("Anthropic"));
+        services.Configure<OpenAiOptions>(config.GetSection("OpenAi"));
         services.Configure<TailoringOptions>(config.GetSection("Tailoring"));
         services.Configure<EmbeddingOptions>(config.GetSection("Embedding"));
 
-        // Tailoring & extraction still use Ollama (optional — graceful failure if not running)
-        services.AddHttpClient<IAiTailoringService, OllamaTailoringService>()
-            .AddStandardResilienceHandler();
-        services.AddHttpClient<ILlmExtractionService, OllamaExtractionService>(client =>
-            client.Timeout = TimeSpan.FromSeconds(60));
+        // Provider selection: Tailoring.Provider (default: "ollama")
+        var tailoringProvider = config.GetSection("Tailoring").GetValue<string>("Provider") ?? "ollama";
+
+        switch (tailoringProvider.ToLowerInvariant())
+        {
+            case "anthropic":
+                services.AddHttpClient<IAiTailoringService, AnthropicTailoringService>()
+                    .AddStandardResilienceHandler();
+                services.AddHttpClient<ILlmExtractionService, AnthropicExtractionService>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(60));
+                break;
+            case "openai":
+                services.AddHttpClient<IAiTailoringService, OpenAiTailoringService>()
+                    .AddStandardResilienceHandler();
+                services.AddHttpClient<ILlmExtractionService, OpenAiExtractionService>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(60));
+                break;
+            default: // ollama
+                services.AddHttpClient<IAiTailoringService, OllamaTailoringService>()
+                    .AddStandardResilienceHandler();
+                services.AddHttpClient<ILlmExtractionService, OllamaExtractionService>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(60));
+                break;
+        }
+
+        // Model discovery for settings UI
+        services.AddHttpClient<ModelDiscoveryService>();
+
+        // AI detection (ONNX model + multi-signal scorer) + de-AI rewriter + translator
+        services.AddSingleton<OnnxAiTextDetector>();
+        services.AddSingleton<AiDetectionScorer>();
+        services.AddSingleton<DeAiRewriter>();
+        services.AddSingleton<ResumeTranslator>();
 
         // Embedding: ONNX by default (fully local), Ollama if explicitly configured
         var embeddingProvider = config.GetSection("Embedding").GetValue<string>("Provider") ?? "onnx";

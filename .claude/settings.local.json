@@ -174,7 +174,32 @@
       "Bash(sqlite3 \"$APPDATA/lucidRESUME/data.db\" \"SELECT key, value FROM app_meta;\")",
       "Bash(sqlite3 \"$APPDATA/lucidRESUME/data.db\" \"SELECT count\\(*\\) as job_count FROM jobs;\")",
       "Bash(for pdf:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(pip3 list:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3 -m optimum.exporters.onnx --model yashpwr/resume-ner-bert-v2 --task token-classification models/resume-ner)",
+      "Bash(gh api:*)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(x[''''path'''']\\) for x in data.get\\(''''tree'''',[]\\) if x[''''path''''].endswith\\(\\(''''.pdf'''',''''.docx'''',''''.PDF'''',''''.DOCX''''\\)\\)]\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(x[''''path'''']\\) for x in data.get\\(''''tree'''',[]\\) if any\\(x[''''path''''].lower\\(\\).endswith\\(e\\) for e in \\(''''.pdf'''',''''.docx''''\\)\\)]\")",
+      "Bash(gh search:*)",
+      "Bash(python3 -c \"import json,sys; [print\\(f\"\"{x[''''owner''''][''''login'''']}/{x[''''name'''']}: {x.get\\(''''description'''',''''''''\\)}\"\"\\) for x in json.load\\(sys.stdin\\)]\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(x[''''path'''']\\) for x in data.get\\(''''tree'''',[]\\) if any\\(x[''''path''''].lower\\(\\).endswith\\(e\\) for e in \\(''''.pdf'''',''''.docx'''',''''.tex''''\\)\\)]\")",
+      "Bash(file /Users/scottgalloway/RiderProjects/lucidRESUME/test-data/resumes/*.pdf /Users/scottgalloway/RiderProjects/lucidRESUME/test-data/resumes/*.docx)",
+      "Bash(python3 -c \"import sys,json; r=json.load\\(sys.stdin\\); [print\\(m[''''id'''']\\) for m in r.get\\(''''data'''',[]\\)]\")",
+      "Read(//Applications/LibreOffice.app/Contents/MacOS/**)",
+      "Bash(mdfind \"kMDItemCFBundleIdentifier == ''org.libreoffice.script''\")",
+      "Read(//Applications/**)",
+      "Bash(\"/Applications/LibreOffice.app/Contents/MacOS/soffice\" --version)",
+      "Read(//Users/scottgalloway/**)",
+      "Bash(python3:*)",
+      "Bash(/dev/null done:*)",
+      "Bash(python3 -c \":*)",
+      "Bash(rm -f \"$HOME/Library/Application Support/lucidRESUME/data.db\")",
+      "Bash(rm -f ux-screenshots/*.png)",
+      "Bash(docker pull:*)",
+      "Bash(docker run:*)",
+      "Bash(git status:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

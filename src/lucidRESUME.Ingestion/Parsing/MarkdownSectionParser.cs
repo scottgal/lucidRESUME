@@ -130,9 +130,13 @@ public static class MarkdownSectionParser
                 case "Experience":
                     if (resume.Experience.Count == 0)
                     {
-                        var expLines = string.IsNullOrWhiteSpace(section.Body)
-                            ? CollectUnclassifiedFollowingSections(sections, i)
-                            : bodyLines.ToList();
+                        // Collect all content until the next major section at the same level.
+                        // Always use the collector (even when body exists) to capture sub-sections
+                        // like "### Mentorship & Education" that contain continuation jobs.
+                        var expLines = new List<string>();
+                        if (!string.IsNullOrWhiteSpace(section.Body))
+                            expLines.AddRange(bodyLines);
+                        expLines.AddRange(CollectUnclassifiedFollowingSections(sections, i));
                         ParseExperience(resume, expLines);
                     }
                     break;
@@ -183,14 +187,20 @@ public static class MarkdownSectionParser
     private static List<string> CollectUnclassifiedFollowingSections(
         IReadOnlyList<DocumentSection> sections, int fromIndex)
     {
+        var parentLevel = sections[fromIndex].Level;
         var lines = new List<string>();
         for (int j = fromIndex + 1; j < sections.Count; j++)
         {
             var s = sections[j];
             var t = s.SemanticType ?? SectionClassifier.ClassifyHeading(s.Heading);
-            if (t != null) break; // Stop at the next classified section
 
-            // Include heading as a content line (it may itself be a skill name like "HTML5")
+            // Stop only at major section boundaries (Experience, Education, Skills, Summary)
+            // at the same or higher level. Minor/ambiguous headings like "Mentorship & Education"
+            // or "AI Systems & Applied ML" within an experience block are absorbed as content.
+            if (t != null && s.Level <= parentLevel && IsMajorSection(t))
+                break;
+
+            // Include heading as a content line (it may itself be a job title or skill name)
             if (!string.IsNullOrWhiteSpace(s.Heading))
                 lines.Add(s.Heading);
             if (!string.IsNullOrWhiteSpace(s.Body))
@@ -479,20 +489,33 @@ public static class MarkdownSectionParser
     {
         WorkExperience? current = null;
 
-        foreach (var rawLine in lines)
+        // Pre-scan: detect "Company | Title" + "Date | Location" two-line pattern
+        // and merge into a synthetic heading so the main loop handles it cleanly.
+        // This is the most common pipe-delimited format in modern resumes.
+        var merged = MergePipeSplitJobEntries(lines);
+
+        foreach (var rawLine in merged)
         {
             var line = rawLine.Trim();
             if (string.IsNullOrWhiteSpace(line)) continue;
 
-            // Pattern 1: "Company | Title | Location Dates" heading
-            if (line.StartsWith('#') && line.Contains('|'))
+            // Pattern 1: "Company | Title | Location Dates" heading (or merged entry)
+            if ((line.StartsWith('#') || line.StartsWith("[JOB]")) && line.Contains('|'))
             {
                 if (current != null) resume.Experience.Add(current);
-                current = ParseJobHeading(line.TrimStart('#').Trim());
+                current = ParseJobHeading(line.TrimStart('#').Trim().Replace("[JOB]", "").Trim());
                 continue;
             }
 
-            // Pattern 2: Date-range-only heading
+            // Pattern 2: Sub-heading within experience (e.g. "### Mentorship & Education")
+            // These are subsection labels, not new top-level sections — skip them
+            if (line.StartsWith("###") && !ResumeDateParser.ContainsDate(line) && !line.Contains('|'))
+            {
+                // Just a label — continue collecting achievements for the current job
+                continue;
+            }
+
+            // Pattern 3: Date-range-only heading
             if (line.StartsWith('#'))
             {
                 var headingRange = ResumeDateParser.ExtractFirstDateRange(line);
@@ -882,7 +905,8 @@ public static class MarkdownSectionParser
     private static WorkExperience ParseJobHeading(string content)
     {
         var job = new WorkExperience();
-        // Pattern: "Company | Title | Location DateRange"
+        // Try pipe-separated first: "Company | Title | Location DateRange"
+        // Then em-dash/en-dash: "Company — Title"
         var parts = content.Split('|');
         if (parts.Length >= 2)
         {
@@ -890,7 +914,22 @@ public static class MarkdownSectionParser
             job.Title = parts[1].Trim();
             if (parts.Length >= 3) job.Location = parts[2].Trim();
         }
-        else job.Company = content;
+        else
+        {
+            // Try em-dash (—) or en-dash (–) separator
+            var dashIdx = content.IndexOf(" — ", StringComparison.Ordinal);
+            if (dashIdx < 0) dashIdx = content.IndexOf(" – ", StringComparison.Ordinal);
+
+            if (dashIdx > 0)
+            {
+                job.Company = content[..dashIdx].Trim();
+                job.Title = content[(dashIdx + 3)..].Trim();
+            }
+            else
+            {
+                job.Company = content;
+            }
+        }
 
         var dateRange = ResumeDateParser.ExtractFirstDateRange(content);
         if (dateRange != null) ApplyDateRange(job, dateRange);
@@ -918,6 +957,60 @@ public static class MarkdownSectionParser
         edu.StartDate = range.Start;
         if (!range.IsCurrent) edu.EndDate = range.End;
     }
+
+    /// <summary>
+    /// Detects the common two-line job entry pattern:
+    ///   Line A: "Company Name | Job Title"         (no date, has pipe)
+    ///   Line B: "Jan 2020 – Present | Remote"      (has date, often has pipe)
+    /// Merges them into a single synthetic line: "[JOB] Company | Title | Location"
+    /// with date info preserved in the combined text.
+    /// </summary>
+    private static List<string> MergePipeSplitJobEntries(List<string> lines)
+    {
+        var result = new List<string>(lines.Count);
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i].Trim();
+            if (string.IsNullOrWhiteSpace(line)) { result.Add(lines[i]); continue; }
+
+            // Skip headings and lines with dates — they're handled by existing patterns
+            if (line.StartsWith('#') || ResumeDateParser.ContainsDate(line))
+            {
+                result.Add(lines[i]);
+                continue;
+            }
+
+            // Candidate: non-heading, non-date line containing a separator (pipe or em/en-dash)
+            bool hasSeparator = line.Contains('|') || line.Contains(" — ") || line.Contains(" – ");
+            if (hasSeparator && i + 1 < lines.Count)
+            {
+                var nextLine = lines[i + 1].Trim();
+                if (!string.IsNullOrWhiteSpace(nextLine) && ResumeDateParser.ContainsDate(nextLine))
+                {
+                    // Merge: "Company | Title" + "Date | Location" → "[JOB] Company | Title | Location Date"
+                    var dateParts = nextLine.Split('|');
+                    var location = dateParts.Length >= 2 ? dateParts[^1].Trim() : "";
+                    var dateText = dateParts[0].Trim();
+
+                    // Build merged line: Company | Title | Location DateRange
+                    var merged = location.Length > 0
+                        ? $"[JOB] {line} | {location} {dateText}"
+                        : $"[JOB] {line} {dateText}";
+
+                    result.Add(merged);
+                    i++; // Skip the date line (consumed)
+                    continue;
+                }
+            }
+
+            result.Add(lines[i]);
+        }
+        return result;
+    }
+
+    /// <summary>True for top-level resume section types that should stop content collection.</summary>
+    private static bool IsMajorSection(string sectionType) =>
+        sectionType is "Experience" or "Education" or "Skills" or "Summary" or "Contact" or "Name";
 
     private static bool IsKnownSection(string text) =>
         SectionClassifier.ClassifyHeading(text) != null;

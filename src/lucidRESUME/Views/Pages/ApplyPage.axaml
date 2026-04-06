@@ -11,51 +11,51 @@
 
       <!-- Header -->
       <TextBlock Grid.Row="0" Text="Tailor Resume" FontSize="18" FontWeight="Bold"
-                 Foreground="#CDD6F4" Margin="0,0,0,16"/>
+                 Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,16"/>
 
       <!-- Ollama unavailable warning -->
-      <Border Grid.Row="1" Background="#3E2A00" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
+      <Border Grid.Row="1" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
               IsVisible="{Binding IsOllamaUnavailable}">
-        <TextBlock Text="⚠ Ollama is not reachable. Start Ollama before tailoring."
-                   Foreground="#FAB387" FontSize="12" TextWrapping="Wrap"/>
+        <TextBlock Text="Ollama is not reachable. Start Ollama before tailoring."
+                   Foreground="{DynamicResource LrAccentPeachBrush}" FontSize="12" TextWrapping="Wrap"/>
       </Border>
 
       <!-- Coverage summary -->
-      <Border Grid.Row="2" Background="#1E1E2E" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
+      <Border Grid.Row="2" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
               IsVisible="{Binding HasCoverage}">
         <StackPanel Orientation="Horizontal" Spacing="12">
-          <TextBlock Foreground="#89B4FA" FontSize="12" VerticalAlignment="Center">
+          <TextBlock Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="12" VerticalAlignment="Center">
             <Run Text="Coverage:"/>
             <Run Text="{Binding CoveragePercent}" FontWeight="Bold"/>
             <Run Text="%"/>
           </TextBlock>
-          <TextBlock Foreground="#F38BA8" FontSize="12" VerticalAlignment="Center"
+          <TextBlock Foreground="{DynamicResource LrAccentRedBrush}" FontSize="12" VerticalAlignment="Center"
                      IsVisible="{Binding GapCount}">
             <Run Text="{Binding GapCount}"/>
             <Run Text="required gap(s)"/>
           </TextBlock>
-          <Border Background="#2A2A3E" CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
+          <Border Background="{DynamicResource LrBadgeBgBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
                   IsVisible="{Binding CompanyTypeLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock Text="{Binding CompanyTypeLabel}" FontSize="10" Foreground="#CBA6F7"/>
+            <TextBlock Text="{Binding CompanyTypeLabel}" FontSize="10" Foreground="{DynamicResource LrAccentPurpleBrush}"/>
           </Border>
         </StackPanel>
       </Border>
 
       <!-- Job Title -->
       <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,10">
-        <TextBlock Text="Job Title" Foreground="#A6ADC8" FontSize="12"/>
+        <TextBlock Text="Job Title" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
         <TextBox Text="{Binding JobTitle}" Watermark="e.g. Senior Software Engineer"/>
       </StackPanel>
 
       <!-- Company -->
       <StackPanel Grid.Row="4" Spacing="4" Margin="0,0,0,10">
-        <TextBlock Text="Company" Foreground="#A6ADC8" FontSize="12"/>
+        <TextBlock Text="Company" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
         <TextBox Text="{Binding Company}" Watermark="e.g. Acme Corp"/>
       </StackPanel>
 
       <!-- Job Description -->
       <StackPanel Grid.Row="5" Spacing="4" Margin="0,0,0,10">
-        <TextBlock Text="Job Description" Foreground="#A6ADC8" FontSize="12"/>
+        <TextBlock Text="Job Description" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
         <TextBox Text="{Binding JobDescriptionText}"
                  Watermark="Paste the full job description here…"
                  AcceptsReturn="True"
@@ -66,10 +66,9 @@
 
       <!-- Tailor button -->
       <Button Grid.Row="6"
-              Content="✨ Tailor Resume"
+              Content="Tailor Resume"
               Command="{Binding TailorCommand}"
               IsEnabled="{Binding !IsTailoring}"
-              Background="#89B4FA" Foreground="#1E1E2E"
               FontSize="15" FontWeight="Bold"
               Padding="20,12"
               HorizontalAlignment="Stretch"
@@ -83,11 +82,11 @@
 
       <!-- Status / Error -->
       <StackPanel Grid.Row="8" Spacing="4">
-        <TextBlock Text="{Binding StatusMessage}" Foreground="#A6ADC8" FontSize="12"
+        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"
                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-        <Border Background="#3E1E1E" Padding="10,6" CornerRadius="4"
+        <Border Background="{DynamicResource LrAccentRedBgBrush}" Padding="10,6" CornerRadius="4"
                 IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-          <TextBlock Text="{Binding ErrorMessage}" Foreground="#F38BA8" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource LrAccentRedBrush}" TextWrapping="Wrap"/>
         </Border>
       </StackPanel>
 
@@ -97,25 +96,23 @@
     <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="12,0,0,0">
 
       <TextBlock Grid.Row="0" Text="Tailored Resume" FontSize="18" FontWeight="Bold"
-                 Foreground="#CDD6F4" Margin="0,0,0,16"/>
+                 Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,16"/>
 
       <!-- Empty state -->
       <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                   IsVisible="{Binding !HasResult}">
-        <TextBlock Text="📝" FontSize="28" HorizontalAlignment="Center"
-                   FontFamily="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji"/>
-        <TextBlock Text="Tailored resume will appear here." Foreground="#A6ADC8"
+        <TextBlock Text="Tailored resume will appear here." Foreground="{DynamicResource LrSecondaryTextBrush}"
                    FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-        <TextBlock Text="Fill in the form and click Tailor Resume." Foreground="#6C7086"
+        <TextBlock Text="Fill in the form and click Tailor Resume." Foreground="{DynamicResource LrSubtleTextBrush}"
                    FontSize="13" HorizontalAlignment="Center"/>
       </StackPanel>
 
       <!-- Result -->
-      <Border Grid.Row="1" Background="#181825" CornerRadius="4"
+      <Border Grid.Row="1" Background="{DynamicResource LrPageBgBrush}" CornerRadius="4"
               IsVisible="{Binding HasResult}">
         <ScrollViewer Padding="12">
           <TextBlock Text="{Binding TailoredMarkdown}"
-                     TextWrapping="Wrap" Foreground="#CDD6F4"
+                     TextWrapping="Wrap" Foreground="{DynamicResource LrPrimaryTextBrush}"
                      FontFamily="Cascadia Code,Consolas,monospace"
                      FontSize="12" LineHeight="18"/>
         </ScrollViewer>
@@ -126,7 +123,6 @@
               Content="Export as Markdown"
               Command="{Binding ExportCommand}"
               IsVisible="{Binding HasResult}"
-              Background="#1A3A1A" Foreground="#A6E3A1"
               Padding="16,8"
               Margin="0,8,0,0"/>
 

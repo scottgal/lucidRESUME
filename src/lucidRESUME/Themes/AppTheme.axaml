@@ -1,0 +1,161 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <ResourceDictionary.ThemeDictionaries>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- DARK theme (Catppuccin Mocha-inspired)                      -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <ResourceDictionary x:Key="Dark">
+
+      <!-- Backgrounds -->
+      <Color x:Key="LrPageBg">#181825</Color>
+      <Color x:Key="LrCardBg">#1E1E2E</Color>
+      <Color x:Key="LrSurfaceBg">#313244</Color>
+      <Color x:Key="LrBorderColor">#45475A</Color>
+      <Color x:Key="LrBadgeBg">#2A2A3E</Color>
+      <Color x:Key="LrHoverBg">#3D3F5C</Color>
+      <Color x:Key="LrInputBg">#1E1E2E</Color>
+
+      <!-- Text -->
+      <Color x:Key="LrPrimaryText">#CDD6F4</Color>
+      <Color x:Key="LrSecondaryText">#A6ADC8</Color>
+      <Color x:Key="LrTertiaryText">#BAC2DE</Color>
+      <Color x:Key="LrSubtleText">#6C7086</Color>
+
+      <!-- Accent colors -->
+      <Color x:Key="LrAccentBlue">#89B4FA</Color>
+      <Color x:Key="LrAccentPurple">#CBA6F7</Color>
+      <Color x:Key="LrAccentGreen">#A6E3A1</Color>
+      <Color x:Key="LrAccentRed">#F38BA8</Color>
+      <Color x:Key="LrAccentYellow">#F9E2AF</Color>
+      <Color x:Key="LrAccentPeach">#FAB387</Color>
+
+      <!-- Semantic backgrounds (tinted) -->
+      <Color x:Key="LrAccentBlueBg">#1E3A5F</Color>
+      <Color x:Key="LrAccentGreenBg">#1A3A1A</Color>
+      <Color x:Key="LrAccentRedBg">#3E1E1E</Color>
+      <Color x:Key="LrAccentYellowBg">#3E2A00</Color>
+      <Color x:Key="LrWarningBannerBg">#2A2020</Color>
+
+      <!-- Score badge foreground (dark text on colored badge) -->
+      <Color x:Key="LrScoreFg">#1E1E2E</Color>
+
+      <!-- Nav sidebar -->
+      <Color x:Key="LrNavBg">#1E1E2E</Color>
+      <Color x:Key="LrNavHoverBg">#313244</Color>
+      <Color x:Key="LrNavAccent">#89B4FA</Color>
+      <Color x:Key="LrNavText">#A6ADC8</Color>
+
+      <!-- Status indicator colors -->
+      <Color x:Key="LrStatusGreen">#A6E3A1</Color>
+      <Color x:Key="LrStatusRed">#F38BA8</Color>
+      <Color x:Key="LrStatusYellow">#F9E2AF</Color>
+      <Color x:Key="LrStatusGrey">#6C7086</Color>
+
+    </ResourceDictionary>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- LIGHT theme                                                 -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <ResourceDictionary x:Key="Light">
+
+      <!-- Backgrounds -->
+      <Color x:Key="LrPageBg">#EFF1F5</Color>
+      <Color x:Key="LrCardBg">#FFFFFF</Color>
+      <Color x:Key="LrSurfaceBg">#F5F5F9</Color>
+      <Color x:Key="LrBorderColor">#CCD0DA</Color>
+      <Color x:Key="LrBadgeBg">#E6E9EF</Color>
+      <Color x:Key="LrHoverBg">#DCE0E8</Color>
+      <Color x:Key="LrInputBg">#FFFFFF</Color>
+
+      <!-- Text -->
+      <Color x:Key="LrPrimaryText">#4C4F69</Color>
+      <Color x:Key="LrSecondaryText">#5C5F77</Color>
+      <Color x:Key="LrTertiaryText">#6C6F85</Color>
+      <Color x:Key="LrSubtleText">#9CA0B0</Color>
+
+      <!-- Accent colors -->
+      <Color x:Key="LrAccentBlue">#1E66F5</Color>
+      <Color x:Key="LrAccentPurple">#8839EF</Color>
+      <Color x:Key="LrAccentGreen">#40A02B</Color>
+      <Color x:Key="LrAccentRed">#D20F39</Color>
+      <Color x:Key="LrAccentYellow">#DF8E1D</Color>
+      <Color x:Key="LrAccentPeach">#FE640B</Color>
+
+      <!-- Semantic backgrounds (tinted) -->
+      <Color x:Key="LrAccentBlueBg">#DBE8FE</Color>
+      <Color x:Key="LrAccentGreenBg">#D8F5D0</Color>
+      <Color x:Key="LrAccentRedBg">#FDDDE4</Color>
+      <Color x:Key="LrAccentYellowBg">#FDF0D5</Color>
+      <Color x:Key="LrWarningBannerBg">#FCE8E8</Color>
+
+      <!-- Score badge foreground (light text on colored badge) -->
+      <Color x:Key="LrScoreFg">#FFFFFF</Color>
+
+      <!-- Nav sidebar -->
+      <Color x:Key="LrNavBg">#E6E9EF</Color>
+      <Color x:Key="LrNavHoverBg">#DCE0E8</Color>
+      <Color x:Key="LrNavAccent">#1E66F5</Color>
+      <Color x:Key="LrNavText">#5C5F77</Color>
+
+      <!-- Status indicator colors -->
+      <Color x:Key="LrStatusGreen">#40A02B</Color>
+      <Color x:Key="LrStatusRed">#D20F39</Color>
+      <Color x:Key="LrStatusYellow">#DF8E1D</Color>
+      <Color x:Key="LrStatusGrey">#9CA0B0</Color>
+
+    </ResourceDictionary>
+
+  </ResourceDictionary.ThemeDictionaries>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- SolidColorBrush resources (resolve dynamically per theme)    -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+
+  <!-- Backgrounds -->
+  <SolidColorBrush x:Key="LrPageBgBrush" Color="{DynamicResource LrPageBg}"/>
+  <SolidColorBrush x:Key="LrCardBgBrush" Color="{DynamicResource LrCardBg}"/>
+  <SolidColorBrush x:Key="LrSurfaceBgBrush" Color="{DynamicResource LrSurfaceBg}"/>
+  <SolidColorBrush x:Key="LrBorderBrush" Color="{DynamicResource LrBorderColor}"/>
+  <SolidColorBrush x:Key="LrBadgeBgBrush" Color="{DynamicResource LrBadgeBg}"/>
+  <SolidColorBrush x:Key="LrHoverBgBrush" Color="{DynamicResource LrHoverBg}"/>
+  <SolidColorBrush x:Key="LrInputBgBrush" Color="{DynamicResource LrInputBg}"/>
+
+  <!-- Text -->
+  <SolidColorBrush x:Key="LrPrimaryTextBrush" Color="{DynamicResource LrPrimaryText}"/>
+  <SolidColorBrush x:Key="LrSecondaryTextBrush" Color="{DynamicResource LrSecondaryText}"/>
+  <SolidColorBrush x:Key="LrTertiaryTextBrush" Color="{DynamicResource LrTertiaryText}"/>
+  <SolidColorBrush x:Key="LrSubtleTextBrush" Color="{DynamicResource LrSubtleText}"/>
+
+  <!-- Accents -->
+  <SolidColorBrush x:Key="LrAccentBlueBrush" Color="{DynamicResource LrAccentBlue}"/>
+  <SolidColorBrush x:Key="LrAccentPurpleBrush" Color="{DynamicResource LrAccentPurple}"/>
+  <SolidColorBrush x:Key="LrAccentGreenBrush" Color="{DynamicResource LrAccentGreen}"/>
+  <SolidColorBrush x:Key="LrAccentRedBrush" Color="{DynamicResource LrAccentRed}"/>
+  <SolidColorBrush x:Key="LrAccentYellowBrush" Color="{DynamicResource LrAccentYellow}"/>
+  <SolidColorBrush x:Key="LrAccentPeachBrush" Color="{DynamicResource LrAccentPeach}"/>
+
+  <!-- Semantic backgrounds -->
+  <SolidColorBrush x:Key="LrAccentBlueBgBrush" Color="{DynamicResource LrAccentBlueBg}"/>
+  <SolidColorBrush x:Key="LrAccentGreenBgBrush" Color="{DynamicResource LrAccentGreenBg}"/>
+  <SolidColorBrush x:Key="LrAccentRedBgBrush" Color="{DynamicResource LrAccentRedBg}"/>
+  <SolidColorBrush x:Key="LrAccentYellowBgBrush" Color="{DynamicResource LrAccentYellowBg}"/>
+  <SolidColorBrush x:Key="LrWarningBannerBgBrush" Color="{DynamicResource LrWarningBannerBg}"/>
+
+  <!-- Score -->
+  <SolidColorBrush x:Key="LrScoreFgBrush" Color="{DynamicResource LrScoreFg}"/>
+
+  <!-- Nav -->
+  <SolidColorBrush x:Key="LrNavBgBrush" Color="{DynamicResource LrNavBg}"/>
+  <SolidColorBrush x:Key="LrNavHoverBgBrush" Color="{DynamicResource LrNavHoverBg}"/>
+  <SolidColorBrush x:Key="LrNavAccentBrush" Color="{DynamicResource LrNavAccent}"/>
+  <SolidColorBrush x:Key="LrNavTextBrush" Color="{DynamicResource LrNavText}"/>
+
+  <!-- Status -->
+  <SolidColorBrush x:Key="LrStatusGreenBrush" Color="{DynamicResource LrStatusGreen}"/>
+  <SolidColorBrush x:Key="LrStatusRedBrush" Color="{DynamicResource LrStatusRed}"/>
+  <SolidColorBrush x:Key="LrStatusYellowBrush" Color="{DynamicResource LrStatusYellow}"/>
+  <SolidColorBrush x:Key="LrStatusGreyBrush" Color="{DynamicResource LrStatusGrey}"/>
+
+</ResourceDictionary>

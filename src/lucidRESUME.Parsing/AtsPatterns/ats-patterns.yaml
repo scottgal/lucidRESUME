@@ -1,0 +1,127 @@
+# ATS Pattern Detection Rules
+# Each pattern describes structural features of resumes from specific ATS/template systems.
+# Used to apply format-specific extraction rules when generic parsing fails.
+
+patterns:
+  - name: latex-awesome-cv
+    description: LaTeX Awesome-CV template — multi-column, clean headings, structured sections
+    signals:
+      - type: metadata_contains
+        value: "LaTeX"
+      - type: heading_count_min
+        value: 8
+      - type: has_section_pattern
+        value: "\\d{4}\\s*[-–]\\s*\\d{4}" # date ranges inline with headings
+    section_keywords:
+      experience: ["experience", "work experience"]
+      education: ["education"]
+      skills: ["skills", "programming"]
+    name_strategy: first_heading
+
+  - name: two-column-modern
+    description: Two-column layout — left sidebar with skills, right with experience
+    signals:
+      - type: short_line_ratio_above
+        value: 0.4  # many short lines = sidebar content
+      - type: interleaved_columns
+        value: true
+    section_keywords:
+      experience: ["experience", "professional"]
+      education: ["education", "academic"]
+      skills: ["skills", "technologies", "languages"]
+    name_strategy: first_line_longest_word
+
+  - name: linkedin-export
+    description: LinkedIn PDF export — distinctive format with profile URL
+    signals:
+      - type: text_contains
+        value: "linkedin.com/in/"
+      - type: first_line_is_name
+        value: true
+    section_keywords:
+      experience: ["experience"]
+      education: ["education"]
+      skills: ["skills & endorsements", "skills"]
+    name_strategy: first_line
+
+  - name: indeed-resume
+    description: Indeed resume download
+    signals:
+      - type: text_contains
+        value: "indeed.com"
+    section_keywords:
+      experience: ["work experience"]
+      education: ["education"]
+      skills: ["skills"]
+    name_strategy: first_heading
+
+  - name: workday-ats
+    description: Workday ATS application export
+    signals:
+      - type: text_contains
+        value: "workday"
+      - type: section_header_style
+        value: all_caps
+    name_strategy: after_header
+
+  - name: greenhouse-ats
+    description: Greenhouse ATS format
+    signals:
+      - type: text_contains
+        value: "greenhouse"
+    name_strategy: first_line
+
+  - name: flat-text-no-headings
+    description: Fallback for PDFs with minimal structure — uses NER + date detection
+    signals:
+      - type: heading_count_max
+        value: 2
+      - type: line_count_min
+        value: 20
+    section_keywords:
+      experience: ["experience", "employment", "work history", "professional"]
+      education: ["education", "academic", "university", "college", "degree"]
+      skills: ["skills", "technologies", "technical", "proficient"]
+    name_strategy: ner_person_name
+    experience_strategy: date_range_splitting
+
+# Language detection heuristics
+language_signals:
+  de:
+    keywords: ["berufserfahrung", "ausbildung", "lebenslauf", "kenntnisse", "erfahrung", "sprachen"]
+    section_map:
+      berufserfahrung: Experience
+      ausbildung: Education
+      kenntnisse: Skills
+      sprachen: Languages
+  fr:
+    keywords: ["expérience", "formation", "compétences", "langues", "diplôme"]
+    section_map:
+      "expérience professionnelle": Experience
+      formation: Education
+      compétences: Skills
+  es:
+    keywords: ["experiencia", "educación", "habilidades", "idiomas", "formación"]
+    section_map:
+      "experiencia laboral": Experience
+      educación: Education
+      habilidades: Skills
+  pt:
+    keywords: ["experiência", "educação", "formação", "habilidades", "competências"]
+    section_map:
+      "experiência profissional": Experience
+      educação: Education
+      formação: Education
+      competências: Skills
+  nl:
+    keywords: ["werkervaring", "opleiding", "vaardigheden"]
+    section_map:
+      werkervaring: Experience
+      opleiding: Education
+      vaardigheden: Skills
+  ja:
+    keywords: ["職歴", "学歴", "スキル", "資格"]
+  zh:
+    keywords: ["工作经验", "教育背景", "技能", "项目经验"]
+  ko:
+    keywords: ["경력", "학력", "기술"]

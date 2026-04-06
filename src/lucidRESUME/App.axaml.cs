@@ -9,6 +9,7 @@ using lucidRESUME.Extraction;
 using lucidRESUME.Ingestion;
 using lucidRESUME.JobSearch;
 using lucidRESUME.JobSpec;
+using lucidRESUME.EmailTracker;
 using lucidRESUME.Matching;
 using lucidRESUME.UXTesting;
 using lucidRESUME.UXTesting.Players;
@@ -192,8 +193,17 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
+        var appDataDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "lucidRESUME");
+        Directory.CreateDirectory(appDataDir);
+        var aiSettingsPath = Path.Combine(appDataDir, "ai-settings.json");
+
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile(aiSettingsPath, optional: true, reloadOnChange: true)
+            .AddUserSecrets(typeof(App).Assembly, optional: true)
+            .AddEnvironmentVariables("LUCIDRESUME_")
             .Build();
 
         services.AddLogging();
@@ -205,10 +215,8 @@ public partial class App : Application
         services.AddAiTailoring(config);
         services.AddExport();
         services.AddCollabora(config);
+        services.AddEmailTracker(config);
 
-        var appDataDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "lucidRESUME");
         var dbPath = Path.Combine(appDataDir, "data.db");
         var jsonPath = Path.Combine(appDataDir, "data.json");
         services.AddSingleton<IAppStore>(_ => new SqliteAppStore(dbPath,
@@ -220,7 +228,9 @@ public partial class App : Application
         services.AddSingleton<JobsPageViewModel>();
         services.AddSingleton<SearchPageViewModel>();
         services.AddSingleton<ApplyPageViewModel>();
+        services.AddSingleton(new Services.AiSettingsPath(aiSettingsPath));
         services.AddSingleton<ProfilePageViewModel>();
+        services.AddSingleton<PipelinePageViewModel>();
 
         services.AddTransient<MainWindow>();
     }
