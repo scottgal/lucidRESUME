@@ -8,6 +8,9 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
     private readonly SqliteConnection _conn;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
+    /// <summary>Vector store for embedding search. Shares the same connection and lock.</summary>
+    public VectorStore Vectors { get; }
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         WriteIndented = true,
@@ -25,6 +28,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         _conn.LoadVector();
 
         InitSchema();
+        Vectors = new VectorStore(_conn, _lock);
 
         if (jsonMigrationPath is not null && File.Exists(jsonMigrationPath))
             MigrateFromJson(jsonMigrationPath);
