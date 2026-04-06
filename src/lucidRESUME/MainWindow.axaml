@@ -71,6 +71,24 @@
           <Run Text="lucid" FontStyle="Italic" Foreground="{DynamicResource LrAccentBlueBrush}"/><Run Text="RESUME" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
         </TextBlock>
 
+        <!-- Notification badge -->
+        <Border Background="{DynamicResource LrAccentBlueBgBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,0,8"
+                IsVisible="{Binding HasNotifications}">
+          <StackPanel Spacing="2">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Border Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="8" Padding="5,1" MinWidth="20"
+                      HorizontalAlignment="Center">
+                <TextBlock Text="{Binding NotificationCount}" FontSize="10" FontWeight="Bold"
+                           Foreground="White" HorizontalAlignment="Center"/>
+              </Border>
+              <TextBlock Text="new jobs" FontSize="10" Foreground="{DynamicResource LrAccentBlueBrush}" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Text="{Binding NotificationMessage}" FontSize="8" Foreground="{DynamicResource LrSecondaryTextBrush}"
+                       TextWrapping="Wrap" MaxWidth="170"
+                       IsVisible="{Binding NotificationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+          </StackPanel>
+        </Border>
+
         <!-- Each nav item: accent border + transparent button in a Panel -->
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"

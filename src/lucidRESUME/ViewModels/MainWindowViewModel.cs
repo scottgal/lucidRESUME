@@ -1,6 +1,7 @@
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using lucidRESUME.JobSearch;
 using lucidRESUME.Services;
 using lucidRESUME.ViewModels.Pages;
 
@@ -23,8 +24,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string _storeLabel = "Store: SQLite";
     [ObservableProperty] private string? _warningMessage;
 
+    // Notifications
+    [ObservableProperty] private int _notificationCount;
+    [ObservableProperty] private string? _notificationMessage;
+    [ObservableProperty] private bool _hasNotifications;
+
     private readonly Dictionary<string, ViewModelBase> _pages;
     private readonly StartupHealthCheck? _healthCheck;
+    private readonly SearchWatchPoller? _watchPoller;
+    private PeriodicTimer? _pollTimer;
 
     /// <summary>Get a page VM by key. Used by UX testing to bypass UI interactions.</summary>
     public ViewModelBase? GetPage(string key) =>
@@ -37,7 +45,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ApplyPageViewModel applyPage,
         PipelinePageViewModel pipelinePage,
         ProfilePageViewModel profilePage,
-        StartupHealthCheck? healthCheck = null)
+        StartupHealthCheck? healthCheck = null,
+        SearchWatchPoller? watchPoller = null)
     {
         _pages = new Dictionary<string, ViewModelBase>(StringComparer.OrdinalIgnoreCase)
         {
@@ -50,6 +59,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         };
         _currentPage = resumePage;
         _healthCheck = healthCheck;
+        _watchPoller = watchPoller;
     }
 
     public async Task InitAsync()
@@ -128,6 +138,51 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
         if (_healthCheck.Warnings.Count > 0)
             WarningMessage = string.Join("\n", _healthCheck.Warnings);
+
+        // Start watch polling timer (every 5 minutes)
+        if (_watchPoller is not null)
+            StartWatchPolling();
+    }
+
+    private void StartWatchPolling()
+    {
+        _pollTimer = new PeriodicTimer(TimeSpan.FromMinutes(5));
+        _ = PollWatchesLoopAsync();
+    }
+
+    private async Task PollWatchesLoopAsync()
+    {
+        if (_watchPoller is null || _pollTimer is null) return;
+
+        // Initial poll after 30 seconds (let the app settle)
+        await Task.Delay(30_000);
+        await PollOnceAsync();
+
+        while (await _pollTimer.WaitForNextTickAsync())
+        {
+            await PollOnceAsync();
+        }
+    }
+
+    private async Task PollOnceAsync()
+    {
+        if (_watchPoller is null) return;
+        try
+        {
+            var notifications = await _watchPoller.PollDueWatchesAsync();
+            if (notifications.Count > 0)
+            {
+                var total = notifications.Sum(n => n.NewJobCount);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    NotificationCount += total;
+                    HasNotifications = NotificationCount > 0;
+                    NotificationMessage = $"{total} new job(s) found: " +
+                        string.Join(", ", notifications.Select(n => $"{n.WatchName} ({n.NewJobCount})"));
+                });
+            }
+        }
+        catch { /* polling failure is non-fatal */ }
     }
 
     [RelayCommand]
