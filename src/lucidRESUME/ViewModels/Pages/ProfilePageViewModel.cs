@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.AI;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Persistence;
+using lucidRESUME.GitHub;
 using lucidRESUME.Services;
 
 namespace lucidRESUME.ViewModels.Pages;
@@ -14,6 +15,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     private readonly IAppStore _store;
     private readonly ModelDiscoveryService _modelDiscovery;
     private readonly AiSettingsPath _aiSettingsPath;
+    private readonly GitHubSkillImporter _gitHubImporter;
     private CancellationTokenSource? _saveCts;
     private bool _isLoading;
 
@@ -55,11 +57,17 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     [ObservableProperty] private bool _isLoadingModels;
     [ObservableProperty] private string? _aiSettingsStatus;
 
-    public ProfilePageViewModel(IAppStore store, ModelDiscoveryService modelDiscovery, AiSettingsPath aiSettingsPath)
+    // ── GitHub Import ──────────────────────────────────────────────────────
+    [ObservableProperty] private string _gitHubUsername = "";
+    [ObservableProperty] private bool _isImportingGitHub;
+    [ObservableProperty] private string? _gitHubImportStatus;
+
+    public ProfilePageViewModel(IAppStore store, ModelDiscoveryService modelDiscovery, AiSettingsPath aiSettingsPath, GitHubSkillImporter gitHubImporter)
     {
         _store = store;
         _modelDiscovery = modelDiscovery;
         _aiSettingsPath = aiSettingsPath;
+        _gitHubImporter = gitHubImporter;
 
         SubscribeCollections();
 
@@ -190,6 +198,59 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         catch
         {
             // Silently ignore save errors for now
+        }
+    }
+
+    // ── GitHub Import ────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task ImportGitHub()
+    {
+        if (string.IsNullOrWhiteSpace(GitHubUsername)) return;
+        IsImportingGitHub = true;
+        GitHubImportStatus = "Importing...";
+        try
+        {
+            var result = await _gitHubImporter.ImportAsync(GitHubUsername.Trim());
+
+            // Store projects and profile data into the resume
+            await _store.MutateAsync(state =>
+            {
+                state.Resume ??= new Core.Models.Resume.ResumeDocument();
+
+                // Add GitHub projects that aren't already present
+                var existingUrls = state.Resume.Projects.Select(p => p.Url).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                foreach (var project in result.Projects.Where(p => !existingUrls.Contains(p.Url)))
+                    state.Resume.Projects.Add(project);
+
+                // Enrich PersonalInfo from GitHub profile
+                if (result.Profile is { } profile)
+                {
+                    state.Resume.Personal.GitHubUrl ??= profile.HtmlUrl;
+                    state.Resume.Personal.FullName ??= profile.Name;
+                    state.Resume.Personal.WebsiteUrl ??= profile.Blog;
+                }
+            });
+
+            var skillCount = result.SkillEntries.Count;
+            var repoCount = result.ReposAnalysed;
+            var projectCount = result.Projects.Count;
+            GitHubImportStatus = $"Imported {skillCount} skills from {repoCount} repos, {projectCount} projects added";
+
+            if (result.Warnings.Count > 0)
+                GitHubImportStatus += $" ({result.Warnings.Count} warnings)";
+        }
+        catch (GitHubRateLimitException ex)
+        {
+            GitHubImportStatus = $"Rate limited. Resets at {ex.ResetsAt:HH:mm UTC}";
+        }
+        catch (Exception ex)
+        {
+            GitHubImportStatus = $"Import failed: {ex.Message}";
+        }
+        finally
+        {
+            IsImportingGitHub = false;
         }
     }
 

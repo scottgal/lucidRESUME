@@ -139,6 +139,29 @@ public sealed class SkillLedgerBuilder
         return ledger;
     }
 
+    /// <summary>
+    /// Merges externally-sourced skill evidence (e.g. from GitHub) into an existing ledger.
+    /// Existing entries get additional evidence; new skills are added.
+    /// </summary>
+    public static void MergeEvidence(SkillLedger ledger, IReadOnlyList<SkillLedgerEntry> externalEntries)
+    {
+        foreach (var external in externalEntries)
+        {
+            var existing = ledger.Find(external.SkillName);
+            if (existing != null)
+            {
+                existing.Evidence.AddRange(external.Evidence);
+                existing.Category ??= external.Category;
+                CalculateYears(existing);
+            }
+            else
+            {
+                ledger.Entries.Add(external);
+            }
+        }
+        ledger.Entries = ledger.Entries.OrderByDescending(e => e.Strength).ToList();
+    }
+
     private static Guid? ParseGuidSafe(string? s) =>
         s is not null && Guid.TryParse(s.AsSpan(), out var g) ? g : null;
 

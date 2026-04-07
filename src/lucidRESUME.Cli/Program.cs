@@ -10,5 +10,6 @@ root.Subcommands.Add(CompoundMatchCommand.Build());
 root.Subcommands.Add(TrainCommand.Build());
 root.Subcommands.Add(TuneCommand.Build());
 root.Subcommands.Add(BatchTestCommand.Build());
+root.Subcommands.Add(GitHubImportCommand.Build());
 
 return await root.Parse(args).InvokeAsync();

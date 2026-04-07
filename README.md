@@ -235,14 +235,15 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 
 ## Roadmap
 
+- [x] Resume improvement UX - synthesized suggestions
+- [x] Automated job polling from skill community search queries
 - [ ] Resume extraction full RRF fusion (same pattern as JD extraction)
-- [ ] Resume improvement UX - synthesized suggestions
-- [ ] Career planner UI page with gap analysis visualization
-- [ ] Automated job polling from skill community search queries
+- [ ] Career planner UI page with gap analysis visualization (backend done)
 - [ ] Leiden community detection (upgrade from Louvain)
 - [ ] Temporal skill drift across resume variants
 - [ ] DOCX/PDF export of tailored resumes
 - [ ] LinkedIn JSON import
+- [ ] GitHub repo skills import
 - [ ] DocLayNet ONNX model for offline PDF layout detection (no Docker)
 
 ---

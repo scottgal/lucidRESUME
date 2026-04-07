@@ -40,4 +40,5 @@ public enum EvidenceSource
     Education,          // mentioned in education (coursework, thesis)
     NerExtracted,       // detected by NER model
     LlmExtracted,       // recovered by LLM
+    GitHubRepository,   // extracted from GitHub repo languages/topics
 }

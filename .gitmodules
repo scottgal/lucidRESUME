@@ -1,0 +1,3 @@
+[submodule "lib/lucidrag"]
+	path = lib/lucidrag
+	url = https://github.com/scottgal/lucidrag.git

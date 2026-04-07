@@ -6,6 +6,7 @@ using lucidRESUME.Extraction;
 using lucidRESUME.Ingestion;
 using lucidRESUME.JobSearch;
 using lucidRESUME.JobSpec;
+using lucidRESUME.GitHub;
 using lucidRESUME.Matching;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +23,7 @@ public static class ServiceBootstrap
             .AddJsonFile("appsettings.json", optional: true)
             .AddJsonFile(configFile ?? Path.Combine(Directory.GetCurrentDirectory(), "lucidresume.json"), optional: true)
             .AddEnvironmentVariables("LUCIDRESUME_")
+            .AddUserSecrets(typeof(ServiceBootstrap).Assembly, optional: true)
             .Build();
 
         var services = new ServiceCollection();
@@ -37,6 +39,7 @@ public static class ServiceBootstrap
         services.AddExport();
         services.AddJobSearch(config);
         services.AddAiTailoring(config);
+        services.AddGitHub(config);
 
         var appDataDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

@@ -10,11 +10,13 @@
     <ProjectReference Include="..\lucidRESUME.Export\lucidRESUME.Export.csproj" />
     <ProjectReference Include="..\lucidRESUME.JobSearch\lucidRESUME.JobSearch.csproj" />
     <ProjectReference Include="..\lucidRESUME.AI\lucidRESUME.AI.csproj" />
+    <ProjectReference Include="..\lucidRESUME.GitHub\lucidRESUME.GitHub.csproj" />
     <ProjectReference Include="..\lucidRESUME.Parsing\lucidRESUME.Parsing.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.5" />
     <PackageReference Include="System.CommandLine" Version="3.0.0-preview.2.26159.112" />
   </ItemGroup>
 
@@ -33,6 +35,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>e7e3de57-7a67-4384-ba07-90139e44ae83</UserSecretsId>
   </PropertyGroup>
 
 </Project>

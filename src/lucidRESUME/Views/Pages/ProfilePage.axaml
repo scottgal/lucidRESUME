@@ -171,7 +171,37 @@
         </Grid>
       </Border>
 
-      <!-- Card 5: AI Provider -->
+      <!-- Card 5: GitHub Import -->
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
+              CornerRadius="8" Padding="0">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
+            <TextBlock Text="GitHub Import" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <TextBlock Text="Import skills and projects from your GitHub repos."
+                       Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" TextWrapping="Wrap"/>
+            <Grid ColumnDefinitions="*,8,Auto" RowDefinitions="Auto,Auto">
+              <TextBlock Grid.Row="0" Grid.Column="0"
+                         Text="GitHub Username" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
+              <TextBox Grid.Row="1" Grid.Column="0"
+                       Text="{Binding GitHubUsername}"
+                       Watermark="e.g. scottgal"
+                       CornerRadius="6" Padding="10,8"/>
+              <Button Grid.Row="1" Grid.Column="2"
+                      Content="Import" Command="{Binding ImportGitHubCommand}"
+                      Padding="16,8" VerticalAlignment="Bottom"/>
+            </Grid>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <ProgressBar IsVisible="{Binding IsImportingGitHub}" IsIndeterminate="True" Width="60" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding GitHubImportStatus}" Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="11"
+                         VerticalAlignment="Center" TextWrapping="Wrap"
+                         IsVisible="{Binding GitHubImportStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Card 6: AI Provider -->
       <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
               CornerRadius="8" Padding="0">
         <Grid ColumnDefinitions="3,*">

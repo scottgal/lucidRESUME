@@ -10,6 +10,7 @@ using lucidRESUME.Ingestion;
 using lucidRESUME.JobSearch;
 using lucidRESUME.JobSpec;
 using lucidRESUME.EmailTracker;
+using lucidRESUME.GitHub;
 using lucidRESUME.Matching;
 using lucidRESUME.UXTesting;
 using lucidRESUME.UXTesting.Players;
@@ -216,6 +217,7 @@ public partial class App : Application
         services.AddExport();
         services.AddCollabora(config);
         services.AddEmailTracker(config);
+        services.AddGitHub(config);
 
         var dbPath = Path.Combine(appDataDir, "data.db");
         var jsonPath = Path.Combine(appDataDir, "data.json");

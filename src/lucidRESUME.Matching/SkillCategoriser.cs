@@ -83,6 +83,25 @@ public static class SkillCategoriser
         }
     }
 
+    /// <summary>
+    /// Categorise a single skill name, returning its category string or null.
+    /// </summary>
+    public static string? CategoriseSkill(string skillName)
+    {
+        var lower = skillName.ToLowerInvariant();
+        var subCat = FindItSubCategory(lower);
+        if (subCat != null) return subCat;
+
+        var canonical = SkillTaxonomy.Canonicalize(lower);
+        if (canonical != null)
+        {
+            var skillDomain = FindDomainForSkill(canonical);
+            if (skillDomain != null && DomainToCategory.TryGetValue(skillDomain, out var cat))
+                return cat;
+        }
+        return null;
+    }
+
     private static string? FindItSubCategory(string skillLower)
     {
         foreach (var (keywords, subCat) in ItSubCategories)
