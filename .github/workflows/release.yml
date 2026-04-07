@@ -61,24 +61,32 @@ jobs:
       - name: Restore
         run: dotnet restore ${{ env.PROJECT }} -r ${{ matrix.rid }}
 
-      - name: Publish self-contained app
-        shell: bash
-        run: |
-          EXTRA_PROPS="/p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true"
-          # macOS: native .dylib files can't reliably extract from single-file bundles
-          # due to Gatekeeper/notarization blocking execution from temp dirs.
-          # Keep them alongside the executable instead.
-          if [[ "${{ matrix.rid }}" != osx-* ]]; then
-            EXTRA_PROPS="$EXTRA_PROPS /p:IncludeNativeLibrariesForSelfExtract=true"
-          fi
-          dotnet publish ${{ env.PROJECT }} \
-            -c Release \
-            -r ${{ matrix.rid }} \
-            --self-contained true \
-            --no-restore \
-            -o artifacts/publish/${{ matrix.rid }} \
-            /p:Version=${{ steps.version.outputs.VERSION }} \
-            $EXTRA_PROPS
+      - name: Publish self-contained app (non-macOS)
+        if: ${{ !startsWith(matrix.rid, 'osx-') }}
+        run: >
+          dotnet publish ${{ env.PROJECT }}
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          --no-restore
+          -o artifacts/publish/${{ matrix.rid }}
+          -p:Version=${{ steps.version.outputs.VERSION }}
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Publish self-contained app (macOS)
+        if: ${{ startsWith(matrix.rid, 'osx-') }}
+        run: >
+          dotnet publish ${{ env.PROJECT }}
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          --no-restore
+          -o artifacts/publish/${{ matrix.rid }}
+          -p:Version=${{ steps.version.outputs.VERSION }}
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
 
       - name: Create archive
         shell: bash
