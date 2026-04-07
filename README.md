@@ -255,7 +255,7 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 - [x] Resume extraction RRF fusion (multi-source confidence boost, same pattern as JD)
 - [ ] Career planner UI page with gap analysis visualization (backend done)
 - [x] Leiden community detection (refinement phase over Louvain greedy moves)
-- [ ] Temporal skill drift across resume variants
+- [x] Temporal skill drift across resume variants (compare ledgers, detect added/dropped/changed skills)
 - [x] DOCX export of tailored resumes (pure C# via OpenXml, cross-platform)
 - [x] PDF export of tailored resumes (QuestPDF, professional formatting)
 - [x] LinkedIn data export import (ZIP archive with full profile)
