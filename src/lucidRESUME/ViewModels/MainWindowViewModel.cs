@@ -46,6 +46,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         PipelinePageViewModel pipelinePage,
         ProfilePageViewModel profilePage,
         MyDataPageViewModel myDataPage,
+        CareerPlannerPageViewModel careerPlannerPage,
         HelpPageViewModel helpPage,
         StartupHealthCheck? healthCheck = null,
         SearchWatchPoller? watchPoller = null)
@@ -54,6 +55,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         {
             ["Resume"] = resumePage,
             ["MyData"] = myDataPage,
+            ["Career"] = careerPlannerPage,
             ["Jobs"] = jobsPage,
             ["Search"] = searchPage,
             ["Apply"] = applyPage,

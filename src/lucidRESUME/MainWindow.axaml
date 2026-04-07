@@ -113,6 +113,14 @@
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Career}"/>
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Career}"/>
+          <Button Classes="nav-btn" Content="Career"
+                  Command="{Binding NavigateCommand}" CommandParameter="Career"/>
+        </Panel>
+        <Panel>
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Jobs}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Jobs}"/>

@@ -233,6 +233,7 @@ public partial class App : Application
         services.AddSingleton(new Services.AiSettingsPath(aiSettingsPath));
         services.AddSingleton<ProfilePageViewModel>();
         services.AddSingleton<MyDataPageViewModel>();
+        services.AddSingleton<CareerPlannerPageViewModel>();
         services.AddSingleton<PipelinePageViewModel>();
         services.AddSingleton<HelpPageViewModel>();
 

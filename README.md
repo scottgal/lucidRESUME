@@ -253,7 +253,7 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 - [x] Resume improvement UX - synthesized suggestions
 - [x] Automated job polling from skill community search queries
 - [x] Resume extraction RRF fusion (multi-source confidence boost, same pattern as JD)
-- [ ] Career planner UI page with gap analysis visualization (backend done)
+- [x] Career planner UI page with gap analysis visualization
 - [x] Leiden community detection (refinement phase over Louvain greedy moves)
 - [x] Temporal skill drift across resume variants (compare ledgers, detect added/dropped/changed skills)
 - [x] DOCX export of tailored resumes (pure C# via OpenXml, cross-platform)

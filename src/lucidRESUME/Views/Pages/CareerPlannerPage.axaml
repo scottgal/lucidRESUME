@@ -1,0 +1,153 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:graph="using:lucidRESUME.Matching.Graph"
+             x:DataType="vm:CareerPlannerPageViewModel"
+             x:Class="lucidRESUME.Views.Pages.CareerPlannerPage">
+
+  <ScrollViewer Background="{DynamicResource LrPageBgBrush}">
+    <StackPanel Margin="24,16" Spacing="20" MaxWidth="900">
+
+      <TextBlock Text="Career Planner" FontSize="22" FontWeight="Bold"
+                 Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+      <TextBlock Text="Select a job to see what skills you need, what you already have, and what to focus on."
+                 Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
+
+      <!-- Job selector -->
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}"
+              BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock Text="Target Role" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <ComboBox ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
+                      MinWidth="400" FontSize="12" DisplayMemberBinding="{Binding Title}"/>
+            <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding HasPlan}">
+              <Border CornerRadius="10" Background="{DynamicResource LrAccentBlueBrush}" Padding="10,3">
+                <TextBlock FontSize="12" Foreground="White">
+                  <Run Text="Fit: "/><Run Text="{Binding CurrentFit, StringFormat='{}{0:P0}'}"/>
+                </TextBlock>
+              </Border>
+              <Border CornerRadius="10" Background="{DynamicResource LrAccentGreenBrush}" Padding="10,3">
+                <TextBlock FontSize="12" Foreground="White">
+                  <Run Text="Coverage: "/><Run Text="{Binding RequiredCoverage, StringFormat='{}{0:P0}'}"/>
+                </TextBlock>
+              </Border>
+              <Border CornerRadius="10" Background="#FF9800" Padding="10,3">
+                <TextBlock FontSize="12" Foreground="White">
+                  <Run Text="{Binding ActionsToGoodFit}"/><Run Text=" actions to good fit"/>
+                </TextBlock>
+              </Border>
+            </StackPanel>
+            <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="200" HorizontalAlignment="Left"/>
+            <TextBlock Text="{Binding StatusMessage}" FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"
+                       IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Low Effort (quick wins) -->
+      <Border IsVisible="{Binding HasPlan}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentGreenBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentGreenBrush}">
+              <Run Text="Quick Wins — Low Effort ("/>
+              <Run Text="{Binding LowEffort.Count}"/>
+              <Run Text=")"/>
+            </TextBlock>
+            <ItemsControl ItemsSource="{Binding LowEffort}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="graph:CareerRecommendation">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,2">
+                    <StackPanel Spacing="2">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding SkillName}" FontWeight="SemiBold" FontSize="12"
+                                   Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+                        <Border CornerRadius="6" Background="{DynamicResource LrAccentBlueBgBrush}" Padding="5,1">
+                          <TextBlock Text="{Binding GapType}" FontSize="9" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                        </Border>
+                      </StackPanel>
+                      <TextBlock Text="{Binding Advice}" FontSize="10" TextWrapping="Wrap"
+                                 Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Medium Effort -->
+      <Border IsVisible="{Binding HasPlan}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="#FF9800" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#FF9800">
+              <Run Text="Side Projects — Medium Effort ("/>
+              <Run Text="{Binding MediumEffort.Count}"/>
+              <Run Text=")"/>
+            </TextBlock>
+            <ItemsControl ItemsSource="{Binding MediumEffort}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="graph:CareerRecommendation">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,2">
+                    <StackPanel Spacing="2">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding SkillName}" FontWeight="SemiBold" FontSize="12"
+                                   Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+                        <Border CornerRadius="6" Background="{DynamicResource LrAccentBlueBgBrush}" Padding="5,1">
+                          <TextBlock Text="{Binding GapType}" FontSize="9" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                        </Border>
+                      </StackPanel>
+                      <TextBlock Text="{Binding Advice}" FontSize="10" TextWrapping="Wrap"
+                                 Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- High Effort -->
+      <Border IsVisible="{Binding HasPlan}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentRedBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentRedBrush}">
+              <Run Text="New Learning — High Effort ("/>
+              <Run Text="{Binding HighEffort.Count}"/>
+              <Run Text=")"/>
+            </TextBlock>
+            <ItemsControl ItemsSource="{Binding HighEffort}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="graph:CareerRecommendation">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,2">
+                    <StackPanel Spacing="2">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding SkillName}" FontWeight="SemiBold" FontSize="12"
+                                   Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+                        <Border CornerRadius="6" Background="{DynamicResource LrAccentBlueBgBrush}" Padding="5,1">
+                          <TextBlock Text="{Binding GapType}" FontSize="9" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                        </Border>
+                      </StackPanel>
+                      <TextBlock Text="{Binding Advice}" FontSize="10" TextWrapping="Wrap"
+                                 Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
