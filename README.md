@@ -118,7 +118,7 @@ Every major job site wants your email, your browsing history, and permission to 
 Seven job board adapters searched in parallel (Adzuna, Reed, Findwork, Arbeitnow, JoinRise, Jobicy, Remotive). Near-duplicate detection via embedding similarity. Hoover role flagging.
 
 ### Export
-JSON Resume (standard schema), Markdown, and **DOCX** (professionally formatted Word document via OpenXml, cross-platform).
+JSON Resume (standard schema), Markdown, **DOCX** (Word via OpenXml), and **PDF** ([QuestPDF](https://www.questpdf.com/) — professional formatting, cross-platform).
 
 ### Documentation
 - [Release & Archive Guide](docs/release.md) - release workflow, platform archives, and single-page docs archive.
@@ -193,7 +193,7 @@ lucidRESUME (Avalonia UI - 6 pages: My CV, Jobs, Add Job, Apply, Pipeline, Profi
     ├── Matching         Skill ledger, skill graph, career planner, coverage analysis
     ├── AI               Ollama/Anthropic/OpenAI providers, AI detection, de-AI, translation
     ├── EmailTracker     IMAP scanning, email classification, application matching
-    ├── Export           JSON Resume + Markdown + DOCX exporters
+    ├── Export           JSON Resume + Markdown + DOCX + PDF exporters
     ├── Collabora        LibreOffice/editor integration, document openers
     ├── UXTesting        UI automation framework (REPL, MCP, script runner)
     └── Core             Domain models, interfaces, persistence (SQLite + sqlite-vec)
@@ -257,7 +257,7 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 - [ ] Leiden community detection (upgrade from Louvain)
 - [ ] Temporal skill drift across resume variants
 - [x] DOCX export of tailored resumes (pure C# via OpenXml, cross-platform)
-- [ ] PDF export of tailored resumes
+- [x] PDF export of tailored resumes (QuestPDF, professional formatting)
 - [x] LinkedIn data export import (ZIP archive with full profile)
 - [x] GitHub repo skills import (languages, topics, README analysis via lucidRAG)
 - [ ] DocLayNet ONNX model for offline PDF layout detection (no Docker)
