@@ -1,0 +1,94 @@
+name: my-data-page-test
+description: Test the My Data page — skill ledger, evidence drill-down, projects, personal info
+default_delay: 500
+
+actions:
+  - type: Wait
+    value: "2000"
+
+  # Navigate to My Data page
+  - type: Navigate
+    value: mydata
+  - type: Wait
+    value: "1500"
+  - type: Screenshot
+    value: mydata-initial
+
+  # Scroll down to see skill ledger
+  - type: Scroll
+    value: "300"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: mydata-skill-ledger
+
+  # Scroll to experience
+  - type: Scroll
+    value: "600"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: mydata-experience
+
+  # Scroll to projects
+  - type: Scroll
+    value: "900"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: mydata-projects
+
+  # Scroll to bottom (issues)
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: mydata-bottom
+
+  # Go back to top
+  - type: Scroll
+    value: top
+  - type: Wait
+    value: "300"
+
+  # Also capture the profile page (GitHub import)
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: profile-github-import
+
+  # Navigate all pages to check nothing broke
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: nav-resume
+
+  - type: Navigate
+    value: mydata
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: nav-mydata
+
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: nav-jobs
+
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: nav-pipeline

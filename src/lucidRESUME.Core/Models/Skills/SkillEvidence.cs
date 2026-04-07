@@ -41,4 +41,5 @@ public enum EvidenceSource
     NerExtracted,       // detected by NER model
     LlmExtracted,       // recovered by LLM
     GitHubRepository,   // extracted from GitHub repo languages/topics
+    Manual,             // added by the user directly
 }

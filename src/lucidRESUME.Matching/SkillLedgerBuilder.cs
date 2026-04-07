@@ -1,4 +1,5 @@
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Models.Skills;
 
@@ -137,6 +138,82 @@ public sealed class SkillLedgerBuilder
         ledger.Issues = issues;
 
         return ledger;
+    }
+
+    /// <summary>
+    /// Applies user corrections: dismissals, renames, manual additions.
+    /// Call after BuildAsync + MergeEvidence to layer user intent on top of extracted data.
+    /// </summary>
+    public static void ApplyOverrides(SkillLedger ledger, UserOverrides overrides)
+    {
+        // 1. Remove dismissed skills
+        ledger.Entries.RemoveAll(e => overrides.DismissedSkills.Contains(e.SkillName));
+
+        // 2. Remove dismissed evidence
+        foreach (var dismissed in overrides.DismissedEvidence)
+        {
+            var entry = ledger.Find(dismissed.SkillName);
+            if (entry == null) continue;
+            entry.Evidence.RemoveAll(e =>
+                e.Source == dismissed.Source &&
+                e.ExperienceId == dismissed.ExperienceId &&
+                (dismissed.SourceText == null || e.SourceText == dismissed.SourceText));
+            // Remove entry entirely if no evidence remains
+            if (entry.Evidence.Count == 0)
+                ledger.Entries.Remove(entry);
+            else
+                CalculateYears(entry);
+        }
+
+        // 3. Apply renames
+        foreach (var (oldName, newName) in overrides.SkillRenames)
+        {
+            var entry = ledger.Find(oldName);
+            if (entry != null)
+            {
+                var existing = ledger.Find(newName);
+                if (existing != null && existing != entry)
+                {
+                    // Merge into existing entry with the new name
+                    existing.Evidence.AddRange(entry.Evidence);
+                    CalculateYears(existing);
+                    ledger.Entries.Remove(entry);
+                }
+                else
+                {
+                    entry.SkillName = newName;
+                }
+            }
+        }
+
+        // 4. Add manual skills
+        foreach (var manual in overrides.ManualSkills)
+        {
+            var entry = ledger.Find(manual.SkillName);
+            if (entry == null)
+            {
+                entry = new SkillLedgerEntry
+                {
+                    SkillName = manual.SkillName,
+                    Category = manual.Category,
+                };
+                ledger.Entries.Add(entry);
+            }
+            // Add manual evidence if not already present
+            if (!entry.Evidence.Any(e => e.Source == EvidenceSource.Manual))
+            {
+                entry.Evidence.Add(new SkillEvidence
+                {
+                    SourceText = manual.Note ?? "Added manually",
+                    Source = EvidenceSource.Manual,
+                    Confidence = 1.0,
+                });
+                if (manual.YearsExperience.HasValue)
+                    entry.CalculatedYears = Math.Max(entry.CalculatedYears, manual.YearsExperience.Value);
+            }
+        }
+
+        ledger.Entries = ledger.Entries.OrderByDescending(e => e.Strength).ToList();
     }
 
     /// <summary>

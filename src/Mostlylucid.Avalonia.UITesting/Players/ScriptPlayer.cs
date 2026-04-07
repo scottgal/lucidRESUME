@@ -326,7 +326,19 @@ public sealed class ScriptPlayer
                     case "top": sv.ScrollToHome(); break;
                     case "bottom": sv.ScrollToEnd(); break;
                     case "up": sv.LineUp(); break;
-                    default: sv.LineDown(); break;
+                    case "down": sv.LineDown(); break;
+                    default:
+                        // Support pixel offset: "300" scrolls to 300px, "+200" scrolls down 200px
+                        if (double.TryParse(action.Value, out var px))
+                        {
+                            if (action.Value!.StartsWith('+') || action.Value.StartsWith('-'))
+                                sv.Offset = sv.Offset.WithY(sv.Offset.Y + px);
+                            else
+                                sv.Offset = sv.Offset.WithY(px);
+                        }
+                        else
+                            sv.LineDown();
+                        break;
                 }
             }
             tcs.SetResult();

@@ -1,0 +1,294 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:mydata="using:lucidRESUME.ViewModels.Pages.MyData"
+             xmlns:skills="using:lucidRESUME.Core.Models.Skills"
+             xmlns:resume="using:lucidRESUME.Core.Models.Resume"
+             x:DataType="vm:MyDataPageViewModel"
+             x:Class="lucidRESUME.Views.Pages.MyDataPage">
+
+  <ScrollViewer Background="{DynamicResource LrPageBgBrush}">
+    <StackPanel Margin="24,16" Spacing="20" MaxWidth="900">
+
+      <TextBlock Text="My Data" FontSize="22" FontWeight="Bold"
+                 Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,4"/>
+      <TextBlock Text="Everything extracted from your resume and GitHub. Click any skill to see evidence."
+                 Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,8"/>
+
+      <!-- No data state -->
+      <Border IsVisible="{Binding !HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
+              CornerRadius="8" Padding="24">
+        <TextBlock Text="Import a resume on the My CV page to see your data here."
+                   Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="14" TextWrapping="Wrap"/>
+      </Border>
+
+      <!-- Card 1: Personal Info -->
+      <Border IsVisible="{Binding HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock Text="Personal Info" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+              <TextBlock Grid.Row="0" Grid.Column="2" Text="Email" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+              <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding FullName}" CornerRadius="4" Padding="8,4" FontSize="13"/>
+              <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding Email}" CornerRadius="4" Padding="8,4" FontSize="13"/>
+
+              <TextBlock Grid.Row="2" Grid.Column="0" Text="Phone" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+              <TextBlock Grid.Row="2" Grid.Column="2" Text="Location" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+              <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding Phone}" CornerRadius="4" Padding="8,4" FontSize="13"/>
+              <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding Location}" CornerRadius="4" Padding="8,4" FontSize="13"/>
+
+              <TextBlock Grid.Row="4" Grid.Column="0" Text="GitHub" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+              <TextBlock Grid.Row="4" Grid.Column="2" Text="LinkedIn" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+              <TextBox Grid.Row="5" Grid.Column="0" Text="{Binding GitHub}" CornerRadius="4" Padding="8,4" FontSize="13"/>
+              <TextBox Grid.Row="5" Grid.Column="2" Text="{Binding LinkedIn}" CornerRadius="4" Padding="8,4" FontSize="13"/>
+            </Grid>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Card 2: Skill Ledger -->
+      <Border IsVisible="{Binding HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentGreenBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="10">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <TextBlock Text="Skill Ledger" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+              <Border CornerRadius="10" Background="{DynamicResource LrAccentGreenBrush}" Padding="8,2">
+                <TextBlock FontSize="11" Foreground="White">
+                  <Run Text="{Binding StrongCount}"/> strong
+                </TextBlock>
+              </Border>
+              <Border CornerRadius="10" Background="#FF9800" Padding="8,2">
+                <TextBlock FontSize="11" Foreground="White">
+                  <Run Text="{Binding ModerateCount}"/> moderate
+                </TextBlock>
+              </Border>
+              <Border CornerRadius="10" Background="{DynamicResource LrAccentRedBrush}" Padding="8,2">
+                <TextBlock FontSize="11" Foreground="White">
+                  <Run Text="{Binding WeakCount}"/> weak
+                </TextBlock>
+              </Border>
+            </StackPanel>
+
+            <!-- Filters -->
+            <Grid ColumnDefinitions="*,8,Auto">
+              <TextBox Grid.Column="0" Text="{Binding SkillSearch}" Watermark="Search skills..."
+                       CornerRadius="4" Padding="8,4" FontSize="12"/>
+              <ComboBox Grid.Column="2" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
+                        MinWidth="140" FontSize="12"/>
+            </Grid>
+
+            <CheckBox Content="Show dismissed" IsChecked="{Binding ShowDismissed}" FontSize="11"
+                      Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+
+            <!-- Skill rows -->
+            <ItemsControl ItemsSource="{Binding FilteredSkills}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="mydata:SkillLedgerEntryVm">
+                  <Border Margin="0,2" CornerRadius="4" Padding="0"
+                          Background="{DynamicResource LrCardBgBrush}"
+                          Opacity="{Binding IsDismissed, Converter={x:Static BoolConverters.Not}}">
+                    <StackPanel>
+                      <!-- Main row -->
+                      <Button Padding="10,6" Cursor="Hand" Background="Transparent"
+                              HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                              Command="{Binding ToggleExpandCommand}">
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                          <!-- Skill name -->
+                          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="{Binding SkillName}" FontWeight="SemiBold" FontSize="13"
+                                       VerticalAlignment="Center" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+                            <Border CornerRadius="8" Background="{DynamicResource LrAccentBlueBgBrush}" Padding="6,1"
+                                    IsVisible="{Binding Category, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                              <TextBlock Text="{Binding Category}" FontSize="9" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                            </Border>
+                          </StackPanel>
+
+                          <!-- Strength -->
+                          <TextBlock Grid.Column="1" FontSize="11" FontWeight="SemiBold" Margin="8,0"
+                                     VerticalAlignment="Center"
+                                     Foreground="{DynamicResource LrAccentGreenBrush}">
+                            <Run Text="{Binding Strength, StringFormat='{}{0:F2}'}"/>
+                          </TextBlock>
+
+                          <!-- Years -->
+                          <TextBlock Grid.Column="2" FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"
+                                     VerticalAlignment="Center" Margin="8,0">
+                            <Run Text="~"/><Run Text="{Binding CalculatedYears, StringFormat='{}{0:F1}'}"/><Run Text=" yr"/>
+                          </TextBlock>
+
+                          <!-- Evidence count -->
+                          <TextBlock Grid.Column="3" FontSize="11" Foreground="{DynamicResource LrSubtleTextBrush}"
+                                     VerticalAlignment="Center" Margin="8,0">
+                            <Run Text="{Binding EvidenceCount}"/><Run Text=" sources"/>
+                          </TextBlock>
+
+                          <!-- Dismiss button -->
+                          <Button Grid.Column="4" Content="x" FontSize="10" Padding="4,1"
+                                  Background="Transparent" Foreground="{DynamicResource LrSubtleTextBrush}"
+                                  Command="{Binding DismissCommand}" VerticalAlignment="Center"/>
+                        </Grid>
+                      </Button>
+
+                      <!-- Evidence panel (expanded) -->
+                      <Border IsVisible="{Binding IsExpanded}" Padding="16,4,10,8"
+                              Background="{DynamicResource LrPageBgBrush}">
+                        <ItemsControl ItemsSource="{Binding Evidence}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="mydata:SkillEvidenceVm">
+                              <Border Margin="0,2" Padding="6,3" CornerRadius="3">
+                                <Grid ColumnDefinitions="Auto,8,*,Auto">
+                                  <!-- Source badge -->
+                                  <Border Grid.Column="0" CornerRadius="6" Padding="6,1" VerticalAlignment="Center"
+                                          Background="{DynamicResource LrAccentBlueBgBrush}">
+                                    <TextBlock Text="{Binding SourceLabel}" FontSize="9" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                                  </Border>
+
+                                  <!-- Details -->
+                                  <StackPanel Grid.Column="2" Spacing="1">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                      <TextBlock Text="{Binding Company}" FontSize="11" FontWeight="SemiBold"
+                                                 Foreground="{DynamicResource LrPrimaryTextBrush}"
+                                                 IsVisible="{Binding Company, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                      <TextBlock Text="{Binding DateRange}" FontSize="10"
+                                                 Foreground="{DynamicResource LrSubtleTextBrush}"
+                                                 IsVisible="{Binding DateRange, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding SourceText}" FontSize="10" FontStyle="Italic" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource LrSecondaryTextBrush}" MaxLines="2"/>
+                                  </StackPanel>
+
+                                  <!-- Confidence -->
+                                  <TextBlock Grid.Column="3" FontSize="9" VerticalAlignment="Center"
+                                             Foreground="{DynamicResource LrSubtleTextBrush}">
+                                    <Run Text="{Binding Confidence, StringFormat='{}{0:P0}'}"/>
+                                  </TextBlock>
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </Border>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Add skill -->
+            <Border Background="{DynamicResource LrPageBgBrush}" CornerRadius="4" Padding="10,6">
+              <Grid ColumnDefinitions="*,8,Auto,8,Auto">
+                <TextBox Grid.Column="0" Text="{Binding NewSkillName}" Watermark="Add a skill..."
+                         CornerRadius="4" Padding="8,4" FontSize="12"/>
+                <ComboBox Grid.Column="2" SelectedItem="{Binding NewSkillCategory}" MinWidth="120" FontSize="11">
+                  <ComboBoxItem Content="Language"/>
+                  <ComboBoxItem Content="Framework"/>
+                  <ComboBoxItem Content="Cloud &amp; DevOps"/>
+                  <ComboBoxItem Content="Database"/>
+                  <ComboBoxItem Content="Tool"/>
+                  <ComboBoxItem Content="AI/ML"/>
+                  <ComboBoxItem Content="Methodology"/>
+                  <ComboBoxItem Content="Security"/>
+                </ComboBox>
+                <Button Grid.Column="4" Content="Add" Command="{Binding AddSkillCommand}" Padding="10,4" FontSize="11"/>
+              </Grid>
+            </Border>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Card 3: Experience -->
+      <Border IsVisible="{Binding HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock Text="Experience" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <ItemsControl ItemsSource="{Binding Experience}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="resume:WorkExperience">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,3">
+                    <StackPanel Spacing="2">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource LrPrimaryTextBrush}">
+                          <Run Text="{Binding Title}"/><Run Text=" — "/><Run Text="{Binding Company}"/>
+                        </TextBlock>
+                        <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource LrSubtleTextBrush}" VerticalAlignment="Center">
+                          <Run Text="{Binding StartDate, StringFormat='{}{0:MMM yyyy}'}"/>
+                          <Run Text=" – "/>
+                          <Run Text="{Binding EndDate, StringFormat='{}{0:MMM yyyy}', TargetNullValue='Present'}"/>
+                        </TextBlock>
+                      </Grid>
+                      <TextBlock Text="{Binding Location}" FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"
+                                 IsVisible="{Binding Location, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Card 4: Projects -->
+      <Border IsVisible="{Binding HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}">
+              <Run Text="Projects ("/>
+              <Run Text="{Binding Projects.Count}"/>
+              <Run Text=")"/>
+            </TextBlock>
+            <ItemsControl ItemsSource="{Binding Projects}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="resume:Project">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,2">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+                      <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"
+                                 TextWrapping="Wrap" MaxLines="2"
+                                 IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Card 5: Consistency Issues -->
+      <Border IsVisible="{Binding HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentYellowBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock Text="Issues" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <ItemsControl ItemsSource="{Binding Issues}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="skills:ConsistencyIssue">
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="8,4" Margin="0,2">
+                    <Grid ColumnDefinitions="Auto,8,*">
+                      <TextBlock Grid.Column="0" Text="{Binding SkillName}" FontWeight="SemiBold" FontSize="11"
+                                 Foreground="{DynamicResource LrAccentYellowBrush}" VerticalAlignment="Center"/>
+                      <TextBlock Grid.Column="2" Text="{Binding Description}" FontSize="11" TextWrapping="Wrap"
+                                 Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

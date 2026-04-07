@@ -45,6 +45,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ApplyPageViewModel applyPage,
         PipelinePageViewModel pipelinePage,
         ProfilePageViewModel profilePage,
+        MyDataPageViewModel myDataPage,
         HelpPageViewModel helpPage,
         StartupHealthCheck? healthCheck = null,
         SearchWatchPoller? watchPoller = null)
@@ -52,6 +53,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _pages = new Dictionary<string, ViewModelBase>(StringComparer.OrdinalIgnoreCase)
         {
             ["Resume"] = resumePage,
+            ["MyData"] = myDataPage,
             ["Jobs"] = jobsPage,
             ["Search"] = searchPage,
             ["Apply"] = applyPage,
