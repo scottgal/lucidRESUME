@@ -2,6 +2,7 @@ using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Ingestion.Docling;
 using lucidRESUME.Ingestion.Images;
 using lucidRESUME.Ingestion.Parsing;
+using lucidRESUME.Ingestion.LinkedIn;
 using lucidRESUME.Ingestion.Preview;
 using lucidRESUME.Parsing;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +25,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IDocumentImageCache>(_ => new FileSystemImageCache());
         services.AddSingleton<MorphDocxPreviewService>();
+        services.AddTransient<LinkedInZipParser>();
         services.AddDirectParsing();
         services.AddTransient<IResumeParser, ResumeParser>();
         return services;

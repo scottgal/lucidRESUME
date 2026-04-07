@@ -2,8 +2,10 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
+using Avalonia.Input;
 using Avalonia.Media;
 using lucidRESUME.ViewModels;
+using lucidRESUME.ViewModels.Pages;
 
 namespace lucidRESUME;
 
@@ -48,15 +50,54 @@ public sealed class StatusColorConverter : IValueConverter
 
 public partial class MainWindow : Window
 {
+    private static readonly string[] ResumeExtensions = [".pdf", ".docx", ".txt"];
+    private static readonly string[] ArchiveExtensions = [".zip"];
+
     // Parameterless constructor for Avalonia designer / XAML runtime loader
     public MainWindow()
     {
         InitializeComponent();
+        AddHandler(DragDrop.DragOverEvent, OnDragOver);
+        AddHandler(DragDrop.DropEvent, OnDrop);
     }
 
     public MainWindow(MainWindowViewModel vm) : this()
     {
         DataContext = vm;
         Loaded += async (_, _) => await vm.InitAsync();
+    }
+
+    private void OnDragOver(object? sender, DragEventArgs e)
+    {
+        e.DragEffects = e.Data.Contains(DataFormats.Files)
+            ? DragDropEffects.Copy
+            : DragDropEffects.None;
+    }
+
+    private async void OnDrop(object? sender, DragEventArgs e)
+    {
+        if (!e.Data.Contains(DataFormats.Files)) return;
+
+        var files = e.Data.GetFiles();
+        if (files is null) return;
+
+        // Navigate to Resume page and import each file
+        if (DataContext is not MainWindowViewModel mainVm) return;
+        var resumeVm = mainVm.GetPage("Resume") as ResumePageViewModel;
+        if (resumeVm is null) return;
+
+        mainVm.NavigateCommand.Execute("Resume");
+
+        foreach (var item in files)
+        {
+            if (item is not Avalonia.Platform.Storage.IStorageFile file) continue;
+            var path = file.Path.LocalPath;
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+
+            if (ResumeExtensions.Contains(ext) || ArchiveExtensions.Contains(ext))
+            {
+                await resumeVm.ImportFromPathAsync(path);
+            }
+        }
     }
 }

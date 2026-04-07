@@ -5,7 +5,8 @@
         x:DataType="vm:MainWindowViewModel"
         x:Class="lucidRESUME.MainWindow"
         Title="lucidRESUME" Width="1200" Height="800"
-        MinWidth="900" MinHeight="600">
+        MinWidth="900" MinHeight="600"
+        DragDrop.AllowDrop="True">
 
   <Window.Styles>
     <Style Selector="Button.nav-btn">

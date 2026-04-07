@@ -1,0 +1,52 @@
+name: linkedin-import-test
+description: Test LinkedIn data export import
+default_delay: 500
+
+actions:
+  - type: Wait
+    value: "2000"
+
+  # Import the LinkedIn ZIP
+  - type: ImportFile
+    value: /Users/scottgalloway/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip
+  - type: Wait
+    value: "3000"
+  - type: Screenshot
+    value: linkedin-import-result
+
+  # Scroll to see structured data
+  - type: Scroll
+    value: "30%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: linkedin-skills
+
+  - type: Scroll
+    value: "60%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: linkedin-experience
+
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: linkedin-bottom
+
+  # Navigate to My Data to see the ledger
+  - type: Navigate
+    value: mydata
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: linkedin-mydata-top
+
+  - type: Scroll
+    value: "40%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: linkedin-mydata-skills

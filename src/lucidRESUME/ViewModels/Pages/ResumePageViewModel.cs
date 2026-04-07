@@ -13,6 +13,7 @@ using lucidRESUME.Matching;
 using lucidRESUME.Core.Models.Quality;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
+using lucidRESUME.Ingestion.LinkedIn;
 using lucidRESUME.Ingestion.Preview;
 
 namespace lucidRESUME.ViewModels.Pages;
@@ -24,6 +25,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly IAppStore _store;
     private readonly LibreOfficeService _libreOffice;
     private readonly MorphDocxPreviewService _morphPreview;
+    private readonly LinkedInZipParser _linkedInParser;
     private readonly DocumentOpenerService _openers;
     private readonly IResumeQualityAnalyser _qualityAnalyser;
     private readonly AiDetectionScorer _aiDetectionScorer;
@@ -135,7 +137,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     public bool CanGoToNextPage => CurrentPage < PageCount;
 
     public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store,
-        LibreOfficeService libreOffice, MorphDocxPreviewService morphPreview,
+        LibreOfficeService libreOffice, MorphDocxPreviewService morphPreview, LinkedInZipParser linkedInParser,
         DocumentOpenerService openers, IResumeQualityAnalyser qualityAnalyser,
         AiDetectionScorer aiDetectionScorer,
         DeAiRewriter deAiRewriter,
@@ -150,6 +152,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         _store = store;
         _libreOffice = libreOffice;
         _morphPreview = morphPreview;
+        _linkedInParser = linkedInParser;
         _openers = openers;
         _qualityAnalyser = qualityAnalyser;
         _aiDetectionScorer = aiDetectionScorer;
@@ -235,21 +238,32 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Programmatic import for UX testing - bypasses file picker dialog.</summary>
+    /// <summary>Programmatic import for UX testing and drag-drop - bypasses file picker dialog.</summary>
     public async Task ImportFromPathAsync(string path)
     {
         _loadedFilePath = path;
         _libreOfficePageImages = [];
         ErrorMessage = null;
-        StatusMessage = $"Parsing {Path.GetFileName(path)}…";
         IsLoading = true;
 
         try
         {
-            Resume = await ParseResumeAsync(path, ParseMode.AI);
-            await ShowResumeAsync(Resume, path);
+            // Route: LinkedIn ZIP export or resume file?
+            if (LinkedInZipParser.IsLinkedInExport(path))
+            {
+                StatusMessage = $"Importing LinkedIn data…";
+                Resume = await _linkedInParser.ParseAsync(path);
+                await ShowResumeAsync(Resume, null);
+                StatusMessage = $"LinkedIn import: {Resume.Skills.Count} skills, {Resume.Experience.Count} positions";
+            }
+            else
+            {
+                StatusMessage = $"Parsing {Path.GetFileName(path)}…";
+                Resume = await ParseResumeAsync(path, ParseMode.AI);
+                await ShowResumeAsync(Resume, path);
+                StatusMessage = $"Imported {Path.GetFileName(path)}";
+            }
 
-            StatusMessage = $"Imported {Path.GetFileName(path)}";
             await SaveImportedResumeAsync(Resume);
 
             // Index embeddings in background (non-blocking)
