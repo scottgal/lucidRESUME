@@ -74,6 +74,7 @@ Every major job site wants your email, your browsing history, and permission to 
 
 ### Resume Import
 - Import PDF or DOCX resumes
+- **DOCX preview** powered by [Morph](https://github.com/SimonCropp/Morph) — cross-platform document-to-image rendering in pure C#, no LibreOffice needed
 - Handles two-column, LaTeX, complex formatting
 - Template learning: learns your resume's structure on first parse, deterministic on subsequent imports
 - Multilingual: German, French, Spanish, Portuguese, Chinese, Dutch, Japanese, Korean
