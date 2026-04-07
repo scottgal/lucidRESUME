@@ -98,10 +98,16 @@ public sealed class AppState
             .Max();
         aggregate.Personal = selected.Personal;
 
-        aggregate.Experience = Resumes.SelectMany(r => r.Experience).ToList();
-        aggregate.Education = Resumes.SelectMany(r => r.Education).ToList();
-        aggregate.Certifications = Resumes.SelectMany(r => r.Certifications).ToList();
-        aggregate.Projects = Resumes.SelectMany(r => r.Projects).ToList();
+        aggregate.Experience = DeduplicateExperience(Resumes.SelectMany(r => r.Experience).ToList());
+        aggregate.Education = DeduplicateEducation(Resumes.SelectMany(r => r.Education).ToList());
+        aggregate.Certifications = Resumes.SelectMany(r => r.Certifications)
+            .GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToList();
+        aggregate.Projects = Resumes.SelectMany(r => r.Projects)
+            .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderByDescending(p => p.Technologies.Count).First())
+            .ToList();
         aggregate.Entities = Resumes.SelectMany(r => r.Entities).ToList();
 
         aggregate.Skills = Resumes
@@ -124,4 +130,118 @@ public sealed class AppState
         aggregate.RawMarkdown = string.Join("\n\n---\n\n", Resumes.Select(r => r.RawMarkdown).Where(s => !string.IsNullOrWhiteSpace(s)));
         return aggregate;
     }
+
+    /// <summary>
+    /// Deduplicates work experience entries across resume variants.
+    /// Matches by company name similarity + date range overlap.
+    /// Different wordings for the same role (e.g. "Lead Dev" vs "Lead Developer")
+    /// are merged, keeping the richer entry (more achievements/technologies).
+    /// </summary>
+    private static List<WorkExperience> DeduplicateExperience(List<WorkExperience> all)
+    {
+        if (all.Count <= 1) return all;
+
+        var merged = new List<WorkExperience>();
+        var used = new HashSet<int>();
+
+        for (var i = 0; i < all.Count; i++)
+        {
+            if (used.Contains(i)) continue;
+
+            var best = all[i];
+            for (var j = i + 1; j < all.Count; j++)
+            {
+                if (used.Contains(j)) continue;
+                if (!AreOverlapping(best, all[j])) continue;
+
+                // Merge: keep the entry with more detail
+                best = MergeExperience(best, all[j]);
+                used.Add(j);
+            }
+            merged.Add(best);
+        }
+
+        return merged.OrderByDescending(e => e.StartDate).ToList();
+    }
+
+    private static bool AreOverlapping(WorkExperience a, WorkExperience b)
+    {
+        // Company name must be similar (fuzzy: one contains the other, or starts the same)
+        var ca = NormalizeCompany(a.Company ?? "");
+        var cb = NormalizeCompany(b.Company ?? "");
+        if (ca.Length == 0 || cb.Length == 0) return false;
+
+        var companySimilar = ca.Contains(cb, StringComparison.OrdinalIgnoreCase)
+                             || cb.Contains(ca, StringComparison.OrdinalIgnoreCase)
+                             || ca.Equals(cb, StringComparison.OrdinalIgnoreCase);
+        if (!companySimilar) return false;
+
+        // Date ranges must overlap or be within 3 months
+        if (a.StartDate is null || b.StartDate is null) return companySimilar;
+        var aStart = a.StartDate.Value.DayNumber;
+        var aEnd = (a.IsCurrent ? DateOnly.FromDateTime(DateTime.Today) : a.EndDate ?? DateOnly.FromDateTime(DateTime.Today)).DayNumber;
+        var bStart = b.StartDate.Value.DayNumber;
+        var bEnd = (b.IsCurrent ? DateOnly.FromDateTime(DateTime.Today) : b.EndDate ?? DateOnly.FromDateTime(DateTime.Today)).DayNumber;
+
+        const int graceDays = 90; // 3 months
+        return aStart <= bEnd + graceDays && bStart <= aEnd + graceDays;
+    }
+
+    private static string NormalizeCompany(string name)
+    {
+        // Strip common suffixes: Ltd, Limited, Inc, Corp, Plc, GmbH, AB, etc.
+        var suffixes = new[] { " ltd", " limited", " inc", " corp", " plc", " gmbh", " ab", " llc", " pty" };
+        var lower = name.ToLowerInvariant().Trim().TrimEnd('.');
+        foreach (var suffix in suffixes)
+            if (lower.EndsWith(suffix))
+                lower = lower[..^suffix.Length].TrimEnd(',', ' ');
+        return lower;
+    }
+
+    private static WorkExperience MergeExperience(WorkExperience a, WorkExperience b)
+    {
+        // Keep the one with more achievements; merge technologies
+        var primary = a.Achievements.Count >= b.Achievements.Count ? a : b;
+        var secondary = primary == a ? b : a;
+
+        // Merge technologies
+        var techs = new HashSet<string>(primary.Technologies, StringComparer.OrdinalIgnoreCase);
+        foreach (var t in secondary.Technologies) techs.Add(t);
+
+        // Merge achievements (add unique ones from secondary)
+        var achievements = new List<string>(primary.Achievements);
+        foreach (var ach in secondary.Achievements)
+        {
+            if (!achievements.Any(a2 => a2.Contains(ach, StringComparison.OrdinalIgnoreCase)
+                                        || ach.Contains(a2, StringComparison.OrdinalIgnoreCase)))
+                achievements.Add(ach);
+        }
+
+        return new WorkExperience
+        {
+            Id = primary.Id,
+            Company = primary.Company?.Length >= (secondary.Company?.Length ?? 0) ? primary.Company : secondary.Company,
+            Title = primary.Title?.Length >= (secondary.Title?.Length ?? 0) ? primary.Title : secondary.Title,
+            Location = primary.Location ?? secondary.Location,
+            StartDate = Min(primary.StartDate, secondary.StartDate),
+            EndDate = primary.IsCurrent || secondary.IsCurrent ? null : Max(primary.EndDate, secondary.EndDate),
+            IsCurrent = primary.IsCurrent || secondary.IsCurrent,
+            Technologies = techs.ToList(),
+            Achievements = achievements,
+        };
+    }
+
+    private static List<Education> DeduplicateEducation(List<Education> all)
+    {
+        return all
+            .GroupBy(e => NormalizeCompany(e.Institution ?? ""))
+            .Select(g => g.OrderByDescending(e => (e.Degree?.Length ?? 0) + (e.FieldOfStudy?.Length ?? 0)).First())
+            .ToList();
+    }
+
+    private static DateOnly? Min(DateOnly? a, DateOnly? b) =>
+        (a, b) switch { (not null, not null) => a < b ? a : b, (not null, _) => a, _ => b };
+
+    private static DateOnly? Max(DateOnly? a, DateOnly? b) =>
+        (a, b) switch { (not null, not null) => a > b ? a : b, (not null, _) => a, _ => b };
 }

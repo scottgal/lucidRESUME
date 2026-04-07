@@ -1,0 +1,48 @@
+name: dedup-gantt-test
+description: Import DOCX + LinkedIn, check deduplication and Gantt
+default_delay: 400
+
+actions:
+  - type: Wait
+    value: "2000"
+
+  # Import DOCX resume first
+  - type: ImportFile
+    value: test-data/resumes/Scott_Galloway_CTO.docx
+  - type: Wait
+    value: "4000"
+
+  # Import LinkedIn on top
+  - type: ImportFile
+    value: /Users/scottgalloway/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip
+  - type: Wait
+    value: "3000"
+
+  # Go to My Data to see deduplicated dashboard
+  - type: Navigate
+    value: mydata
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: dedup-dashboard
+
+  - type: Scroll
+    value: "25%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: dedup-gantt
+
+  - type: Scroll
+    value: "50%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: dedup-skills
+
+  - type: Scroll
+    value: "75%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: dedup-experience
