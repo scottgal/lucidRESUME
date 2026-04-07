@@ -30,8 +30,8 @@ public sealed class MorphDocxPreviewService
 
         try
         {
-            var converter = new WordRender.Skia.DocumentConverter();
-            var options = new ConversionOptions
+            var converter = new global::WordRender.Skia.DocumentConverter();
+            var options = new global::WordRender.ConversionOptions
             {
                 Dpi = 150,
                 FontWidthScale = 1.07, // better match to Word rendering

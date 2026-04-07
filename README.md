@@ -50,9 +50,13 @@ This is the foundation everything else builds on - matching, tailoring, gap anal
 |---------------------|----------------------|
 | ![DOCX Preview](docs/screenshots/docx-preview.png) | ![My Data](docs/screenshots/my-data-page.png) |
 
-| My Data — Skills & Experience |
-|-------------------------------|
-| ![Skills detail](docs/screenshots/my-data-skills.png) |
+| My Data — Skills & Experience | LinkedIn Import |
+|-------------------------------|----------------|
+| ![Skills detail](docs/screenshots/my-data-skills.png) | ![LinkedIn Import](docs/screenshots/linkedin-import.png) |
+
+| LinkedIn → My Data |
+|--------------------|
+| ![LinkedIn My Data](docs/screenshots/linkedin-mydata.png) |
 
 ---
 
@@ -73,8 +77,10 @@ Every major job site wants your email, your browsing history, and permission to 
 ## What It Does
 
 ### Resume Import
+- **Drag and drop** any file onto the app to import — resumes, LinkedIn exports, anything
 - Import PDF or DOCX resumes
 - **DOCX preview** powered by [Morph](https://github.com/SimonCropp/Morph) — cross-platform document-to-image rendering in pure C#, no LibreOffice needed
+- **LinkedIn data export** — drop your LinkedIn ZIP archive and it auto-detects and imports your full profile: positions, skills (with endorsement counts), education, projects, contact info
 - Handles two-column, LaTeX, complex formatting
 - Template learning: learns your resume's structure on first parse, deterministic on subsequent imports
 - Multilingual: German, French, Spanish, Portuguese, Chinese, Dutch, Japanese, Korean
@@ -251,8 +257,8 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 - [ ] Leiden community detection (upgrade from Louvain)
 - [ ] Temporal skill drift across resume variants
 - [ ] DOCX/PDF export of tailored resumes
-- [ ] LinkedIn JSON import
-- [ ] GitHub repo skills import
+- [x] LinkedIn data export import (ZIP archive with full profile)
+- [x] GitHub repo skills import (languages, topics, README analysis via lucidRAG)
 - [ ] DocLayNet ONNX model for offline PDF layout detection (no Docker)
 
 ---

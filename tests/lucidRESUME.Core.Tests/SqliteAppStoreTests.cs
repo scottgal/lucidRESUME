@@ -28,7 +28,8 @@ public class SqliteAppStoreTests : IDisposable
     {
         var state = await _store.LoadAsync();
         Assert.NotNull(state);
-        Assert.Null(state.Resume);
+        Assert.Null(state.SelectedResume);
+        Assert.Empty(state.Resumes);
         Assert.NotNull(state.Profile);
         Assert.Empty(state.Jobs);
     }
@@ -38,18 +39,44 @@ public class SqliteAppStoreTests : IDisposable
     {
         var state = new AppState
         {
-            Resume = ResumeDocument.Create("cv.pdf", "application/pdf", 1234),
             Profile = new UserProfile { DisplayName = "Test User" },
             Jobs = [JobDescription.Create("Dev role", new JobSource { Type = JobSourceType.PastedText })]
         };
+        state.AddOrReplaceResume(ResumeDocument.Create("cv.pdf", "application/pdf", 1234));
 
         await _store.SaveAsync(state);
         var loaded = await _store.LoadAsync();
 
-        Assert.NotNull(loaded.Resume);
-        Assert.Equal("cv.pdf", loaded.Resume!.FileName);
+        Assert.NotNull(loaded.SelectedResume);
+        Assert.Equal("cv.pdf", loaded.SelectedResume!.FileName);
+        Assert.Single(loaded.Resumes);
         Assert.Equal("Test User", loaded.Profile.DisplayName);
         Assert.Single(loaded.Jobs);
+    }
+
+    [Fact]
+    public async Task SaveAsync_RoundTripsMultipleResumesAndSelection()
+    {
+        var first = ResumeDocument.Create("general.pdf", "application/pdf", 100);
+        first.Skills.Add(new Skill { Name = "C#" });
+        var second = ResumeDocument.Create("old.pdf", "application/pdf", 200);
+        second.Skills.Add(new Skill { Name = "Perl" });
+
+        var state = new AppState();
+        state.AddOrReplaceResume(first);
+        state.AddOrReplaceResume(second);
+
+        await _store.SaveAsync(state);
+        var loaded = await _store.LoadAsync();
+
+        Assert.Equal(2, loaded.Resumes.Count);
+        Assert.Equal(second.ResumeId, loaded.SelectedResumeId);
+        Assert.Equal("old.pdf", loaded.SelectedResume!.FileName);
+
+        var aggregate = loaded.BuildAggregateResume();
+        Assert.NotNull(aggregate);
+        Assert.Contains(aggregate!.Skills, s => s.Name == "C#");
+        Assert.Contains(aggregate.Skills, s => s.Name == "Perl");
     }
 
     [Fact]
@@ -68,9 +95,9 @@ public class SqliteAppStoreTests : IDisposable
     {
         var state = new AppState
         {
-            Resume = ResumeDocument.Create("cv.pdf", "application/pdf", 1234),
             Profile = new UserProfile { DisplayName = "Export Test" }
         };
+        state.AddOrReplaceResume(ResumeDocument.Create("cv.pdf", "application/pdf", 1234));
         await _store.SaveAsync(state);
 
         using var ms = new MemoryStream();
@@ -87,9 +114,9 @@ public class SqliteAppStoreTests : IDisposable
     {
         var original = new AppState
         {
-            Resume = ResumeDocument.Create("imported.pdf", "application/pdf", 999),
             Profile = new UserProfile { DisplayName = "Imported" }
         };
+        original.AddOrReplaceResume(ResumeDocument.Create("imported.pdf", "application/pdf", 999));
 
         using var ms = new MemoryStream();
         await JsonSerializer.SerializeAsync(ms, original);
@@ -99,21 +126,19 @@ public class SqliteAppStoreTests : IDisposable
 
         var loaded = await _store.LoadAsync();
         Assert.Equal("Imported", loaded.Profile.DisplayName);
-        Assert.NotNull(loaded.Resume);
-        Assert.Equal("imported.pdf", loaded.Resume!.FileName);
+        Assert.NotNull(loaded.SelectedResume);
+        Assert.Equal("imported.pdf", loaded.SelectedResume!.FileName);
     }
 
     [Fact]
     public async Task MigrateFromJson_ImportsAndRenames()
     {
-        _store.Dispose();
-        try { File.Delete(_dbPath); } catch { }
-
-        var jsonPath = _dbPath + ".migration.json";
+        var migrationDbPath = Path.Combine(Path.GetTempPath(), $"lucidresume_migration_{Guid.NewGuid():N}.db");
+        var jsonPath = migrationDbPath + ".migration.json";
         var state = new AppState { Profile = new UserProfile { DisplayName = "Migrated" } };
         await File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(state));
 
-        using var migratingStore = new SqliteAppStore(_dbPath, jsonMigrationPath: jsonPath);
+        using var migratingStore = new SqliteAppStore(migrationDbPath, jsonMigrationPath: jsonPath);
         var loaded = await migratingStore.LoadAsync();
 
         Assert.Equal("Migrated", loaded.Profile.DisplayName);
@@ -121,23 +146,25 @@ public class SqliteAppStoreTests : IDisposable
         Assert.True(File.Exists(jsonPath + ".bak"), "Backup should exist");
 
         File.Delete(jsonPath + ".bak");
+        try { File.Delete(migrationDbPath); } catch { }
     }
 
     [Fact]
     public async Task FullCycle_SaveLoadMutateExport()
     {
         var state = new AppState();
-        state.Resume = ResumeDocument.Create("test.pdf", "application/pdf", 100);
-        state.Resume.Skills.Add(new Skill { Name = "C#" });
-        state.Resume.Skills.Add(new Skill { Name = "SQL" });
+        var resume = ResumeDocument.Create("test.pdf", "application/pdf", 100);
+        resume.Skills.Add(new Skill { Name = "C#" });
+        resume.Skills.Add(new Skill { Name = "SQL" });
+        state.AddOrReplaceResume(resume);
         await _store.SaveAsync(state);
 
         var loaded = await _store.LoadAsync();
-        Assert.Equal(2, loaded.Resume!.Skills.Count);
+        Assert.Equal(2, loaded.SelectedResume!.Skills.Count);
 
-        await _store.MutateAsync(s => s.Resume!.Skills.Add(new Skill { Name = "Azure" }));
+        await _store.MutateAsync(s => s.SelectedResume!.Skills.Add(new Skill { Name = "Azure" }));
         loaded = await _store.LoadAsync();
-        Assert.Equal(3, loaded.Resume!.Skills.Count);
+        Assert.Equal(3, loaded.SelectedResume!.Skills.Count);
 
         using var ms = new MemoryStream();
         await _store.ExportJsonAsync(ms);
@@ -149,7 +176,7 @@ public class SqliteAppStoreTests : IDisposable
         ms.Position = 0;
         await store2.ImportJsonAsync(ms);
         var imported = await store2.LoadAsync();
-        Assert.Equal(3, imported.Resume!.Skills.Count);
+        Assert.Equal(3, imported.SelectedResume!.Skills.Count);
 
         store2.Dispose();
         try { File.Delete(dbPath2); } catch { }

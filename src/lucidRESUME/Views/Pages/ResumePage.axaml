@@ -14,6 +14,19 @@
     <!-- Toolbar -->
     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="16,8">
       <Button Content="Import Resume…" Command="{Binding ImportResumeCommand}"/>
+      <ComboBox ItemsSource="{Binding ResumeItems}" SelectedItem="{Binding SelectedResumeItem}"
+                Width="220" VerticalAlignment="Center" FontSize="11" Padding="6,3"
+                IsVisible="{Binding HasResume}"
+                ToolTip.Tip="Select which imported resume to inspect/export. Skill evidence uses all imported resumes.">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:ResumeListItem">
+            <StackPanel>
+              <TextBlock Text="{Binding Title}" FontSize="11"/>
+              <TextBlock Text="{Binding Subtitle}" FontSize="9" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+            </StackPanel>
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
       <SplitButton x:Name="OpenInButton"
                    Content="{Binding PrimaryOpenerName}"
                    Command="{Binding OpenWithPrimaryCommand}"

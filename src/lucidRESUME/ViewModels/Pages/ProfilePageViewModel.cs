@@ -216,20 +216,23 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             // Store projects and profile data into the resume
             await _store.MutateAsync(state =>
             {
-                state.Resume ??= new Core.Models.Resume.ResumeDocument();
+                var resume = state.SelectedResume ?? Core.Models.Resume.ResumeDocument.Create(
+                    "profile-enrichment", "application/vnd.lucidresume.profile", 0);
 
                 // Add GitHub projects that aren't already present
-                var existingUrls = state.Resume.Projects.Select(p => p.Url).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var existingUrls = resume.Projects.Select(p => p.Url).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 foreach (var project in result.Projects.Where(p => !existingUrls.Contains(p.Url)))
-                    state.Resume.Projects.Add(project);
+                    resume.Projects.Add(project);
 
                 // Enrich PersonalInfo from GitHub profile
                 if (result.Profile is { } profile)
                 {
-                    state.Resume.Personal.GitHubUrl ??= profile.HtmlUrl;
-                    state.Resume.Personal.FullName ??= profile.Name;
-                    state.Resume.Personal.WebsiteUrl ??= profile.Blog;
+                    resume.Personal.GitHubUrl ??= profile.HtmlUrl;
+                    resume.Personal.FullName ??= profile.Name;
+                    resume.Personal.WebsiteUrl ??= profile.Blog;
                 }
+
+                state.AddOrReplaceResume(resume, select: true);
             });
 
             var skillCount = result.SkillEntries.Count;

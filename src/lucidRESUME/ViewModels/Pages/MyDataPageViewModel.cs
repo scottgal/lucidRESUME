@@ -74,7 +74,7 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
         try
         {
             var state = await _store.LoadAsync();
-            _resume = state.Resume;
+            _resume = state.BuildAggregateResume();
             _overrides = state.Overrides;
 
             if (_resume == null) { HasData = false; return; }

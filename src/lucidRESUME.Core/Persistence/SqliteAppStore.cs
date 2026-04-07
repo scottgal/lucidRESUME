@@ -39,7 +39,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         using var cmd = _conn.CreateCommand();
         cmd.CommandText = """
             CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-            CREATE TABLE IF NOT EXISTS resume (id INTEGER PRIMARY KEY CHECK (id = 1), data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS resumes (id TEXT PRIMARY KEY, data TEXT NOT NULL, imported_at TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS profile (id INTEGER PRIMARY KEY CHECK (id = 1), data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS saved_searches (id TEXT PRIMARY KEY, data TEXT NOT NULL);
@@ -63,6 +63,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         using (var stream = File.OpenRead(jsonPath))
             state = JsonSerializer.Deserialize<AppState>(stream, JsonOpts) ?? new AppState();
 
+        state.NormalizeResumes();
         SaveCore(state);
         File.Move(jsonPath, jsonPath + ".bak", overwrite: true);
     }
@@ -112,9 +113,13 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
 
         using (var cmd = _conn.CreateCommand())
         {
-            cmd.CommandText = "SELECT data FROM resume WHERE id = 1";
-            if (cmd.ExecuteScalar() is string json)
-                state.Resume = JsonSerializer.Deserialize<Models.Resume.ResumeDocument>(json, JsonOpts);
+            cmd.CommandText = "SELECT data FROM resumes ORDER BY imported_at";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var resume = JsonSerializer.Deserialize<Models.Resume.ResumeDocument>(reader.GetString(0), JsonOpts);
+                if (resume is not null) state.AddOrReplaceResume(resume, select: false);
+            }
         }
 
         using (var cmd = _conn.CreateCommand())
@@ -186,19 +191,34 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
                 state.LastSaved = dt;
         }
 
+        using (var cmd = _conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT value FROM app_meta WHERE key = 'selected_resume_id'";
+            if (cmd.ExecuteScalar() is string id && Guid.TryParse(id, out var resumeId))
+                state.SelectedResumeId = resumeId;
+        }
+
+        state.NormalizeResumes();
         return state;
     }
 
     private void SaveCore(AppState state)
     {
+        state.NormalizeResumes();
         state.LastSaved = DateTimeOffset.UtcNow;
         using var tx = _conn.BeginTransaction();
 
-        // Resume
-        if (state.Resume is not null)
-            Upsert("resume", "id", "1", JsonSerializer.Serialize(state.Resume, JsonOpts));
-        else
-            Execute("DELETE FROM resume WHERE id = 1");
+        // Resume variants
+        Execute("DELETE FROM resumes");
+        foreach (var resume in state.Resumes)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO resumes (id, data, imported_at) VALUES ($id, $data, $imported_at)";
+            cmd.Parameters.AddWithValue("$id", resume.ResumeId.ToString());
+            cmd.Parameters.AddWithValue("$data", JsonSerializer.Serialize(resume, JsonOpts));
+            cmd.Parameters.AddWithValue("$imported_at", resume.CreatedAt.ToString("O"));
+            cmd.ExecuteNonQuery();
+        }
 
         // Profile
         Upsert("profile", "id", "1", JsonSerializer.Serialize(state.Profile, JsonOpts));
@@ -259,6 +279,10 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         }
 
         UpsertMeta("last_saved", state.LastSaved.ToString("O"));
+        if (state.SelectedResumeId is { } selectedResumeId)
+            UpsertMeta("selected_resume_id", selectedResumeId.ToString());
+        else
+            Execute("DELETE FROM app_meta WHERE key = 'selected_resume_id'");
         tx.Commit();
     }
 

@@ -138,9 +138,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
 
         // Compute match scores using skill ledger if resume is available
         Core.Models.Skills.SkillLedger? resumeLedger = null;
-        if (state.Resume is not null)
+        var aggregateResume = state.BuildAggregateResume();
+        if (aggregateResume is not null)
         {
-            try { resumeLedger = await _ledgerBuilder.BuildAsync(state.Resume); }
+            try { resumeLedger = await _ledgerBuilder.BuildAsync(aggregateResume); }
             catch { /* non-blocking */ }
         }
 
@@ -155,7 +156,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
                 try
                 {
                     var jdLedger = await _jdLedgerBuilder.BuildAsync(j);
-                    var match = await _ledgerMatcher.MatchAsync(resumeLedger, jdLedger, resumeDoc: state.Resume);
+                    var match = await _ledgerMatcher.MatchAsync(resumeLedger, jdLedger, resumeDoc: aggregateResume);
                     score = match.OverallFit;
                     j.SetMatchScore(score);
                 }
@@ -184,8 +185,9 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     {
         try
         {
-            if (state.Resume is null) return;
-            var ledger = await _ledgerBuilder.BuildAsync(state.Resume);
+            var aggregateResume = state.BuildAggregateResume();
+            if (aggregateResume is null) return;
+            var ledger = await _ledgerBuilder.BuildAsync(aggregateResume);
             var graph = new SkillGraph();
             graph.AddResumeLedger(ledger);
 
@@ -288,9 +290,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         try
         {
             var state = await _store.LoadAsync();
-            if (state.Resume is null) return;
+            var aggregateResume = state.BuildAggregateResume();
+            if (aggregateResume is null) return;
 
-            var report = await _coverageAnalyser.AnalyseAsync(state.Resume, job);
+            var report = await _coverageAnalyser.AnalyseAsync(aggregateResume, job);
             CoveragePercent = report.CoveragePercent;
             CoverageItems = report.Entries
                 .Where(e => e.Requirement.Priority == RequirementPriority.Required)
@@ -372,7 +375,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
             var results = await _jobSearchService.SearchAllAsync(query);
 
             var state = await _store.LoadAsync();
-            var resume = state.Resume;
+            var resume = state.BuildAggregateResume();
             var profile = state.Profile;
 
             var items = new List<JobListItem>();
@@ -432,7 +435,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     {
         if (SelectedJob is null) return;
         var state = await _store.LoadAsync();
-        _applyPage.SetContext(state.Resume, SelectedJob.FullJob);
+        _applyPage.SetContext(state.SelectedResume, SelectedJob.FullJob);
         NavigateTo?.Invoke("Apply");
     }
 
@@ -451,9 +454,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         try
         {
             var state = await _store.LoadAsync();
-            if (state.Resume is null) return;
+            var aggregateResume = state.BuildAggregateResume();
+            if (aggregateResume is null) return;
 
-            var resumeLedger = await _ledgerBuilder.BuildAsync(state.Resume);
+            var resumeLedger = await _ledgerBuilder.BuildAsync(aggregateResume);
             var jdLedger = await _jdLedgerBuilder.BuildAsync(job);
             var graph = new SkillGraph();
             graph.AddResumeLedger(resumeLedger);

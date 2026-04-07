@@ -69,6 +69,7 @@ public sealed class JsonAppStore : IAppStore
     public async Task ImportJsonAsync(Stream input, CancellationToken ct = default)
     {
         var state = await JsonSerializer.DeserializeAsync<AppState>(input, Options, ct) ?? new AppState();
+        state.NormalizeResumes();
         await SaveAsync(state, ct);
     }
 
@@ -78,11 +79,14 @@ public sealed class JsonAppStore : IAppStore
             return new AppState();
 
         await using var stream = File.OpenRead(_filePath);
-        return await JsonSerializer.DeserializeAsync<AppState>(stream, Options, ct) ?? new AppState();
+        var state = await JsonSerializer.DeserializeAsync<AppState>(stream, Options, ct) ?? new AppState();
+        state.NormalizeResumes();
+        return state;
     }
 
     private async Task SaveCoreAsync(AppState state, CancellationToken ct)
     {
+        state.NormalizeResumes();
         state.LastSaved = DateTimeOffset.UtcNow;
 
         var dir = Path.GetDirectoryName(_filePath)!;

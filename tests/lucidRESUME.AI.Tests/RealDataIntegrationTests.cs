@@ -149,11 +149,11 @@ public class RealDataIntegrationTests : IDisposable
     public async Task SqliteStore_PersistsAndReloads_FullResumeWithSkills()
     {
         var state = new AppState();
-        state.Resume = ResumeDocument.Create("dev-resume.pdf", "application/pdf", 50000);
-        state.Resume.Skills.Add(new Skill { Name = "C#" });
-        state.Resume.Skills.Add(new Skill { Name = ".NET" });
-        state.Resume.Skills.Add(new Skill { Name = "Azure" });
-        state.Resume.Experience.Add(new WorkExperience
+        var resume = ResumeDocument.Create("dev-resume.pdf", "application/pdf", 50000);
+        resume.Skills.Add(new Skill { Name = "C#" });
+        resume.Skills.Add(new Skill { Name = ".NET" });
+        resume.Skills.Add(new Skill { Name = "Azure" });
+        resume.Experience.Add(new WorkExperience
         {
             Company = "BigCorp",
             Title = "Senior Developer",
@@ -161,14 +161,15 @@ public class RealDataIntegrationTests : IDisposable
             EndDate = new DateOnly(2024, 6, 1),
             Achievements = ["Led team of 5", "Built API platform"]
         });
-        state.Resume.Education.Add(new Education
+        resume.Education.Add(new Education
         {
             Institution = "MIT",
             Degree = "BS Computer Science",
             EndDate = new DateOnly(2019, 6, 1)
         });
-        state.Resume.Personal.FullName = "Jane Developer";
-        state.Resume.Personal.Email = "jane@example.com";
+        resume.Personal.FullName = "Jane Developer";
+        resume.Personal.Email = "jane@example.com";
+        state.AddOrReplaceResume(resume);
 
         var job1 = JobDescription.Create("Senior .NET Dev at StartupCo", new JobSource { Type = JobSourceType.PastedText });
         job1.RequiredSkills = ["C#", ".NET", "Azure"];
@@ -181,14 +182,14 @@ public class RealDataIntegrationTests : IDisposable
         await _store.SaveAsync(state);
         var loaded = await _store.LoadAsync();
 
-        Assert.NotNull(loaded.Resume);
-        Assert.Equal("dev-resume.pdf", loaded.Resume!.FileName);
-        Assert.Equal("Jane Developer", loaded.Resume.Personal.FullName);
-        Assert.Equal("jane@example.com", loaded.Resume.Personal.Email);
-        Assert.Equal(3, loaded.Resume.Skills.Count);
-        Assert.Single(loaded.Resume.Experience);
-        Assert.Equal("Led team of 5", loaded.Resume.Experience[0].Achievements[0]);
-        Assert.Single(loaded.Resume.Education);
+        Assert.NotNull(loaded.SelectedResume);
+        Assert.Equal("dev-resume.pdf", loaded.SelectedResume!.FileName);
+        Assert.Equal("Jane Developer", loaded.SelectedResume.Personal.FullName);
+        Assert.Equal("jane@example.com", loaded.SelectedResume.Personal.Email);
+        Assert.Equal(3, loaded.SelectedResume.Skills.Count);
+        Assert.Single(loaded.SelectedResume.Experience);
+        Assert.Equal("Led team of 5", loaded.SelectedResume.Experience[0].Achievements[0]);
+        Assert.Single(loaded.SelectedResume.Education);
         Assert.Equal(2, loaded.Jobs.Count);
         Assert.Equal(3, loaded.Jobs[0].RequiredSkills.Count);
 

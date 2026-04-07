@@ -105,7 +105,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         try
         {
             var state = await _store.LoadAsync();
-            var resume = _contextResume ?? state.Resume;
+            var resume = _contextResume ?? state.SelectedResume;
             if (resume is null)
             {
                 ErrorMessage = "No resume loaded. Please import a resume first.";
@@ -151,7 +151,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         try
         {
             var state = await _store.LoadAsync();
-            var resume = _contextResume ?? state.Resume;
+            var resume = _contextResume ?? state.SelectedResume;
             if (resume is null) { ErrorMessage = "No resume loaded."; return; }
 
             var job = _contextJob ?? new JobDescription

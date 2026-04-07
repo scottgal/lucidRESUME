@@ -223,7 +223,14 @@
       "Bash(huggingface-cli whoami:*)",
       "Bash(hf upload:*)",
       "Bash(git:*)",
-      "Bash(unzip -l /tmp/nupkg-test/*.nupkg)"
+      "Bash(unzip -l /tmp/nupkg-test/*.nupkg)",
+      "WebFetch(domain:andrewlock.net)",
+      "WebFetch(domain:devblogs.microsoft.com)",
+      "WebFetch(domain:www.damirscorner.com)",
+      "Bash(gunzip)",
+      "Bash(dotnet script:*)",
+      "WebFetch(domain:sergey-tihon.github.io)",
+      "Bash(unzip -l ~/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip)"
     ]
   }
 }
