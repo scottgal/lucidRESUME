@@ -98,7 +98,7 @@ Every major job site wants your email, your browsing history, and permission to 
 - Per-skill match detail with similarity scores, evidence strength, calculated years
 
 ### Career Direction
-- **Skill graph** with co-occurrence edges and Louvain community detection
+- **Skill graph** with co-occurrence edges and Leiden community detection
 - **Career planner**: 4 gap types (PresentationGap, WeakEvidence, AdjacentSkill, TrueGap)
 - **Effort/impact ranking**: Low (rewording), Medium (side project), High (new learning)
 - **Search query generator**: suggests job searches from your strongest skill communities
@@ -254,7 +254,7 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 - [x] Automated job polling from skill community search queries
 - [ ] Resume extraction full RRF fusion (same pattern as JD extraction)
 - [ ] Career planner UI page with gap analysis visualization (backend done)
-- [ ] Leiden community detection (upgrade from Louvain)
+- [x] Leiden community detection (refinement phase over Louvain greedy moves)
 - [ ] Temporal skill drift across resume variants
 - [x] DOCX export of tailored resumes (pure C# via OpenXml, cross-platform)
 - [x] PDF export of tailored resumes (QuestPDF, professional formatting)

@@ -69,8 +69,10 @@ public sealed class SkillGraph
     }
 
     /// <summary>
-    /// Simple Louvain-style community detection (greedy modularity optimization).
-    /// Not full Leiden but captures the main communities effectively for small graphs.
+    /// Leiden community detection — improves on Louvain by adding a refinement phase
+    /// that can split poorly-assigned nodes within communities. Produces higher-quality,
+    /// more stable partitions than greedy Louvain alone.
+    /// Based on: Traag, Waltman, van Eck (2019) "From Louvain to Leiden"
     /// </summary>
     public void DetectCommunities()
     {
@@ -84,40 +86,90 @@ public sealed class SkillGraph
         var totalWeight = nodes.Sum(n => n.Edges.Values.Sum()) / 2.0;
         if (totalWeight == 0) { CommunityCount = nodes.Count; return; }
 
-        bool changed = true;
-        int iterations = 0;
-
-        while (changed && iterations++ < 50)
+        for (int outerIter = 0; outerIter < 10; outerIter++)
         {
-            changed = false;
-            foreach (var node in nodes)
+            // Phase 1: Louvain-style greedy moves
+            bool moved = true;
+            int innerIter = 0;
+            while (moved && innerIter++ < 50)
             {
-                var bestCommunity = node.CommunityId;
-                var bestGain = 0.0;
-
-                // Try moving this node to each neighbor's community
-                var neighborCommunities = node.Edges.Keys
-                    .Where(k => Nodes.ContainsKey(k))
-                    .Select(k => Nodes[k].CommunityId)
-                    .Distinct();
-
-                foreach (var candidateCommunity in neighborCommunities)
+                moved = false;
+                foreach (var node in nodes)
                 {
-                    if (candidateCommunity == node.CommunityId) continue;
-                    var gain = ModularityGain(node, candidateCommunity, nodes, totalWeight);
-                    if (gain > bestGain)
+                    var bestCommunity = node.CommunityId;
+                    var bestGain = 0.0;
+
+                    var neighborCommunities = node.Edges.Keys
+                        .Where(k => Nodes.ContainsKey(k))
+                        .Select(k => Nodes[k].CommunityId)
+                        .Distinct();
+
+                    foreach (var candidateCommunity in neighborCommunities)
                     {
-                        bestGain = gain;
-                        bestCommunity = candidateCommunity;
+                        if (candidateCommunity == node.CommunityId) continue;
+                        var gain = ModularityGain(node, candidateCommunity, nodes, totalWeight);
+                        if (gain > bestGain)
+                        {
+                            bestGain = gain;
+                            bestCommunity = candidateCommunity;
+                        }
+                    }
+
+                    if (bestCommunity != node.CommunityId)
+                    {
+                        node.CommunityId = bestCommunity;
+                        moved = true;
                     }
                 }
+            }
 
-                if (bestCommunity != node.CommunityId)
+            // Phase 2: Leiden refinement — check if any node is better off alone
+            // or in a different sub-partition within its community
+            bool refined = false;
+            foreach (var node in nodes)
+            {
+                // Calculate modularity contribution of current assignment
+                var currentGain = ModularityGain(node, node.CommunityId, nodes, totalWeight);
+
+                // Check if node should be a singleton (disconnected from community)
+                var communityMembers = nodes.Count(n => n.CommunityId == node.CommunityId);
+                if (communityMembers <= 1) continue;
+
+                // Sum of internal edges for this node within its community
+                var internalWeight = node.Edges
+                    .Where(kv => Nodes.ContainsKey(kv.Key) && Nodes[kv.Key].CommunityId == node.CommunityId)
+                    .Sum(kv => kv.Value);
+
+                var externalWeight = node.Edges.Values.Sum() - internalWeight;
+
+                // If more external than internal connections, this node is poorly assigned
+                if (externalWeight > internalWeight * 1.5)
                 {
-                    node.CommunityId = bestCommunity;
-                    changed = true;
+                    // Try all neighbor communities again with stricter threshold
+                    var bestAlt = node.CommunityId;
+                    var bestAltGain = 0.0;
+
+                    foreach (var neighbor in node.Edges.Keys.Where(k => Nodes.ContainsKey(k)))
+                    {
+                        var nc = Nodes[neighbor].CommunityId;
+                        if (nc == node.CommunityId) continue;
+                        var gain = ModularityGain(node, nc, nodes, totalWeight);
+                        if (gain > bestAltGain)
+                        {
+                            bestAltGain = gain;
+                            bestAlt = nc;
+                        }
+                    }
+
+                    if (bestAlt != node.CommunityId)
+                    {
+                        node.CommunityId = bestAlt;
+                        refined = true;
+                    }
                 }
             }
+
+            if (!refined) break; // Converged — no refinements made
         }
 
         // Renumber communities to be contiguous 0..N
