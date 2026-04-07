@@ -126,6 +126,11 @@ public sealed class AppState
             .OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        // Store merge variants for user review (only new ones not already stored)
+        var existingIds = Overrides.ExperienceVariants.Select(v => v.ExperienceId).ToHashSet();
+        foreach (var variant in LastMergeVariants.Where(v => !existingIds.Contains(v.ExperienceId)))
+            Overrides.ExperienceVariants.Add(variant);
+
         aggregate.PlainText = string.Join("\n\n", Resumes.Select(r => r.PlainText).Where(s => !string.IsNullOrWhiteSpace(s)));
         aggregate.RawMarkdown = string.Join("\n\n---\n\n", Resumes.Select(r => r.RawMarkdown).Where(s => !string.IsNullOrWhiteSpace(s)));
         return aggregate;
@@ -137,10 +142,14 @@ public sealed class AppState
     /// Different wordings for the same role (e.g. "Lead Dev" vs "Lead Developer")
     /// are merged, keeping the richer entry (more achievements/technologies).
     /// </summary>
-    private static List<WorkExperience> DeduplicateExperience(List<WorkExperience> all)
+    /// <summary>Variants found during the last deduplication, for user review.</summary>
+    internal List<ExperienceVariant> LastMergeVariants { get; } = [];
+
+    private List<WorkExperience> DeduplicateExperience(List<WorkExperience> all)
     {
         if (all.Count <= 1) return all;
 
+        LastMergeVariants.Clear();
         var merged = new List<WorkExperience>();
         var used = new HashSet<int>();
 
@@ -148,16 +157,29 @@ public sealed class AppState
         {
             if (used.Contains(i)) continue;
 
+            var variants = new List<WorkExperience> { all[i] };
             var best = all[i];
+
             for (var j = i + 1; j < all.Count; j++)
             {
                 if (used.Contains(j)) continue;
                 if (!AreOverlapping(best, all[j])) continue;
 
-                // Merge: keep the entry with more detail
+                variants.Add(all[j]);
                 best = MergeExperience(best, all[j]);
                 used.Add(j);
             }
+
+            // Store variants when there were conflicts (different wordings for same role)
+            if (variants.Count > 1)
+            {
+                LastMergeVariants.Add(new ExperienceVariant
+                {
+                    ExperienceId = best.Id,
+                    Variants = variants,
+                });
+            }
+
             merged.Add(best);
         }
 
