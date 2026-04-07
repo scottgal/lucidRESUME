@@ -33,13 +33,25 @@ public sealed class ExtractionPipeline
             }
         }
 
-        // Deduplicate: same (Classification, NormalizedValue) from multiple detectors
-        // Keep the highest-confidence version
-        var deduplicated = all
-            .GroupBy(e => (e.Classification, e.NormalizedValue))
-            .Select(g => g.OrderByDescending(e => e.Confidence).First())
+        // RRF fusion: same (Classification, NormalizedValue) from multiple detectors
+        // gets a confidence boost — multi-source agreement is strong evidence.
+        // Same pattern as JdFieldFuser for JD extraction.
+        const double multiSourceBoost = 0.08;
+        var fused = all
+            .GroupBy(e => (e.Classification, Norm: e.NormalizedValue.ToLowerInvariant()))
+            .Select(g =>
+            {
+                var best = g.OrderByDescending(e => e.Confidence).First();
+                var distinctSources = g.Select(e => e.Source).Distinct().Count();
+                if (distinctSources > 1)
+                {
+                    // Boost confidence for multi-source agreement
+                    best.Confidence = Math.Min(1.0, best.Confidence + multiSourceBoost * (distinctSources - 1));
+                }
+                return best;
+            })
             .ToList();
 
-        return deduplicated.AsReadOnly();
+        return fused.AsReadOnly();
     }
 }
