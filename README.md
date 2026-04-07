@@ -46,6 +46,14 @@ This is the foundation everything else builds on - matching, tailoring, gap anal
 |----------------|----------------------|
 | ![Pipeline](docs/screenshots/pipeline-page.png) | ![AI Settings](docs/screenshots/ai-settings.png) |
 
+| DOCX Preview (Morph) | My Data — Skill Ledger |
+|---------------------|----------------------|
+| ![DOCX Preview](docs/screenshots/docx-preview.png) | ![My Data](docs/screenshots/my-data-page.png) |
+
+| My Data — Skills & Experience |
+|-------------------------------|
+| ![Skills detail](docs/screenshots/my-data-skills.png) |
+
 ---
 
 ## Why ***lucid*RESUME**?
