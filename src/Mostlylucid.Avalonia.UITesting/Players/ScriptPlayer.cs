@@ -320,16 +320,25 @@ public sealed class ScriptPlayer
 
             if (sv != null)
             {
-                var value = action.Value?.ToLowerInvariant() ?? "down";
+                var value = action.Value?.ToLowerInvariant()?.Trim() ?? "down";
                 switch (value)
                 {
-                    case "top": sv.ScrollToHome(); break;
-                    case "bottom": sv.ScrollToEnd(); break;
-                    case "up": sv.LineUp(); break;
-                    case "down": sv.LineDown(); break;
+                    case "top": sv.Offset = sv.Offset.WithY(0); break;
+                    case "bottom": sv.Offset = sv.Offset.WithY(sv.Extent.Height); break;
+                    case "up": sv.PageUp(); break;
+                    case "down": sv.PageDown(); break;
+                    case "pageup": sv.PageUp(); break;
+                    case "pagedown": sv.PageDown(); break;
+                    case "lineup": sv.LineUp(); break;
+                    case "linedown": sv.LineDown(); break;
                     default:
-                        // Support pixel offset: "300" scrolls to 300px, "+200" scrolls down 200px
-                        if (double.TryParse(action.Value, out var px))
+                        // Percentage: "50%" scrolls to 50% of content
+                        if (value.EndsWith('%') && double.TryParse(value.TrimEnd('%'), out var pct))
+                        {
+                            sv.Offset = sv.Offset.WithY(sv.Extent.Height * pct / 100.0);
+                        }
+                        // Pixel offset: "300" scrolls to 300px, "+200" scrolls down 200px
+                        else if (double.TryParse(action.Value, out var px))
                         {
                             if (action.Value!.StartsWith('+') || action.Value.StartsWith('-'))
                                 sv.Offset = sv.Offset.WithY(sv.Offset.Y + px);
@@ -337,7 +346,7 @@ public sealed class ScriptPlayer
                                 sv.Offset = sv.Offset.WithY(px);
                         }
                         else
-                            sv.LineDown();
+                            sv.PageDown();
                         break;
                 }
             }

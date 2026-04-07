@@ -12,33 +12,37 @@ actions:
   - type: Wait
     value: "1500"
   - type: Screenshot
-    value: mydata-initial
+    value: mydata-top
 
-  # Scroll down to see skill ledger
+  # Scroll through the page using percentages
   - type: Scroll
-    value: "300"
+    value: "20%"
   - type: Wait
     value: "500"
   - type: Screenshot
-    value: mydata-skill-ledger
+    value: mydata-skills-top
 
-  # Scroll to experience
   - type: Scroll
-    value: "600"
+    value: "40%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: mydata-skills-mid
+
+  - type: Scroll
+    value: "60%"
   - type: Wait
     value: "500"
   - type: Screenshot
     value: mydata-experience
 
-  # Scroll to projects
   - type: Scroll
-    value: "900"
+    value: "80%"
   - type: Wait
     value: "500"
   - type: Screenshot
     value: mydata-projects
 
-  # Scroll to bottom (issues)
   - type: Scroll
     value: bottom
   - type: Wait
@@ -46,13 +50,13 @@ actions:
   - type: Screenshot
     value: mydata-bottom
 
-  # Go back to top
+  # Back to top
   - type: Scroll
     value: top
   - type: Wait
     value: "300"
 
-  # Also capture the profile page (GitHub import)
+  # Profile page — GitHub import card
   - type: Navigate
     value: profile
   - type: Wait
@@ -64,7 +68,7 @@ actions:
   - type: Screenshot
     value: profile-github-import
 
-  # Navigate all pages to check nothing broke
+  # Navigation check — all pages
   - type: Navigate
     value: resume
   - type: Wait
@@ -85,10 +89,3 @@ actions:
     value: "500"
   - type: Screenshot
     value: nav-jobs
-
-  - type: Navigate
-    value: pipeline
-  - type: Wait
-    value: "500"
-  - type: Screenshot
-    value: nav-pipeline
