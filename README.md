@@ -114,16 +114,39 @@ JSON Resume (standard schema) and Markdown.
 
 ## Getting Started
 
-### Prerequisites
+### Download & Install
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- (Optional) [Ollama](https://ollama.ai) - `ollama pull qwen3.5:4b` for AI tailoring
-- (Optional) Docker - for Docling PDF layout detection
-- (Optional) LibreOffice - for document preview
+1. Go to the [latest release](https://github.com/scottgal/lucidRESUME/releases/latest)
+2. Download the archive for your platform:
 
-ONNX models (NER + embeddings) are **auto-downloaded on first run** (~600MB total).
+| Platform | Download |
+|----------|----------|
+| **Windows** | `lucidRESUME-...-win-x64.zip` or `win-arm64.zip` |
+| **macOS** | `lucidRESUME-...-osx-arm64.tar.gz` (Apple Silicon) or `osx-x64.tar.gz` (Intel) |
+| **Linux** | `lucidRESUME-...-linux-x64.tar.gz` or `linux-arm64.tar.gz` |
 
-### Build & Run
+3. Extract and run `lucidRESUME` (or `lucidRESUME.exe` on Windows)
+
+That's it. ONNX models (~600MB) are downloaded automatically on first launch. No accounts, no setup wizards.
+
+> **macOS users:** if Gatekeeper blocks the app, right-click → Open, or run `xattr -cr lucidRESUME.app` from Terminal.
+
+### AI Tailoring (Optional)
+
+AI tailoring is optional — everything else works without it.
+
+**Option 1: Local AI with [Ollama](https://ollama.ai) (recommended)**
+1. Install Ollama
+2. Pull a model: `ollama pull qwen3.5:4b`
+3. That's it — lucidRESUME connects to `localhost:11434` automatically
+
+**Option 2: Cloud AI (Anthropic or OpenAI)**
+1. Open the **Profile** page in the app
+2. Enter your API key and select the provider
+
+### Build from Source
+
+For developers who want to build from source:
 
 ```bash
 git clone https://github.com/scottgal/lucidRESUME
@@ -131,48 +154,7 @@ cd lucidRESUME
 dotnet run --project src/lucidRESUME/lucidRESUME.csproj
 ```
 
-### Release Archives
-
-Tagged releases publish self-contained app archives from GitHub Actions. Download the archive for your platform, extract it, and run the `lucidRESUME` executable inside:
-
-| Platform | Runtime IDs |
-|----------|-------------|
-| Windows | `win-x64`, `win-arm64` |
-| macOS | `osx-x64`, `osx-arm64` |
-| Linux | `linux-x64`, `linux-arm64` |
-
-Each runtime is published as both `.zip` and `.tar.gz`, with `.sha256` checksum files. The GitHub release page includes basic usage, configuration, and macOS Gatekeeper guidance. Releases also include a documentation archive containing `lucidRESUME-docs-single-page.md` for offline reading.
-
-Maintainers: see [docs/release.md](docs/release.md) for the release workflow and archive policy.
-
-### Configure AI Provider
-
-**Ollama (default, local):**
-```bash
-ollama pull qwen3.5:4b
-# App uses http://localhost:11434 by default
-```
-
-**Anthropic or OpenAI:**
-```bash
-dotnet user-secrets --project src/lucidRESUME set "Anthropic:ApiKey" "sk-ant-..."
-dotnet user-secrets --project src/lucidRESUME set "OpenAi:ApiKey" "sk-..."
-```
-
-Then set `Tailoring.Provider` to `"anthropic"` or `"openai"` in `appsettings.json` or via the Profile page.
-
-### CLI
-
-```bash
-# Parse a resume
-dotnet run --project src/lucidRESUME.Cli -- parse --file cv.pdf --output result.json
-
-# Analyse resume vs job description
-dotnet run --project src/lucidRESUME.Cli -- analyse --resume cv.docx --job "$(cat jd.txt)"
-
-# Export as Markdown
-dotnet run --project src/lucidRESUME.Cli -- export --file cv.docx --format markdown
-```
+Requires [.NET 10 SDK](https://dotnet.microsoft.com/download). See [docs/release.md](docs/release.md) for the release workflow.
 
 ---
 

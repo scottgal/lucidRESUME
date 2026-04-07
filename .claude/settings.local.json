@@ -205,7 +205,25 @@
       "Bash(matches this JD requirement?\" without re-computing embeddings.:*)",
       "Bash(# Update docs screenshots with latest\ncp ux-screenshots/01-resume-imported.png docs/screenshots/resume-page.png\ncp ux-screenshots/06-job-added.png docs/screenshots/add-job-page.png\ncp ux-screenshots/07-jobs-with-score.png docs/screenshots/jobs-page.png\ncp ux-screenshots/09-apply-empty.png docs/screenshots/apply-page.png\ncp ux-screenshots/10-pipeline-empty.png docs/screenshots/pipeline-page.png\ncp ux-screenshots/11-profile-top.png docs/screenshots/profile-page.png\ncp ux-screenshots/13-profile-ai-settings.png docs/screenshots/ai-settings.png\ncp ux-screenshots/00-startup.png docs/screenshots/startup-status.png\n\ngit add -A && git commit -m \"$\\(cat <<'EOF'\nfeat: comprehensive E2E test, button-by-content click, Ollama check fix\n\nComprehensive UX test \\(comprehensive-e2e.yaml\\):\n- 16 screenshots covering every page and feature\n- Import resume → quality panel → export buttons → add job → jobs with\n  match score → apply page → pipeline → profile → AI settings → watches\n- Tests: Click by button content text \\(not just x:Name\\)\n- All actions pass, no \"Control not found\" errors\n\nUX Player improvements:\n- FindControl: fallback to Button.Content text match \\(case-insensitive\\)\n- FindControl: fallback to TextBlock.Text match for labels\n- ExecuteClickAsync: runs on Dispatcher thread, handles async commands\n- Graceful \"skipping\" instead of throwing on missing controls\n\nBug fix:\n- Apply page: deferred Ollama availability check \\(was checking at\n  construction before health check finished → always showed warning\\)\n\nUpdated all docs/screenshots from latest E2E run.\n159 tests passing.\n\nCo-Authored-By: Claude Opus 4.6 \\(1M context\\) <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(outdir=\"/Users/scottgalloway/RiderProjects/lucidRESUME/test-output/kaggle\" ls \"$outdir\"/*.json)",
-      "Bash(outdir=\"/Users/scottgalloway/RiderProjects/lucidRESUME/test-output/kaggle\" rm -f \"$outdir/CHEF.json\" dotnet run --project src/lucidRESUME.Cli/lucidRESUME.Cli.csproj -- parse --file \"/Users/scottgalloway/Desktop/resumes/archive/data/data/CHEF/10001727.pdf\" --output \"$outdir/CHEF2.json\")"
+      "Bash(outdir=\"/Users/scottgalloway/RiderProjects/lucidRESUME/test-output/kaggle\" rm -f \"$outdir/CHEF.json\" dotnet run --project src/lucidRESUME.Cli/lucidRESUME.Cli.csproj -- parse --file \"/Users/scottgalloway/Desktop/resumes/archive/data/data/CHEF/10001727.pdf\" --output \"$outdir/CHEF2.json\")",
+      "Bash(LUCIDRESUME_Docling__Enabled=false dotnet run --project src/lucidRESUME.Cli/lucidRESUME.Cli.csproj -- parse --file \"/Users/scottgalloway/Desktop/resumes/archive/data/data/INFORMATION-TECHNOLOGY/10089434.pdf\" --output /tmp/cat-test.json)",
+      "Bash(__NEW_LINE_d636df69e078a956__ python3 -c \":*)",
+      "Bash(LUCIDRESUME_Docling__Enabled=false dotnet run --project src/lucidRESUME.Cli/lucidRESUME.Cli.csproj -- parse --file \"test-data/resumes/Scott_Galloway_CTO.docx\" --output /tmp/cat-test-cto.json)",
+      "Bash(__NEW_LINE_93f3f2e9327b3d56__ python3 -c \":*)",
+      "Bash(LUCIDRESUME_Docling__Enabled=false dotnet run --project src/lucidRESUME.Cli/lucidRESUME.Cli.csproj -- batch-test --dir test-data/resumes --limit 20)",
+      "Bash(LUCIDRESUME_Docling__Enabled=false dotnet run --project src/lucidRESUME.Cli/lucidRESUME.Cli.csproj -- batch-test --dir \"/Users/scottgalloway/Desktop/resumes/archive/data/data/INFORMATION-TECHNOLOGY\" --limit 20)",
+      "Bash(# Copy models from CLI to UI\ncp src/lucidRESUME.Cli/bin/Debug/net10.0/models/all-MiniLM-L6-v2.onnx src/lucidRESUME/bin/Debug/net10.0/models/ 2>/dev/null\ncp src/lucidRESUME.Cli/bin/Debug/net10.0/models/vocab.txt src/lucidRESUME/bin/Debug/net10.0/models/ 2>/dev/null\ncp src/lucidRESUME.Cli/bin/Debug/net10.0/models/vocab_clean.txt src/lucidRESUME/bin/Debug/net10.0/models/ 2>/dev/null\nls -la src/lucidRESUME/bin/Debug/net10.0/models/*.onnx src/lucidRESUME/bin/Debug/net10.0/models/vocab*.txt 2>/dev/null)",
+      "Bash(LUCIDRESUME_Docling__Enabled=false dotnet run --project src/lucidRESUME.Cli/lucidRESUME.Cli.csproj -- parse --file \"test-data/resumes/Scott_Galloway_Startup_Rescue.docx\" --output /tmp/startup.json)",
+      "Bash(gh issue:*)",
+      "Bash(gh pr:*)",
+      "Bash(git tag:*)",
+      "Bash(gh run:*)",
+      "WebFetch(domain:www.nuget.org)",
+      "WebFetch(domain:api.nuget.org)",
+      "Bash(huggingface-cli whoami:*)",
+      "Bash(hf upload:*)",
+      "Bash(git:*)",
+      "Bash(unzip -l /tmp/nupkg-test/*.nupkg)"
     ]
   }
 }

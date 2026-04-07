@@ -62,34 +62,43 @@ jobs:
         run: dotnet restore ${{ env.PROJECT }} -r ${{ matrix.rid }}
 
       - name: Publish self-contained app
-        run: >
-          dotnet publish ${{ env.PROJECT }}
-          -c Release
-          -r ${{ matrix.rid }}
-          --self-contained true
-          --no-restore
-          -o artifacts/publish/${{ matrix.rid }}
-          /p:Version=${{ steps.version.outputs.VERSION }}
-          /p:PublishSingleFile=true
-          /p:IncludeNativeLibrariesForSelfExtract=true
-          /p:EnableCompressionInSingleFile=true
-
-      - name: Create zip and tar.gz archives
-        shell: pwsh
+        shell: bash
         run: |
-          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
-          $version = "${{ steps.version.outputs.VERSION }}"
-          $rid = "${{ matrix.rid }}"
-          $name = "lucidRESUME-$version-$rid"
-          $publishDir = Resolve-Path "artifacts/publish/$rid"
-          $stagingRoot = Resolve-Path "artifacts/release"
-          $staging = Join-Path $stagingRoot $name
-          New-Item -ItemType Directory -Force -Path $staging | Out-Null
-          Copy-Item -Path "$publishDir/*" -Destination $staging -Recurse -Force
-          Compress-Archive -Path $staging -DestinationPath "artifacts/release/$name.zip" -Force
-          tar -czf "artifacts/release/$name.tar.gz" -C "artifacts/release" $name
-          Get-FileHash "artifacts/release/$name.zip" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $name.zip" } | Set-Content "artifacts/release/$name.zip.sha256"
-          Get-FileHash "artifacts/release/$name.tar.gz" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $name.tar.gz" } | Set-Content "artifacts/release/$name.tar.gz.sha256"
+          EXTRA_PROPS="/p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true"
+          # macOS: native .dylib files can't reliably extract from single-file bundles
+          # due to Gatekeeper/notarization blocking execution from temp dirs.
+          # Keep them alongside the executable instead.
+          if [[ "${{ matrix.rid }}" != osx-* ]]; then
+            EXTRA_PROPS="$EXTRA_PROPS /p:IncludeNativeLibrariesForSelfExtract=true"
+          fi
+          dotnet publish ${{ env.PROJECT }} \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            --self-contained true \
+            --no-restore \
+            -o artifacts/publish/${{ matrix.rid }} \
+            /p:Version=${{ steps.version.outputs.VERSION }} \
+            $EXTRA_PROPS
+
+      - name: Create archive
+        shell: bash
+        run: |
+          mkdir -p artifacts/release
+          version="${{ steps.version.outputs.VERSION }}"
+          rid="${{ matrix.rid }}"
+          name="lucidRESUME-${version}-${rid}"
+          cp -r "artifacts/publish/${rid}" "artifacts/release/${name}"
+          if [[ "$rid" == win-* ]]; then
+            # Windows: zip only
+            (cd artifacts/release && zip -qr "${name}.zip" "${name}")
+            sha256sum "artifacts/release/${name}.zip" | cut -d' ' -f1 | tr -d '\n' > "artifacts/release/${name}.zip.sha256"
+            echo "  ${name}.zip" >> "artifacts/release/${name}.zip.sha256"
+          else
+            # macOS / Linux: tar.gz only
+            tar -czf "artifacts/release/${name}.tar.gz" -C artifacts/release "${name}"
+            sha256sum "artifacts/release/${name}.tar.gz" | cut -d' ' -f1 | tr -d '\n' > "artifacts/release/${name}.tar.gz.sha256"
+            echo "  ${name}.tar.gz" >> "artifacts/release/${name}.tar.gz.sha256"
+          fi
 
       - name: Upload app archives
         uses: actions/upload-artifact@v4
@@ -197,7 +206,7 @@ jobs:
           | Linux Intel/AMD | \`linux-x64\` |
           | Linux ARM | \`linux-arm64\` |
 
-          Each runtime is published as both \`.zip\` and \`.tar.gz\`, with matching \`.sha256\` checksum files. The docs archive includes a single-page Markdown reference, \`lucidRESUME-docs-single-page.md\`.
+          Windows builds are \`.zip\`, macOS and Linux are \`.tar.gz\`. Each archive has a matching \`.sha256\` checksum file. The docs archive includes a single-page Markdown reference, \`lucidRESUME-docs-single-page.md\`.
 
           ### Basic Usage
 

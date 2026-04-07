@@ -59,7 +59,8 @@ public sealed class StartupHealthCheck
     private const string EmbeddingVocabUrl = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt";
     private const string GeneralNerModelUrl = "https://huggingface.co/dslim/bert-base-NER/resolve/main/onnx/model.onnx";
     private const string GeneralNerVocabUrl = "https://huggingface.co/dslim/bert-base-NER/resolve/main/vocab.txt";
-    private const string ResumeNerVocabUrl = "https://huggingface.co/yashpwr/resume-ner-bert-v2/resolve/main/vocab.txt";
+    private const string ResumeNerModelUrl = "https://huggingface.co/scottgal/resume-ner-bert-v2-onnx/resolve/main/model.onnx";
+    private const string ResumeNerVocabUrl = "https://huggingface.co/scottgal/resume-ner-bert-v2-onnx/resolve/main/vocab.txt";
 
     public async Task RunAsync(CancellationToken ct = default)
     {
@@ -167,103 +168,33 @@ public sealed class StartupHealthCheck
             }
         }
 
-        // Resume NER (yashpwr/resume-ner-bert-v2) - no pre-exported ONNX; needs Python optimum export
+        // Resume NER (pre-exported ONNX from scottgal/resume-ner-bert-v2-onnx)
         var resumeModelPath = ResolvePath("models/resume-ner/model.onnx");
         var resumeVocabPath = ResolvePath("models/resume-ner/vocab.txt");
 
         ResumeNerReady = File.Exists(resumeModelPath) && File.Exists(resumeVocabPath);
         if (!ResumeNerReady)
         {
-            _logger.LogWarning("Resume NER model not found. Attempting export via optimum-cli...");
+            _logger.LogInformation("Resume NER model not found. Downloading from HuggingFace...");
             try
             {
-                ReportStatus("ner", "NER: exporting resume-ner model (Python)...");
-                await ExportResumeNerModelAsync(resumeModelPath, resumeVocabPath, ct);
-                ResumeNerReady = File.Exists(resumeModelPath) && File.Exists(resumeVocabPath);
+                Directory.CreateDirectory(Path.GetDirectoryName(resumeModelPath)!);
 
+                if (!File.Exists(resumeModelPath))
+                    await DownloadFileWithProgressAsync(ResumeNerModelUrl, resumeModelPath, "ner", "Resume NER", ct);
+                if (!File.Exists(resumeVocabPath))
+                    await DownloadFileAsync(ResumeNerVocabUrl, resumeVocabPath, ct);
+
+                ResumeNerReady = File.Exists(resumeModelPath) && File.Exists(resumeVocabPath);
                 if (ResumeNerReady)
-                    _logger.LogInformation("Resume NER model exported successfully");
-                else
-                {
-                    // Vocab may be downloadable even if export failed
-                    if (!File.Exists(resumeVocabPath))
-                        await DownloadFileAsync(ResumeNerVocabUrl, resumeVocabPath, ct);
-                    Warnings.Add("Resume NER model export failed. Install Python + optimum: pip install optimum[onnxruntime] transformers torch");
-                }
+                    _logger.LogInformation("Resume NER model downloaded successfully");
             }
             catch (Exception ex)
             {
-                Warnings.Add($"Resume NER model unavailable: {ex.Message}. Skill/degree extraction will be limited.");
-                _logger.LogError(ex, "Failed to export resume NER model");
+                Warnings.Add($"Failed to download resume NER model: {ex.Message}. Skill/degree extraction will be limited.");
+                _logger.LogError(ex, "Failed to download resume NER model");
             }
         }
-    }
-
-    private async Task ExportResumeNerModelAsync(string modelPath, string vocabPath, CancellationToken ct)
-    {
-        var outputDir = Path.GetDirectoryName(modelPath)!;
-        Directory.CreateDirectory(outputDir);
-
-        // Check if Python + optimum are available
-        var pythonPath = FindPython();
-        if (pythonPath is null)
-        {
-            Warnings.Add("Python not found. Resume NER model requires: pip install optimum[onnxruntime] transformers torch");
-            return;
-        }
-
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = pythonPath,
-            Arguments = $"-m optimum.exporters.onnx --model yashpwr/resume-ner-bert-v2 --task token-classification \"{outputDir}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        using var process = System.Diagnostics.Process.Start(psi);
-        if (process is null)
-        {
-            Warnings.Add("Failed to start Python for resume NER model export.");
-            return;
-        }
-
-        // Read output asynchronously so we don't deadlock
-        var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
-        var stderrTask = process.StandardError.ReadToEndAsync(ct);
-
-        await process.WaitForExitAsync(ct);
-
-        if (process.ExitCode != 0)
-        {
-            var stderr = await stderrTask;
-            _logger.LogWarning("optimum export exited with {Code}: {Stderr}", process.ExitCode, stderr);
-
-            // Check if optimum is not installed
-            if (stderr.Contains("No module named") || stderr.Contains("ModuleNotFoundError"))
-                Warnings.Add("Python optimum not installed. Run: pip install optimum[onnxruntime] transformers torch");
-        }
-    }
-
-    private static string? FindPython()
-    {
-        foreach (var name in new[] { "python3", "python" })
-        {
-            try
-            {
-                var psi = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = name, Arguments = "--version",
-                    RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true,
-                };
-                using var p = System.Diagnostics.Process.Start(psi);
-                p?.WaitForExit(5000);
-                if (p?.ExitCode == 0) return name;
-            }
-            catch { /* not found */ }
-        }
-        return null;
     }
 
     private async Task DownloadFileWithProgressAsync(string url, string targetPath, string serviceKey, string serviceLabel, CancellationToken ct)

@@ -17,12 +17,14 @@
     <PackageProjectUrl>https://github.com/scottgal/Mostlylucid.Avalonia.UITesting</PackageProjectUrl>
     <RepositoryUrl>https://github.com/scottgal/Mostlylucid.Avalonia.UITesting</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" Condition="Exists('README.md')" />
+    <None Include="icon.png" Pack="true" PackagePath="" />
     <None Include="examples\**\*.yaml" Pack="true" PackagePath="content\examples" />
   </ItemGroup>
 
