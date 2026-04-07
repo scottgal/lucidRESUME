@@ -66,12 +66,13 @@ public static class ExportCommand
             {
                 "json" or "jsonresume" => ExportFormat.JsonResume,
                 "md" or "markdown"    => ExportFormat.Markdown,
+                "docx" or "word"      => ExportFormat.Docx,
                 _ => (ExportFormat?)null
             };
 
             if (fmt is null)
             {
-                Console.Error.WriteLine($"Unknown format '{format}'. Use: json, markdown");
+                Console.Error.WriteLine($"Unknown format '{format}'. Use: json, markdown, docx");
                 return;
             }
 

@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IResumeExporter, JsonResumeExporter>();
         services.AddSingleton<IResumeExporter, MarkdownExporter>();
+        services.AddSingleton<IResumeExporter, DocxExporter>();
         return services;
     }
 }

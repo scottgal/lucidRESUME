@@ -1,0 +1,23 @@
+name: docx-export-roundtrip
+description: Export resume as DOCX then re-import to verify rendering
+default_delay: 500
+
+actions:
+  - type: Wait
+    value: "2000"
+
+  # Import original resume
+  - type: ImportFile
+    value: test-data/resumes/Scott_Galloway_CTO.docx
+  - type: Wait
+    value: "4000"
+  - type: Screenshot
+    value: export-original
+
+  # Now import the exported DOCX to verify it renders
+  - type: ImportFile
+    value: /tmp/test-export.docx
+  - type: Wait
+    value: "4000"
+  - type: Screenshot
+    value: export-reimported
