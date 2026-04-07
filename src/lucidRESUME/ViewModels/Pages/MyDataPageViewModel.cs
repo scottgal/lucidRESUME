@@ -66,7 +66,6 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
 
     // ── Charts ─────────────────────────────────────────────────────────────
     [ObservableProperty] private ISeries[] _categoryPieSeries = [];
-    [ObservableProperty] private ISeries[] _strengthBarSeries = [];
     [ObservableProperty] private ISeries[] _topSkillsRadarSeries = [];
     [ObservableProperty] private PolarAxis[] _topSkillsRadarAxes = [];
 
@@ -116,9 +115,14 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
                 }
             }
 
-            // Build ledger
+            // Build ledger + ensure categories are set
             _ledger = await _ledgerBuilder.BuildAsync(_resume);
             SkillLedgerBuilder.ApplyOverrides(_ledger, _overrides);
+            foreach (var entry in _ledger.Entries.Where(e => string.IsNullOrEmpty(e.Category)))
+                entry.Category = SkillCategoriser.CategoriseSkill(entry.SkillName);
+            // Final fallback: anything still null gets "Other"
+            foreach (var entry in _ledger.Entries.Where(e => string.IsNullOrEmpty(e.Category)))
+                entry.Category = "Other";
 
             // Populate skills
             var allVms = _ledger.Entries.Select(e =>
@@ -241,57 +245,37 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
     private void BuildCharts(List<SkillLedgerEntryVm> skills, IEnumerable<WorkExperience> experience)
     {
         // 1. Category pie chart
-        var catColors = new Dictionary<string, SKColor>(StringComparer.OrdinalIgnoreCase)
+        var catColorList = new SKColor[]
         {
-            ["Language"] = new(30, 136, 229),
-            ["Framework"] = new(156, 39, 176),
-            ["Cloud & DevOps"] = new(255, 152, 0),
-            ["Database"] = new(0, 188, 212),
-            ["Tool"] = new(76, 175, 80),
-            ["AI/ML"] = new(233, 30, 99),
-            ["Methodology"] = new(121, 85, 72),
-            ["Security"] = new(244, 67, 54),
+            new(30, 136, 229),   // blue
+            new(156, 39, 176),   // purple
+            new(255, 152, 0),    // orange
+            new(0, 188, 212),    // cyan
+            new(76, 175, 80),    // green
+            new(233, 30, 99),    // pink
+            new(121, 85, 72),    // brown
+            new(244, 67, 54),    // red
+            new(63, 81, 181),    // indigo
+            new(255, 193, 7),    // amber
         };
 
-        CategoryPieSeries = skills
+        var groups = skills
             .GroupBy(s => s.Category ?? "Other")
-            .Where(g => g.Count() >= 1)
             .OrderByDescending(g => g.Count())
-            .Select(g =>
-            {
-                var color = catColors.GetValueOrDefault(g.Key, new SKColor(158, 158, 158));
-                return (ISeries)new PieSeries<int>
-                {
-                    Values = [g.Count()],
-                    Name = g.Key,
-                    Fill = new SolidColorPaint(color),
-                    InnerRadius = 40,
-                };
-            })
-            .ToArray();
+            .ToList();
 
-        // 2. Strength distribution
-        StrengthBarSeries =
-        [
-            new StackedRowSeries<int>
+        CategoryPieSeries = groups.Select((g, i) =>
+            (ISeries)new PieSeries<double>
             {
-                Values = [StrongCount],
-                Name = "Strong",
-                Fill = new SolidColorPaint(new SKColor(76, 175, 80)),
-            },
-            new StackedRowSeries<int>
-            {
-                Values = [ModerateCount],
-                Name = "Moderate",
-                Fill = new SolidColorPaint(new SKColor(255, 152, 0)),
-            },
-            new StackedRowSeries<int>
-            {
-                Values = [WeakCount],
-                Name = "Weak",
-                Fill = new SolidColorPaint(new SKColor(244, 67, 54)),
-            },
-        ];
+                Values = new double[] { g.Count() },
+                Name = $"{g.Key} ({g.Count()})",
+                Fill = new SolidColorPaint(catColorList[i % catColorList.Length]),
+                InnerRadius = 50,
+                DataLabelsSize = 10,
+                DataLabelsPaint = new SolidColorPaint(SKColors.White),
+            }).ToArray();
+
+        // 2. Strength distribution — skip, shown in badges already
 
         // 3. Top skills radar
         var topSkills = skills.OrderByDescending(s => s.Strength).Take(8).ToList();
@@ -303,9 +287,11 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
                 {
                     Values = topSkills.Select(s => s.Strength).ToArray(),
                     Name = "Strength",
-                    Fill = new SolidColorPaint(new SKColor(30, 136, 229, 60)),
-                    Stroke = new SolidColorPaint(new SKColor(30, 136, 229), 2),
-                    GeometrySize = 6,
+                    Fill = new SolidColorPaint(new SKColor(30, 136, 229, 80)),
+                    Stroke = new SolidColorPaint(new SKColor(100, 180, 255), 2),
+                    GeometryFill = new SolidColorPaint(new SKColor(100, 180, 255)),
+                    GeometryStroke = new SolidColorPaint(new SKColor(30, 136, 229), 2),
+                    GeometrySize = 8,
                     LineSmoothness = 0,
                     IsClosed = true,
                 }
@@ -314,6 +300,7 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
             {
                 Name = s.SkillName,
                 NameTextSize = 10,
+                NamePaint = new SolidColorPaint(new SKColor(200, 200, 200)),
                 MinLimit = 0,
                 MaxLimit = 1,
             }).ToArray();

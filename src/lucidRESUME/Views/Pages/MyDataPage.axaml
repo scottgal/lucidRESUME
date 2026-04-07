@@ -24,14 +24,13 @@
           <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
             <TextBlock Text="Skills Dashboard" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
 
-            <!-- Row 1: Pie + Strength bar -->
-            <Grid ColumnDefinitions="*,*" Height="180">
+            <!-- Pie + Radar side by side -->
+            <Grid ColumnDefinitions="*,*" Height="220">
               <lvc:PieChart Grid.Column="0" Series="{Binding CategoryPieSeries}"
-                            LegendPosition="Right" LegendTextSize="10" Margin="0,0,8,0"/>
-              <!-- Radar -->
+                            LegendPosition="Bottom" LegendTextSize="9"/>
               <lvc:PolarChart Grid.Column="1" Series="{Binding TopSkillsRadarSeries}"
                               AngleAxes="{Binding TopSkillsRadarAxes}"
-                              Height="180"/>
+                              LegendPosition="Hidden"/>
             </Grid>
           </StackPanel>
         </Grid>
