@@ -4,6 +4,7 @@
              xmlns:mydata="using:lucidRESUME.ViewModels.Pages.MyData"
              xmlns:skills="using:lucidRESUME.Core.Models.Skills"
              xmlns:resume="using:lucidRESUME.Core.Models.Resume"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
              x:DataType="vm:MyDataPageViewModel"
              x:Class="lucidRESUME.Views.Pages.MyDataPage">
 
@@ -14,6 +15,64 @@
                  Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,4"/>
       <TextBlock Text="Everything extracted from your resume and GitHub. Click any skill to see evidence."
                  Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,8"/>
+
+      <!-- Dashboard Charts -->
+      <Border IsVisible="{Binding HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock Text="Skills Dashboard" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+
+            <!-- Row 1: Pie + Strength bar -->
+            <Grid ColumnDefinitions="*,*" Height="180">
+              <lvc:PieChart Grid.Column="0" Series="{Binding CategoryPieSeries}"
+                            LegendPosition="Right" LegendTextSize="10" Margin="0,0,8,0"/>
+              <!-- Radar -->
+              <lvc:PolarChart Grid.Column="1" Series="{Binding TopSkillsRadarSeries}"
+                              AngleAxes="{Binding TopSkillsRadarAxes}"
+                              Height="180"/>
+            </Grid>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Career Timeline (Gantt) -->
+      <Border IsVisible="{Binding HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="4">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="Career Timeline" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+              <TextBlock Grid.Column="1" FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}" VerticalAlignment="Center">
+                <Run Text="{Binding GanttStartLabel}"/>
+                <Run Text=" → "/>
+                <Run Text="{Binding GanttEndLabel}"/>
+              </TextBlock>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding GanttBars}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="mydata:GanttBarVm">
+                  <Grid Height="22" Margin="0,1" ToolTip.Tip="{Binding DateRange}">
+                    <Border CornerRadius="3" Background="{DynamicResource LrCardBgBrush}"/>
+                    <Canvas>
+                      <Border Canvas.Top="1" Canvas.Left="0"
+                              Height="20" CornerRadius="3" Opacity="0.85"
+                              Background="{Binding Color}">
+                        <TextBlock FontSize="8" Foreground="White" VerticalAlignment="Center"
+                                   Margin="6,0" TextTrimming="CharacterEllipsis">
+                          <Run Text="{Binding Title}"/><Run Text=" — "/><Run Text="{Binding Company}"/>
+                        </TextBlock>
+                      </Border>
+                    </Canvas>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
 
       <!-- No data state -->
       <Border IsVisible="{Binding !HasData}" Background="{DynamicResource LrSurfaceBgBrush}"

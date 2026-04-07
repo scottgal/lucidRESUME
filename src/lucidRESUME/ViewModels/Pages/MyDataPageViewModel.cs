@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
@@ -8,6 +11,7 @@ using lucidRESUME.Core.Models.Skills;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.Matching;
 using lucidRESUME.ViewModels.Pages.MyData;
+using SkiaSharp;
 
 namespace lucidRESUME.ViewModels.Pages;
 
@@ -40,6 +44,9 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
 
     // ── Experience ─────────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<WorkExperience> _experience = [];
+    [ObservableProperty] private ObservableCollection<GanttBarVm> _ganttBars = [];
+    [ObservableProperty] private string _ganttStartLabel = "";
+    [ObservableProperty] private string _ganttEndLabel = "";
 
     // ── Education ──────────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<Education> _education = [];
@@ -56,6 +63,12 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
     [ObservableProperty] private int _strongCount;
     [ObservableProperty] private int _moderateCount;
     [ObservableProperty] private int _weakCount;
+
+    // ── Charts ─────────────────────────────────────────────────────────────
+    [ObservableProperty] private ISeries[] _categoryPieSeries = [];
+    [ObservableProperty] private ISeries[] _strengthBarSeries = [];
+    [ObservableProperty] private ISeries[] _topSkillsRadarSeries = [];
+    [ObservableProperty] private PolarAxis[] _topSkillsRadarAxes = [];
 
     // ── Add Skill ──────────────────────────────────────────────────────────
     [ObservableProperty] private string _newSkillName = "";
@@ -135,6 +148,9 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
             Education = new ObservableCollection<Education>(_resume.Education);
             Projects = new ObservableCollection<Project>(_resume.Projects);
             Issues = new ObservableCollection<ConsistencyIssue>(_ledger.Issues);
+
+            // Build charts
+            BuildCharts(allVms, _resume.Experience);
         }
         finally
         {
@@ -220,5 +236,117 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
     private async Task SaveOverridesAsync()
     {
         await _store.MutateAsync(state => state.Overrides = _overrides);
+    }
+
+    private void BuildCharts(List<SkillLedgerEntryVm> skills, IEnumerable<WorkExperience> experience)
+    {
+        // 1. Category pie chart
+        var catColors = new Dictionary<string, SKColor>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Language"] = new(30, 136, 229),
+            ["Framework"] = new(156, 39, 176),
+            ["Cloud & DevOps"] = new(255, 152, 0),
+            ["Database"] = new(0, 188, 212),
+            ["Tool"] = new(76, 175, 80),
+            ["AI/ML"] = new(233, 30, 99),
+            ["Methodology"] = new(121, 85, 72),
+            ["Security"] = new(244, 67, 54),
+        };
+
+        CategoryPieSeries = skills
+            .GroupBy(s => s.Category ?? "Other")
+            .Where(g => g.Count() >= 1)
+            .OrderByDescending(g => g.Count())
+            .Select(g =>
+            {
+                var color = catColors.GetValueOrDefault(g.Key, new SKColor(158, 158, 158));
+                return (ISeries)new PieSeries<int>
+                {
+                    Values = [g.Count()],
+                    Name = g.Key,
+                    Fill = new SolidColorPaint(color),
+                    InnerRadius = 40,
+                };
+            })
+            .ToArray();
+
+        // 2. Strength distribution
+        StrengthBarSeries =
+        [
+            new StackedRowSeries<int>
+            {
+                Values = [StrongCount],
+                Name = "Strong",
+                Fill = new SolidColorPaint(new SKColor(76, 175, 80)),
+            },
+            new StackedRowSeries<int>
+            {
+                Values = [ModerateCount],
+                Name = "Moderate",
+                Fill = new SolidColorPaint(new SKColor(255, 152, 0)),
+            },
+            new StackedRowSeries<int>
+            {
+                Values = [WeakCount],
+                Name = "Weak",
+                Fill = new SolidColorPaint(new SKColor(244, 67, 54)),
+            },
+        ];
+
+        // 3. Top skills radar
+        var topSkills = skills.OrderByDescending(s => s.Strength).Take(8).ToList();
+        if (topSkills.Count >= 3)
+        {
+            TopSkillsRadarSeries =
+            [
+                new PolarLineSeries<double>
+                {
+                    Values = topSkills.Select(s => s.Strength).ToArray(),
+                    Name = "Strength",
+                    Fill = new SolidColorPaint(new SKColor(30, 136, 229, 60)),
+                    Stroke = new SolidColorPaint(new SKColor(30, 136, 229), 2),
+                    GeometrySize = 6,
+                    LineSmoothness = 0,
+                    IsClosed = true,
+                }
+            ];
+            TopSkillsRadarAxes = topSkills.Select(s => new PolarAxis
+            {
+                Name = s.SkillName,
+                NameTextSize = 10,
+                MinLimit = 0,
+                MaxLimit = 1,
+            }).ToArray();
+        }
+
+        // 4. Career Gantt chart
+        var expList = experience.OrderBy(e => e.StartDate).ToList();
+        if (expList.Count > 0)
+        {
+            var earliest = expList.Min(e => e.StartDate ?? DateOnly.FromDateTime(DateTime.Today));
+            var now = DateOnly.FromDateTime(DateTime.Today);
+            var totalDays = Math.Max(1, now.DayNumber - earliest.DayNumber);
+
+            var colors = new[] { "#1E88E5", "#8E24AA", "#43A047", "#FB8C00", "#E53935", "#00ACC1", "#5E35B1", "#F4511E" };
+            GanttStartLabel = earliest.Year.ToString();
+            GanttEndLabel = now.Year.ToString();
+
+            GanttBars = new ObservableCollection<GanttBarVm>(expList.Select((exp, i) =>
+            {
+                var start = (exp.StartDate ?? earliest).DayNumber - earliest.DayNumber;
+                var end = (exp.IsCurrent ? now : exp.EndDate ?? now).DayNumber - earliest.DayNumber;
+                var dates = $"{exp.StartDate?.ToString("MMM yyyy") ?? "?"} – {(exp.IsCurrent ? "Present" : exp.EndDate?.ToString("MMM yyyy") ?? "?")}";
+                return new GanttBarVm
+                {
+                    Title = exp.Title ?? "",
+                    Company = exp.Company ?? "",
+                    DateRange = dates,
+                    LeftPercent = (double)start / totalDays * 100,
+                    WidthPercent = Math.Max(1, (double)(end - start) / totalDays * 100),
+                    Color = colors[i % colors.Length],
+                    IsCurrent = exp.IsCurrent,
+                };
+            }));
+        }
     }
 }
