@@ -5,6 +5,7 @@
              xmlns:skills="using:lucidRESUME.Core.Models.Skills"
              xmlns:resume="using:lucidRESUME.Core.Models.Resume"
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:sp="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
              x:DataType="vm:MyDataPageViewModel"
              x:Class="lucidRESUME.Views.Pages.MyDataPage">
 
@@ -42,33 +43,8 @@
         <Grid ColumnDefinitions="3,*">
           <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3"/>
           <StackPanel Grid.Column="1" Margin="20,16" Spacing="4">
-            <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Text="Career Timeline" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
-              <TextBlock Grid.Column="1" FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}" VerticalAlignment="Center">
-                <Run Text="{Binding GanttStartLabel}"/>
-                <Run Text=" → "/>
-                <Run Text="{Binding GanttEndLabel}"/>
-              </TextBlock>
-            </Grid>
-            <ItemsControl ItemsSource="{Binding GanttBars}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="mydata:GanttBarVm">
-                  <Grid Height="22" Margin="0,1" ToolTip.Tip="{Binding DateRange}">
-                    <Border CornerRadius="3" Background="{DynamicResource LrCardBgBrush}"/>
-                    <Canvas>
-                      <Border Canvas.Top="1" Canvas.Left="0"
-                              Height="20" CornerRadius="3" Opacity="0.85"
-                              Background="{Binding Color}">
-                        <TextBlock FontSize="8" Foreground="White" VerticalAlignment="Center"
-                                   Margin="6,0" TextTrimming="CharacterEllipsis">
-                          <Run Text="{Binding Title}"/><Run Text=" — "/><Run Text="{Binding Company}"/>
-                        </TextBlock>
-                      </Border>
-                    </Canvas>
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <TextBlock Text="Career Timeline" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <sp:AvaPlot x:Name="GanttChart" Height="300"/>
           </StackPanel>
         </Grid>
       </Border>
