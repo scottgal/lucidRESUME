@@ -28,11 +28,27 @@
               IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"/>
       <Button Content="Export Markdown" Command="{Binding ExportMarkdownCommand}"
               IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"/>
-      <TextBox Text="{Binding TranslateLanguage}" Width="80" Watermark="Language" VerticalAlignment="Center"
-               Padding="6,3" FontSize="11"/>
+
+      <!-- Import mode selector -->
+      <ComboBox ItemsSource="{Binding ImportModes}" SelectedItem="{Binding ImportMode}"
+                Width="70" VerticalAlignment="Center" FontSize="11" Padding="6,3"
+                ToolTip.Tip="Fast: structural only (sub-second). AI: adds LLM for missing fields."/>
+
+      <!-- Language selector for translation -->
+      <ComboBox ItemsSource="{Binding TranslateLanguages}" SelectedItem="{Binding TranslateLanguage}"
+                Width="100" VerticalAlignment="Center" FontSize="11" Padding="6,3"/>
       <Button Content="Translate" Command="{Binding TranslateResumeCommand}"
               IsEnabled="{Binding !IsTranslating}" IsVisible="{Binding HasResume}"
               Padding="8,4" FontSize="12"/>
+
+      <!-- Detected language badge -->
+      <Border Background="{DynamicResource LrAccentBlueBgBrush}" CornerRadius="4" Padding="6,2"
+              VerticalAlignment="Center"
+              IsVisible="{Binding DetectedLanguage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="{Binding DetectedLanguage}" FontSize="10"
+                   Foreground="{DynamicResource LrAccentBlueBrush}"/>
+      </Border>
+
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
       <ProgressBar IsVisible="{Binding IsTranslating}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}"

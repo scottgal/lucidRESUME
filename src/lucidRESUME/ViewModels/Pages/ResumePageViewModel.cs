@@ -38,6 +38,37 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
     internal TopLevel? TopLevel { get; set; }
 
+    // Simple language detection from resume text
+    private static string DetectLanguage(ResumeDocument resume)
+    {
+        var text = (resume.PlainText ?? resume.RawMarkdown ?? "").ToLowerInvariant();
+        if (text.Length < 50) return "English";
+
+        // Chinese/Japanese/Korean: check for CJK characters
+        if (text.Any(c => c >= '\u4E00' && c <= '\u9FFF')) return "Chinese";
+        if (text.Any(c => c >= '\u3040' && c <= '\u309F')) return "Japanese";
+        if (text.Any(c => c >= '\uAC00' && c <= '\uD7AF')) return "Korean";
+
+        // European languages: keyword-based detection
+        var sample = text.Length > 2000 ? text[..2000] : text;
+        (string Lang, string[] Keywords)[] signals =
+        [
+            ("German", ["erfahrung", "ausbildung", "berufserfahrung", "kenntnisse", "fähigkeiten", "lebenslauf"]),
+            ("French", ["expérience", "formation", "compétences", "langues", "diplôme", "licence"]),
+            ("Spanish", ["experiencia", "educación", "habilidades", "conocimientos", "formación", "idiomas"]),
+            ("Portuguese", ["experiência", "educação", "habilidades", "formação", "conhecimentos", "idiomas"]),
+            ("Dutch", ["ervaring", "opleiding", "vaardigheden", "kennis", "werkervaring"]),
+        ];
+
+        foreach (var (lang, keywords) in signals)
+        {
+            var hits = keywords.Count(k => sample.Contains(k));
+            if (hits >= 2) return lang;
+        }
+
+        return "English";
+    }
+
     public bool HasLibreOffice => _libreOffice.IsAvailable;
     public bool HasAnyOpener => _openers.HasAny;
     public string PrimaryOpenerName => _openers.Primary?.Name ?? "Open in…";
@@ -69,6 +100,13 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     // Keep raw findings for backward compat (used in AI detection too)
     [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _qualityFindings = [];
 
+    // Import mode: "Fast" (structural only) vs "AI" (structural + LLM + Docling)
+    [ObservableProperty] private string _importMode = "AI";
+    public IReadOnlyList<string> ImportModes { get; } = ["Fast", "AI"];
+
+    // Detected language
+    [ObservableProperty] private string _detectedLanguage = "";
+
     // AI detection
     [ObservableProperty] private int _aiScore;
     [ObservableProperty] private bool _hasAiReport;
@@ -77,6 +115,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private string? _deAiStatus;
     [ObservableProperty] private bool _isTranslating;
     [ObservableProperty] private string _translateLanguage = "German";
+    public IReadOnlyList<string> TranslateLanguages { get; } =
+        ["German", "French", "Spanish", "Portuguese", "Chinese", "Dutch", "Japanese", "Korean", "Italian", "Polish", "Swedish", "Arabic", "Hindi", "Turkish", "Russian"];
 
     // Page image display
     [ObservableProperty] private Bitmap? _currentPageImage;
@@ -142,7 +182,15 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
         try
         {
-            Resume = await _parser.ParseAsync(path);
+            var mode = ImportMode == "Fast" ? ParseMode.Fast : ParseMode.AI;
+            Resume = await _parser.ParseAsync(path, mode);
+            if (Resume.LlmEnhancementTask != null)
+                await Resume.LlmEnhancementTask;
+            lucidRESUME.Matching.SkillCategoriser.Categorise(Resume);
+
+            // Detect language from content
+            DetectedLanguage = DetectLanguage(Resume);
+
             PopulateDisplayProperties();
 
             // Tier 2: Docling images
@@ -157,7 +205,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
                 await GenerateLibreOfficePreviewAsync(path);
             }
 
-            StatusMessage = $"Imported {Path.GetFileName(path)}";
+            var modeLabel = mode == ParseMode.Fast ? "fast" : "AI";
+            StatusMessage = $"Imported {Path.GetFileName(path)} ({modeLabel})";
         }
         catch (Exception ex)
         {
@@ -182,6 +231,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         try
         {
             Resume = await _parser.ParseAsync(path);
+            if (Resume.LlmEnhancementTask != null)
+                await Resume.LlmEnhancementTask;
+            lucidRESUME.Matching.SkillCategoriser.Categorise(Resume);
             PopulateDisplayProperties();
 
             if (!HasPageImages && _libreOffice.IsAvailable)

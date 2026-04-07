@@ -1,0 +1,54 @@
+# Healthcare skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+# Clinical
+patient care: bedside care, direct patient care, patient assessment
+vital signs: blood pressure, heart rate, temperature monitoring
+medication administration: drug dispensing, pharmaceutical administration, med pass
+wound care: dressing changes, wound management, debridement
+iv therapy: intravenous therapy, iv insertion, infusion therapy
+phlebotomy: blood draw, venipuncture
+cpr: cardiopulmonary resuscitation, bls, basic life support, acls, advanced cardiac life support
+triage: patient prioritization, emergency assessment
+ehr: electronic health records, emr, electronic medical records, epic, cerner, meditech
+hipaa: health information privacy, patient confidentiality, phi
+icd-10: medical coding, diagnostic coding, cpt coding
+medical terminology: clinical terminology, anatomy
+infection control: sterile technique, aseptic technique, hand hygiene
+
+# Nursing
+registered nurse: rn, bsn, nursing
+licensed practical nurse: lpn, lvn
+nurse practitioner: np, arnp, aprn
+charge nurse: nursing supervisor, shift lead
+care planning: nursing care plan, patient care plan
+patient education: health education, discharge planning
+
+# Allied Health
+physical therapy: pt, physiotherapy, rehabilitation
+occupational therapy: ot, functional rehabilitation
+speech therapy: slp, speech-language pathology
+radiology: x-ray, imaging, ct scan, mri, ultrasound
+laboratory: lab technician, clinical laboratory, pathology
+pharmacy: pharmacist, medication management, drug interaction
+respiratory therapy: rt, ventilator management, pulmonary function
+
+# Administration
+healthcare administration: hospital administration, clinic management
+medical billing: claims processing, revenue cycle, coding and billing
+insurance verification: prior authorization, benefits verification
+patient scheduling: appointment management
+medical records: health information management, him, chart management
+quality improvement: qi, quality assurance, performance improvement
+joint commission: jcaho, accreditation, regulatory compliance
+
+# Specialties
+oncology: cancer care, chemotherapy, radiation therapy
+cardiology: cardiac care, ecg, electrocardiogram, heart catheterization
+orthopedics: musculoskeletal, joint replacement, fracture care
+pediatrics: child healthcare, neonatal, nicu
+geriatrics: elder care, long-term care, assisted living
+mental health: psychiatric nursing, behavioral health, counseling
+emergency medicine: er, emergency department, trauma
+surgery: operating room, or, perioperative, surgical tech
+icu: intensive care unit, critical care

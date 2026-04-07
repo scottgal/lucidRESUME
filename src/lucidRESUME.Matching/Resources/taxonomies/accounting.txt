@@ -1,0 +1,26 @@
+# Accounting skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+general ledger: gl, journal entries, chart of accounts
+accounts payable: ap, vendor management, invoice processing, purchase orders
+accounts receivable: ar, billing, collections, invoicing, credit control
+bank reconciliation: account reconciliation, statement reconciliation
+payroll: payroll processing, payroll taxes, wage calculation
+tax preparation: tax filing, tax returns, income tax, corporate tax, vat, gst
+audit: internal audit, external audit, audit preparation, compliance audit
+budgeting: budget preparation, variance analysis, cost control
+financial statements: balance sheet, income statement, profit and loss, p&l, cash flow statement
+cost accounting: cost analysis, job costing, standard costing, activity-based costing
+gaap: generally accepted accounting principles, accounting standards
+ifrs: international financial reporting standards
+sox: sarbanes-oxley, sox compliance, internal controls
+quickbooks: intuit quickbooks, qbo, quickbooks online
+sage: sage 50, sage 100, sage intacct
+sap: sap fico, sap erp, sap business one
+xero: cloud accounting
+excel: spreadsheets, pivot tables, vlookup, formulas
+erp: enterprise resource planning, oracle, netsuite, dynamics
+cpa: certified public accountant
+cma: certified management accountant
+bookkeeping: double-entry bookkeeping, trial balance
+depreciation: fixed assets, asset management, amortization

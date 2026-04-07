@@ -1,0 +1,94 @@
+# Information Technology skill taxonomy
+# Groups related skills so "AWS" matches "cloud infrastructure", "Docker" matches "containerization"
+# Format: canonical_term: alias1, alias2, alias3
+
+# Languages
+python: python3, py
+javascript: js, ecmascript, es6, es2015, node.js, nodejs
+typescript: ts
+java: jdk, jvm, j2ee, jee
+c#: csharp, .net, dotnet, asp.net, asp.net core
+c++: cpp, c plus plus
+go: golang
+rust: rustlang
+ruby: ruby on rails, ror, rails
+php: laravel, symfony, wordpress
+swift: swiftui, ios development
+kotlin: android development
+r: rstudio, r programming
+scala: akka, play framework
+sql: t-sql, pl/sql, mysql, postgresql, postgres, mariadb, mssql, sql server
+html: html5
+css: css3, sass, scss, less, tailwind, bootstrap
+
+# Cloud & Infrastructure
+aws: amazon web services, ec2, s3, lambda, cloudformation, eks, ecs, rds, dynamodb, sqs, sns, cloudwatch
+azure: microsoft azure, azure devops, azure functions, azure ad, aks
+gcp: google cloud, google cloud platform, bigquery, cloud run, gke
+docker: containers, containerization, containerisation, dockerfile
+kubernetes: k8s, kubectl, helm, k8s cluster
+terraform: infrastructure as code, iac, hcl
+ansible: configuration management
+jenkins: ci/cd, continuous integration, continuous delivery
+github actions: github ci
+gitlab ci: gitlab pipelines
+
+# Databases
+mongodb: mongo, nosql document store
+redis: caching, in-memory database
+elasticsearch: elastic, elk stack, opensearch
+cassandra: apache cassandra, wide-column store
+neo4j: graph database
+sqlite: embedded database
+oracle: oracle database, oracle db
+
+# Frameworks & Libraries
+react: reactjs, react.js, next.js, nextjs
+angular: angularjs, angular.js
+vue: vuejs, vue.js, nuxt, nuxtjs
+django: django rest framework, drf
+flask: python web framework
+spring: spring boot, spring framework, spring mvc
+express: expressjs, express.js
+fastapi: python api framework
+
+# DevOps & Tools
+git: github, gitlab, bitbucket, version control
+linux: ubuntu, centos, rhel, debian, fedora, unix, bash, shell scripting
+nginx: reverse proxy, load balancer
+apache: httpd, web server
+grafana: monitoring, observability
+prometheus: metrics collection
+datadog: apm, application monitoring
+splunk: log analysis, siem
+jira: project management, agile tools
+confluence: documentation, wiki
+
+# Security
+oauth: oauth2, oidc, openid connect
+jwt: json web tokens
+ssl: tls, https, certificates
+penetration testing: pen testing, ethical hacking
+soc2: compliance, security audit
+gdpr: data protection, privacy
+
+# AI/ML
+machine learning: ml, predictive modeling
+deep learning: neural networks, dl
+natural language processing: nlp, text mining
+computer vision: cv, image recognition
+tensorflow: tf
+pytorch: torch
+scikit-learn: sklearn
+pandas: data analysis
+numpy: numerical computing
+huggingface: transformers, bert, gpt
+
+# Methodologies
+agile: scrum, kanban, sprint planning
+devops: ci/cd, infrastructure automation
+microservices: service-oriented architecture, soa
+rest: restful, rest api
+graphql: api query language
+grpc: remote procedure call
+event-driven: event sourcing, cqrs, message queue

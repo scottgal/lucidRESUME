@@ -1,0 +1,137 @@
+name: e2e-multi-resume-jobs
+description: Import multiple resumes, add multiple jobs, verify compound ledger and matching
+default_delay: 300
+
+actions:
+  - type: Wait
+    value: "2000"
+
+  # === Import first resume (CTO DOCX) ===
+  - type: ImportFile
+    value: "test-data/resumes/Scott_Galloway_CTO.docx"
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 01-first-resume-imported
+
+  # === Import second resume (AI variant) ===
+  - type: ImportFile
+    value: "test-data/resumes/Scott_Galloway_AI.docx"
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 02-second-resume-imported
+
+  # === Import a PDF resume ===
+  - type: ImportFile
+    value: "test-data/resumes/Scott_Galloway_Full.pdf"
+  - type: Wait
+    value: "2500"
+  - type: Screenshot
+    value: 03-pdf-resume-imported
+
+  # Scroll to see extraction details
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 04-resume-details-scroll
+
+  # === Add CTO job ===
+  - type: PasteJob
+    value: "@test-data/job-cto.txt"
+  - type: Wait
+    value: "2000"
+
+  # === Add AI Architect job ===
+  - type: PasteJob
+    value: "@test-data/job-ai-architect.txt"
+  - type: Wait
+    value: "2000"
+
+  # === Add A-Team AI job ===
+  - type: PasteJob
+    value: "@test-data/job-ateam-ai.txt"
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 05-all-jobs-added
+
+  # === Check Jobs page with match scores ===
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 06-jobs-list-matches
+
+  # Scroll to see all jobs
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 07-jobs-scrolled
+
+  # === Visit Apply page ===
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 08-apply-page
+
+  # === Visit Pipeline (should be empty) ===
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 09-pipeline-empty
+
+  # === Profile page ===
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 10-profile-page
+
+  # Scroll profile to see AI settings
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 11-profile-bottom
+
+  # === Help page - check different sections ===
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 12-help-page
+
+  - type: Click
+    target: "Profile & Preferences"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 13-help-profile-section
+
+  - type: Click
+    target: "Keyboard Shortcuts"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 14-help-keyboard-shortcuts
+
+  # === Back to My CV to verify data persists ===
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 15-final-resume-view

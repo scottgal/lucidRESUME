@@ -1,0 +1,53 @@
+# Engineering skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+# Mechanical
+cad: computer-aided design, autocad, solidworks, catia, creo, inventor, fusion 360
+cfd: computational fluid dynamics, ansys fluent, openfoam
+fea: finite element analysis, ansys, abaqus, nastran
+3d printing: additive manufacturing, rapid prototyping, fdm, sla, sls
+cnc: computer numerical control, machining, milling, turning, lathe
+gd&t: geometric dimensioning and tolerancing
+tolerance analysis: stack-up analysis, dimensional analysis
+materials science: metallurgy, composites, polymers, ceramics
+thermodynamics: heat transfer, fluid mechanics, thermal analysis
+hvac: heating ventilation air conditioning, mechanical systems
+
+# Electrical & Electronics
+pcb design: printed circuit board, altium, eagle, kicad, orcad
+embedded systems: microcontroller, firmware, rtos, arm, stm32, arduino
+plc: programmable logic controller, ladder logic, allen bradley, siemens
+scada: supervisory control, industrial automation
+signal processing: dsp, digital signal processing, filter design
+power systems: electrical distribution, power electronics, inverter
+rf engineering: radio frequency, antenna design, wireless
+vhdl: fpga, verilog, digital logic design
+
+# Civil & Structural
+structural analysis: structural engineering, load analysis, beam design
+concrete design: reinforced concrete, prestressed concrete
+steel design: structural steel, connection design
+geotechnical: soil mechanics, foundation design, site investigation
+surveying: land surveying, gps, total station, lidar
+project management: construction management, scheduling, gantt
+revit: bim, building information modeling, autodesk
+primavera: p6, project scheduling, critical path
+autocad civil 3d: civil engineering design, grading
+
+# Quality & Process
+six sigma: lean six sigma, dmaic, process improvement
+lean manufacturing: kaizen, 5s, value stream mapping, continuous improvement
+iso 9001: quality management system, qms
+spc: statistical process control, control charts
+root cause analysis: rca, 5 why, fishbone diagram, ishikawa
+dfmea: design failure mode effects analysis, pfmea, fmea
+inspection: quality control, qc, dimensional inspection, cmm
+
+# Safety & Compliance
+osha: occupational safety, workplace safety, safety compliance
+environmental: eia, environmental impact assessment, ehs
+risk assessment: hazard analysis, safety analysis, hazop
+nec: national electrical code, electrical safety
+asme: mechanical engineering standards, pressure vessel
+astm: material testing standards
+ieee: electrical engineering standards

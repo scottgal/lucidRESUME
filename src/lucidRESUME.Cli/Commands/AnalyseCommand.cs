@@ -52,6 +52,7 @@ public static class AnalyseCommand
 
             Console.Error.WriteLine($"Parsing resume: {resume.Name}");
             var resumeDoc = await resumeParser.ParseAsync(resume.FullName, ct);
+            if (resumeDoc.LlmEnhancementTask != null) await resumeDoc.LlmEnhancementTask;
 
             Console.Error.WriteLine("Parsing job spec...");
             var jobDoc = job.StartsWith("http", StringComparison.OrdinalIgnoreCase)

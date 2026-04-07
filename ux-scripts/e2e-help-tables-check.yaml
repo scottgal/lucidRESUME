@@ -1,0 +1,80 @@
+name: e2e-help-tables-check
+description: Verify table rendering in different help sections
+default_delay: 200
+
+actions:
+  - type: Wait
+    value: "1500"
+
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "600"
+
+  # Skill Ledger - "What's in an Entry" table
+  - type: Click
+    target: "Understanding the Skill Ledger"
+  - type: Wait
+    value: "500"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Screenshot
+    value: 01-skill-ledger-entry-table
+
+  # Adding JDs - Job Boards table
+  - type: Click
+    target: "Adding Job Descriptions"
+  - type: Wait
+    value: "500"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Screenshot
+    value: 02-job-boards-table
+
+  # AI Provider Setup - comparison table
+  - type: Click
+    target: "AI Provider Setup"
+  - type: Wait
+    value: "500"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Screenshot
+    value: 03-ai-provider-table
+
+  # Keyboard Shortcuts table
+  - type: Click
+    target: "Keyboard Shortcuts"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 04-keyboard-shortcuts-table

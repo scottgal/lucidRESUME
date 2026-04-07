@@ -1,0 +1,23 @@
+# Human Resources skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+recruiting: talent acquisition, hiring, sourcing, staffing, headhunting
+onboarding: new hire orientation, employee induction, first day
+employee relations: labor relations, workplace relations, conflict resolution, grievance
+performance management: performance reviews, appraisals, goal setting, pip, kpi
+compensation: salary administration, pay structure, total rewards, benefits
+benefits administration: health insurance, 401k, pension, employee benefits, open enrollment
+hris: human resource information system, workday, successfactors, bamboohr, adp, ultipro
+payroll: payroll processing, wage administration, time and attendance
+compliance: employment law, labor law, eeoc, fmla, ada, flsa, osha, workplace safety
+training: learning and development, l&d, employee training, professional development, lms
+diversity: dei, diversity equity inclusion, equal opportunity, affirmative action
+succession planning: talent pipeline, leadership development, career pathing
+workforce planning: headcount planning, organizational design, restructuring
+employee engagement: culture, retention, satisfaction surveys, pulse surveys
+offboarding: exit interviews, termination, severance, separation
+background checks: pre-employment screening, reference checks, drug testing
+ats: applicant tracking system, greenhouse, lever, icims, taleo
+linkedin recruiter: sourcing tools, boolean search, talent mapping
+interviewing: behavioral interviewing, structured interviews, competency-based
+job descriptions: role profiles, job analysis, job evaluation

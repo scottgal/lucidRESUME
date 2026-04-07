@@ -1,0 +1,39 @@
+# Sales skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+# Core Sales
+b2b sales: business-to-business, enterprise sales, corporate sales
+b2c sales: business-to-consumer, retail sales, direct sales
+inside sales: phone sales, remote selling, virtual sales
+outside sales: field sales, territory management, door-to-door
+account management: key account management, kam, client management, customer success
+business development: biz dev, new business acquisition, prospecting
+lead generation: lead qualification, pipeline building, outbound
+cold calling: outbound calling, telemarketing, warm calling
+closing: deal closing, contract negotiation, agreement signing
+upselling: cross-selling, revenue expansion, account growth
+consultative selling: solution selling, value selling, needs-based selling
+
+# Process & Methodology
+salesforce: sfdc, crm, customer relationship management, hubspot, pipedrive, zoho
+pipeline management: sales pipeline, opportunity management, funnel management
+quota attainment: sales targets, revenue goals, kpi
+territory management: territory planning, geographic coverage
+proposal writing: rfp response, bid management, sow
+contract negotiation: pricing negotiation, deal structuring, terms and conditions
+forecasting: sales forecasting, revenue prediction, pipeline forecast
+
+# Marketing Adjacent
+digital marketing: online marketing, internet marketing, sem, seo
+content marketing: thought leadership, blog writing, whitepapers
+social selling: linkedin selling, social media outreach
+email marketing: drip campaigns, nurture sequences, outreach
+trade shows: events, conferences, exhibitions, booth management
+product marketing: go-to-market, gtm, product launch, positioning
+
+# Retail
+point of sale: pos, cash register, checkout
+merchandising: visual merchandising, product display, planogram
+inventory management: stock control, warehouse, supply chain
+loss prevention: shrinkage, theft prevention, security
+customer service: customer experience, cx, client satisfaction, nps

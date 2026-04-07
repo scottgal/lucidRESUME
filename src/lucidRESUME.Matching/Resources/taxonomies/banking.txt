@@ -1,0 +1,23 @@
+# Banking skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+retail banking: consumer banking, personal banking, branch banking
+commercial banking: business banking, corporate banking, lending
+credit analysis: credit assessment, creditworthiness, risk rating
+loan origination: mortgage, personal loans, auto loans, loan processing
+underwriting: credit underwriting, risk underwriting, loan approval
+kyc: know your customer, customer due diligence, cdd, identity verification
+aml: anti-money laundering, bsa, bank secrecy act, suspicious activity, sar
+regulatory compliance: occ, fdic, federal reserve, cfpb, dodd-frank
+deposit operations: account opening, cash management, wire transfers
+treasury: cash flow, liquidity management, foreign exchange, fx
+wealth management: private banking, portfolio management, financial advisory
+investment: securities, equities, fixed income, mutual funds, etf
+risk management: credit risk, market risk, operational risk, enterprise risk
+relationship management: client management, customer retention, cross-selling
+teller operations: cash handling, transactions, customer service, vault
+online banking: digital banking, mobile banking, internet banking, fintech
+payment processing: ach, swift, wire transfer, rtgs, card processing
+fraud detection: fraud prevention, transaction monitoring, chargeback
+core banking: fiserv, jack henry, temenos, finacle, banking software
+series 6: series 7, series 63, series 65, finra, securities license

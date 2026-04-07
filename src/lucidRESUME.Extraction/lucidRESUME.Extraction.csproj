@@ -8,7 +8,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.3" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.4" />
     <PackageReference Include="Microsoft.Recognizers.Text" Version="1.8.13" />
     <PackageReference Include="Microsoft.Recognizers.Text.DateTime" Version="1.8.13" />
     <PackageReference Include="Microsoft.Recognizers.Text.Number" Version="1.8.13" />
@@ -20,20 +20,5 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="..\..\models\ner\model.onnx" Link="models\ner\model.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\..\models\ner\vocab.txt" Link="models\ner\vocab.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\..\models\resume-ner\model.onnx" Link="models\resume-ner\model.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\..\models\resume-ner\vocab.txt" Link="models\resume-ner\vocab.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
 
 </Project>

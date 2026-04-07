@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:controls="using:lucidRESUME.Views.Controls"
+             x:DataType="vm:HelpPageViewModel"
+             x:Class="lucidRESUME.Views.Pages.HelpPage">
+
+  <Grid ColumnDefinitions="220,*" Background="{DynamicResource LrPageBgBrush}">
+
+    <!-- Left: Table of Contents -->
+    <Border Grid.Column="0" Background="{DynamicResource LrSurfaceBgBrush}"
+            BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="0,0,1,0"
+            Padding="12,16">
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="User Manual" FontSize="16" FontWeight="Bold"
+                   Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="4,0,0,16"/>
+
+        <ScrollViewer>
+          <ItemsControl ItemsSource="{Binding Sections}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:HelpSection">
+                <Button Content="{Binding Title}"
+                        Command="{Binding $parent[UserControl].((vm:HelpPageViewModel)DataContext).NavigateToSectionCommand}"
+                        CommandParameter="{Binding Anchor}"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        Background="Transparent" BorderThickness="0"
+                        Foreground="{DynamicResource LrSecondaryTextBrush}"
+                        Padding="8,6" FontSize="13"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
+
+    <!-- Right: Markdown content -->
+    <controls:MarkdownViewer Grid.Column="1"
+                              Markdown="{Binding ManualMarkdown}"
+                              ScrollToAnchor="{Binding ScrollToAnchor}"
+                              Margin="24,16,24,16"/>
+  </Grid>
+</UserControl>

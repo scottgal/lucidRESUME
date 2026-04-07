@@ -14,10 +14,13 @@ namespace lucidRESUME.AI;
 /// </summary>
 public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
 {
-    private readonly InferenceSession _session;
-    private readonly BertTokenizer _tokenizer;
+    private InferenceSession? _session;
+    private BertTokenizer? _tokenizer;
     private readonly ILogger<OnnxEmbeddingService> _logger;
+    private readonly string _modelPath;
+    private readonly string _vocabPath;
     private readonly ConcurrentDictionary<string, float[]> _cache = new();
+    private static readonly object LoadLock = new();
     private const int MaxCacheEntries = 500;
     private const int MaxSequenceLength = 256;
 
@@ -25,21 +28,45 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
     {
         _logger = logger;
         var opts = options.Value;
+        _modelPath = ResolvePath(opts.OnnxModelPath);
+        _vocabPath = ResolvePath(opts.VocabPath);
 
-        var modelPath = ResolvePath(opts.OnnxModelPath);
-        var vocabPath = ResolvePath(opts.VocabPath);
+        // Lazy load — don't crash on construction if models not yet downloaded.
+        // StartupHealthCheck downloads models, then first EmbedAsync call loads them.
+        if (File.Exists(_modelPath) && File.Exists(_vocabPath))
+            LoadModel();
+    }
 
-        _session = new InferenceSession(modelPath);
-        // Some HuggingFace vocab files have duplicate entries (e.g. '-' at two positions).
-        // BertTokenizer.Create throws on duplicates, so deduplicate the vocab file first.
-        var cleanVocab = DeduplicateVocab(vocabPath);
-        _tokenizer = BertTokenizer.Create(cleanVocab, new BertOptions { LowerCaseBeforeTokenization = true });
+    private void EnsureLoaded()
+    {
+        if (_session != null && _tokenizer != null) return;
+        lock (LoadLock)
+        {
+            if (_session != null && _tokenizer != null) return;
+            if (!File.Exists(_modelPath))
+                throw new FileNotFoundException($"ONNX embedding model not found at {_modelPath}. It should auto-download on startup.");
+            LoadModel();
+        }
+    }
 
-        _logger.LogInformation("ONNX embedding model loaded from {Path} (384-dim)", modelPath);
+    private void LoadModel()
+    {
+        lock (LoadLock)
+        {
+            _session ??= new InferenceSession(_modelPath);
+            if (_tokenizer == null)
+            {
+                var cleanVocab = DeduplicateVocab(_vocabPath);
+                _tokenizer = BertTokenizer.Create(cleanVocab, new BertOptions { LowerCaseBeforeTokenization = true });
+            }
+        }
+        _logger.LogInformation("ONNX embedding model loaded from {Path} (384-dim)", _modelPath);
     }
 
     public Task<float[]> EmbedAsync(string text, CancellationToken ct = default)
     {
+        EnsureLoaded();
+
         if (_cache.TryGetValue(text, out var cached))
             return Task.FromResult(cached);
 
@@ -59,7 +86,7 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
     private float[] Embed(string text)
     {
         // Tokenize with special tokens [CLS] ... [SEP]
-        var ids = _tokenizer.EncodeToIds(text, addSpecialTokens: true);
+        var ids = _tokenizer!.EncodeToIds(text, addSpecialTokens: true);
         var len = Math.Min(ids.Count, MaxSequenceLength);
 
         var inputIdsTensor = new DenseTensor<long>(new[] { 1, len });
@@ -80,7 +107,7 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
             NamedOnnxValue.CreateFromTensor("token_type_ids", tokenTypeTensor)
         };
 
-        using var results = _session.Run(inputs);
+        using var results = _session!.Run(inputs);
 
         // Output: last_hidden_state shape [1, seq_len, 384] - mean pool over tokens
         var output = results.First().AsEnumerable<float>().ToArray();
@@ -162,5 +189,5 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
     private static string ResolvePath(string path) =>
         Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path);
 
-    public void Dispose() => _session.Dispose();
+    public void Dispose() => _session?.Dispose();
 }

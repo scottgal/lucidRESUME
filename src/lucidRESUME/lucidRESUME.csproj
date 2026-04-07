@@ -32,6 +32,10 @@
 
   <ItemGroup>
     <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- ONNX models: copy from repo root models/ to output if present -->
+    <None Include="..\..\models\**\*" Link="models\%(RecursiveDir)%(FileName)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

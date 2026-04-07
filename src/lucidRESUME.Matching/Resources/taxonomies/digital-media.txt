@@ -1,0 +1,23 @@
+# Digital Media / Marketing skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+seo: search engine optimization, organic search, keyword research, on-page seo, technical seo
+sem: search engine marketing, ppc, pay-per-click, google ads, adwords
+social media marketing: smm, facebook ads, instagram marketing, linkedin marketing, tiktok
+content marketing: blogging, content strategy, content creation, editorial calendar
+email marketing: mailchimp, constant contact, drip campaigns, newsletter, marketing automation
+analytics: google analytics, ga4, web analytics, data analysis, reporting, kpi
+copywriting: ad copy, sales copy, web copy, persuasive writing
+video production: video editing, youtube, premiere pro, final cut pro
+photography: photo editing, lightroom, product photography, headshots
+graphic design: visual design, photoshop, illustrator, canva
+wordpress: cms, content management system, website management, web development
+html/css: web design, front-end, responsive design
+public relations: pr, media relations, press releases, crisis communications
+influencer marketing: brand partnerships, sponsorships, ambassador programs
+conversion optimization: cro, a/b testing, landing pages, funnel optimization
+marketing automation: hubspot, marketo, pardot, eloqua, salesforce marketing cloud
+crm: customer relationship management, salesforce, hubspot crm
+branding: brand strategy, brand voice, brand guidelines, visual identity
+podcast: audio production, podcast editing, audio marketing
+affiliate marketing: referral program, commission-based, partner program

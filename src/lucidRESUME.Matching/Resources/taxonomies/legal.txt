@@ -1,0 +1,23 @@
+# Legal / Advocate skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+litigation: civil litigation, trial, courtroom, dispute resolution
+legal research: westlaw, lexisnexis, case law, statutory research
+contract law: contract drafting, contract review, agreement, terms and conditions
+corporate law: business law, mergers, acquisitions, incorporation
+family law: divorce, custody, child support, family court, domestic relations
+criminal law: defense, prosecution, criminal justice, penal code
+immigration law: visa, green card, deportation, asylum, work permit
+intellectual property: ip, patent, trademark, copyright, trade secret
+real estate law: property law, conveyancing, title search, closing
+employment law: labor law, discrimination, wrongful termination, eeoc, ada
+compliance: regulatory compliance, gdpr, hipaa, anti-corruption, ethics
+legal writing: briefs, memoranda, motions, pleadings, opinions
+client counseling: legal advice, client consultation, case strategy
+mediation: arbitration, adr, alternative dispute resolution, negotiation
+due diligence: investigation, background research, risk assessment
+paralegal: legal assistant, case management, document review
+case management: docket management, deadline tracking, filing
+notary: notarization, apostille, document authentication
+pro bono: public interest, legal aid, community service
+bar admission: bar exam, licensed attorney, jd, law degree

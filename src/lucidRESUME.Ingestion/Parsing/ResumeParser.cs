@@ -42,7 +42,10 @@ public sealed class ResumeParser : IResumeParser
         ".pdf", ".docx", ".doc", ".txt"
     };
 
-    public async Task<ResumeDocument> ParseAsync(string filePath, CancellationToken ct = default)
+    public Task<ResumeDocument> ParseAsync(string filePath, CancellationToken ct = default) =>
+        ParseAsync(filePath, ParseMode.AI, ct);
+
+    public async Task<ResumeDocument> ParseAsync(string filePath, ParseMode mode, CancellationToken ct = default)
     {
         var fileInfo = new FileInfo(filePath);
         var ext = fileInfo.Extension.ToLowerInvariant();
@@ -60,17 +63,21 @@ public sealed class ResumeParser : IResumeParser
         string? plainText;
         IReadOnlyList<lucidRESUME.Parsing.DocumentSection>? structuredSections = null;
 
-        // For PDFs: prefer Docling when available (much better layout detection)
-        // For DOCX: prefer direct parse (already high quality, no need for Docling)
+        // Fast-first pipeline: try direct parse, only escalate to Docling if confidence is low.
+        // DOCX: direct parse is already excellent (often 100% with template learning).
+        // PDF: direct parse via PdfPig; escalate to Docling only when confidence < 70%.
         var isPdf = ext.Equals(".pdf", StringComparison.OrdinalIgnoreCase);
-        var useDocling = isPdf && _docling is not null;
+        var directConfidence = direct?.Confidence ?? 0;
+        // Docling: only in Full mode, or AI mode when direct parse confidence is very low
+        var needsDocling = isPdf && _docling is not null
+            && (mode == ParseMode.Full || (mode == ParseMode.AI && directConfidence < 0.50));
 
-        if (useDocling)
+        if (needsDocling)
         {
-            // ── PDF + Docling: use ML-based layout detection ──────────────
-            _logger.LogInformation("Converting PDF {File} via Docling (ML layout detection)", fileInfo.Name);
+            // ── PDF with low-confidence direct parse: escalate to Docling ──
+            _logger.LogInformation("Converting PDF {File} via Docling (direct parse confidence={Confidence:P0})",
+                fileInfo.Name, directConfidence);
             var docling = await _docling!.ConvertAsync(filePath, ct);
-            // Docling preserves tab characters from PDF layout - normalize to spaces
             var doclingMd = docling.Markdown?.Replace('\t', ' ') ?? "";
             var doclingText = docling.PlainText?.Replace('\t', ' ');
             resume.SetDoclingOutput(doclingMd, docling.Json, doclingText);
@@ -125,11 +132,15 @@ public sealed class ResumeParser : IResumeParser
         // ── 4. Section parsing ────────────────────────────────────────────
         MarkdownSectionParser.PopulateSections(resume, markdown, structuredSections);
 
-        // ── 5. LLM fallback for missing fields (fire-and-forget) ─────────
-        // Non-blocking: doesn't slow down parse return, updates resume in background.
-        // Results are available if the caller awaits resume.LlmEnhancementTask.
-        if (_llm != null && (resume.Skills.Count == 0 || resume.Experience.Count == 0))
+        // ── 5. LLM fallback — only in AI/Full mode and when structural extraction has gaps
+        // Fast mode: never calls LLM (sub-second parse, no external services)
+        if (mode != ParseMode.Fast && _llm != null
+            && (resume.Skills.Count == 0 || resume.Experience.Count == 0))
+        {
+            _logger.LogDebug("Structural parse gaps (skills={Skills}, exp={Exp}) — escalating to LLM",
+                resume.Skills.Count, resume.Experience.Count);
             resume.LlmEnhancementTask = LlmFillMissingAsync(resume, plainText ?? markdown, ct);
+        }
 
         return resume;
     }
@@ -291,17 +302,50 @@ public sealed class ResumeParser : IResumeParser
             fallback ??= text;
 
             // Strategy 2: non-heading, non-section, name-like line
-            if (text.Length > 60 || text.Length < 3) continue;
+            if (text.Length > 40 || text.Length < 3) continue;
             if (text.Any(char.IsDigit)) continue;
             if (text.Contains('@') || text.Contains("http")) continue;
+
+            // Skip section headers
             if (Ingestion.Parsing.SectionClassifier.ClassifyHeading(text) is not null) continue;
-            resume.Personal.FullName = text;
-            return;
+
+            // Skip ALL CAPS (likely job titles: "SALES MANAGER", "SOUS CHEF", "IT MANAGEMENT")
+            if (text.Length > 5 && text == text.ToUpperInvariant()) continue;
+
+            // Skip lines with common job title words
+            var lower = text.ToLowerInvariant();
+            if (IsLikelyJobTitle(lower)) continue;
+
+            // Looks like a name: 2-4 words, mixed case, no special chars
+            var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length >= 2 && words.Length <= 5
+                && words.All(w => w.Length >= 2 && char.IsUpper(w[0])))
+            {
+                resume.Personal.FullName = text;
+                return;
+            }
         }
 
-        // Strategy 3: first non-empty line (last resort)
-        if (fallback is not null)
+        // Strategy 3: first non-empty line (last resort) — but clean it up
+        if (fallback is not null && fallback.Length <= 40)
             resume.Personal.FullName = fallback;
+    }
+
+    private static readonly HashSet<string> JobTitleKeywords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "manager", "director", "engineer", "developer", "analyst", "consultant",
+        "specialist", "coordinator", "administrator", "supervisor", "assistant",
+        "associate", "technician", "officer", "lead", "senior", "junior",
+        "chef", "teacher", "nurse", "accountant", "designer", "architect",
+        "intern", "instructor", "professor", "receptionist", "clerk", "agent",
+        "representative", "executive", "president", "vice", "chief",
+        "head", "principal", "superintendent", "foreman", "captain"
+    };
+
+    private static bool IsLikelyJobTitle(string lower)
+    {
+        var words = lower.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return words.Any(w => JobTitleKeywords.Contains(w));
     }
 
     private static string GetContentType(string ext) => ext.ToLowerInvariant() switch

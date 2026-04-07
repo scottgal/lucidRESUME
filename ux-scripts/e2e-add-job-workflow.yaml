@@ -1,0 +1,95 @@
+name: e2e-add-job-workflow
+description: Test the Add Job page workflow - paste text, navigate to jobs, check search
+default_delay: 300
+
+actions:
+  - type: Wait
+    value: "1500"
+
+  # === Start on Add Job page ===
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 01-add-job-empty
+
+  # Scroll to see full page
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 02-add-job-bottom
+
+  # Scroll back up
+  - type: Scroll
+    value: top
+  - type: Wait
+    value: "400"
+
+  # === Add a job via text paste ===
+  - type: PasteJob
+    value: "@test-data/job-cto.txt"
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 03-job-pasted
+
+  # === Add second job ===
+  - type: PasteJob
+    value: "@test-data/job-ai-architect.txt"
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 04-second-job-pasted
+
+  # === Navigate to Jobs to see both ===
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "1500"
+  - type: Screenshot
+    value: 05-jobs-list
+
+  # === Navigate back to Add Job ===
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 06-add-job-revisit
+
+  # === Import a resume then check matches ===
+  - type: ImportFile
+    value: "test-data/resumes/Scott_Galloway_CTO.docx"
+  - type: Wait
+    value: "2000"
+
+  # === Go to Jobs - now with match scores ===
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 07-jobs-with-matches
+
+  # === Navigate to Help for the Add Job section ===
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "600"
+  - type: Click
+    target: "Adding Job Descriptions"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 08-help-adding-jobs
+
+  # === Check search job boards help ===
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 09-help-job-boards-scroll

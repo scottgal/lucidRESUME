@@ -1,0 +1,127 @@
+name: e2e-help-integrated
+description: Full E2E flow - import resume, add job, view match, use help, check all pages
+default_delay: 300
+
+actions:
+  - type: Wait
+    value: "2000"
+
+  # === 1. Import a resume ===
+  - type: ImportFile
+    value: "test-data/resumes/Scott_Galloway_CTO.docx"
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 01-resume-imported
+
+  # Scroll down to see extraction results
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 02-resume-scroll-bottom
+
+  # === 2. Add a job description ===
+  - type: PasteJob
+    value: "@test-data/job-cto.txt"
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: 03-job-added
+
+  # === 3. Check Jobs page for match scores ===
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "1500"
+  - type: Screenshot
+    value: 04-jobs-with-match
+
+  # Scroll to see more details
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 05-jobs-scroll
+
+  # === 4. Visit Apply page ===
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 06-apply-page
+
+  # === 5. Visit Pipeline page ===
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 07-pipeline-page
+
+  # === 6. Visit Profile page ===
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 08-profile-page
+
+  # === 7. Navigate to Help ===
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 09-help-landing
+
+  # Jump to skill ledger help
+  - type: Click
+    target: "Understanding the Skill Ledger"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 10-help-skill-ledger
+
+  # Jump to matching help
+  - type: Click
+    target: "Matching & Gap Analysis"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 11-help-matching
+
+  # Jump to AI setup
+  - type: Click
+    target: "AI Provider Setup"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 12-help-ai-setup
+
+  # Jump to troubleshooting
+  - type: Click
+    target: "Troubleshooting"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 13-help-troubleshooting
+
+  # === 8. Back to resume to verify everything still intact ===
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 14-back-to-resume
+
+  # === 9. Back to jobs to verify match still showing ===
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 15-back-to-jobs

@@ -1,0 +1,20 @@
+# Weak/vague verbs that weaken resume achievement bullets
+# One verb per line. # comments.
+helped
+assisted
+worked
+was
+handled
+did
+made
+got
+used
+supported
+involved
+participated
+contributed
+responsible
+tasked
+tried
+attempted
+managed

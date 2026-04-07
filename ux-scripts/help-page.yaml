@@ -1,0 +1,80 @@
+name: help-page
+description: Test Help page - navigation, TOC, markdown rendering, scroll to anchors
+default_delay: 300
+
+actions:
+  - type: Wait
+    value: "1500"
+
+  # Navigate to Help page
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 01-help-page-initial
+
+  # Click TOC sections to test scroll-to-anchor
+  - type: Click
+    target: "Importing Your Resume"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 02-help-importing-resume
+
+  - type: Click
+    target: "Understanding the Skill Ledger"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 03-help-skill-ledger
+
+  - type: Click
+    target: "Matching & Gap Analysis"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 04-help-matching
+
+  - type: Click
+    target: "Tailoring Your Resume"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 05-help-tailoring
+
+  - type: Click
+    target: "Application Pipeline"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 06-help-pipeline
+
+  - type: Click
+    target: "Email Integration"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 07-help-email
+
+  - type: Click
+    target: "AI Provider Setup"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 08-help-ai-setup
+
+  - type: Click
+    target: "Troubleshooting"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 09-help-troubleshooting
+
+  # Scroll back to top
+  - type: Click
+    target: "Getting Started"
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: 10-help-back-to-top

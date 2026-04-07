@@ -37,6 +37,8 @@ public static class MatchCommand
 
             Console.WriteLine($"Parsing resume: {resumeFile.Name}");
             var resume = await parser.ParseAsync(resumeFile.FullName, ct);
+            if (resume.LlmEnhancementTask != null)
+                await resume.LlmEnhancementTask;
 
             Console.WriteLine("Parsing job description...");
             var jd = await jdParser.ParseFromTextAsync(jobText, ct);

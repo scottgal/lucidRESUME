@@ -1,0 +1,22 @@
+# Aviation skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+aircraft maintenance: airframe, powerplant, a&p, aircraft repair
+avionics: aircraft electronics, flight instruments, navigation systems, autopilot
+faa regulations: far, federal aviation regulations, part 121, part 135, part 91
+safety management: sms, safety management system, risk assessment
+flight operations: flight planning, dispatch, crew scheduling
+pilot: commercial pilot, atp, airline transport pilot, cpl, ppl
+air traffic control: atc, radar, approach control, tower
+ground handling: ramp operations, baggage handling, aircraft marshalling
+mro: maintenance repair overhaul, heavy maintenance, line maintenance
+ndt: non-destructive testing, ultrasonic, eddy current, magnetic particle
+composite repair: composite structures, fiberglass, carbon fiber
+sheet metal: aircraft skin repair, riveting, structural repair
+hydraulics: aircraft hydraulic systems, landing gear, flight controls
+pneumatics: bleed air, pressurization, environmental control
+turbine engine: jet engine, cfm56, pw4000, trent, turbofan
+reciprocating engine: piston engine, lycoming, continental
+eia: electrical interconnect assembly, wire harness, avionics installation
+boeing: 737, 747, 777, 787, boeing aircraft
+airbus: a320, a330, a350, a380, airbus aircraft

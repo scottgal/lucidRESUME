@@ -66,27 +66,34 @@ public sealed class JdSkillLedgerBuilder
         }
 
         // 2. Structural: add terms from the extracted skill lists
-        // These come from the JD parser's structural + NER fusion
-        // Filter out years requirements but keep everything else
+        // Split comma-delimited lines into individual skills
         foreach (var rawSkill in jd.RequiredSkills.Concat(jd.PreferredSkills))
         {
-            var clean = rawSkill.Trim();
-            if (clean.Length < 2) continue;
-
-            // Skip years-of-experience lines
-            if (System.Text.RegularExpressions.Regex.IsMatch(clean, @"^\d+\+?\s*years")) continue;
-
             var importance = jd.RequiredSkills.Contains(rawSkill)
                 ? SkillImportance.Required : SkillImportance.Preferred;
 
-            if (!seen.Add(clean)) continue;
-            ledger.Requirements.Add(new JdSkillRequirement
+            // Split on commas if the line contains multiple skills
+            var parts = rawSkill.Contains(',')
+                ? rawSkill.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                : [rawSkill];
+
+            foreach (var part in parts)
             {
-                SkillName = clean,
-                Importance = importance,
-                SourceText = rawSkill,
-                Embedding = await _embedder.EmbedAsync(clean, ct),
-            });
+                var clean = part.Trim().TrimStart('-', '*', '•', ' ');
+                if (clean.Length < 2 || clean.Length > 50) continue;
+
+                // Skip years-of-experience fragments
+                if (System.Text.RegularExpressions.Regex.IsMatch(clean, @"^\d+\+?\s*years")) continue;
+
+                if (!seen.Add(clean)) continue;
+                ledger.Requirements.Add(new JdSkillRequirement
+                {
+                    SkillName = clean,
+                    Importance = importance,
+                    SourceText = rawSkill,
+                    Embedding = await _embedder.EmbedAsync(clean, ct),
+                });
+            }
         }
 
         return ledger;

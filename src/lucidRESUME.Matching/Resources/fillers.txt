@@ -1,0 +1,10 @@
+# Filler words that weaken resume bullets
+# One word per line. # comments.
+just
+very
+really
+quite
+rather
+somewhat
+basically
+literally

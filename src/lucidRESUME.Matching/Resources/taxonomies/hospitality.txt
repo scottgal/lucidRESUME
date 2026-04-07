@@ -1,0 +1,20 @@
+# Hospitality / Chef / Food Service skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+food preparation: cooking, meal preparation, food production, prep cook
+menu development: menu planning, recipe development, seasonal menu
+food safety: servsafe, haccp, food handling, sanitation, health code
+kitchen management: back of house, boh, kitchen operations, line management
+inventory management: food cost, portion control, waste reduction, ordering
+customer service: guest service, hospitality, guest relations, front of house, foh
+pos system: point of sale, toast, square, micros, aloha
+reservation system: opentable, resy, booking management
+banquet: catering, event dining, buffet service, plated service
+wine: sommelier, wine pairing, beverage management, bar management
+baking: pastry, bread making, patisserie, desserts
+grill: grilling, bbq, char-grill, broiling
+saute: pan frying, searing, flambe
+garde manger: cold kitchen, salads, appetizers, charcuterie
+sous vide: precision cooking, low-temperature cooking
+hotel management: front desk, concierge, housekeeping, property management
+revenue management: yield management, dynamic pricing, occupancy optimization

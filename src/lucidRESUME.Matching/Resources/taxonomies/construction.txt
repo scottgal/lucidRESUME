@@ -1,0 +1,23 @@
+# Construction skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+project management: construction management, site management, general contracting
+estimating: cost estimating, quantity surveying, takeoff, bid preparation
+scheduling: project scheduling, critical path, cpm, gantt, primavera, ms project
+blueprint reading: plan reading, construction drawings, architectural plans, shop drawings
+safety: osha, site safety, safety management, toolbox talks, jsa, ppe
+quality control: qc, inspection, punch list, quality assurance, qa
+concrete: concrete placement, formwork, rebar, finishing, flatwork
+framing: wood framing, steel framing, structural framing, carpentry
+electrical: electrical installation, wiring, conduit, panel, nec
+plumbing: pipe fitting, drainage, water supply, sewage
+hvac: heating, ventilation, air conditioning, ductwork, mechanical
+roofing: roof installation, waterproofing, membrane, shingles
+heavy equipment: crane operation, excavator, bulldozer, forklift, backhoe
+surveying: land surveying, layout, grading, gps, total station
+welding: mig, tig, stick welding, fabrication, structural welding
+building codes: ibc, local codes, permits, inspections, code compliance
+leed: green building, sustainable construction, energy efficiency
+bim: building information modeling, revit, navisworks
+subcontractor management: trade coordination, vendor management
+change orders: contract modifications, scope changes, claims

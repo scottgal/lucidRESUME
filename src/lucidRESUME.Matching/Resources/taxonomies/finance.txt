@@ -1,0 +1,46 @@
+# Finance skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+# Core Finance
+financial analysis: financial modeling, financial planning, fp&a
+budgeting: budget management, budget forecasting, cost analysis
+forecasting: financial forecasting, revenue projection, trend analysis
+gaap: generally accepted accounting principles, us gaap, ifrs
+audit: internal audit, external audit, sox compliance, sarbanes-oxley
+tax: tax preparation, tax planning, corporate tax, income tax, vat
+bookkeeping: general ledger, journal entries, double-entry
+accounts payable: ap, vendor payments, invoice processing
+accounts receivable: ar, collections, billing, invoicing
+reconciliation: bank reconciliation, account reconciliation
+payroll: payroll processing, compensation, benefits administration
+cash flow: cash management, treasury, liquidity management
+financial reporting: management reporting, quarterly reports, annual reports
+
+# Banking & Investment
+investment banking: m&a, mergers and acquisitions, deal structuring
+portfolio management: asset management, wealth management, fund management
+risk management: credit risk, market risk, operational risk, var
+compliance: regulatory compliance, aml, anti-money laundering, kyc, know your customer
+trading: equity trading, fixed income, derivatives, options, futures
+underwriting: credit underwriting, insurance underwriting, loan origination
+mortgage: mortgage lending, loan servicing, real estate finance
+private equity: venture capital, pe, vc, lbo, leveraged buyout
+
+# Tools & Systems
+excel: spreadsheets, vlookup, pivot tables, vba, macros
+sap: erp, enterprise resource planning, sap fico, sap hana
+quickbooks: accounting software, intuit
+oracle financials: oracle erp, peoplesoft
+bloomberg: bloomberg terminal, market data
+tableau: data visualization, business intelligence, power bi
+sql: database queries, data extraction
+python: financial modeling, quantitative analysis
+
+# Certifications & Standards
+cpa: certified public accountant
+cfa: chartered financial analyst
+cfp: certified financial planner
+acca: association of chartered certified accountants
+series 7: securities license, finra
+series 63: state securities license
+cma: certified management accountant

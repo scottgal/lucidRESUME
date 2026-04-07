@@ -10,8 +10,8 @@
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.4.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.3" />
-    <PackageReference Include="Microsoft.ML.Tokenizers" Version="1.0.3" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.4" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -19,14 +19,5 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="..\..\models\all-MiniLM-L6-v2.onnx" Link="models\all-MiniLM-L6-v2.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\..\models\vocab.txt" Link="models\vocab.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
 
 </Project>

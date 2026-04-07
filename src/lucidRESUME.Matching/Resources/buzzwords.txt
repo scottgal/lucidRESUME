@@ -1,0 +1,25 @@
+# Buzzwords to penalise in resume text
+# One word/phrase per line. # comments.
+synergy
+synergies
+dynamic
+results-driven
+results-oriented
+go-getter
+hardworking
+hard-working
+passionate
+guru
+ninja
+rockstar
+wizard
+thought leader
+disruptive
+innovative
+proactive
+self-starter
+team player
+detail-oriented
+fast-paced
+leverage
+leveraging

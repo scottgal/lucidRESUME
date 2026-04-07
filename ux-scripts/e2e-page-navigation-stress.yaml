@@ -1,0 +1,131 @@
+name: e2e-page-navigation-stress
+description: Rapid navigation between all pages, verify no crashes or rendering glitches
+default_delay: 100
+
+actions:
+  - type: Wait
+    value: "1500"
+
+  # Rapid cycle through all 7 pages
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 01-resume
+
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 02-jobs
+
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 03-add-job
+
+  - type: Navigate
+    value: apply
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 04-apply
+
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 05-pipeline
+
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 06-profile
+
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 07-help
+
+  # Second rapid cycle - even faster
+  - type: Navigate
+    value: resume
+  - type: Navigate
+    value: jobs
+  - type: Navigate
+    value: search
+  - type: Navigate
+    value: apply
+  - type: Navigate
+    value: pipeline
+  - type: Navigate
+    value: profile
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 08-rapid-final-help
+
+  # Navigate back and forth between help and jobs quickly
+  - type: Navigate
+    value: jobs
+  - type: Navigate
+    value: Help
+  - type: Navigate
+    value: jobs
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 09-bounce-help
+
+  # Click through all help TOC items rapidly
+  - type: Click
+    target: "Getting Started"
+  - type: Click
+    target: "Importing Your Resume"
+  - type: Click
+    target: "Understanding the Skill Ledger"
+  - type: Click
+    target: "Browsing & Managing Jobs"
+  - type: Click
+    target: "Adding Job Descriptions"
+  - type: Click
+    target: "Matching & Gap Analysis"
+  - type: Click
+    target: "Tailoring Your Resume"
+  - type: Click
+    target: "Application Pipeline"
+  - type: Click
+    target: "Email Integration"
+  - type: Click
+    target: "AI Provider Setup"
+  - type: Click
+    target: "Profile & Preferences"
+  - type: Click
+    target: "Keyboard Shortcuts"
+  - type: Click
+    target: "Troubleshooting"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 10-rapid-toc-final
+
+  # End on resume page to verify app still responsive
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: 11-final-resume-ok

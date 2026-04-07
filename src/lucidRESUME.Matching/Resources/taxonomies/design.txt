@@ -1,0 +1,34 @@
+# Design skill taxonomy (graphic, UX, product, interior, fashion)
+# Format: canonical_term: alias1, alias2, alias3
+
+# Tools
+adobe photoshop: photoshop, ps, image editing, photo retouching
+adobe illustrator: illustrator, ai, vector graphics, vector illustration
+adobe indesign: indesign, page layout, print design, desktop publishing
+figma: ui design, interface design, design system, prototyping
+sketch: sketch app, mac design tool
+adobe xd: xd, ux prototyping
+after effects: motion graphics, animation, video effects
+premiere pro: video editing, video production
+blender: 3d modeling, 3d rendering, 3d animation
+autocad: drafting, 2d cad, technical drawing
+sketchup: 3d modeling, architectural visualization
+canva: social media design, quick design
+
+# UX/UI
+user experience: ux, ux design, user-centered design, ucd
+user interface: ui, ui design, interface design, visual design
+wireframing: low-fidelity, mockup, prototype, lo-fi
+user research: usability testing, user interviews, personas, journey mapping
+information architecture: ia, site map, navigation design, content structure
+interaction design: ixd, micro-interactions, design patterns
+responsive design: mobile-first, adaptive design, cross-device
+design systems: component library, style guide, pattern library
+accessibility: wcag, a11y, ada compliance, inclusive design
+
+# Branding
+brand identity: logo design, visual identity, brand guidelines
+typography: typeface selection, font pairing, lettering
+color theory: color palette, color psychology, color systems
+print design: brochure, flyer, poster, packaging, business card
+packaging design: product packaging, label design

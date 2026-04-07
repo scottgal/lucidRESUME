@@ -1,0 +1,154 @@
+name: e2e-profile-and-help-deep
+description: Profile setup, help deep dive - every section, tables, code blocks, blockquotes
+default_delay: 200
+
+actions:
+  - type: Wait
+    value: "1500"
+
+  # === Profile page - fill in some fields ===
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 01-profile-top
+
+  # Scroll through profile sections
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 02-profile-mid
+
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "300"
+
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "300"
+
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 03-profile-bottom
+
+  # === Help: deep scroll through entire manual ===
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: 04-help-top
+
+  # Click Getting Started - should show first section with bullet list
+  - type: Click
+    target: "Getting Started"
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 05-help-getting-started
+
+  # Import section - numbered list, bullet list, blockquote tip
+  - type: Click
+    target: "Importing Your Resume"
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 06-help-import
+
+  # Skill Ledger - has a TABLE (Field/What it means)
+  - type: Click
+    target: "Understanding the Skill Ledger"
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 07-help-skill-ledger-table
+
+  # Adding JDs - another table (job boards)
+  - type: Click
+    target: "Adding Job Descriptions"
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 08-help-adding-jds
+
+  # AI Provider Setup - table + code block + blockquote
+  - type: Click
+    target: "AI Provider Setup"
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 09-help-ai-setup
+
+  # Troubleshooting - code blocks for docker/curl commands
+  - type: Click
+    target: "Troubleshooting"
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 10-help-troubleshooting
+
+  # === Test scrolling within the help content ===
+  - type: Click
+    target: "Getting Started"
+  - type: Wait
+    value: "300"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Screenshot
+    value: 11-help-scrolled-down
+
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Scroll
+    value: down
+  - type: Wait
+    value: "200"
+  - type: Screenshot
+    value: 12-help-scrolled-more
+
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: 13-help-bottom
+
+  # === Navigate away and back to confirm state preserved ===
+  - type: Navigate
+    value: resume
+  - type: Wait
+    value: "400"
+  - type: Navigate
+    value: Help
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: 14-help-preserved

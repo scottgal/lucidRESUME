@@ -1,0 +1,42 @@
+# Education / Teaching skill taxonomy
+# Format: canonical_term: alias1, alias2, alias3
+
+# Teaching
+lesson planning: curriculum development, unit planning, course design
+classroom management: behavior management, discipline, student engagement
+differentiated instruction: adaptive teaching, individualized learning, scaffolding
+assessment: student assessment, formative assessment, summative assessment, grading, rubrics
+special education: sped, iep, individualized education program, 504 plan, inclusion
+esl: english as a second language, ell, english language learner, tesol, tefl
+stem education: science technology engineering math, steam
+early childhood education: ece, preschool, pre-k, kindergarten
+higher education: university teaching, college instruction, adjunct
+tutoring: academic support, one-on-one instruction, small group instruction
+
+# Technology in Education
+lms: learning management system, canvas, blackboard, moodle, google classroom
+smartboard: interactive whiteboard, promethean
+educational technology: edtech, digital learning, blended learning
+online teaching: virtual instruction, remote teaching, synchronous, asynchronous
+google workspace: google docs, google slides, google drive, g suite
+microsoft office: word, excel, powerpoint, teams, office 365
+zoom: video conferencing, virtual meeting, webex, google meet
+
+# Administration
+student records: sis, student information system, powerschool, infinite campus
+accreditation: school accreditation, program review, self-study
+grant writing: funding proposals, research grants, title i
+parent communication: parent-teacher conferences, family engagement
+school safety: crisis management, emergency preparedness, anti-bullying
+professional development: pd, teacher training, in-service, continuing education
+standardized testing: state testing, common core, benchmark assessment
+
+# Subject Areas
+mathematics: algebra, geometry, calculus, statistics
+science: biology, chemistry, physics, earth science, lab safety
+english language arts: ela, reading, writing, literature, composition
+social studies: history, geography, civics, economics
+foreign language: spanish, french, german, mandarin, world languages
+physical education: pe, health education, coaching, athletics
+music: band, choir, orchestra, music theory
+art: visual arts, studio art, art history, ceramics
