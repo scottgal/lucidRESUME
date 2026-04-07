@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -12,6 +13,7 @@ using lucidRESUME.Matching;
 using lucidRESUME.Core.Models.Quality;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
+using lucidRESUME.Ingestion.Preview;
 
 namespace lucidRESUME.ViewModels.Pages;
 
@@ -21,6 +23,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly IDocumentImageCache _imageCache;
     private readonly IAppStore _store;
     private readonly LibreOfficeService _libreOffice;
+    private readonly MorphDocxPreviewService _morphPreview;
     private readonly DocumentOpenerService _openers;
     private readonly IResumeQualityAnalyser _qualityAnalyser;
     private readonly AiDetectionScorer _aiDetectionScorer;
@@ -32,6 +35,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly IResumeExporter? _jsonExporter;
     private readonly IResumeExporter? _markdownExporter;
     private string? _loadedFilePath;
+    private bool _suppressResumeSelectionSave;
 
     // LibreOffice-generated page image paths (fallback when Docling unavailable)
     private string[] _libreOfficePageImages = [];
@@ -91,6 +95,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private IReadOnlyList<EducationItemViewModel> _education = [];
     [ObservableProperty] private IReadOnlyList<SkillGroup> _skillGroups = [];
     [ObservableProperty] private bool _hasResume;
+    [ObservableProperty] private ObservableCollection<ResumeListItem> _resumeItems = [];
+    [ObservableProperty] private ResumeListItem? _selectedResumeItem;
+    [ObservableProperty] private int _resumeCount;
 
     // Quality analysis - synthesized suggestions (not raw findings)
     [ObservableProperty] private int _qualityScore;
@@ -128,7 +135,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     public bool CanGoToNextPage => CurrentPage < PageCount;
 
     public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store,
-        LibreOfficeService libreOffice, DocumentOpenerService openers, IResumeQualityAnalyser qualityAnalyser,
+        LibreOfficeService libreOffice, MorphDocxPreviewService morphPreview,
+        DocumentOpenerService openers, IResumeQualityAnalyser qualityAnalyser,
         AiDetectionScorer aiDetectionScorer,
         DeAiRewriter deAiRewriter,
         ResumeTranslator translator,
@@ -141,6 +149,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         _imageCache = imageCache;
         _store = store;
         _libreOffice = libreOffice;
+        _morphPreview = morphPreview;
         _openers = openers;
         _qualityAnalyser = qualityAnalyser;
         _aiDetectionScorer = aiDetectionScorer;
@@ -152,6 +161,23 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         var exporterList = exporters.ToList();
         _jsonExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.JsonResume);
         _markdownExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.Markdown);
+        _ = LoadSavedResumesAsync();
+    }
+
+    private async Task LoadSavedResumesAsync()
+    {
+        var state = await _store.LoadAsync();
+        RefreshResumeItems(state);
+
+        if (state.SelectedResume is not null)
+        {
+            Resume = state.SelectedResume;
+            _loadedFilePath = Resume.FileName;
+            DetectedLanguage = DetectLanguage(Resume);
+            PopulateDisplayProperties();
+            if (HasPageImages)
+                await LoadPageImageAsync(1);
+        }
     }
 
     [RelayCommand]
@@ -161,52 +187,42 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
         var files = await TopLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select Resume",
-            AllowMultiple = false,
+            Title = "Select Resumes",
+            AllowMultiple = true,
             FileTypeFilter =
             [
-                new FilePickerFileType("Resume Files") { Patterns = ["*.pdf", "*.docx"] },
+                new FilePickerFileType("Resume Files") { Patterns = ["*.pdf", "*.docx", "*.txt"] },
                 new FilePickerFileType("PDF") { Patterns = ["*.pdf"] },
                 new FilePickerFileType("Word Document") { Patterns = ["*.docx"] },
+                new FilePickerFileType("Text") { Patterns = ["*.txt"] },
             ]
         });
 
         if (files.Count == 0) return;
 
-        var path = files[0].Path.LocalPath;
-        _loadedFilePath = path;
-        _libreOfficePageImages = [];
         ErrorMessage = null;
-        StatusMessage = $"Parsing {Path.GetFileName(path)}…";
         IsLoading = true;
 
         try
         {
             var mode = ImportMode == "Fast" ? ParseMode.Fast : ParseMode.AI;
-            Resume = await _parser.ParseAsync(path, mode);
-            if (Resume.LlmEnhancementTask != null)
-                await Resume.LlmEnhancementTask;
-            lucidRESUME.Matching.SkillCategoriser.Categorise(Resume);
-
-            // Detect language from content
-            DetectedLanguage = DetectLanguage(Resume);
-
-            PopulateDisplayProperties();
-
-            // Tier 2: Docling images
-            if (HasPageImages)
+            ResumeDocument? lastImported = null;
+            string? lastPath = null;
+            foreach (var file in files)
             {
-                await LoadPageImageAsync(1);
+                lastPath = file.Path.LocalPath;
+                StatusMessage = $"Parsing {Path.GetFileName(lastPath)}…";
+                lastImported = await ParseResumeAsync(lastPath, mode);
+                await SaveImportedResumeAsync(lastImported);
             }
-            // Tier 3: LibreOffice fallback when Docling produced no images
-            else if (_libreOffice.IsAvailable)
-            {
-                StatusMessage = $"Generating preview via LibreOffice…";
-                await GenerateLibreOfficePreviewAsync(path);
-            }
+
+            if (lastImported is not null && lastPath is not null)
+                await ShowResumeAsync(lastImported, lastPath);
 
             var modeLabel = mode == ParseMode.Fast ? "fast" : "AI";
-            StatusMessage = $"Imported {Path.GetFileName(path)} ({modeLabel})";
+            StatusMessage = files.Count == 1
+                ? $"Imported {Path.GetFileName(files[0].Path.LocalPath)} ({modeLabel})"
+                : $"Imported {files.Count} resumes ({modeLabel}); selected {Path.GetFileName(lastPath)}";
         }
         catch (Exception ex)
         {
@@ -230,21 +246,11 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
         try
         {
-            Resume = await _parser.ParseAsync(path);
-            if (Resume.LlmEnhancementTask != null)
-                await Resume.LlmEnhancementTask;
-            lucidRESUME.Matching.SkillCategoriser.Categorise(Resume);
-            PopulateDisplayProperties();
-
-            if (!HasPageImages && _libreOffice.IsAvailable)
-            {
-                StatusMessage = "Generating preview…";
-                await GenerateLibreOfficePreviewAsync(path);
-            }
+            Resume = await ParseResumeAsync(path, ParseMode.AI);
+            await ShowResumeAsync(Resume, path);
 
             StatusMessage = $"Imported {Path.GetFileName(path)}";
-
-            await _store.MutateAsync(state => state.Resume = Resume);
+            await SaveImportedResumeAsync(Resume);
 
             // Index embeddings in background (non-blocking)
             if (_store is Core.Persistence.SqliteAppStore sqlStore)
@@ -259,6 +265,110 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         {
             IsLoading = false;
         }
+    }
+
+    private async Task<ResumeDocument> ParseResumeAsync(string path, ParseMode mode)
+    {
+        var resume = await _parser.ParseAsync(path, mode);
+        if (resume.LlmEnhancementTask != null)
+            await resume.LlmEnhancementTask;
+        lucidRESUME.Matching.SkillCategoriser.Categorise(resume);
+        return resume;
+    }
+
+    private async Task SaveImportedResumeAsync(ResumeDocument imported)
+    {
+        await _store.MutateAsync(state => state.AddOrReplaceResume(imported, select: true));
+        var state = await _store.LoadAsync();
+        RefreshResumeItems(state);
+    }
+
+    private async Task ShowResumeAsync(ResumeDocument resume, string? filePath = null)
+    {
+        Resume = resume;
+        _loadedFilePath = filePath ?? resume.FileName;
+        _libreOfficePageImages = [];
+        CurrentPageImage?.Dispose();
+        CurrentPageImage = null;
+        CurrentPage = 1;
+
+        DetectedLanguage = DetectLanguage(resume);
+        PopulateDisplayProperties();
+
+        if (HasPageImages)
+        {
+            await LoadPageImageAsync(1);
+        }
+        else if (filePath is not null)
+        {
+            // Tier 2: Morph (pure C#, cross-platform, DOCX only)
+            StatusMessage = "Generating preview…";
+            var morphImages = await _morphPreview.RenderToImagesAsync(filePath,
+                Path.Combine(Path.GetTempPath(), "lucidRESUME-preview", Path.GetFileNameWithoutExtension(filePath)));
+            if (morphImages.Length > 0)
+            {
+                _libreOfficePageImages = morphImages;
+                PageCount = morphImages.Length;
+                HasPageImages = true;
+                await LoadPageImageAsync(1);
+            }
+            // Tier 3: LibreOffice (external process, if installed)
+            else if (_libreOffice.IsAvailable)
+            {
+                await GenerateLibreOfficePreviewAsync(filePath);
+            }
+        }
+    }
+
+    private void RefreshResumeItems(AppState state)
+    {
+        state.NormalizeResumes();
+        ResumeCount = state.Resumes.Count;
+        _suppressResumeSelectionSave = true;
+        try
+        {
+            ResumeItems = new ObservableCollection<ResumeListItem>(
+                state.Resumes
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Select(r => new ResumeListItem(
+                        r.ResumeId,
+                        string.IsNullOrWhiteSpace(r.FileName) ? "(untitled resume)" : Path.GetFileName(r.FileName),
+                        BuildResumeSubTitle(r))));
+
+            SelectedResumeItem = state.SelectedResume is null
+                ? null
+                : ResumeItems.FirstOrDefault(i => i.ResumeId == state.SelectedResume.ResumeId);
+        }
+        finally
+        {
+            _suppressResumeSelectionSave = false;
+        }
+    }
+
+    private static string BuildResumeSubTitle(ResumeDocument resume)
+    {
+        var name = resume.Personal.FullName;
+        var role = resume.Experience.OrderByDescending(e => e.StartDate).FirstOrDefault()?.Title;
+        var parts = new[] { name, role }.Where(p => !string.IsNullOrWhiteSpace(p));
+        return string.Join(" - ", parts);
+    }
+
+    partial void OnSelectedResumeItemChanged(ResumeListItem? value)
+    {
+        if (_suppressResumeSelectionSave || value is null) return;
+        _ = SelectResumeAsync(value.ResumeId);
+    }
+
+    private async Task SelectResumeAsync(Guid resumeId)
+    {
+        var state = await _store.LoadAsync();
+        var resume = state.Resumes.FirstOrDefault(r => r.ResumeId == resumeId);
+        if (resume is null) return;
+
+        state.SelectedResumeId = resume.ResumeId;
+        await _store.SaveAsync(state);
+        await ShowResumeAsync(resume, resume.FileName);
+        StatusMessage = $"Selected {Path.GetFileName(resume.FileName)}";
     }
 
     private async Task GenerateLibreOfficePreviewAsync(string filePath)
@@ -490,7 +600,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             DeAiStatus = $"Rewrote {result.Rewritten}/{result.TotalBullets} bullets";
 
             // Save the updated resume
-            await _store.MutateAsync(state => state.Resume = Resume);
+            await _store.MutateAsync(state => state.AddOrReplaceResume(Resume, select: true));
 
             // Re-run AI detection to update the score
             await RunAiDetectionAsync();
@@ -524,7 +634,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             else if (result.TranslatedDocument is not null)
             {
                 Resume = result.TranslatedDocument;
-                await _store.MutateAsync(state => state.Resume = Resume);
+                await _store.MutateAsync(state => state.AddOrReplaceResume(Resume, select: true));
+                var state = await _store.LoadAsync();
+                RefreshResumeItems(state);
                 PopulateFromResume();
                 StatusMessage = $"Translated to {TranslateLanguage}" +
                     (result.Glossary?.Count > 0 ? $" ({result.Glossary.Count} terms in glossary)" : "");
@@ -592,6 +704,8 @@ public record EducationItemViewModel(
     IReadOnlyList<string> Highlights);
 
 public record OpenerItem(string Name, ICommand Command);
+
+public record ResumeListItem(Guid ResumeId, string Title, string Subtitle);
 
 public record QualityFindingViewModel(string Severity, string SeverityColor, string Code, string Message, string Section);
 
