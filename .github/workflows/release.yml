@@ -89,24 +89,26 @@ jobs:
           -p:EnableCompressionInSingleFile=true
 
       - name: Create archive
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p artifacts/release
-          version="${{ steps.version.outputs.VERSION }}"
-          rid="${{ matrix.rid }}"
-          name="lucidRESUME-${version}-${rid}"
-          cp -r "artifacts/publish/${rid}" "artifacts/release/${name}"
-          if [[ "$rid" == win-* ]]; then
+          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $rid = "${{ matrix.rid }}"
+          $name = "lucidRESUME-$version-$rid"
+          $publishDir = Resolve-Path "artifacts/publish/$rid"
+          $stagingRoot = Resolve-Path "artifacts/release"
+          $staging = Join-Path $stagingRoot $name
+          New-Item -ItemType Directory -Force -Path $staging | Out-Null
+          Copy-Item -Path "$publishDir/*" -Destination $staging -Recurse -Force
+          if ($rid -like "win-*") {
             # Windows: zip only
-            (cd artifacts/release && zip -qr "${name}.zip" "${name}")
-            sha256sum "artifacts/release/${name}.zip" | cut -d' ' -f1 | tr -d '\n' > "artifacts/release/${name}.zip.sha256"
-            echo "  ${name}.zip" >> "artifacts/release/${name}.zip.sha256"
-          else
+            Compress-Archive -Path $staging -DestinationPath "artifacts/release/$name.zip" -Force
+            Get-FileHash "artifacts/release/$name.zip" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $name.zip" } | Set-Content "artifacts/release/$name.zip.sha256"
+          } else {
             # macOS / Linux: tar.gz only
-            tar -czf "artifacts/release/${name}.tar.gz" -C artifacts/release "${name}"
-            sha256sum "artifacts/release/${name}.tar.gz" | cut -d' ' -f1 | tr -d '\n' > "artifacts/release/${name}.tar.gz.sha256"
-            echo "  ${name}.tar.gz" >> "artifacts/release/${name}.tar.gz.sha256"
-          fi
+            tar -czf "artifacts/release/$name.tar.gz" -C "artifacts/release" $name
+            Get-FileHash "artifacts/release/$name.tar.gz" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $name.tar.gz" } | Set-Content "artifacts/release/$name.tar.gz.sha256"
+          }
 
       - name: Upload app archives
         uses: actions/upload-artifact@v4
