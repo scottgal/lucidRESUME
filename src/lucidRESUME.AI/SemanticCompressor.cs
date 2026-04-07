@@ -56,7 +56,7 @@ public sealed class SemanticCompressor
             jd.Title, jd.Company, matchResult.OverallFit,
             matchResult.Matches.Count(m => m.IsMatched), matchResult.Matches.Count);
 
-        // Collect the most relevant experience IDs — roles that evidence required skills
+        // Collect the most relevant experience IDs - roles that evidence required skills
         var relevantRoleIds = new HashSet<Guid>();
         var skillToEvidence = new Dictionary<string, List<SkillEvidence>>();
 
@@ -99,7 +99,7 @@ public sealed class SemanticCompressor
             md.AppendLine(string.Join(" | ", contactParts));
         md.AppendLine();
 
-        // Compressed summary — targeted to the JD
+        // Compressed summary - targeted to the JD
         md.AppendLine("## Summary");
         var matchedSkillNames = matchResult.Matches
             .Where(m => m.IsMatched)
@@ -118,7 +118,7 @@ public sealed class SemanticCompressor
             if (!relevantRoleIds.Contains(exp.Id) && includedRoles >= 3)
                 continue; // skip non-relevant roles after we have 3
 
-            md.AppendLine($"### {exp.Title ?? ""} — {exp.Company ?? ""}");
+            md.AppendLine($"### {exp.Title ?? ""} - {exp.Company ?? ""}");
             var dateRange = FormatDateRange(exp.StartDate, exp.EndDate, exp.IsCurrent);
             if (!string.IsNullOrEmpty(dateRange))
                 md.AppendLine($"*{dateRange}*");
@@ -142,7 +142,7 @@ public sealed class SemanticCompressor
             includedRoles++;
         }
 
-        // Skills section — only matched skills, organized by category
+        // Skills section - only matched skills, organized by category
         md.AppendLine("## Skills");
         var skillsByCategory = matchResult.Matches
             .Where(m => m.IsMatched)
@@ -160,7 +160,7 @@ public sealed class SemanticCompressor
         {
             md.AppendLine("## Education");
             foreach (var edu in resume.Education)
-                md.AppendLine($"**{edu.Degree ?? ""}** — {edu.Institution ?? ""}");
+                md.AppendLine($"**{edu.Degree ?? ""}** - {edu.Institution ?? ""}");
         }
 
         var compressedMd = md.ToString();

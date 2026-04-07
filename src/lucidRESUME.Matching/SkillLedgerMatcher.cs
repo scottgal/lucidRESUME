@@ -85,6 +85,20 @@ public sealed class SkillLedgerMatcher
                     continue;
                 }
 
+                // Taxonomy path: "k8s" matches "kubernetes", "AWS" matches "amazon web services"
+                if (!substringMatch && SkillTaxonomy.AreEquivalent(reqLower, nameLower))
+                {
+                    var entry = resumeLedger.Find(name);
+                    if (entry is not null)
+                    {
+                        bestSim = Math.Max(bestSim, 0.82f);
+                        bestResumeName = name;
+                        bestEntry = entry;
+                        substringMatch = true; // treat taxonomy match as definitive
+                        continue;
+                    }
+                }
+
                 // Semantic path: embedding similarity
                 if (req.Embedding is not null)
                 {
@@ -192,7 +206,7 @@ public sealed class LedgerMatchResult
     /// <summary>Required skills with no match in the resume.</summary>
     public List<string> Gaps { get; init; } = [];
 
-    /// <summary>Skills that are close but below the match threshold — potential bridge skills.</summary>
+    /// <summary>Skills that are close but below the match threshold - potential bridge skills.</summary>
     public List<NearMiss> NearMisses { get; init; } = [];
 }
 

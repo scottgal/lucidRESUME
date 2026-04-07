@@ -50,11 +50,11 @@ public sealed class JobQualityAnalyser : IJobQualityAnalyser
 
         if (job.Salary is null)
             findings.Add(new("Core", FindingSeverity.Info, "NO_SALARY",
-                "Salary range not found — adds uncertainty to application"));
+                "Salary range not found - adds uncertainty to application"));
 
         if (job.RequiredSkills.Count == 0)
             findings.Add(new("Skills", FindingSeverity.Error, "NO_REQUIRED_SKILLS",
-                "No required skills extracted — matching accuracy will be low"));
+                "No required skills extracted - matching accuracy will be low"));
 
         if (job.Responsibilities.Count == 0)
             findings.Add(new("Content", FindingSeverity.Warning, "NO_RESPONSIBILITIES",
@@ -62,7 +62,7 @@ public sealed class JobQualityAnalyser : IJobQualityAnalyser
 
         if (string.IsNullOrWhiteSpace(job.RawText) || job.RawText.Length < 200)
             findings.Add(new("Content", FindingSeverity.Warning, "SPARSE_TEXT",
-                $"JD text is very short ({job.RawText.Length} chars) — likely incomplete"));
+                $"JD text is very short ({job.RawText.Length} chars) - likely incomplete"));
 
         return findings;
     }
@@ -76,7 +76,7 @@ public sealed class JobQualityAnalyser : IJobQualityAnalyser
         // Too many required skills is a red flag (spray-and-pray JD)
         if (job.RequiredSkills.Count > 20)
             findings.Add(new("Skills", FindingSeverity.Warning, "TOO_MANY_REQUIRED",
-                $"{job.RequiredSkills.Count} required skills is unusually high — may be a boilerplate or unrealistic JD"));
+                $"{job.RequiredSkills.Count} required skills is unusually high - may be a boilerplate or unrealistic JD"));
 
         // Years of experience
         if (job.RequiredYearsExperience is null)
@@ -84,7 +84,7 @@ public sealed class JobQualityAnalyser : IJobQualityAnalyser
                 "Years of experience not specified"));
         else if (job.RequiredYearsExperience > 10)
             findings.Add(new("Requirements", FindingSeverity.Warning, "VERY_HIGH_EXP",
-                $"Requires {job.RequiredYearsExperience}+ years — may be unrealistic or mislabelled seniority"));
+                $"Requires {job.RequiredYearsExperience}+ years - may be unrealistic or mislabelled seniority"));
 
         // Education requirements
         if (string.IsNullOrWhiteSpace(job.RequiredEducation))
@@ -97,7 +97,7 @@ public sealed class JobQualityAnalyser : IJobQualityAnalyser
             var vagueTerms = new[] { "various", "multiple", "team member", "staff", "associate" };
             if (vagueTerms.Any(v => job.Title.Contains(v, StringComparison.OrdinalIgnoreCase)))
                 findings.Add(new("Core", FindingSeverity.Info, "VAGUE_TITLE",
-                    $"Job title \"{job.Title}\" is vague — consider if this is the right role"));
+                    $"Job title \"{job.Title}\" is vague - consider if this is the right role"));
         }
 
         return findings;

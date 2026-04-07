@@ -1,7 +1,7 @@
 namespace lucidRESUME.Matching.Graph;
 
 /// <summary>
-/// A node in the skill graph — represents a unique skill with its embedding.
+/// A node in the skill graph - represents a unique skill with its embedding.
 /// Connected to other skills by co-occurrence in jobs (resume or JD).
 /// </summary>
 public sealed class SkillNode

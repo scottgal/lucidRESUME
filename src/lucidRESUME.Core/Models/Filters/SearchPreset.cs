@@ -10,7 +10,7 @@ public sealed class SearchPreset
     public List<SortCriterion> Sort { get; set; } = [];
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
-    // Built-in presets — static readonly so they are allocated once, not per-access
+    // Built-in presets - static readonly so they are allocated once, not per-access
     public static readonly SearchPreset RemoteDotNetUk = new()
     {
         PresetId = "builtin-remote-dotnet-uk",

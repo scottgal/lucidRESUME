@@ -7,7 +7,7 @@ namespace lucidRESUME.Core.Persistence;
 /// Persists embeddings alongside metadata, enables fast similarity search.
 ///
 /// At 10K vectors × 384 dimensions, brute-force KNN returns in &lt;5ms.
-/// When sqlite-vec adds DiskANN support, this code stays the same — just faster.
+/// When sqlite-vec adds DiskANN support, this code stays the same - just faster.
 /// </summary>
 public sealed class VectorStore
 {

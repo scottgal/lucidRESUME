@@ -53,7 +53,7 @@ public sealed class ScrapeStrategySelector
         {
             if (host.EndsWith(domain, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogInformation("Domain {Host} matched manual-only list — skipping to Layer 5 (manual paste).", uri.Host);
+                _logger.LogInformation("Domain {Host} matched manual-only list - skipping to Layer 5 (manual paste).", uri.Host);
                 return [];
             }
         }
@@ -63,12 +63,12 @@ public sealed class ScrapeStrategySelector
 
         if (_cfBrOptions.IsConfigured)
         {
-            // Layer 3 configured — prefer it over Playwright
+            // Layer 3 configured - prefer it over Playwright
             scrapers.Add(_layer3);
         }
         else
         {
-            // Layer 4 — local Playwright, heavy but available
+            // Layer 4 - local Playwright, heavy but available
             scrapers.Add(_layer4);
         }
 

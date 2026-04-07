@@ -39,7 +39,7 @@ public sealed class JobSpecParser : IJobSpecParser
     {
         var job = JobDescription.Create(text, new JobSource { Type = JobSourceType.PastedText });
 
-        // Run all extractors in parallel — each produces candidates with confidence
+        // Run all extractors in parallel - each produces candidates with confidence
         var allCandidates = new List<JdFieldCandidate>();
 
         // Layer 1: Structural (fast, high confidence for obvious stuff)
@@ -89,7 +89,7 @@ public sealed class JobSpecParser : IJobSpecParser
         {
             if (!scraper.CanHandle(uri))
             {
-                _logger.LogDebug("Scraper {Scraper} reports CanHandle=false for {Url} — skipping.", scraper.Name, url);
+                _logger.LogDebug("Scraper {Scraper} reports CanHandle=false for {Url} - skipping.", scraper.Name, url);
                 continue;
             }
 
@@ -110,10 +110,10 @@ public sealed class JobSpecParser : IJobSpecParser
             }
         }
 
-        // Layer 5 fallback — all scrapers failed
+        // Layer 5 fallback - all scrapers failed
         if (result is null)
         {
-            _logger.LogWarning("All scrapers failed for {Url} — returning NeedsManualInput.", url);
+            _logger.LogWarning("All scrapers failed for {Url} - returning NeedsManualInput.", url);
             var fallback = JobDescription.Create("", new JobSource { Type = JobSourceType.Url, Url = url });
             fallback.MarkNeedsManualInput();
             return fallback;
@@ -141,7 +141,7 @@ public sealed class JobSpecParser : IJobSpecParser
     }
 
     // -------------------------------------------------------------------------
-    // Structured data overlay — enriches what regex couldn't find
+    // Structured data overlay - enriches what regex couldn't find
     // -------------------------------------------------------------------------
 
     private static void ApplyStructuredData(JobDescription job, StructuredJobData? data)
@@ -172,19 +172,19 @@ public sealed class JobSpecParser : IJobSpecParser
     // Field extraction from plain text / markdown
     // -------------------------------------------------------------------------
 
-    /// <summary>Legacy regex extraction — used by URL path and as supplement.</summary>
+    /// <summary>Legacy regex extraction - used by URL path and as supplement.</summary>
     private static void ExtractFields(JobDescription job, string text)
     {
         var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        // Title + Company — only if LLM didn't already extract them
+        // Title + Company - only if LLM didn't already extract them
         if (string.IsNullOrWhiteSpace(job.Title))
         {
             var header = lines.FirstOrDefault(l => l.Length > 5 && !l.StartsWith('#'));
             if (header != null)
             {
                 string[]? titleCompany = null;
-                foreach (var sep in new[] { " at ", " — ", " – ", " - ", " | " })
+                foreach (var sep in new[] { " at ", " - ", " – ", " - ", " | " })
                 {
                     var parts = header.Split(sep, 2, StringSplitOptions.TrimEntries);
                     if (parts.Length == 2 && parts[0].Length > 2 && parts[1].Length > 2)
@@ -197,7 +197,7 @@ public sealed class JobSpecParser : IJobSpecParser
             }
         }
 
-        // Remote detection — only if not already set
+        // Remote detection - only if not already set
         var lower = text.ToLowerInvariant();
         job.IsRemote ??= lower.Contains("remote") && (
             lower.Contains("fully remote") || lower.Contains("remote:") ||
@@ -205,13 +205,13 @@ public sealed class JobSpecParser : IJobSpecParser
             Regex.IsMatch(lower, @"remote\s*\("));
         job.IsHybrid ??= lower.Contains("hybrid");
 
-        // Skills — only if LLM didn't extract enough
+        // Skills - only if LLM didn't extract enough
         if (job.RequiredSkills.Count < 3)
             job.RequiredSkills = ExtractSkillsList(text, @"required|skills");
         if (job.PreferredSkills.Count < 3)
             job.PreferredSkills = ExtractSkillsList(text, @"preferred|nice to have|desirable");
 
-        // Salary — only if not already extracted
+        // Salary - only if not already extracted
         if (job.Salary is null)
         {
             var salaryMatch = Regex.Match(text, @"[£$€](\d[\d,]+)\s*[-–]\s*[£$€]?(\d[\d,]+)", RegexOptions.IgnoreCase);
@@ -223,7 +223,7 @@ public sealed class JobSpecParser : IJobSpecParser
             }
         }
 
-        // Years — simple fallback only
+        // Years - simple fallback only
         if (job.RequiredYearsExperience is null)
         {
             var yearsMatch = Regex.Match(text,

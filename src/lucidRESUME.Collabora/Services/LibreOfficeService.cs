@@ -5,7 +5,7 @@ namespace lucidRESUME.Collabora.Services;
 
 /// <summary>
 /// Auto-detects a locally installed LibreOffice and provides document preview/open functionality.
-/// No Docker or external server required — if LibreOffice is installed, it works.
+/// No Docker or external server required - if LibreOffice is installed, it works.
 /// </summary>
 public sealed class LibreOfficeService
 {

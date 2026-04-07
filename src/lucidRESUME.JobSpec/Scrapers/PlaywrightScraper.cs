@@ -7,7 +7,7 @@ namespace lucidRESUME.JobSpec.Scrapers;
 /// <summary>
 /// Layer 4: Local Playwright headless browser.
 /// Used when CF Browser Rendering API (Layer 3) is not configured.
-/// Heavy — lazy-initialises Playwright on first use.
+/// Heavy - lazy-initialises Playwright on first use.
 ///
 /// SETUP: Run "playwright install chromium" after package restore.
 /// The easiest place is in a post-publish script or user-facing setup wizard.
@@ -39,7 +39,7 @@ public sealed class PlaywrightScraper : IJobPageScraper, IAsyncDisposable
 
     public string Name => "Playwright";
 
-    // Only used when CF BR is not configured — callers should check CloudflareBrScraper.CanHandle first.
+    // Only used when CF BR is not configured - callers should check CloudflareBrScraper.CanHandle first.
     public bool CanHandle(Uri uri) => true;
 
     public async Task<ScrapeResult?> ScrapeAsync(Uri uri, CancellationToken ct = default)
@@ -48,7 +48,7 @@ public sealed class PlaywrightScraper : IJobPageScraper, IAsyncDisposable
 
         if (_browser is null)
         {
-            _logger.LogWarning("[{Scraper}] Browser not available — skipping.", Name);
+            _logger.LogWarning("[{Scraper}] Browser not available - skipping.", Name);
             return null;
         }
 
@@ -96,7 +96,7 @@ public sealed class PlaywrightScraper : IJobPageScraper, IAsyncDisposable
                 _logger.LogDebug(ex, "[{Scraper}] Structured data extraction failed (non-fatal) for {Url}", Name, uri);
             }
 
-            _logger.LogInformation("[{Scraper}] Success — {Len} chars for {Url}", Name, markdown.Length, uri);
+            _logger.LogInformation("[{Scraper}] Success - {Len} chars for {Url}", Name, markdown.Length, uri);
             return new ScrapeResult { Markdown = markdown, StructuredData = structuredData };
         }
         catch (Exception ex)

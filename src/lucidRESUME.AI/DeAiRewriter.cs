@@ -64,10 +64,10 @@ public sealed class DeAiRewriter
                 Rules:
                 - Replace generic buzzwords (leveraged, spearheaded, orchestrated, robust, comprehensive, innovative, seamless, transformative) with specific, concrete language
                 - Add specific details where the original is vague (numbers, tools, outcomes)
-                - Vary sentence structure — don't start every bullet the same way
-                - Keep the same meaning and facts — do NOT invent new achievements
+                - Vary sentence structure - don't start every bullet the same way
+                - Keep the same meaning and facts - do NOT invent new achievements
                 - Use active voice but vary the patterns
-                - Match the person's natural voice — direct, not corporate
+                - Match the person's natural voice - direct, not corporate
                 - Keep roughly the same length
 
                 For each bullet, reply with ONLY the rewritten version, numbered to match.

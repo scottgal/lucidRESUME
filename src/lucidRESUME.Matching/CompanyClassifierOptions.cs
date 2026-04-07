@@ -5,7 +5,7 @@ public sealed class CompanyTypeRule
     /// <summary>Must match a <see cref="lucidRESUME.Core.Models.Jobs.CompanyType"/> enum name.</summary>
     public string Type { get; set; } = string.Empty;
 
-    /// <summary>If any keyword appears in (title + JD text), this rule fires. Order matters — first match wins.</summary>
+    /// <summary>If any keyword appears in (title + JD text), this rule fires. Order matters - first match wins.</summary>
     public string[] Keywords { get; set; } = [];
 }
 

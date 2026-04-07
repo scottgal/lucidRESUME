@@ -85,14 +85,14 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
         var modelPath = ResolvePath(_options.ModelPath);
         if (string.IsNullOrWhiteSpace(modelPath) || !File.Exists(modelPath))
         {
-            _logger.LogInformation("OnnxNerDetector: no model configured — NER disabled");
+            _logger.LogInformation("OnnxNerDetector: no model configured - NER disabled");
             return;
         }
 
         var vocabPath = ResolvePath(_options.ResolvedVocabPath);
         if (string.IsNullOrEmpty(vocabPath) || !File.Exists(vocabPath))
         {
-            _logger.LogWarning("OnnxNerDetector: vocab.txt not found at {Path} — NER disabled", vocabPath);
+            _logger.LogWarning("OnnxNerDetector: vocab.txt not found at {Path} - NER disabled", vocabPath);
             return;
         }
 
@@ -250,7 +250,7 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
                 }
                 else
                 {
-                    // Type mismatch — treat as B-
+                    // Type mismatch - treat as B-
                     EmitCurrent();
                     currentType = iType;
                     entityCharStart = charStart;

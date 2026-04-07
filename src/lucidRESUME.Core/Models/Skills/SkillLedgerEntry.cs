@@ -6,7 +6,7 @@ namespace lucidRESUME.Core.Models.Skills;
 /// </summary>
 public sealed class SkillLedgerEntry
 {
-    /// <summary>Canonical skill name (normalized — "K8s" → "Kubernetes").</summary>
+    /// <summary>Canonical skill name (normalized - "K8s" → "Kubernetes").</summary>
     public string SkillName { get; set; } = "";
 
     /// <summary>Category if known (e.g., "Programming Language", "Cloud", "Framework").</summary>

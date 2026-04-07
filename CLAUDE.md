@@ -48,7 +48,7 @@ Local-first desktop app. Zero external services required by default. All user da
 Everything depends inward on `Core`. `Core` depends only on `Microsoft.Data.Sqlite` and `sqlite-vec`. Never add outward dependencies from Core.
 
 ```
-lucidRESUME (Avalonia app shell — DI wiring, Views, ViewModels)
+lucidRESUME (Avalonia app shell - DI wiring, Views, ViewModels)
   ├── Ingestion      Resume parsing, Docling client (Docker), image cache
   ├── Extraction     ONNX NER (2 models: general + resume) + Microsoft.Recognizers
   ├── Parsing        DOCX/PDF/TXT extraction, ATS patterns (YAML), template learning
@@ -65,7 +65,7 @@ lucidRESUME (Avalonia app shell — DI wiring, Views, ViewModels)
 
 ### MVVM Pattern
 
-- **6 ViewModels**: MainWindow, ResumePage, JobsPage, SearchPage, ApplyPage, ProfilePage — all extend `ViewModelBase` (wraps CommunityToolkit.Mvvm `ObservableObject`)
+- **6 ViewModels**: MainWindow, ResumePage, JobsPage, SearchPage, ApplyPage, ProfilePage - all extend `ViewModelBase` (wraps CommunityToolkit.Mvvm `ObservableObject`)
 - Uses `[ObservableProperty]` and `[RelayCommand]` attributes exclusively (no manual ICommand)
 - Compiled bindings enabled (`AvaloniaUseCompiledBindingsByDefault`)
 - `ViewLocator` maps VM → View by namespace convention
@@ -106,11 +106,11 @@ All external HTTP services use typed `HttpClient` registered with `AddStandardRe
 
 ## Tests
 
-xUnit 2.9.3. Five test projects under `tests/`: AI.Tests, Core.Tests, Extraction.Tests, JobSpec.Tests, Matching.Tests. Plus `test/lucidRESUME.UXTesting.Tests`. Direct service instantiation — no mocking framework.
+xUnit 2.9.3. Five test projects under `tests/`: AI.Tests, Core.Tests, Extraction.Tests, JobSpec.Tests, Matching.Tests. Plus `test/lucidRESUME.UXTesting.Tests`. Direct service instantiation - no mocking framework.
 
 ## Key Conventions
 
 - AI tailoring prompts must include honest-only constraints (no fabricating skills/experience)
 - Job scraping: prefer text/markdown extraction first, fall back to JSON-LD or Playwright only if needed
-- Non-blocking async pattern for long operations (quality checks, coverage analysis) — fire without awaiting, update UI on completion with cancellation support
+- Non-blocking async pattern for long operations (quality checks, coverage analysis) - fire without awaiting, update UI on completion with cancellation support
 - `UserProfile` vote lookups use a cached dictionary (`_voteCache`), invalidated on mutation

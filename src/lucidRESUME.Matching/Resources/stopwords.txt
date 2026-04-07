@@ -1,4 +1,4 @@
-# Stop words for skill matching — filtered before keyword search in achievement text
+# Stop words for skill matching - filtered before keyword search in achievement text
 # One word per line. Lines starting with # are comments.
 # Add language-specific stop words below their language header.
 

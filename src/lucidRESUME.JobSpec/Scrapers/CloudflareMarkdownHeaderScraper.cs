@@ -5,7 +5,7 @@ namespace lucidRESUME.JobSpec.Scrapers;
 /// <summary>
 /// Layer 1: Send Accept: text/markdown header.
 /// Cloudflare "Markdown for Agents" (Feb 2026) converts HTML→markdown at the CDN edge
-/// for Cloudflare-hosted sites — no key, no cost, just a header.
+/// for Cloudflare-hosted sites - no key, no cost, just a header.
 /// </summary>
 public sealed class CloudflareMarkdownHeaderScraper : IJobPageScraper
 {
@@ -47,18 +47,18 @@ public sealed class CloudflareMarkdownHeaderScraper : IJobPageScraper
 
         if (!contentType.Contains("text/markdown", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogDebug("[{Scraper}] Response Content-Type was '{CT}', not text/markdown — layer skipped.", Name, contentType);
+            _logger.LogDebug("[{Scraper}] Response Content-Type was '{CT}', not text/markdown - layer skipped.", Name, contentType);
             return null;
         }
 
         var body = await response.Content.ReadAsStringAsync(ct);
         if (body.Length <= 200)
         {
-            _logger.LogDebug("[{Scraper}] Markdown body too short ({Len} chars) — layer skipped.", Name, body.Length);
+            _logger.LogDebug("[{Scraper}] Markdown body too short ({Len} chars) - layer skipped.", Name, body.Length);
             return null;
         }
 
-        _logger.LogInformation("[{Scraper}] Success — received {Len} chars of markdown for {Url}", Name, body.Length, uri);
+        _logger.LogInformation("[{Scraper}] Success - received {Len} chars of markdown for {Url}", Name, body.Length, uri);
         return new ScrapeResult { Markdown = body };
     }
 }

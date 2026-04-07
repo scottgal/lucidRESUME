@@ -4,7 +4,7 @@
 
 patterns:
   - name: latex-awesome-cv
-    description: LaTeX Awesome-CV template — multi-column, clean headings, structured sections
+    description: LaTeX Awesome-CV template - multi-column, clean headings, structured sections
     signals:
       - type: metadata_contains
         value: "LaTeX"
@@ -19,7 +19,7 @@ patterns:
     name_strategy: first_heading
 
   - name: two-column-modern
-    description: Two-column layout — left sidebar with skills, right with experience
+    description: Two-column layout - left sidebar with skills, right with experience
     signals:
       - type: short_line_ratio_above
         value: 0.4  # many short lines = sidebar content
@@ -32,7 +32,7 @@ patterns:
     name_strategy: first_line_longest_word
 
   - name: linkedin-export
-    description: LinkedIn PDF export — distinctive format with profile URL
+    description: LinkedIn PDF export - distinctive format with profile URL
     signals:
       - type: text_contains
         value: "linkedin.com/in/"
@@ -72,7 +72,7 @@ patterns:
     name_strategy: first_line
 
   - name: flat-text-no-headings
-    description: Fallback for PDFs with minimal structure — uses NER + date detection
+    description: Fallback for PDFs with minimal structure - uses NER + date detection
     signals:
       - type: heading_count_max
         value: 2

@@ -4,7 +4,7 @@ default_delay: 500
 
 actions:
   # ═══════════════════════════════════════════════
-  # STARTUP — wait for health checks
+  # STARTUP - wait for health checks
   # ═══════════════════════════════════════════════
   - type: Wait
     value: "3000"
@@ -22,7 +22,7 @@ actions:
     value: 01-resume-imported
 
   # ═══════════════════════════════════════════════
-  # STEP 2: RESUME PAGE — quality panel, AI detection
+  # STEP 2: RESUME PAGE - quality panel, AI detection
   # ═══════════════════════════════════════════════
   - type: Navigate
     value: resume
@@ -48,7 +48,7 @@ actions:
     value: 04-export-md-clicked
 
   # ═══════════════════════════════════════════════
-  # STEP 3: ADD JOB — paste JD
+  # STEP 3: ADD JOB - paste JD
   # ═══════════════════════════════════════════════
   - type: Navigate
     value: search
@@ -65,7 +65,7 @@ actions:
     value: 06-job-added
 
   # ═══════════════════════════════════════════════
-  # STEP 4: JOBS PAGE — match scores, career plan
+  # STEP 4: JOBS PAGE - match scores, career plan
   # ═══════════════════════════════════════════════
   - type: Navigate
     value: jobs
@@ -83,7 +83,7 @@ actions:
     value: 08-jobs-saved
 
   # ═══════════════════════════════════════════════
-  # STEP 5: APPLY PAGE — Smart Compress + Full Tailor buttons
+  # STEP 5: APPLY PAGE - Smart Compress + Full Tailor buttons
   # ═══════════════════════════════════════════════
   - type: Navigate
     value: apply
@@ -93,7 +93,7 @@ actions:
     value: 09-apply-empty
 
   # ═══════════════════════════════════════════════
-  # STEP 6: PIPELINE — empty state
+  # STEP 6: PIPELINE - empty state
   # ═══════════════════════════════════════════════
   - type: Navigate
     value: pipeline
@@ -103,7 +103,7 @@ actions:
     value: 10-pipeline-empty
 
   # ═══════════════════════════════════════════════
-  # STEP 7: PROFILE — top section
+  # STEP 7: PROFILE - top section
   # ═══════════════════════════════════════════════
   - type: Navigate
     value: profile
@@ -132,7 +132,7 @@ actions:
     value: 13-profile-ai-settings
 
   # ═══════════════════════════════════════════════
-  # STEP 8: BACK TO ADD JOB — check watches section
+  # STEP 8: BACK TO ADD JOB - check watches section
   # ═══════════════════════════════════════════════
   - type: Navigate
     value: search
@@ -146,7 +146,7 @@ actions:
     value: 14-search-watches
 
   # ═══════════════════════════════════════════════
-  # STEP 9: FINAL — back to resume, verify state persisted
+  # STEP 9: FINAL - back to resume, verify state persisted
   # ═══════════════════════════════════════════════
   - type: Navigate
     value: resume

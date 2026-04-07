@@ -17,7 +17,7 @@ public sealed class ModelDiscoveryService
     private readonly OpenAiOptions _openAiOpts;
     private readonly ILogger<ModelDiscoveryService> _logger;
 
-    // Approximate cost per 1M input tokens (USD) — for display only
+    // Approximate cost per 1M input tokens (USD) - for display only
     private static readonly Dictionary<string, string> KnownCosts = new(StringComparer.OrdinalIgnoreCase)
     {
         // Anthropic

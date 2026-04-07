@@ -1,0 +1,251 @@
+name: Release - App Archives
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, without leading v (for example, 1.0.0)'
+        required: true
+        default: '0.1.0'
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  PROJECT: src/lucidRESUME/lucidRESUME.csproj
+
+jobs:
+  publish-app:
+    name: Publish ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: windows-latest
+            rid: win-arm64
+          - os: macos-latest
+            rid: osx-x64
+          - os: macos-latest
+            rid: osx-arm64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: ubuntu-latest
+            rid: linux-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Determine version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            "VERSION=${{ github.event.inputs.version }}" >> $env:GITHUB_OUTPUT
+          } else {
+            "VERSION=$("${{ github.ref_name }}".TrimStart('v'))" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT }} -r ${{ matrix.rid }}
+
+      - name: Publish self-contained app
+        run: >
+          dotnet publish ${{ env.PROJECT }}
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          --no-restore
+          -o artifacts/publish/${{ matrix.rid }}
+          /p:Version=${{ steps.version.outputs.VERSION }}
+          /p:PublishSingleFile=true
+          /p:IncludeNativeLibrariesForSelfExtract=true
+          /p:EnableCompressionInSingleFile=true
+
+      - name: Create zip and tar.gz archives
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $rid = "${{ matrix.rid }}"
+          $name = "lucidRESUME-$version-$rid"
+          $publishDir = Resolve-Path "artifacts/publish/$rid"
+          $stagingRoot = Resolve-Path "artifacts/release"
+          $staging = Join-Path $stagingRoot $name
+          New-Item -ItemType Directory -Force -Path $staging | Out-Null
+          Copy-Item -Path "$publishDir/*" -Destination $staging -Recurse -Force
+          Compress-Archive -Path $staging -DestinationPath "artifacts/release/$name.zip" -Force
+          tar -czf "artifacts/release/$name.tar.gz" -C "artifacts/release" $name
+          Get-FileHash "artifacts/release/$name.zip" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $name.zip" } | Set-Content "artifacts/release/$name.zip.sha256"
+          Get-FileHash "artifacts/release/$name.tar.gz" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $name.tar.gz" } | Set-Content "artifacts/release/$name.tar.gz.sha256"
+
+      - name: Upload app archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: lucidRESUME-${{ matrix.rid }}-archives
+          path: |
+            artifacts/release/*.zip
+            artifacts/release/*.tar.gz
+            artifacts/release/*.sha256
+          if-no-files-found: error
+
+  docs-archive:
+    name: Build single-page docs archive
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build single-page documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.VERSION }}"
+          name="lucidRESUME-${version}-docs"
+          out_dir="artifacts/docs/${name}"
+          mkdir -p "$out_dir" artifacts/release
+          {
+            echo "# lucidRESUME Documentation Archive"
+            echo
+            echo "Version: ${version}"
+            echo
+            echo "Generated from README.md, docs/architecture.md, and src/lucidRESUME/Resources/user-manual.md."
+            echo
+            echo "---"
+            echo
+            sed -n '1,$p' README.md
+            echo
+            echo "---"
+            echo
+            sed -n '1,$p' docs/architecture.md
+            echo
+            echo "---"
+            echo
+            sed -n '1,$p' src/lucidRESUME/Resources/user-manual.md
+          } > "${out_dir}/lucidRESUME-docs-single-page.md"
+          cp README.md docs/architecture.md src/lucidRESUME/Resources/user-manual.md "$out_dir/"
+          (cd artifacts/docs && zip -qr "../release/${name}.zip" "$name")
+          tar -czf "artifacts/release/${name}.tar.gz" -C artifacts/docs "$name"
+          sha256sum "artifacts/release/${name}.zip" > "artifacts/release/${name}.zip.sha256"
+          sha256sum "artifacts/release/${name}.tar.gz" > "artifacts/release/${name}.tar.gz.sha256"
+
+      - name: Upload docs archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: lucidRESUME-docs-archive
+          path: |
+            artifacts/release/*.zip
+            artifacts/release/*.tar.gz
+            artifacts/release/*.sha256
+          if-no-files-found: error
+
+  github-release:
+    name: Publish GitHub release
+    needs: [publish-app, docs-archive]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/downloaded
+          merge-multiple: true
+
+      - name: Write release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          cat > artifacts/release-notes.md <<EOF
+          ## lucidRESUME ${version}
+
+          Local-first desktop tooling for importing resumes, building an evidence-backed skill ledger, matching against job descriptions, tailoring applications, and tracking your pipeline.
+
+          ### Downloads
+
+          Pick the archive that matches your machine:
+
+          | System | Runtime |
+          |--------|---------|
+          | Windows Intel/AMD | \`win-x64\` |
+          | Windows ARM | \`win-arm64\` |
+          | macOS Intel | \`osx-x64\` |
+          | macOS Apple Silicon | \`osx-arm64\` |
+          | Linux Intel/AMD | \`linux-x64\` |
+          | Linux ARM | \`linux-arm64\` |
+
+          Each runtime is published as both \`.zip\` and \`.tar.gz\`, with matching \`.sha256\` checksum files. The docs archive includes a single-page Markdown reference, \`lucidRESUME-docs-single-page.md\`.
+
+          ### Basic Usage
+
+          1. Extract the archive into a folder you control.
+          2. Run the \`lucidRESUME\` executable inside the extracted folder.
+          3. Import a PDF, DOCX, or TXT resume on the My CV page.
+          4. Add a job description from pasted text or a job URL.
+          5. Use Jobs for match scoring, Apply for evidence-backed tailoring, and Pipeline for application tracking.
+
+          ### macOS Gatekeeper
+
+          These archives are currently unsigned, so macOS may quarantine the extracted app and block the first launch. Do not disable Gatekeeper globally. Use one of these per-app exceptions:
+
+          \`\`\`bash
+          xattr -dr com.apple.quarantine ~/Applications/lucidRESUME
+          \`\`\`
+
+          Or Control-click/right-click the \`lucidRESUME\` executable, choose Open, and confirm once.
+
+          ### Configuration
+
+          | Area | Default | How to configure |
+          |------|---------|------------------|
+          | Local AI | Ollama at \`http://localhost:11434\` | Install Ollama and run \`ollama pull qwen3.5:4b\`. Change provider/model in the Profile page or \`appsettings.json\`. |
+          | Cloud AI | Off | Add Anthropic or OpenAI API keys with user secrets, environment variables, or the Profile page. |
+          | PDF layout | Local parser fallback | Enable Docling for ML-based layout extraction on complex PDFs. |
+          | Embeddings and NER | Auto-download on first run | Allow the first-run model download, or pre-populate the app data model cache. |
+          | Data store | Local SQLite database | Back up \`data.db\` from the app data folder for migration or restore. |
+          | Email tracking | Off | Configure IMAP host, port, username, and app password in Profile. |
+
+          ### Useful Commands
+
+          \`\`\`bash
+          # Verify a checksum on macOS or Linux
+          shasum -a 256 lucidRESUME-${version}-osx-arm64.zip
+
+          # Start Ollama and pull the default local model
+          ollama serve
+          ollama pull qwen3.5:4b
+
+          # Optional Docling container for complex PDF layout detection
+          docker run -d --name docling-serve -p 5001:5001 quay.io/docling-project/docling-serve:latest
+          \`\`\`
+          EOF
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/downloaded/*
+          body_path: artifacts/release-notes.md
+          generate_release_notes: true

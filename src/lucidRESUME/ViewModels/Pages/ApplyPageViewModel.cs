@@ -52,7 +52,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         _compressor = compressor;
         _coverageAnalyser = coverageAnalyser;
         _store = store;
-        // Don't check at construction — service may not have pinged Ollama yet.
+        // Don't check at construction - service may not have pinged Ollama yet.
         // Rechecked in SetContext() and before each tailor operation.
     }
 
@@ -160,7 +160,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                 Title = JobTitle, Company = Company, RawText = JobDescriptionText
             };
 
-            // Step 1: Semantic compression — filter to relevant evidence only
+            // Step 1: Semantic compression - filter to relevant evidence only
             StatusMessage = "Analysing skill coverage…";
             var compressed = await _compressor.CompressAsync(resume, job);
 

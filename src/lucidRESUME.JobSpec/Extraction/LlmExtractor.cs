@@ -4,7 +4,7 @@ using lucidRESUME.Core.Interfaces;
 namespace lucidRESUME.JobSpec.Extraction;
 
 /// <summary>
-/// LLM-based extractor. Just another signal — runs in parallel with structural and NER.
+/// LLM-based extractor. Just another signal - runs in parallel with structural and NER.
 /// Only fires if an LLM is available.
 /// </summary>
 public static class LlmExtractor
@@ -56,7 +56,7 @@ public static class LlmExtractor
                 }
             }
         }
-        catch { /* LLM failure is non-fatal — other extractors still contribute */ }
+        catch { /* LLM failure is non-fatal - other extractors still contribute */ }
 
         return candidates;
     }

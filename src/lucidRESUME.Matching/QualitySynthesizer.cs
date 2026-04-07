@@ -193,7 +193,7 @@ public sealed class QualitySynthesizer
             {
                 Category = "Consistency",
                 Title = issue.Description,
-                Summary = $"Review {issue.SkillName} — evidence doesn't match claims",
+                Summary = $"Review {issue.SkillName} - evidence doesn't match claims",
                 Severity = SuggestionSeverity.Important,
                 AffectedCount = 1,
             });

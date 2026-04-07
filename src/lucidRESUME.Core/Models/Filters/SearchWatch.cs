@@ -1,7 +1,7 @@
 namespace lucidRESUME.Core.Models.Filters;
 
 /// <summary>
-/// A persistent search watch — polls job APIs on a schedule,
+/// A persistent search watch - polls job APIs on a schedule,
 /// matches against the skill ledger, and alerts on top matches.
 /// Each watch has its own query, hard filters, and polling interval.
 /// </summary>

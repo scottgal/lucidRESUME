@@ -19,7 +19,7 @@ public static class StructuralExtractor
         {
             var clean = firstLine.TrimStart('#').Trim();
             // Split on common separators
-            foreach (var sep in new[] { " — ", " – ", " - ", " | ", " at " })
+            foreach (var sep in new[] { " - ", " – ", " - ", " | ", " at " })
             {
                 var parts = clean.Split(sep, 2, StringSplitOptions.TrimEntries);
                 if (parts.Length == 2 && parts[0].Length > 2 && parts[1].Length > 2)
@@ -101,7 +101,7 @@ public static class StructuralExtractor
             if (string.IsNullOrWhiteSpace(line)) { blanks++; if (blanks > 1) { inSection = false; } continue; }
             if (line.StartsWith('#') || (line.Length < 50 && line.EndsWith(':')))
             {
-                // Check if this is a new known section — if so, stop
+                // Check if this is a new known section - if so, stop
                 var nextLower = line.ToLowerInvariant().TrimStart('#').Trim().TrimEnd(':');
                 if (!sectionKeywords.Any(k => nextLower.Contains(k)))
                 { inSection = false; continue; }

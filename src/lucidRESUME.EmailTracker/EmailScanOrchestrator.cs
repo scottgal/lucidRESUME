@@ -22,7 +22,7 @@ public sealed class EmailScanOrchestrator
     private readonly IAppStore _store;
     private readonly ILogger<EmailScanOrchestrator> _logger;
 
-    // Terminal stages — never auto-advance past these
+    // Terminal stages - never auto-advance past these
     private static readonly HashSet<ApplicationStage> TerminalStages =
     [
         ApplicationStage.Accepted,
@@ -49,7 +49,7 @@ public sealed class EmailScanOrchestrator
 
         if (!_scanner.IsConfigured)
         {
-            _logger.LogWarning("Email scanner not configured — skipping scan");
+            _logger.LogWarning("Email scanner not configured - skipping scan");
             return summary;
         }
 

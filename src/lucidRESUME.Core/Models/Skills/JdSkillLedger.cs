@@ -3,7 +3,7 @@ using lucidRESUME.Core.Models.Jobs;
 namespace lucidRESUME.Core.Models.Skills;
 
 /// <summary>
-/// Skill ledger for a job description — the demand side.
+/// Skill ledger for a job description - the demand side.
 /// Maps to the resume's SkillLedger (supply side) for matching.
 /// </summary>
 public sealed class JdSkillLedger

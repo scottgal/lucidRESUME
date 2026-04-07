@@ -187,7 +187,7 @@ public sealed class UXPlayer
                 var control = FindControl(action.Target);
                 if (control == null)
                 {
-                    Log?.Invoke(this, $"    Control not found: {action.Target} — skipping");
+                    Log?.Invoke(this, $"    Control not found: {action.Target} - skipping");
                     tcs.SetResult();
                     return;
                 }

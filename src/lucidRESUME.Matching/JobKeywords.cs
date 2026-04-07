@@ -9,7 +9,7 @@ internal static class JobKeywords
 {
     /// <summary>
     /// Industry keyword groups. Multiple industries may match a single job
-    /// (e.g. "Fintech SaaS") — callers should NOT break on first match.
+    /// (e.g. "Fintech SaaS") - callers should NOT break on first match.
     /// </summary>
     public static readonly (string[] Keywords, string Industry)[] Industries =
     [

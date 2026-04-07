@@ -10,7 +10,7 @@ namespace lucidRESUME.AI;
 
 /// <summary>
 /// Fully local embedding service using all-MiniLM-L6-v2 ONNX model (384 dimensions).
-/// No external services required — runs on CPU via ONNX Runtime.
+/// No external services required - runs on CPU via ONNX Runtime.
 /// </summary>
 public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
 {
@@ -30,7 +30,10 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
         var vocabPath = ResolvePath(opts.VocabPath);
 
         _session = new InferenceSession(modelPath);
-        _tokenizer = BertTokenizer.Create(vocabPath, new BertOptions { LowerCaseBeforeTokenization = true });
+        // Some HuggingFace vocab files have duplicate entries (e.g. '-' at two positions).
+        // BertTokenizer.Create throws on duplicates, so deduplicate the vocab file first.
+        var cleanVocab = DeduplicateVocab(vocabPath);
+        _tokenizer = BertTokenizer.Create(cleanVocab, new BertOptions { LowerCaseBeforeTokenization = true });
 
         _logger.LogInformation("ONNX embedding model loaded from {Path} (384-dim)", modelPath);
     }
@@ -79,7 +82,7 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
 
         using var results = _session.Run(inputs);
 
-        // Output: last_hidden_state shape [1, seq_len, 384] — mean pool over tokens
+        // Output: last_hidden_state shape [1, seq_len, 384] - mean pool over tokens
         var output = results.First().AsEnumerable<float>().ToArray();
         var dims = 384;
         var pooled = new float[dims];
@@ -114,6 +117,46 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
         if (mag < 1e-8f) return;
         for (int i = 0; i < v.Length; i++)
             v[i] /= mag;
+    }
+
+    /// <summary>
+    /// Some HuggingFace vocab.txt files contain duplicate token entries (e.g. '-' at two line positions).
+    /// BertTokenizer.Create uses a Dictionary which throws on duplicate keys.
+    /// This writes a deduplicated copy to a temp file, keeping only the first occurrence of each token.
+    /// </summary>
+    private static string DeduplicateVocab(string vocabPath)
+    {
+        var lines = File.ReadAllLines(vocabPath);
+        var seen = new HashSet<string>();
+        bool hasDuplicates = false;
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (!seen.Add(lines[i]))
+            {
+                hasDuplicates = true;
+                break;
+            }
+        }
+
+        if (!hasDuplicates) return vocabPath;
+
+        // Write deduplicated version — replace duplicate lines with [unused{line}] placeholder
+        // to preserve line numbering (token IDs = line numbers in BERT vocab)
+        seen.Clear();
+        var cleanLines = new string[lines.Length];
+        int unusedIdx = 9000; // high unused range
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (seen.Add(lines[i]))
+                cleanLines[i] = lines[i];
+            else
+                cleanLines[i] = $"[unused_dedup_{unusedIdx++}]";
+        }
+
+        var cleanPath = Path.Combine(Path.GetDirectoryName(vocabPath)!, "vocab_clean.txt");
+        File.WriteAllLines(cleanPath, cleanLines);
+        return cleanPath;
     }
 
     private static string ResolvePath(string path) =>

@@ -301,7 +301,7 @@ public sealed class ScriptPlayer
 
     private async Task ExecuteHoverAsync(UIAction action)
     {
-        // Hover is recorded for intent — Avalonia doesn't expose PointerEventArgs constructors publicly.
+        // Hover is recorded for intent - Avalonia doesn't expose PointerEventArgs constructors publicly.
         // The action is logged and can trigger hover-sensitive bindings via automation peers in future.
         Log?.Invoke(this, $"    Hover: {action.Target} (logged for replay)");
         await Task.Delay(50);
@@ -390,7 +390,7 @@ public sealed class ScriptPlayer
 
     private async Task ExecuteMouseDownAsync(UIAction action)
     {
-        // MouseDown at coordinates — logged for replay intent.
+        // MouseDown at coordinates - logged for replay intent.
         // For actual click behavior, use Click action with control names.
         Log?.Invoke(this, $"    MouseDown: ({action.X}, {action.Y})");
         await Task.CompletedTask;

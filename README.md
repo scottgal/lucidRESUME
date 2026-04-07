@@ -1,10 +1,34 @@
 # ***lucid*RESUME**
 
-**Your job search. Your data. Your machine. Your career.**
+**Your job search. Your data. Your machine.**
 
-***lucid*RESUME** is a free, open-source desktop app that helps you find jobs, tailor your resume, track applications, and plan your career — entirely on your own computer. No accounts. No subscriptions. No data leaving your machine unless you want it to.
+***lucid*RESUME** is a free, open-source desktop app that builds a structured, evidence-based model of your skills from your actual work - then uses it to:
+
+- **Tailor resumes** to specific job descriptions
+- **Match you to relevant roles** with per-skill similarity scoring
+- **Show what you're missing** (and what you're not)
+- **Plan your next move** based on your actual skill graph
+
+Everything runs locally on your machine. No accounts. No data leaving your device unless you choose to.
 
 > Built with .NET 10 + Avalonia. Runs on Windows, macOS, and Linux.
+
+---
+
+## Core Idea
+
+**Every skill is backed by evidence.**
+
+***lucid*RESUME** doesn't just list what you *say* you know - it builds a **skill ledger** where each skill is tied to:
+
+- **Where** it appeared (job, project, repo)
+- **When** you used it (date ranges, calculated years)
+- **How often** it shows up across roles
+- **How strong** the evidence is (recency, frequency, confidence)
+
+No invented skills. No guessing. Just structured inference over your actual work.
+
+This is the foundation everything else builds on - matching, tailoring, gap analysis, career direction.
 
 ---
 
@@ -24,116 +48,146 @@
 
 ---
 
-## Why lucidRESUME?
+## Why ***lucid*RESUME**?
 
 Every major job site wants your email, your browsing history, and permission to sell your profile. AI resume tools send your CV to some SaaS vendor's cloud. Paid tools charge monthly for table-stakes features.
 
-lucidRESUME does things differently:
+***lucid*RESUME** does things differently:
 
-- **Local-first AI** — tailoring runs through [Ollama](https://ollama.ai) on your hardware. Or use Anthropic/OpenAI APIs if you prefer.
-- **No account required** — data stored in a local SQLite database. You own it.
-- **Honest tailoring** — the AI never invents skills or experience you don't have.
-- **Career navigation** — not just "match this job" but "what to do next to reach your target cluster".
-- **Free forever** — Unlicense. Public domain.
+- **Local-first AI** - tailoring runs through [Ollama](https://ollama.ai) on your hardware. Or use Anthropic/OpenAI APIs if you prefer.
+- **No account required** - data stored in a local SQLite database. You own it.
+- **Honest tailoring** - the AI never invents skills or experience you don't have.
+- **Career direction (based on your actual skill graph)** - not just "match this job" but "what to do next to reach your target cluster".
+- **Free forever** - Unlicense. Public domain.
 
 ---
 
-## Features
+## What It Does
 
-### Resume Import & Extraction
+### Resume Import
 - Import PDF or DOCX resumes
-- **Multi-signal RRF fusion extraction**: structural analysis + ONNX NER (2 models) + LLM recovery + regex patterns — all run in parallel, fused by reciprocal rank fusion
-- Dual NER: `dslim/bert-base-NER` (names, orgs) + `yashpwr/resume-ner-bert-v2` (skills, degrees, job titles)
-- ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) for semantic matching
-- **Docling integration** (Docker) for ML-based PDF layout detection — handles two-column resumes, LaTeX CVs, complex formatting
-- PdfPig with column detection as local fallback
-- Template learning: learns your resume's structure on first parse, 100% confidence on subsequent imports
-- **Multilingual**: German, French, Spanish, Portuguese, Chinese language detection with section keyword maps
+- Handles two-column, LaTeX, complex formatting
+- Template learning: learns your resume's structure on first parse, deterministic on subsequent imports
+- Multilingual: German, French, Spanish, Portuguese, Chinese, Dutch, Japanese, Korean
 
 ### Skill Ledger
-Every skill claim is backed by evidence:
-- **Provenance chain**: skill → which job → which date range → which bullet point
+- **Provenance chain**: skill -> which job -> which date range -> which bullet point
 - **Calculated years**: sum of non-overlapping date ranges where the skill appears
 - **Evidence strength**: combining years, role count, recency, confidence
-- **Consistency checking**: flags skills listed but never demonstrated, claimed years vs calculated years
-- **Presentation gap vs true gap**: "you have Kubernetes adjacent skills" vs "you don't have this at all"
+- **Consistency checking**: flags skills listed but never demonstrated, claimed vs calculated years
+- **Presentation gap vs true gap**: "you have adjacent skills" vs "you don't have this at all"
 
-### AI Detection & De-AI
-- **5-signal AI detection scorer**: embedding variance, stylometric analysis, lexical diversity, local LLM judge, ONNX RoBERTa classifier (opt-in)
-- **De-AI rewrite button**: rewrites AI-sounding bullets to be more human and specific via LLM
-- Score shown as banner on resume page with per-signal findings
+### Smart Matching
+- Multi-vector cosine similarity between resume and JD skill ledgers
+- 3-layer matching: substring -> embedding similarity -> achievement-text keyword search
+- Per-skill match detail with similarity scores, evidence strength, calculated years
 
-### Job Description Parsing
-- **Parallel signal fusion** (same as resume): Structural + NER + LLM extractors run simultaneously
-- Handles pipe-delimited, em-dash, and heading-based JD formats
-- Salary, remote/hybrid, years of experience detection
-- **Configurable fusion weights** in `appsettings.json` (`JdFusion` section)
-
-### Smart Matching & Career Planning
-- **Skill ledger matching**: multi-vector cosine similarity between resume and JD skill ledgers
+### Career Direction
 - **Skill graph** with co-occurrence edges and Louvain community detection
-- **Career planner**: computes minimum-cost path through skill space
-  - 4 gap types: PresentationGap, WeakEvidence, AdjacentSkill, TrueGap
-  - 3 effort levels: Low (rewording), Medium (side project), High (new learning)
-  - Recommendations ranked by impact/effort ratio
-- **Search query generator**: suggests job search queries from your strongest skill communities
+- **Career planner**: 4 gap types (PresentationGap, WeakEvidence, AdjacentSkill, TrueGap)
+- **Effort/impact ranking**: Low (rewording), Medium (side project), High (new learning)
+- **Search query generator**: suggests job searches from your strongest skill communities
+
+### AI Tailoring
+- Rewrites resume for specific JDs using skill ledger evidence (not hallucination)
+- Semantic compression: 13 roles -> 6 relevant -> filtered to evidence-backed bullets
+- AI detection scorer (5 signals) + de-AI rewrite button
+- Translation with sliding context and glossary
 
 ### Personal ATS (Pipeline)
-Track applications through your job hunt:
-- **Stage pipeline**: Saved → Applied → Screening → Interview → Offer → Accepted/Rejected/Withdrawn/Ghosted
-- **Timeline**: chronological events per application (stage changes, emails, notes)
-- **Funnel visualization**: horizontal bar showing application flow by stage
-- **Stale detection**: flags applications with no activity for 14+ days
-- **Ghosted auto-detection**: 30+ days in Applied → auto-marked as Ghosted
-
-### Email Integration
-- **IMAP scanner** (MailKit) — connects to Gmail, Outlook, etc.
-- **Rule-based email classifier**: detects confirmations, interview invites, rejections, offers
-- **Email-to-application matcher**: matches emails by sender domain, subject, recruiter email
-- Auto-creates timeline events and advances stages (flagged as auto-detected)
-
-### AI Provider Selection
-- **Ollama** (default, local) — any installed model
-- **Anthropic API** — Claude Haiku/Sonnet/Opus
-- **OpenAI API** — GPT-4o, GPT-4o-mini, etc.
-- Dynamic model listing from each provider
-- Cost estimates per model
-- Configurable via Profile page or `appsettings.json`
-
-### Translation
-- Translate resume to any language via LLM
-- **Sliding context with glossary**: maintains term consistency across sections
-- Technical terms (Kubernetes, ASP.NET, etc.) preserved in English
-
-### Document Openers
-Auto-detects installed editors:
-- LibreOffice, Microsoft Word, WPS Office, ONLYOFFICE
-- macOS native: Preview, Pages, TextEdit, System Default
-- Split button with dropdown for multiple options
+- **Stage pipeline**: Saved -> Applied -> Screening -> Interview -> Offer -> Accepted/Rejected/Withdrawn/Ghosted
+- Timeline per application, funnel visualization, stale detection
+- **Email integration** (IMAP via MailKit): auto-detects confirmations, interviews, rejections, offers
 
 ### Job Search
-Seven job board adapters, searched in parallel:
-
-| Source | Auth | Notes |
-|--------|------|-------|
-| Adzuna | API key | UK, US, DE, FR, etc. |
-| Reed | API key | UK |
-| Findwork | API key | Global |
-| Arbeitnow | None | EU focus |
-| JoinRise | None | |
-| Jobicy | None (RSS) | Remote |
-| Remotive | None (RSS) | Remote |
+Seven job board adapters searched in parallel (Adzuna, Reed, Findwork, Arbeitnow, JoinRise, Jobicy, Remotive). Near-duplicate detection via embedding similarity. Hoover role flagging.
 
 ### Export
-- **JSON Resume** — standard schema
-- **Markdown** — clean, structured
+JSON Resume (standard schema) and Markdown.
+
+### Documentation
+- [Release & Archive Guide](docs/release.md) - release workflow, platform archives, and single-page docs archive.
+- [Technical Architecture](docs/architecture.md) - modules, data flow, persistence, and extraction pipeline.
+- [In-App User Manual](src/lucidRESUME/Resources/user-manual.md) - the same help content embedded in the desktop app.
 
 ---
 
-## Architecture
+## Getting Started
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- (Optional) [Ollama](https://ollama.ai) - `ollama pull qwen3.5:4b` for AI tailoring
+- (Optional) Docker - for Docling PDF layout detection
+- (Optional) LibreOffice - for document preview
+
+ONNX models (NER + embeddings) are **auto-downloaded on first run** (~600MB total).
+
+### Build & Run
+
+```bash
+git clone https://github.com/scottgal/lucidRESUME
+cd lucidRESUME
+dotnet run --project src/lucidRESUME/lucidRESUME.csproj
+```
+
+### Release Archives
+
+Tagged releases publish self-contained app archives from GitHub Actions. Download the archive for your platform, extract it, and run the `lucidRESUME` executable inside:
+
+| Platform | Runtime IDs |
+|----------|-------------|
+| Windows | `win-x64`, `win-arm64` |
+| macOS | `osx-x64`, `osx-arm64` |
+| Linux | `linux-x64`, `linux-arm64` |
+
+Each runtime is published as both `.zip` and `.tar.gz`, with `.sha256` checksum files. The GitHub release page includes basic usage, configuration, and macOS Gatekeeper guidance. Releases also include a documentation archive containing `lucidRESUME-docs-single-page.md` for offline reading.
+
+Maintainers: see [docs/release.md](docs/release.md) for the release workflow and archive policy.
+
+### Configure AI Provider
+
+**Ollama (default, local):**
+```bash
+ollama pull qwen3.5:4b
+# App uses http://localhost:11434 by default
+```
+
+**Anthropic or OpenAI:**
+```bash
+dotnet user-secrets --project src/lucidRESUME set "Anthropic:ApiKey" "sk-ant-..."
+dotnet user-secrets --project src/lucidRESUME set "OpenAi:ApiKey" "sk-..."
+```
+
+Then set `Tailoring.Provider` to `"anthropic"` or `"openai"` in `appsettings.json` or via the Profile page.
+
+### CLI
+
+```bash
+# Parse a resume
+dotnet run --project src/lucidRESUME.Cli -- parse --file cv.pdf --output result.json
+
+# Analyse resume vs job description
+dotnet run --project src/lucidRESUME.Cli -- analyse --resume cv.docx --job "$(cat jd.txt)"
+
+# Export as Markdown
+dotnet run --project src/lucidRESUME.Cli -- export --file cv.docx --format markdown
+```
+
+---
+
+## How It Works (Technical)
+
+### Extraction
+
+**Multi-signal RRF fusion**: structural analysis + ONNX NER (2 models: `dslim/bert-base-NER` + `yashpwr/resume-ner-bert-v2`) + LLM recovery + regex patterns - all run in parallel, fused by reciprocal rank fusion. Same pattern for both resume and JD extraction.
+
+ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) power semantic matching throughout. Docling (Docker) adds ML-based PDF layout detection for complex documents; PdfPig with column detection as local fallback.
+
+### Architecture
 
 ```
-lucidRESUME (Avalonia UI — 6 pages: My CV, Jobs, Add Job, Apply, Pipeline, Profile)
+lucidRESUME (Avalonia UI - 6 pages: My CV, Jobs, Add Job, Apply, Pipeline, Profile)
     ├── Ingestion        Resume parsing, Docling client, image cache
     ├── Extraction       ONNX NER (2 models) + Microsoft.Recognizers pipeline
     ├── Parsing          DOCX/PDF/TXT extraction, ATS pattern detection, template learning
@@ -162,61 +216,20 @@ lucidRESUME (Avalonia UI — 6 pages: My CV, Jobs, Add Job, Apply, Pipeline, Pro
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- (Optional) [Ollama](https://ollama.ai) — `ollama pull qwen3.5:4b` for AI tailoring
-- (Optional) Docker — for Docling PDF layout detection
-- (Optional) LibreOffice — for document preview and "Open in..." button
-
-ONNX models (NER + embeddings) are **auto-downloaded on first run** (~600MB total).
-
-### Build & Run
+## Tests
 
 ```bash
-git clone https://github.com/scottgal/lucidRESUME
-cd lucidRESUME
-dotnet run --project src/lucidRESUME/lucidRESUME.csproj
+dotnet test    # 161 tests across 6 projects
 ```
 
-### Configure AI Provider
-
-**Ollama (default, local):**
-```bash
-ollama pull qwen3.5:4b
-# App uses http://localhost:11434 by default
-```
-
-**Anthropic or OpenAI:**
-```bash
-dotnet user-secrets --project src/lucidRESUME set "Anthropic:ApiKey" "sk-ant-..."
-dotnet user-secrets --project src/lucidRESUME set "OpenAi:ApiKey" "sk-..."
-```
-
-Then set `Tailoring.Provider` to `"anthropic"` or `"openai"` in `appsettings.json` or via the Profile page.
-
-### Enable Docling (better PDF parsing)
-
-```bash
-docker run -d --name docling-serve -p 5001:5001 quay.io/docling-project/docling-serve:latest
-```
-
-Set `Docling.Enabled = true` in `appsettings.json`. PDFs will use ML-based layout detection.
-
-### CLI
-
-```bash
-# Parse a resume
-dotnet run --project src/lucidRESUME.Cli -- parse --file cv.pdf --output result.json
-
-# Analyse resume vs job description
-dotnet run --project src/lucidRESUME.Cli -- analyse --resume cv.docx --job "$(cat jd.txt)"
-
-# Export as Markdown
-dotnet run --project src/lucidRESUME.Cli -- export --file cv.docx --format markdown
-```
+| Project | Tests | Coverage |
+|---------|-------|----------|
+| Core.Tests | 44 | Persistence, models, round-trip |
+| Extraction.Tests | 23 | NER, recognizers, pipeline |
+| AI.Tests | 16 | Embeddings, matching |
+| Matching.Tests | 50 | Skill scoring, filters, voting, quality word lists |
+| JobSpec.Tests | 3 | JD parsing, salary extraction |
+| EmailTracker.Tests | 25 | Classifier, matcher |
 
 ---
 
@@ -236,35 +249,16 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-repl
 dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 ```
 
-Test actions include: `Navigate`, `Click`, `TypeText`, `Scroll`, `Screenshot`, `ImportFile`, `PasteJob`, `Assert`, `Svg`.
-
----
-
-## Tests
-
-```bash
-dotnet test    # 159 tests across 6 projects
-```
-
-| Project | Tests | Coverage |
-|---------|-------|----------|
-| Core.Tests | 44 | Persistence, models, round-trip |
-| Extraction.Tests | 23 | NER, recognizers, pipeline |
-| AI.Tests | 16 | Embeddings, matching |
-| Matching.Tests | 48 | Skill scoring, filters, voting |
-| JobSpec.Tests | 3 | JD parsing, salary extraction |
-| EmailTracker.Tests | 25 | Classifier, matcher |
-
 ---
 
 ## Roadmap
 
-- [ ] Refactor resume extraction to full RRF fusion (same pattern as JD extraction)
-- [ ] Resume improvement UX — synthesized suggestions instead of raw findings list
+- [ ] Resume extraction full RRF fusion (same pattern as JD extraction)
+- [ ] Resume improvement UX - synthesized suggestions
 - [ ] Career planner UI page with gap analysis visualization
 - [ ] Automated job polling from skill community search queries
 - [ ] Leiden community detection (upgrade from Louvain)
-- [ ] Temporal skill drift comparison across resume variants
+- [ ] Temporal skill drift across resume variants
 - [ ] DOCX/PDF export of tailored resumes
 - [ ] LinkedIn JSON import
 - [ ] DocLayNet ONNX model for offline PDF layout detection (no Docker)
@@ -279,7 +273,7 @@ PRs welcome. Run the tests before submitting:
 dotnet test
 ```
 
-The codebase follows a strict inward dependency rule — keep domain logic in `Core` and wire everything in the app shell.
+The codebase follows a strict inward dependency rule - keep domain logic in `Core` and wire everything in the app shell.
 
 ---
 

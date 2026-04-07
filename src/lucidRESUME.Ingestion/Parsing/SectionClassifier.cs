@@ -31,7 +31,7 @@ public static partial class SectionClassifier
                 var idx = clean.IndexOf(k, StringComparison.Ordinal);
                 if (idx <= 0 || clean[idx - 1] != ' ') continue;
 
-                // Count words before the keyword — allow max 1 qualifying word
+                // Count words before the keyword - allow max 1 qualifying word
                 var prefix = clean[..idx].Trim();
                 var wordsBefore = prefix.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
                 if (wordsBefore <= 1)

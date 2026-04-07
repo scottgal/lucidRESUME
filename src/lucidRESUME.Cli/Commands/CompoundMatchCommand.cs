@@ -9,7 +9,7 @@ namespace lucidRESUME.Cli.Commands;
 
 /// <summary>
 /// Match multiple resume variants against a JD using a compound skill ledger.
-/// Each resume adds to the ledger — skills from CTO + AI Consultant + Lead Dev
+/// Each resume adds to the ledger - skills from CTO + AI Consultant + Lead Dev
 /// compound into a richer profile than any single resume alone.
 /// </summary>
 public static class CompoundMatchCommand
@@ -65,7 +65,7 @@ public static class CompoundMatchCommand
                 {
                     if (compoundEntries.TryGetValue(entry.SkillName, out var existing))
                     {
-                        // Merge evidence — add new evidence items
+                        // Merge evidence - add new evidence items
                         foreach (var evidence in entry.Evidence)
                         {
                             if (!existing.Evidence.Any(e => e.SourceText == evidence.SourceText))

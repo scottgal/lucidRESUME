@@ -1,6 +1,6 @@
-# Personal / private resume files — not for version control
+# Personal / private resume files - not for version control
 personal/
 
-# Large downloaded datasets — not for version control
+# Large downloaded datasets - not for version control
 kaggle-pdfs/
 vacancy-cv-docx/

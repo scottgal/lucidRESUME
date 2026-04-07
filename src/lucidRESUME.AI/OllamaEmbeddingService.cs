@@ -16,7 +16,7 @@ public sealed class OllamaEmbeddingService : IEmbeddingService
     private readonly OllamaOptions _options;
     private readonly ILogger<OllamaEmbeddingService> _logger;
 
-    // Simple concurrent LRU cache — keyed by (model, text)
+    // Simple concurrent LRU cache - keyed by (model, text)
     private readonly Dictionary<(string model, string text), float[]> _cache = new();
     private const int MaxCacheEntries = 500;
 

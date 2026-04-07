@@ -9,7 +9,7 @@ public static class EmailClassifier
 {
     private static readonly (string[] Patterns, ApplicationStage Stage, TimelineEventType EventType, float Confidence)[] Rules =
     [
-        // Offer — high confidence, check first
+        // Offer - high confidence, check first
         (["offer letter", "pleased to offer", "compensation package", "we would like to extend"],
             ApplicationStage.Offer, TimelineEventType.OfferReceived, 0.9f),
 

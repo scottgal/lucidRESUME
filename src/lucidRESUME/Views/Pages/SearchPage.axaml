@@ -84,7 +84,7 @@
                  Foreground="{DynamicResource LrAccentBlueBrush}" Margin="0,0,0,8"/>
 
       <!-- Empty state -->
-      <TextBlock Grid.Row="1" Text="No jobs saved yet — fetch a URL or paste a job description above."
+      <TextBlock Grid.Row="1" Text="No jobs saved yet - fetch a URL or paste a job description above."
                  Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="13"
                  HorizontalAlignment="Center" VerticalAlignment="Center"
                  IsVisible="{Binding !SavedJobs.Count}"/>
@@ -100,7 +100,7 @@
                   <StackPanel Grid.Column="0" Spacing="2">
                     <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="13">
                       <Run Text="{Binding Title}"/>
-                      <Run Text=" — " Foreground="{DynamicResource LrSubtleTextBrush}"/>
+                      <Run Text=" - " Foreground="{DynamicResource LrSubtleTextBrush}"/>
                       <Run Text="{Binding Company}"/>
                     </TextBlock>
                     <StackPanel Orientation="Horizontal" Spacing="8">

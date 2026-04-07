@@ -88,7 +88,7 @@ public sealed class JsonAppStore : IAppStore
         var dir = Path.GetDirectoryName(_filePath)!;
         Directory.CreateDirectory(dir);
 
-        // Write to a temp file then rename for atomicity — prevents truncated JSON on crash
+        // Write to a temp file then rename for atomicity - prevents truncated JSON on crash
         var tmp = Path.Combine(dir, Path.GetRandomFileName());
         try
         {

@@ -5,7 +5,7 @@ using lucidRESUME.Core.Models.Jobs;
 
 namespace lucidRESUME.JobSearch.Adapters;
 
-/// <summary>Arbeitnow — free job board API, no API key required</summary>
+/// <summary>Arbeitnow - free job board API, no API key required</summary>
 public sealed class ArbeitnowAdapter : IJobSearchAdapter
 {
     private readonly HttpClient _http;
@@ -16,7 +16,7 @@ public sealed class ArbeitnowAdapter : IJobSearchAdapter
 
     public async Task<IReadOnlyList<JobDescription>> SearchAsync(JobSearchQuery query, CancellationToken ct = default)
     {
-        // Arbeitnow does not support keyword search on the public API — fetch page 1 and filter client-side
+        // Arbeitnow does not support keyword search on the public API - fetch page 1 and filter client-side
         var url = "https://www.arbeitnow.com/api/job-board-api?page=1";
         var response = await _http.GetFromJsonAsync<ArbeitnowResponse>(url, ct);
         if (response?.Data is null) return [];

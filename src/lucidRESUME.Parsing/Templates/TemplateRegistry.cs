@@ -118,7 +118,7 @@ public sealed class TemplateRegistry
         var template = templates.FirstOrDefault(t => t.Id == templateId);
         if (template is null)
         {
-            _logger.LogWarning("Template id '{Id}' not found — cannot update hints", templateId);
+            _logger.LogWarning("Template id '{Id}' not found - cannot update hints", templateId);
             return;
         }
 

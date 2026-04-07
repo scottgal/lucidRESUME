@@ -58,9 +58,9 @@ public sealed class CareerPlanner
 
             if (isNearMiss && nearSkill is not null)
             {
-                // PRESENTATION GAP — you have adjacent skill, need to surface it
+                // PRESENTATION GAP - you have adjacent skill, need to surface it
                 recommendation.GapType = GapType.PresentationGap;
-                recommendation.Advice = $"You have '{nearSkill.ClosestResumeSkill}' (similarity {nearSkill.Similarity:P0}) — " +
+                recommendation.Advice = $"You have '{nearSkill.ClosestResumeSkill}' (similarity {nearSkill.Similarity:P0}) - " +
                     $"strengthen this by adding specific {skillMatch.RequiredSkill} achievements, " +
                     $"or use the JD's exact terminology in your resume.";
                 recommendation.Effort = EffortLevel.Low;
@@ -68,7 +68,7 @@ public sealed class CareerPlanner
             }
             else
             {
-                // TRUE GAP — skill not in your graph
+                // TRUE GAP - skill not in your graph
                 var communityId = graph.Nodes.TryGetValue(skillMatch.RequiredSkill, out var node)
                     ? node.CommunityId : -1;
                 var yourCommunities = resumeLedger.StrongSkills
@@ -78,16 +78,16 @@ public sealed class CareerPlanner
 
                 if (yourCommunities.Count > 0)
                 {
-                    // Adjacent community — you have related skills
+                    // Adjacent community - you have related skills
                     recommendation.GapType = GapType.AdjacentSkill;
-                    recommendation.Advice = $"You're close — your {string.Join(", ", yourCommunities.Take(3))} " +
+                    recommendation.Advice = $"You're close - your {string.Join(", ", yourCommunities.Take(3))} " +
                         $"skills are in the same cluster. A small project using {skillMatch.RequiredSkill} would bridge the gap.";
                     recommendation.Effort = EffortLevel.Medium;
                     recommendation.Impact = skillMatch.Importance == SkillImportance.Required ? 0.7 : 0.3;
                 }
                 else
                 {
-                    // Distant skill — not in your graph at all
+                    // Distant skill - not in your graph at all
                     recommendation.GapType = GapType.TrueGap;
                     recommendation.Advice = $"'{skillMatch.RequiredSkill}' is not in your current skill set. " +
                         $"This would require dedicated learning or a role that uses it.";
@@ -115,7 +115,7 @@ public sealed class CareerPlanner
             });
         }
 
-        // Sort by impact descending — highest-value actions first
+        // Sort by impact descending - highest-value actions first
         plan.Recommendations = plan.Recommendations
             .OrderByDescending(r => r.Impact)
             .ThenBy(r => r.Effort)
@@ -151,9 +151,9 @@ public sealed class CareerRecommendation
 
 public enum GapType
 {
-    PresentationGap,  // you have adjacent skill — surface it differently
-    WeakEvidence,     // you have it but evidence is thin — add achievements
-    AdjacentSkill,    // you have related skills in the same cluster — small project bridges it
+    PresentationGap,  // you have adjacent skill - surface it differently
+    WeakEvidence,     // you have it but evidence is thin - add achievements
+    AdjacentSkill,    // you have related skills in the same cluster - small project bridges it
     TrueGap,          // genuinely new skill needed
 }
 

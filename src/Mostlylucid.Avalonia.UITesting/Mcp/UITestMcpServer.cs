@@ -156,7 +156,7 @@ public sealed class UITestMcpServer
                 ("name", "string", "Optional filename", false),
                 ("window", "string", "Window name/title (optional)", false)),
 
-            Tool("ui_svg", "Export the current UI as an SVG file by walking the visual tree. Produces a scalable vector representation of the UI layout, text, shapes, and colors — no Skia dependency.",
+            Tool("ui_svg", "Export the current UI as an SVG file by walking the visual tree. Produces a scalable vector representation of the UI layout, text, shapes, and colors - no Skia dependency.",
                 ("name", "string", "Optional filename", false),
                 ("window", "string", "Window name/title (optional)", false)),
 

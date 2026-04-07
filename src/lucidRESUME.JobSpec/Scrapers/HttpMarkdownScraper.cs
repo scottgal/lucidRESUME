@@ -83,7 +83,7 @@ public sealed class HttpMarkdownScraper : IJobPageScraper
             _logger.LogDebug(ex, "[{Scraper}] Structured data extraction failed (non-fatal) for {Url}", Name, uri);
         }
 
-        _logger.LogInformation("[{Scraper}] Success — {Len} chars markdown for {Url}", Name, markdown.Length, uri);
+        _logger.LogInformation("[{Scraper}] Success - {Len} chars markdown for {Url}", Name, markdown.Length, uri);
         return new ScrapeResult { Markdown = markdown, StructuredData = structuredData };
     }
 }

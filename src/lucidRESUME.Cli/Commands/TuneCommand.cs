@@ -71,7 +71,7 @@ public static class TuneCommand
                 var match = await registry.FindMatchAsync(fp, ct);
                 if (match is null)
                 {
-                    Console.WriteLine($"  UNKNOWN {Path.GetFileName(file)} — not in registry (run train first)");
+                    Console.WriteLine($"  UNKNOWN {Path.GetFileName(file)} - not in registry (run train first)");
                     continue;
                 }
 
@@ -98,9 +98,9 @@ public static class TuneCommand
             {
                 var hints = t.Hints;
                 if (hints is null)
-                    Console.WriteLine($"  {t.Id}  '{t.Name}'  — no hints");
+                    Console.WriteLine($"  {t.Id}  '{t.Name}'  - no hints");
                 else
-                    Console.WriteLine($"  {t.Id}  '{t.Name}'  — {hints.SampleCount} samples, " +
+                    Console.WriteLine($"  {t.Id}  '{t.Name}'  - {hints.SampleCount} samples, " +
                                       $"{hints.SectionMap.Count} section mappings, " +
                                       $"usable={hints.IsUsable}");
             }

@@ -8,7 +8,7 @@ namespace lucidRESUME.Parsing;
 ///
 /// Selection rules:
 ///  1. Find a parser that supports the file extension.
-///  2. Attempt to parse — if result confidence &lt; <see cref="MinDirectConfidence"/>
+///  2. Attempt to parse - if result confidence &lt; <see cref="MinDirectConfidence"/>
 ///     treat as a Docling-fallback case.
 ///  3. If no direct parser exists, always fall back to Docling.
 /// </summary>
@@ -38,7 +38,7 @@ public sealed class ParserSelector
         var parser = _parsers.FirstOrDefault(p => p.SupportedExtensions.Contains(ext));
         if (parser is null)
         {
-            _logger.LogDebug("No direct parser for {Ext} — using Docling", ext);
+            _logger.LogDebug("No direct parser for {Ext} - using Docling", ext);
             return null;
         }
 
@@ -49,7 +49,7 @@ public sealed class ParserSelector
         if (result is null || result.Confidence < MinDirectConfidence)
         {
             _logger.LogInformation(
-                "Direct parse confidence {Confidence:P0} below threshold — falling back to Docling",
+                "Direct parse confidence {Confidence:P0} below threshold - falling back to Docling",
                 result?.Confidence ?? 0);
             return null;
         }

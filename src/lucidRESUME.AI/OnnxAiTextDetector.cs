@@ -30,7 +30,7 @@ public sealed class OnnxAiTextDetector : IDisposable
 
         if (!File.Exists(modelPath) || !File.Exists(vocabPath) || !File.Exists(mergesPath))
         {
-            _logger.LogInformation("AI text detector model not found — ONNX detection disabled. Enable in Settings to download (~126MB).");
+            _logger.LogInformation("AI text detector model not found - ONNX detection disabled. Enable in Settings to download (~126MB).");
             return;
         }
 

@@ -16,51 +16,71 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
     }
 
     // ── Scoring weights (must sum to 100) ─────────────────────────────────
-    private const int WeightBulletQuality  = 35;
-    private const int WeightCompleteness   = 25;
-    private const int WeightAlignment      = 20;
-    private const int WeightFormat         = 12;
+    private const int WeightBulletQuality  = 30;
+    private const int WeightCompleteness   = 22;
+    private const int WeightAlignment      = 18;
+    private const int WeightSpelling       = 12;
+    private const int WeightFormat         = 10;
     private const int WeightPresentation   = 8;
 
-    // ── Action verbs (strong) ─────────────────────────────────────────────
-    private static readonly HashSet<string> StrongVerbs = new(StringComparer.OrdinalIgnoreCase)
-    {
+    // ── Word lists loaded from Resources/*.txt ────────────────────────────
+    private static readonly string[] StrongVerbFallback =
+    [
         "accelerated","achieved","administered","advanced","architected","automated",
         "built","championed","coached","collaborated","conceived","configured",
-        "consolidated","containerised","created","cut","decreased","defined","delivered",
-        "deployed","designed","developed","devised","directed","doubled","drove",
-        "eliminated","enabled","engineered","established","executed","expanded",
-        "facilitated","generated","grew","guided","halved","implemented","improved",
-        "increased","initiated","integrated","introduced","launched","led","mentored",
-        "migrated","modernised","monitored","negotiated","optimised","orchestrated",
-        "overhauled","owned","partnered","pioneered","planned","produced","proposed",
-        "published","rebuilt","redesigned","reduced","refactored","released","replaced",
-        "resolved","scaled","secured","shipped","simplified","spearheaded","standardised",
-        "streamlined","trained","transformed","tripled","unified","upgraded","wrote",
-        // US spelling variants
-        "optimized","modernized","standardized"
-    };
+        "consolidated","containerised","containerized","created","cut","decreased",
+        "defined","delivered","deployed","designed","developed","devised","directed",
+        "doubled","drove","eliminated","enabled","engineered","established","executed",
+        "expanded","facilitated","generated","grew","guided","halved","implemented",
+        "improved","increased","initiated","integrated","introduced","launched","led",
+        "mentored","migrated","modernised","modernized","monitored","negotiated",
+        "optimised","optimized","orchestrated","overhauled","owned","partnered",
+        "pioneered","planned","produced","proposed","published","rebuilt","redesigned",
+        "reduced","refactored","released","replaced","resolved","scaled","secured",
+        "shipped","simplified","spearheaded","standardised","standardized","streamlined",
+        "trained","transformed","tripled","unified","upgraded","wrote"
+    ];
 
-    // ── Weak/vague verbs ──────────────────────────────────────────────────
-    private static readonly HashSet<string> WeakVerbs = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly string[] WeakVerbFallback =
+    [
         "helped","assisted","worked","was","handled","did","made","got","used",
         "supported","involved","participated","contributed","responsible","tasked",
-        "tried","attempted","managed" // "managed" alone is weak without object
-    };
+        "tried","attempted","managed"
+    ];
 
-    // ── Buzzwords to penalise ─────────────────────────────────────────────
-    private static readonly HashSet<string> Buzzwords = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly string[] BuzzwordFallback =
+    [
         "synergy","synergies","dynamic","results-driven","results-oriented",
         "go-getter","hardworking","hard-working","passionate","guru","ninja","rockstar",
         "wizard","thought leader","disruptive","innovative","proactive","self-starter",
         "team player","detail-oriented","fast-paced","leverage","leveraging"
-    };
+    ];
 
-    // ── Filler words ──────────────────────────────────────────────────────
-    private static readonly HashSet<string> Fillers = new(StringComparer.OrdinalIgnoreCase)
-    { "just","very","really","quite","rather","somewhat","basically","literally" };
+    private static readonly string[] FillerFallback =
+    [
+        "just","very","really","quite","rather","somewhat","basically","literally"
+    ];
+
+    private static readonly Lazy<HashSet<string>> StrongVerbs = LoadWordList("strong-verbs.txt", StrongVerbFallback);
+    private static readonly Lazy<HashSet<string>> WeakVerbs   = LoadWordList("weak-verbs.txt", WeakVerbFallback);
+    private static readonly Lazy<HashSet<string>> Buzzwords   = LoadWordList("buzzwords.txt", BuzzwordFallback);
+    private static readonly Lazy<HashSet<string>> Fillers     = LoadWordList("fillers.txt", FillerFallback);
+
+    internal static Lazy<HashSet<string>> LoadWordList(string filename, IEnumerable<string> fallbackWords) => new(() =>
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Resources", filename);
+        if (!File.Exists(path))
+            path = Path.Combine(Path.GetDirectoryName(typeof(ResumeQualityAnalyser).Assembly.Location)!, "Resources", filename);
+        if (File.Exists(path))
+        {
+            return new HashSet<string>(
+                File.ReadAllLines(path)
+                    .Where(l => !string.IsNullOrWhiteSpace(l) && !l.TrimStart().StartsWith('#'))
+                    .Select(l => l.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+        }
+        return new HashSet<string>(fallbackWords, StringComparer.OrdinalIgnoreCase);
+    });
 
     // ── Personal pronouns ─────────────────────────────────────────────────
     private static readonly Regex PronounRx = MyPronounRx();
@@ -103,18 +123,21 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         var completenessFindings = CheckCompleteness(resume);
         var formatFindings       = CheckFormat(resume);
         var presentationFindings = CheckPresentation(resume);
+        var spellingFindings     = SpellChecker.Check(resume);
         var alignmentFindings    = job is null ? (IReadOnlyList<QualityFinding>)[] : CheckAlignment(resume, job);
 
         int bulletScore       = ScoreFromFindings(bulletFindings, resume.Experience.Sum(e => Math.Max(e.Achievements.Count, 1)));
-        int completenessScore = ScoreFromFindings(completenessFindings, 8);   // 8 completeness checks
+        int completenessScore = ScoreFromFindings(completenessFindings, 8);
         int formatScore       = ScoreFromFindings(formatFindings, 4);
         int presentationScore = ScoreFromFindings(presentationFindings, 5);
+        int spellingScore     = ScoreFromFindings(spellingFindings, Math.Max(resume.Experience.Sum(e => e.Achievements.Count), 1));
         int alignmentScore    = job is null ? 100 : ScoreFromFindings(alignmentFindings, Math.Max(job.RequiredSkills.Count, 5));
 
         var categories = new List<QualityCategory>
         {
             new("Bullet Quality",   bulletScore,       WeightBulletQuality,  bulletFindings),
             new("Completeness",     completenessScore, WeightCompleteness,   completenessFindings),
+            new("Spelling",         spellingScore,     WeightSpelling,       spellingFindings),
             new("Format",           formatScore,       WeightFormat,         formatFindings),
             new("Presentation",     presentationScore, WeightPresentation,   presentationFindings),
             new("JD Alignment",     alignmentScore,    job is null ? 0 : WeightAlignment, alignmentFindings),
@@ -159,11 +182,11 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
             if (exp.Achievements.Count < 3)
                 findings.Add(new($"Experience[{j}]", FindingSeverity.Warning,
-                    "FEW_BULLETS", $"{jobLabel}: only {exp.Achievements.Count} bullet(s) — aim for 3-6"));
+                    "FEW_BULLETS", $"{jobLabel}: only {exp.Achievements.Count} bullet(s) - aim for 3-6"));
 
             if (exp.Achievements.Count > 8)
                 findings.Add(new($"Experience[{j}]", FindingSeverity.Info,
-                    "MANY_BULLETS", $"{jobLabel}: {exp.Achievements.Count} bullets — consider trimming to 6"));
+                    "MANY_BULLETS", $"{jobLabel}: {exp.Achievements.Count} bullets - consider trimming to 6"));
 
             for (int k = 0; k < exp.Achievements.Count; k++)
             {
@@ -174,31 +197,31 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
                 string firstWord = bullet.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
                 firstWord = firstWord.TrimEnd('.', ',', ';', ':');
 
-                if (WeakVerbs.Contains(firstWord))
+                if (WeakVerbs.Value.Contains(firstWord))
                     findings.Add(new(section, FindingSeverity.Warning,
-                        "WEAK_VERB", $"Starts with weak verb \"{firstWord}\" — try a stronger action verb"));
-                else if (!StrongVerbs.Contains(firstWord))
+                        "WEAK_VERB", $"Starts with weak verb \"{firstWord}\" - try a stronger action verb"));
+                else if (!StrongVerbs.Value.Contains(firstWord))
                     findings.Add(new(section, FindingSeverity.Info,
-                        "UNRECOGNISED_VERB", $"\"{firstWord}\" not in strong-verb list — verify it's an active verb"));
+                        "UNRECOGNISED_VERB", $"\"{firstWord}\" not in strong-verb list - verify it's an active verb"));
 
                 // Quantification
                 if (!QuantRx.IsMatch(bullet))
                     findings.Add(new(section, FindingSeverity.Warning,
-                        "MISSING_QUANTITY", "No measurable result or number detected — add a metric if possible"));
+                        "MISSING_QUANTITY", "No measurable result or number detected - add a metric if possible"));
 
                 // Pronouns
                 if (PronounRx.IsMatch(bullet))
                     findings.Add(new(section, FindingSeverity.Error,
-                        "PRONOUN", "Contains personal pronoun — remove \"I\", \"we\", \"my\" etc."));
+                        "PRONOUN", "Contains personal pronoun - remove \"I\", \"we\", \"my\" etc."));
 
                 // Buzzwords
-                foreach (var bw in Buzzwords)
+                foreach (var bw in Buzzwords.Value)
                     if (bullet.Contains(bw, StringComparison.OrdinalIgnoreCase))
                         findings.Add(new(section, FindingSeverity.Warning,
                             "BUZZWORD", $"Buzzword detected: \"{bw}\""));
 
                 // Filler words
-                foreach (var f in Fillers)
+                foreach (var f in Fillers.Value)
                     if (Regex.IsMatch(bullet, $@"\b{Regex.Escape(f)}\b", RegexOptions.IgnoreCase))
                         findings.Add(new(section, FindingSeverity.Info,
                             "FILLER_WORD", $"Filler word \"{f}\" weakens the bullet"));
@@ -207,10 +230,10 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
                 int wordCount = bullet.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
                 if (wordCount < 8)
                     findings.Add(new(section, FindingSeverity.Warning,
-                        "BULLET_TOO_SHORT", $"Only {wordCount} words — too vague"));
+                        "BULLET_TOO_SHORT", $"Only {wordCount} words - too vague"));
                 else if (wordCount > 35)
                     findings.Add(new(section, FindingSeverity.Info,
-                        "BULLET_TOO_LONG", $"{wordCount} words — try splitting or trimming"));
+                        "BULLET_TOO_LONG", $"{wordCount} words - try splitting or trimming"));
             }
         }
 
@@ -235,7 +258,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
         if (string.IsNullOrWhiteSpace(p.Summary))
             findings.Add(new("Personal", FindingSeverity.Warning, "NO_SUMMARY",
-                "No summary or objective section — add 2-3 sentences at the top"));
+                "No summary or objective section - add 2-3 sentences at the top"));
 
         if (resume.Experience.Count == 0)
             findings.Add(new("Experience", FindingSeverity.Error, "NO_EXPERIENCE",
@@ -247,7 +270,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
         if (resume.Skills.Count == 0)
             findings.Add(new("Skills", FindingSeverity.Warning, "NO_SKILLS",
-                "No skills section found — this hurts ATS keyword matching"));
+                "No skills section found - this hurts ATS keyword matching"));
 
         // Check each work entry has dates
         for (int i = 0; i < resume.Experience.Count; i++)
@@ -285,16 +308,16 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
             if (yearsExp < 10 && wordCount > 900)
                 findings.Add(new("Length", FindingSeverity.Warning, "TOO_LONG",
-                    $"~{wordCount} words for <10 years experience — aim for 1 page (~600 words)"));
+                    $"~{wordCount} words for <10 years experience - aim for 1 page (~600 words)"));
             else if (wordCount < 300)
                 findings.Add(new("Length", FindingSeverity.Warning, "TOO_SHORT",
-                    $"Only ~{wordCount} words — the resume may be too sparse"));
+                    $"Only ~{wordCount} words - the resume may be too sparse"));
         }
 
         // Page count check
         if (resume.PageCount > 3)
             findings.Add(new("Length", FindingSeverity.Warning, "TOO_MANY_PAGES",
-                $"{resume.PageCount} pages — keep to 1-2 pages for most roles"));
+                $"{resume.PageCount} pages - keep to 1-2 pages for most roles"));
 
         return findings;
     }
@@ -339,7 +362,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
     }
 
     // ── JD Alignment (keyword overlap) ────────────────────────────────────
-    // NOTE: This is Phase 1 — keyword overlap only.
+    // NOTE: This is Phase 1 - keyword overlap only.
     // Phase 2 replaces with embedding-based semantic similarity via IEmbeddingService.
 
     private static IReadOnlyList<QualityFinding> CheckAlignment(ResumeDocument resume, JobDescription job)
@@ -492,7 +515,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
         if (resumeTerms.Count == 0)
         {
-            // Nothing to compare — fall back to keyword check
+            // Nothing to compare - fall back to keyword check
             return CheckAlignment(resume, job);
         }
 
@@ -509,7 +532,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         }
         catch (Exception)
         {
-            // Embedding service unavailable — fall back to keyword check
+            // Embedding service unavailable - fall back to keyword check
             return CheckAlignment(resume, job);
         }
 
@@ -535,7 +558,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
             }
         }
 
-        // Preferred skills — semantic check, info severity
+        // Preferred skills - semantic check, info severity
         var preferredSkills = job.PreferredSkills.Where(s => !string.IsNullOrWhiteSpace(s)).Take(10).ToList();
         if (preferredSkills.Count > 0)
         {
@@ -570,7 +593,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
                         "TITLE_NOT_IN_SUMMARY",
                         $"Job title \"{job.Title}\" not well-reflected in resume summary (semantic match: {sim:P0})"));
             }
-            catch { /* ignore — title check is Info only */ }
+            catch { /* ignore - title check is Info only */ }
         }
 
         return findings;

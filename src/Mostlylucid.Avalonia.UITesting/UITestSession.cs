@@ -145,7 +145,7 @@ public sealed class UITestSession : IAsyncDisposable
 
     public async Task MouseMoveAsync(double x, double y, string? windowId = null)
     {
-        // Mouse move is best-effort — Avalonia's PointerEventArgs constructor is internal.
+        // Mouse move is best-effort - Avalonia's PointerEventArgs constructor is internal.
         // Log intent for script replay; actual replay uses ScriptPlayer coordinates.
         _log?.Invoke($"Mouse moved to: ({x}, {y})");
         await Task.CompletedTask;

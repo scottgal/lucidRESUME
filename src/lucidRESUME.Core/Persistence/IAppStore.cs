@@ -14,7 +14,7 @@ public interface IAppStore
 
     /// <summary>
     /// Atomically loads, applies <paramref name="mutate"/>, and saves state
-    /// under a single lock — prevents concurrent callers from overwriting each other.
+    /// under a single lock - prevents concurrent callers from overwriting each other.
     /// </summary>
     Task MutateAsync(Action<AppState> mutate, CancellationToken ct = default);
 

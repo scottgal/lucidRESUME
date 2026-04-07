@@ -71,7 +71,7 @@ internal sealed class WordpieceTokenizer
 
         var inputIds = new long[maxLength];
         var attnMask = new long[maxLength];
-        var typeIds = new long[maxLength]; // all zero — single-sentence task
+        var typeIds = new long[maxLength]; // all zero - single-sentence task
 
         for (int i = 0; i < maxLength; i++)
         {
@@ -137,7 +137,7 @@ internal sealed class WordpieceTokenizer
         char.IsPunctuation(c) || char.IsSymbol(c) || (c >= 0x4E00 && c <= 0x9FFF);
 }
 
-/// <summary>BERT tokenizer output — ready to feed directly into an ONNX session.</summary>
+/// <summary>BERT tokenizer output - ready to feed directly into an ONNX session.</summary>
 internal sealed record BertEncoding(
     long[] InputIds,
     long[] AttentionMask,

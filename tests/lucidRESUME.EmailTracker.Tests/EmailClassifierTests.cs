@@ -28,7 +28,7 @@ public class EmailClassifierTests
     }
 
     [Theory]
-    [InlineData("Interview invitation — Senior Developer")]
+    [InlineData("Interview invitation - Senior Developer")]
     [InlineData("Please schedule a call for your interview")]
     [InlineData("Technical assessment for your application")]
     [InlineData("We'd like to invite you for a video call")]
@@ -42,7 +42,7 @@ public class EmailClassifierTests
 
     [Theory]
     [InlineData("Unfortunately, we have decided to move forward with other candidates")]
-    [InlineData("Thank you for your interest — position has been filled")]
+    [InlineData("Thank you for your interest - position has been filled")]
     [InlineData("We will not be moving forward with your application")]
     public void Classify_Rejection_ReturnsRejected(string subject)
     {
@@ -53,7 +53,7 @@ public class EmailClassifierTests
     }
 
     [Theory]
-    [InlineData("Offer letter — Senior Software Engineer")]
+    [InlineData("Offer letter - Senior Software Engineer")]
     [InlineData("We are pleased to offer you the position")]
     public void Classify_Offer_ReturnsOffer(string subject)
     {
@@ -64,7 +64,7 @@ public class EmailClassifierTests
     }
 
     [Theory]
-    [InlineData("Phone screen — 30 minute call")]
+    [InlineData("Phone screen - 30 minute call")]
     [InlineData("Recruiter call about your application")]
     public void Classify_Screening_ReturnsScreening(string subject)
     {

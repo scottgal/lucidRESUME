@@ -33,13 +33,13 @@ static void GenerateModernTemplate(string path)
     body.AppendChild(SectionPara("PROFESSIONAL SUMMARY", "Heading2"));
     body.AppendChild(TextPara("Results-driven software engineer with 8 years building scalable distributed systems."));
     body.AppendChild(SectionPara("EXPERIENCE", "Heading2"));
-    body.AppendChild(HeadingPara("Senior Software Engineer — TechCorp, London (2020–Present)", "Heading3"));
+    body.AppendChild(HeadingPara("Senior Software Engineer - TechCorp, London (2020–Present)", "Heading3"));
     body.AppendChild(BulletPara("Led migration of monolith to microservices, reducing deployment time by 60%"));
     body.AppendChild(BulletPara("Mentored team of 5 engineers across 3 time zones"));
-    body.AppendChild(HeadingPara("Software Engineer — StartupXYZ, London (2018–2020)", "Heading3"));
+    body.AppendChild(HeadingPara("Software Engineer - StartupXYZ, London (2018–2020)", "Heading3"));
     body.AppendChild(BulletPara("Built real-time analytics dashboard processing 1M events/day"));
     body.AppendChild(SectionPara("EDUCATION", "Heading2"));
-    body.AppendChild(TextPara("BSc Computer Science — University of Edinburgh, 2018"));
+    body.AppendChild(TextPara("BSc Computer Science - University of Edinburgh, 2018"));
     body.AppendChild(SectionPara("SKILLS", "Heading2"));
     body.AppendChild(TextPara("C# · .NET · Azure · Kubernetes · PostgreSQL · React · TypeScript"));
 
@@ -65,8 +65,8 @@ static void GenerateClassicTemplate(string path)
     body.AppendChild(HeadingPara("Senior Developer, TradeWorks Ltd, New York (2016–2019)", "Heading3"));
     body.AppendChild(BulletPara("Implemented low-latency order matching engine in C++"));
     body.AppendChild(SectionPara("Education", "Heading2"));
-    body.AppendChild(TextPara("MBA Finance — Columbia Business School, 2014"));
-    body.AppendChild(TextPara("BEng Electrical Engineering — MIT, 2011"));
+    body.AppendChild(TextPara("MBA Finance - Columbia Business School, 2014"));
+    body.AppendChild(TextPara("BEng Electrical Engineering - MIT, 2011"));
     body.AppendChild(SectionPara("Skills", "Heading2"));
     body.AppendChild(TextPara("C++ | Java | Python | SQL | FIX Protocol | Bloomberg API"));
 
@@ -116,11 +116,11 @@ static void GenerateFunctionalTemplate(string path)
     body.AppendChild(BulletPara("Delivered €5M digital transformation project 3 months ahead of schedule"));
     body.AppendChild(BulletPara("Reduced operational costs by 30% through process automation initiative"));
     body.AppendChild(SectionPara("Career History", "Heading2"));
-    body.AppendChild(HeadingPara("Product Director — GlobalTech SA, Madrid (2018–Present)", "Heading3"));
-    body.AppendChild(HeadingPara("Product Manager — InnovateCo, Barcelona (2015–2018)", "Heading3"));
+    body.AppendChild(HeadingPara("Product Director - GlobalTech SA, Madrid (2018–Present)", "Heading3"));
+    body.AppendChild(HeadingPara("Product Manager - InnovateCo, Barcelona (2015–2018)", "Heading3"));
     body.AppendChild(SectionPara("Education", "Heading2"));
-    body.AppendChild(TextPara("MBA — IE Business School, Madrid, 2015"));
-    body.AppendChild(TextPara("BA Business Administration — Universidad Complutense, 2012"));
+    body.AppendChild(TextPara("MBA - IE Business School, Madrid, 2015"));
+    body.AppendChild(TextPara("BA Business Administration - Universidad Complutense, 2012"));
 
     mainPart.Document.Save();
 }

@@ -91,7 +91,7 @@
       <ScrollViewer Grid.Column="1" Margin="8,8,16,16">
         <StackPanel Spacing="16">
 
-          <!-- Resume Quality — Synthesized Suggestions -->
+          <!-- Resume Quality - Synthesized Suggestions -->
           <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
                   IsVisible="{Binding HasQualityReport}">
             <StackPanel Spacing="8">
@@ -227,7 +227,7 @@
                       <Grid ColumnDefinitions="*,Auto">
                         <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="12">
                           <Run Text="{Binding Title}"/>
-                          <Run Text=" — " Foreground="{DynamicResource LrSubtleTextBrush}"/>
+                          <Run Text=" - " Foreground="{DynamicResource LrSubtleTextBrush}"/>
                           <Run Text="{Binding Company}"/>
                         </TextBlock>
                         <TextBlock Grid.Column="1" Text="{Binding DateRange}"
@@ -266,7 +266,7 @@
                       <Grid ColumnDefinitions="*,Auto">
                         <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="12">
                           <Run Text="{Binding Degree}"/>
-                          <Run Text=" — " Foreground="{DynamicResource LrSubtleTextBrush}"/>
+                          <Run Text=" - " Foreground="{DynamicResource LrSubtleTextBrush}"/>
                           <Run Text="{Binding Institution}"/>
                         </TextBlock>
                         <TextBlock Grid.Column="1" Text="{Binding DateRange}"

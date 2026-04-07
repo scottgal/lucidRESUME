@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Treat the JD as a prioritised question set and the resume as an answer sheet — build a coverage map that links each requirement to resume evidence (or flags it as a gap), factor in company type, and feed both into a restructured tailoring prompt.
+**Goal:** Treat the JD as a prioritised question set and the resume as an answer sheet - build a coverage map that links each requirement to resume evidence (or flags it as a gap), factor in company type, and feed both into a restructured tailoring prompt.
 
 **Architecture:** `CompanyClassifier` (in Matching) extracts a typed `CompanyType` from a `JobDescription`. `ResumeCoverageAnalyser` (in Matching) maps each `JdRequirement` to the best-matching resume evidence using keyword overlap with optional semantic upgrade via `IEmbeddingService`. `TailoringPromptBuilder` receives the `CoverageReport` and uses it to order answers by priority and inject company-type tone guidance. The tailoring service calls coverage analysis before building the prompt.
 
@@ -96,7 +96,7 @@ public class CompanyClassifierTests
 ```bash
 dotnet test tests/lucidRESUME.Matching.Tests --filter CompanyClassifierTests -v minimal
 ```
-Expected: compile error — `CompanyClassifier` does not exist.
+Expected: compile error - `CompanyClassifier` does not exist.
 
 **Step 3: Implement**
 
@@ -109,7 +109,7 @@ namespace lucidRESUME.Matching;
 
 /// <summary>
 /// Classifies a job's employer type from JD text and title.
-/// First definitive match wins — a company is one type.
+/// First definitive match wins - a company is one type.
 /// </summary>
 public sealed class CompanyClassifier
 {
@@ -433,7 +433,7 @@ public class ResumeCoverageAnalyserTests
 ```bash
 dotnet test tests/lucidRESUME.Matching.Tests --filter ResumeCoverageAnalyserTests -v minimal
 ```
-Expected: compile error — `ResumeCoverageAnalyser` does not exist.
+Expected: compile error - `ResumeCoverageAnalyser` does not exist.
 
 **Step 3: Implement**
 
@@ -491,7 +491,7 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
         foreach (var pref in job.PreferredSkills)
             entries.Add(await MatchSkillAsync(pref, RequirementPriority.Preferred, allSkillEvidence, ct));
 
-        // Responsibilities — keyword match against achievement bullets
+        // Responsibilities - keyword match against achievement bullets
         foreach (var resp in job.Responsibilities)
             entries.Add(await MatchResponsibilityAsync(resp, achievementEvidence, ct));
 
@@ -634,12 +634,12 @@ Expected: all existing tests still pass.
 git add src/lucidRESUME.Matching/ResumeCoverageAnalyser.cs \
         src/lucidRESUME.Matching/ServiceCollectionExtensions.cs \
         tests/lucidRESUME.Matching.Tests/ResumeCoverageAnalyserTests.cs
-git commit -m "feat: add ResumeCoverageAnalyser — maps JD requirements to resume evidence"
+git commit -m "feat: add ResumeCoverageAnalyser - maps JD requirements to resume evidence"
 ```
 
 ---
 
-## Task 6: TailoringPromptBuilder — coverage-aware, company-type-aware
+## Task 6: TailoringPromptBuilder - coverage-aware, company-type-aware
 
 Replaces the current flat dump of resume + JD with a structured, prioritised answer format.
 
@@ -748,7 +748,7 @@ public class TailoringPromptBuilderTests
 ```bash
 dotnet test tests/lucidRESUME.AI.Tests --filter TailoringPromptBuilderTests -v minimal
 ```
-Expected: compile error — `Build` overload with `coverage` parameter does not exist.
+Expected: compile error - `Build` overload with `coverage` parameter does not exist.
 
 **Step 3: Update TailoringPromptBuilder**
 
@@ -794,14 +794,14 @@ public static string Build(ResumeDocument resume, JobDescription job, UserProfil
 
         if (covered.Count > 0)
         {
-            sb.AppendLine("### Answered — lead with these, strongest first:");
+            sb.AppendLine("### Answered - lead with these, strongest first:");
             foreach (var e in covered)
                 sb.AppendLine($"- [{e.Requirement.Priority}] {e.Requirement.Text} → \"{e.Evidence}\"");
         }
 
         if (gaps.Count > 0)
         {
-            sb.AppendLine("### Not covered — do NOT fabricate; omit or note as developing:");
+            sb.AppendLine("### Not covered - do NOT fabricate; omit or note as developing:");
             foreach (var e in gaps)
                 sb.AppendLine($"- {e.Requirement.Text} (not covered in resume)");
         }
@@ -932,7 +932,7 @@ In `src/lucidRESUME.AI/ServiceCollectionExtensions.cs`, update the `OllamaTailor
 
 ```csharp
 // The DI container will resolve ICoverageAnalyser from lucidRESUME.Matching's registration.
-// No explicit factory needed — all constructor params are registered.
+// No explicit factory needed - all constructor params are registered.
 services.AddHttpClient<IAiTailoringService, OllamaTailoringService>()
     .AddStandardResilienceHandler();
 ```
@@ -965,7 +965,7 @@ git commit -m "feat: wire ICoverageAnalyser into tailoring pipeline"
 
 ## Task 8: Surface coverage in the Jobs page UI
 
-Show a coverage breakdown below the JD quality banner — required requirements with a ✓/✗ indicator.
+Show a coverage breakdown below the JD quality banner - required requirements with a ✓/✗ indicator.
 
 **Files:**
 - Modify: `src/lucidRESUME/ViewModels/Pages/JobsPageViewModel.cs`
@@ -1089,7 +1089,7 @@ Persist the classified `CompanyType` on the `JobDescription` so it doesn't need 
 public CompanyType CompanyType { get; set; } = CompanyType.Unknown;
 ```
 
-**Step 2: Update CompanyClassifier** to write back to the job after classification (optional — only if the service has a reference to the job):
+**Step 2: Update CompanyClassifier** to write back to the job after classification (optional - only if the service has a reference to the job):
 
 In `ResumeCoverageAnalyser.AnalyseAsync`, after classification:
 ```csharp
@@ -1128,10 +1128,10 @@ git commit -m "feat: persist CompanyType on JobDescription, unify classification
 
 | Task | What it builds | Tests |
 |------|---------------|-------|
-| 1 | `CompanyType` enum | — |
+| 1 | `CompanyType` enum | - |
 | 2 | `CompanyClassifier` | 10 theory tests |
-| 3 | Coverage domain models | — |
-| 4 | `ICoverageAnalyser` interface | — |
+| 3 | Coverage domain models | - |
+| 4 | `ICoverageAnalyser` interface | - |
 | 5 | `ResumeCoverageAnalyser` | 7 unit tests |
 | 6 | Coverage + company-tone prompt builder | 4 unit tests |
 | 7 | Wire into tailoring service | Build check |

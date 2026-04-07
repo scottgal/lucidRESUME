@@ -50,7 +50,7 @@ public sealed class JobSearchOrchestrator
             }
             catch (Exception ex)
             {
-                // Log and degrade gracefully — one failing adapter should not crash the search
+                // Log and degrade gracefully - one failing adapter should not crash the search
                 _ = ex; // surfaced to caller via logs in the adapter; swallow here
                 return (IReadOnlyList<JobDescription>)[];
             }

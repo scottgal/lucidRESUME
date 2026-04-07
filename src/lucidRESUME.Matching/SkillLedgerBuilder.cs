@@ -63,7 +63,7 @@ public sealed class SkillLedgerBuilder
         // 2. Scan experience entries for skill mentions
         foreach (var exp in resume.Experience)
         {
-            // Technologies field — direct skill listing
+            // Technologies field - direct skill listing
             foreach (var tech in exp.Technologies)
             {
                 var entry = GetOrCreate(entries, tech);
@@ -80,7 +80,7 @@ public sealed class SkillLedgerBuilder
                 });
             }
 
-            // Achievement bullets — semantic + substring matching
+            // Achievement bullets - semantic + substring matching
             foreach (var achievement in exp.Achievements)
             {
                 var matchedSkills = await FindSkillMentionsAsync(
@@ -120,7 +120,7 @@ public sealed class SkillLedgerBuilder
             }
         }
 
-        // 4. (NER skills already added in step 1b — no duplicate needed)
+        // 4. (NER skills already added in step 1b - no duplicate needed)
 
         // 5. Calculate years and dates for each skill
         foreach (var entry in entries.Values)
@@ -278,7 +278,7 @@ public sealed class SkillLedgerBuilder
             }
         }
 
-        // Issue 3: Stale skills — not used in recent roles
+        // Issue 3: Stale skills - not used in recent roles
         var today = DateOnly.FromDateTime(DateTime.Today);
         foreach (var entry in entries.Where(e =>
             e.LastSeen.HasValue && !e.IsCurrent &&
@@ -287,7 +287,7 @@ public sealed class SkillLedgerBuilder
             issues.Add(new ConsistencyIssue
             {
                 SkillName = entry.SkillName,
-                Description = $"'{entry.SkillName}' last used {entry.LastSeen:MMM yyyy} — may be stale",
+                Description = $"'{entry.SkillName}' last used {entry.LastSeen:MMM yyyy} - may be stale",
                 Severity = ConsistencySeverity.Info
             });
         }

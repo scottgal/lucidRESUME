@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Make lucidRESUME run fully offline with zero external services — SQLite+vec for persistence, ONNX embeddings locally, Docling optional.
+**Goal:** Make lucidRESUME run fully offline with zero external services - SQLite+vec for persistence, ONNX embeddings locally, Docling optional.
 
 **Architecture:** Replace `JsonAppStore` with `SqliteAppStore` backed by a single `data.db` file. Replace `OllamaEmbeddingService` with `OnnxEmbeddingService` using `all-MiniLM-L6-v2`. Make `IDoclingClient` an optional dependency in `ResumeParser` so the app works without Docling running.
 
@@ -169,7 +169,7 @@ public class SqliteAppStoreTests : IDisposable
 **Step 2: Run tests to verify they fail**
 
 Run: `dotnet test tests/lucidRESUME.Core.Tests --filter "FullyQualifiedName~SqliteAppStoreTests" -v n`
-Expected: FAIL — `SqliteAppStore` does not exist yet
+Expected: FAIL - `SqliteAppStore` does not exist yet
 
 **Step 3: Implement SqliteAppStore**
 
@@ -345,7 +345,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         // Profile
         Upsert("profile", "id", "1", JsonSerializer.Serialize(state.Profile, JsonOpts));
 
-        // Jobs — delete-and-reinsert for simplicity (small dataset)
+        // Jobs - delete-and-reinsert for simplicity (small dataset)
         Execute("DELETE FROM jobs");
         foreach (var job in state.Jobs)
         {
@@ -477,7 +477,7 @@ public async Task MigrateFromJson_ImportsAndRenames()
 **Step 2: Run test to verify it fails**
 
 Run: `dotnet test tests/lucidRESUME.Core.Tests --filter "FullyQualifiedName~MigrateFromJson" -v n`
-Expected: FAIL — constructor overload doesn't exist
+Expected: FAIL - constructor overload doesn't exist
 
 **Step 3: Add migration constructor overload**
 
@@ -496,7 +496,7 @@ public SqliteAppStore(string dbPath, string? jsonMigrationPath = null) : this(db
 }
 ```
 
-Note: Merge both constructors — the primary constructor does Open + InitSchema, then optionally migrates.
+Note: Merge both constructors - the primary constructor does Open + InitSchema, then optionally migrates.
 
 **Step 4: Run test to verify it passes**
 
@@ -522,7 +522,7 @@ git commit -m "feat: auto-migrate data.json to SQLite on first launch"
 **Step 1: Download model files**
 
 ```bash
-# From Hugging Face — the quantized ONNX export
+# From Hugging Face - the quantized ONNX export
 mkdir -p models
 curl -L "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx" -o models/all-MiniLM-L6-v2.onnx
 curl -L "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer.json" -o models/tokenizer.json
@@ -638,7 +638,7 @@ public class OnnxEmbeddingServiceTests : IDisposable
 **Step 2: Run tests to verify they fail**
 
 Run: `dotnet test tests/lucidRESUME.AI.Tests --filter "FullyQualifiedName~OnnxEmbeddingServiceTests" -v n`
-Expected: FAIL — classes don't exist
+Expected: FAIL - classes don't exist
 
 **Step 3: Create EmbeddingOptions**
 
@@ -743,7 +743,7 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
 
         using var results = _session.Run(inputs);
 
-        // Output shape: [1, seq_len, 384] — mean pool over attention mask
+        // Output shape: [1, seq_len, 384] - mean pool over attention mask
         var output = results.First().AsEnumerable<float>().ToArray();
         var dims = 384;
         var pooled = new float[dims];
@@ -874,7 +874,7 @@ In `ResumeParser.ParseAsync`, change the `else` branch (around line 70):
         }
         else
         {
-            // ── 2b. No Docling, no direct parse — unsupported ─────────────
+            // ── 2b. No Docling, no direct parse - unsupported ─────────────
             var ext = fileInfo.Extension.ToLowerInvariant();
             throw new NotSupportedException(
                 $"Cannot parse '{ext}' without Docling. Enable Docling in settings or use a PDF/DOCX file.");
@@ -913,7 +913,7 @@ Expected: 0 errors, all tests pass
 
 ```bash
 git add src/lucidRESUME.Ingestion/
-git commit -m "feat: make Docling optional — direct parsers work without external services"
+git commit -m "feat: make Docling optional - direct parsers work without external services"
 ```
 
 ---
@@ -1034,7 +1034,7 @@ public static IServiceCollection AddAiTailoring(this IServiceCollection services
     services.Configure<TailoringOptions>(config.GetSection("Tailoring"));
     services.Configure<EmbeddingOptions>(config.GetSection("Embedding"));
 
-    // Tailoring & extraction still use Ollama (optional — graceful failure)
+    // Tailoring & extraction still use Ollama (optional - graceful failure)
     services.AddHttpClient<IAiTailoringService, OllamaTailoringService>()
         .AddStandardResilienceHandler();
     services.AddHttpClient<ILlmExtractionService, OllamaExtractionService>(client =>
@@ -1056,7 +1056,7 @@ public static IServiceCollection AddAiTailoring(this IServiceCollection services
 }
 ```
 
-**Step 2: Update App.axaml.cs — replace JsonAppStore with SqliteAppStore**
+**Step 2: Update App.axaml.cs - replace JsonAppStore with SqliteAppStore**
 
 Change lines ~210-213 from:
 
@@ -1079,7 +1079,7 @@ services.AddSingleton<IAppStore>(_ => new SqliteAppStore(dbPath,
     jsonMigrationPath: File.Exists(jsonPath) ? jsonPath : null));
 ```
 
-**Step 3: Update ServiceBootstrap.cs — add IAppStore for CLI**
+**Step 3: Update ServiceBootstrap.cs - add IAppStore for CLI**
 
 The CLI currently doesn't register `IAppStore`. For commands that need it, add:
 
@@ -1175,7 +1175,7 @@ git commit -m "feat: add ExportJsonAsync/ImportJsonAsync to IAppStore interface"
 
 ---
 
-### Task 10: Integration smoke test — full pipeline without external services
+### Task 10: Integration smoke test - full pipeline without external services
 
 **Files:**
 - Create: `tests/lucidRESUME.Core.Tests/ZeroDependencyIntegrationTests.cs`

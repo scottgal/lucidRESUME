@@ -12,7 +12,7 @@ namespace lucidRESUME.AI.Tests;
 
 /// <summary>
 /// End-to-end tests using real ONNX embeddings, real SQLite store,
-/// and real matching logic — no mocks, no external services.
+/// and real matching logic - no mocks, no external services.
 /// </summary>
 public class RealDataIntegrationTests : IDisposable
 {

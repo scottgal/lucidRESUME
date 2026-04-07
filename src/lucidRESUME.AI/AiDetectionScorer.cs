@@ -7,9 +7,9 @@ namespace lucidRESUME.AI;
 
 /// <summary>
 /// Scores how "AI-generated" a resume's text appears using three signals:
-///   1. Embedding variance — AI text clusters tighter in embedding space
-///   2. Stylometric signals — sentence uniformity, buzzword density, passive voice
-///   3. Lexical diversity — AI tends toward lower type-token ratio
+///   1. Embedding variance - AI text clusters tighter in embedding space
+///   2. Stylometric signals - sentence uniformity, buzzword density, passive voice
+///   3. Lexical diversity - AI tends toward lower type-token ratio
 ///
 /// Returns a score 0-100 where 100 = "almost certainly AI-generated".
 /// </summary>
@@ -50,7 +50,7 @@ public sealed class AiDetectionScorer
         // Signal 5: ONNX RoBERTa detector (0-100, optional)
         var onnxScore = ScoreOnnxDetector(bullets);
 
-        // Weighted combination — optional signals get weight only if available
+        // Weighted combination - optional signals get weight only if available
         var signals = new List<(double score, double weight)>
         {
             (embeddingScore.Score, 0.30),

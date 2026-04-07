@@ -97,7 +97,7 @@ public sealed class JobFilterExecutor
 
     private static bool ApplyOp(FilterNode node, object? resolved)
     {
-        // String list (skills, industries) — Equal/NotEqual treated as In/NotIn
+        // String list (skills, industries) - Equal/NotEqual treated as In/NotIn
         if (resolved is IEnumerable<string> stringList)
         {
             var items = stringList.ToList();

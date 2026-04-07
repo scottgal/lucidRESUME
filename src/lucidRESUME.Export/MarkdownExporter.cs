@@ -41,7 +41,7 @@ public sealed class MarkdownExporter : IResumeExporter
             sb.AppendLine("## Experience");
             foreach (var exp in resume.Experience)
             {
-                sb.AppendLine($"### {exp.Title} — {exp.Company}");
+                sb.AppendLine($"### {exp.Title} - {exp.Company}");
                 var dates = FormatDateRange(exp.StartDate, exp.EndDate, exp.IsCurrent);
                 if (!string.IsNullOrEmpty(dates)) sb.AppendLine($"*{dates}*");
                 foreach (var a in exp.Achievements) sb.AppendLine($"- {a}");
@@ -54,7 +54,7 @@ public sealed class MarkdownExporter : IResumeExporter
             sb.AppendLine("## Education");
             foreach (var edu in resume.Education)
             {
-                sb.AppendLine($"### {edu.Degree} in {edu.FieldOfStudy} — {edu.Institution}");
+                sb.AppendLine($"### {edu.Degree} in {edu.FieldOfStudy} - {edu.Institution}");
                 var dates = FormatDateRange(edu.StartDate, edu.EndDate, false);
                 if (!string.IsNullOrEmpty(dates)) sb.AppendLine($"*{dates}*");
                 sb.AppendLine();
@@ -75,7 +75,7 @@ public sealed class MarkdownExporter : IResumeExporter
         {
             sb.AppendLine("## Certifications");
             foreach (var c in resume.Certifications)
-                sb.AppendLine($"- **{c.Name}** — {c.Issuer} ({c.IssuedDate?.Year})");
+                sb.AppendLine($"- **{c.Name}** - {c.Issuer} ({c.IssuedDate?.Year})");
             sb.AppendLine();
         }
 

@@ -42,7 +42,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     public bool HasAnyOpener => _openers.HasAny;
     public string PrimaryOpenerName => _openers.Primary?.Name ?? "Open in…";
 
-    // Pre-built items for MenuFlyout binding — each carries its own Command
+    // Pre-built items for MenuFlyout binding - each carries its own Command
     public IReadOnlyList<OpenerItem> OpenerItems => _openers.Available
         .Select(o => new OpenerItem(o.Name, new RelayCommand(() => o.Open(_loadedFilePath ?? ""))))
         .ToList();
@@ -61,7 +61,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private IReadOnlyList<SkillGroup> _skillGroups = [];
     [ObservableProperty] private bool _hasResume;
 
-    // Quality analysis — synthesized suggestions (not raw findings)
+    // Quality analysis - synthesized suggestions (not raw findings)
     [ObservableProperty] private int _qualityScore;
     [ObservableProperty] private bool _hasQualityReport;
     [ObservableProperty] private IReadOnlyList<QualitySuggestionViewModel> _qualitySuggestions = [];
@@ -170,7 +170,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Programmatic import for UX testing — bypasses file picker dialog.</summary>
+    /// <summary>Programmatic import for UX testing - bypasses file picker dialog.</summary>
     public async Task ImportFromPathAsync(string path)
     {
         _loadedFilePath = path;

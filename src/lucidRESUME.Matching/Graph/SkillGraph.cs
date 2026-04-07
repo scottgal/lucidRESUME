@@ -13,7 +13,7 @@ public sealed class SkillGraph
     public Dictionary<string, SkillNode> Nodes { get; } = new(StringComparer.OrdinalIgnoreCase);
     public int CommunityCount { get; private set; }
 
-    /// <summary>Add skills from a resume ledger — edges from co-occurrence in same role.</summary>
+    /// <summary>Add skills from a resume ledger - edges from co-occurrence in same role.</summary>
     public void AddResumeLedger(SkillLedger ledger)
     {
         // Group skills by experience entry they appear in
@@ -40,7 +40,7 @@ public sealed class SkillGraph
         }
     }
 
-    /// <summary>Add skills from a JD ledger — all required skills co-occur.</summary>
+    /// <summary>Add skills from a JD ledger - all required skills co-occur.</summary>
     public void AddJdLedger(JdSkillLedger jdLedger)
     {
         var skills = jdLedger.Requirements.Select(r => r.SkillName).ToList();

@@ -47,7 +47,7 @@ public static class NerExtractor
         "JobTitle" => "title",
         "Address" => "location",
         "YearsExperience" => "yearsexp",
-        "Miscellaneous" => null, // general NER MISC too noisy for JD skills — produces fragments
+        "Miscellaneous" => null, // general NER MISC too noisy for JD skills - produces fragments
         "PersonName" or "Email" or "PhoneNumber" or "Url" or "Degree" or "Date" => null,
 
         // Raw BIO labels (fallback if Classification isn't mapped)

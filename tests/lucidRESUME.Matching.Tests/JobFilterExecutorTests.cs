@@ -153,7 +153,7 @@ public class JobFilterExecutorTests
     public void Evaluate_IsRemote_IsFalse_WhenNotSet()
     {
         var job = JobDescription.Create("role", new JobSource { Type = JobSourceType.PastedText });
-        // IsRemote not set — defaults to false
+        // IsRemote not set - defaults to false
         var filter = FilterNode.Leaf("is_remote", FilterOp.IsFalse, null);
         Assert.True(_executor.Evaluate(filter, job));
     }
@@ -182,7 +182,7 @@ public class JobFilterExecutorTests
         job.IsRemote = true;
         job.RequiredSkills = [".NET"];
 
-        // Not(All(...)) — both children match, so All=true, Not(All)=false
+        // Not(All(...)) - both children match, so All=true, Not(All)=false
         var filter = FilterNode.Not(FilterNode.All(
             FilterNode.Leaf("work_model", FilterOp.Equal, "Remote"),
             FilterNode.Leaf("skills", FilterOp.In, new[] { ".NET" })

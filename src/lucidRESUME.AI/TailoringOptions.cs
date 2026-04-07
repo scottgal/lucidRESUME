@@ -1,7 +1,7 @@
 namespace lucidRESUME.AI;
 
 /// <summary>
-/// Tunable parameters for resume tailoring — prompts, weights, and thresholds.
+/// Tunable parameters for resume tailoring - prompts, weights, and thresholds.
 /// All values are JSON-configurable via the "Tailoring" appsettings section.
 /// </summary>
 public sealed class TailoringOptions

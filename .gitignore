@@ -36,7 +36,7 @@ artifacts/
 .claude/settings.local.json
 nul
 
-## ONNX model files (download separately — auto-downloaded on first run)
+## ONNX model files (download separately - auto-downloaded on first run)
 models/**/*.onnx
 models/**/*.txt
 models/**/*.json

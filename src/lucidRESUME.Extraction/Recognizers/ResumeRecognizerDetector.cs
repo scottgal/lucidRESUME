@@ -67,7 +67,7 @@ public sealed class ResumeRecognizerDetector : IEntityDetector
         var dates = DateTimeRecognizer.RecognizeDateTime(context.Text, Culture);
         foreach (var d in dates)
         {
-            // Skip single-word season matches — "Spring Boot", "Spring MVC", etc.
+            // Skip single-word season matches - "Spring Boot", "Spring MVC", etc.
             if (SeasonOnlyWords.Contains(d.Text.Trim())) continue;
 
             var resolutionValues = d.Resolution?.TryGetValue("values", out var v) == true
@@ -95,7 +95,7 @@ public sealed class ResumeRecognizerDetector : IEntityDetector
         var urls = SequenceRecognizer.RecognizeURL(context.Text, Culture);
         foreach (var u in urls)
         {
-            // LinkedIn/GitHub get their own classification — skip here
+            // LinkedIn/GitHub get their own classification - skip here
             if (LinkedInPattern.IsMatch(u.Text) || GitHubPattern.IsMatch(u.Text)) continue;
             entities.Add(ExtractedEntity.Create(u.Text, "Url", DetectionSource.Recognizer, 0.90, context.PageNumber));
         }

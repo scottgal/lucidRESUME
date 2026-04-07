@@ -3,7 +3,7 @@ using lucidRESUME.Core.Models.Resume;
 namespace lucidRESUME.Core.Models.Skills;
 
 /// <summary>
-/// The complete skill ledger for a resume — every skill claim backed by evidence.
+/// The complete skill ledger for a resume - every skill claim backed by evidence.
 /// Built by scanning all sections of a ResumeDocument and cross-referencing dates.
 /// </summary>
 public sealed class SkillLedger

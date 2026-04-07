@@ -8,7 +8,7 @@ namespace lucidRESUME.Matching;
 /// Builds a JdSkillLedger from a JobDescription.
 /// Uses NER to extract clean skill names from the full JD text.
 /// Falls back to structural extractor output only for short, clean terms.
-/// No regex sentence parsing — NER does the heavy lifting.
+/// No regex sentence parsing - NER does the heavy lifting.
 /// </summary>
 public sealed class JdSkillLedgerBuilder
 {

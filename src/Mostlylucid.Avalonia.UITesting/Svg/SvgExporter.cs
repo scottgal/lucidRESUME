@@ -200,7 +200,7 @@ public sealed class SvgExporter
         var text = tb.Text;
         if (string.IsNullOrEmpty(text))
         {
-            // Try Inlines for rich text — grab the plain text representation
+            // Try Inlines for rich text - grab the plain text representation
             if (tb.Inlines is { Count: > 0 })
                 text = tb.Text; // Avalonia resolves Inlines into Text
             if (string.IsNullOrEmpty(text)) return;
@@ -378,7 +378,7 @@ public sealed class SvgExporter
         var b = image.Bounds;
         if (b.Width <= 0 || b.Height <= 0) return;
 
-        // Placeholder — actual image embedding would require base64 encoding
+        // Placeholder - actual image embedding would require base64 encoding
         xml.WriteStartElement("rect");
         xml.WriteAttributeString("x", F(pos.X));
         xml.WriteAttributeString("y", F(pos.Y));

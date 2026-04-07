@@ -1,7 +1,7 @@
 namespace lucidRESUME.Core.Models.Filters;
 
 /// <summary>
-/// Hard filters for job search — non-negotiable requirements.
+/// Hard filters for job search - non-negotiable requirements.
 /// Applied before matching/scoring. Jobs that fail any hard filter are excluded.
 /// </summary>
 public sealed class SearchHardFilter

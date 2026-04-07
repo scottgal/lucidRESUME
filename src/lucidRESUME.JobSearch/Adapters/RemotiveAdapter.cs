@@ -4,7 +4,7 @@ using lucidRESUME.Core.Models.Jobs;
 
 namespace lucidRESUME.JobSearch.Adapters;
 
-/// <summary>Remotive.com — free, no API key required</summary>
+/// <summary>Remotive.com - free, no API key required</summary>
 public sealed class RemotiveAdapter : IJobSearchAdapter
 {
     private readonly HttpClient _http;

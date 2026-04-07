@@ -59,7 +59,7 @@ public static class ServiceCollectionExtensions
             return new CloudflareBrScraper(http, opts, logger);
         });
 
-        // Layer 4: Local Playwright (singleton — shares browser instance)
+        // Layer 4: Local Playwright (singleton - shares browser instance)
         services.AddSingleton<PlaywrightScraper>();
 
         // Strategy selector

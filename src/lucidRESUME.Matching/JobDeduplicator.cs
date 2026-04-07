@@ -54,7 +54,7 @@ public sealed class JobDeduplicator
                     IsDuplicate = similarity >= DuplicateThreshold,
                     Reason = similarity >= DuplicateThreshold
                         ? "Near-identical listing (possibly reposted or different agency)"
-                        : "Very similar role — may be same position with different wording",
+                        : "Very similar role - may be same position with different wording",
                 });
             }
         }
@@ -63,7 +63,7 @@ public sealed class JobDeduplicator
     }
 
     /// <summary>
-    /// Detect "hoover" patterns — companies that repost the same role repeatedly.
+    /// Detect "hoover" patterns - companies that repost the same role repeatedly.
     /// </summary>
     public List<HooverDetection> DetectHooverRoles(IReadOnlyList<JobDescription> jobs)
     {

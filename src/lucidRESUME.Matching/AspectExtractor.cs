@@ -8,7 +8,7 @@ public sealed record ExtractedAspect(AspectType Type, string Value, string Sourc
 
 /// <summary>
 /// Extracts votable aspects from a <see cref="JobDescription"/> for display in the UI.
-/// Results are memoized per <see cref="JobDescription.JobId"/> — repeated calls for the
+/// Results are memoized per <see cref="JobDescription.JobId"/> - repeated calls for the
 /// same job (e.g. from SkillMatchingService and VoteService in a single search pass) return
 /// the cached list without re-scanning the raw text.
 /// </summary>
@@ -55,7 +55,7 @@ public sealed class AspectExtractor
         if (job.Salary?.Min is not null)
             Add(AspectType.SalaryBand, BucketSalary(job.Salary.Min.Value), "Salary.Min");
 
-        // Industry — collect ALL matching industries (a job can be both Fintech and SaaS)
+        // Industry - collect ALL matching industries (a job can be both Fintech and SaaS)
         var searchText = ((job.Title ?? "") + " " + job.RawText).ToLowerInvariant();
         foreach (var (keywords, industry) in JobKeywords.Industries)
         {
@@ -63,7 +63,7 @@ public sealed class AspectExtractor
                 Add(AspectType.Industry, industry, "Title/RawText");
         }
 
-        // CompanyType — use persisted value if already classified, otherwise classify now
+        // CompanyType - use persisted value if already classified, otherwise classify now
         var companyType = job.CompanyType != CompanyType.Unknown
             ? job.CompanyType
             : _classifier.Classify(job);
@@ -71,7 +71,7 @@ public sealed class AspectExtractor
         if (companyType != CompanyType.Unknown)
             Add(AspectType.CompanyType, companyType.ToString(), "CompanyType");
 
-        // CultureSignals — all that match
+        // CultureSignals - all that match
         var descText = job.RawText.ToLowerInvariant();
         foreach (var (keywords, signal) in JobKeywords.CultureSignals)
         {

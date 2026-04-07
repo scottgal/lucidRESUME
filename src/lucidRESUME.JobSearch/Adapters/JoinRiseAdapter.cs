@@ -5,7 +5,7 @@ using lucidRESUME.Core.Models.Jobs;
 
 namespace lucidRESUME.JobSearch.Adapters;
 
-/// <summary>JoinRise — free public job API, no API key required</summary>
+/// <summary>JoinRise - free public job API, no API key required</summary>
 public sealed class JoinRiseAdapter : IJobSearchAdapter
 {
     private readonly HttpClient _http;

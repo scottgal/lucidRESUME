@@ -1,5 +1,5 @@
 name: e2e-full-flow
-description: Complete end-to-end flow — import resume, add job, view analysis, screenshot every step
+description: Complete end-to-end flow - import resume, add job, view analysis, screenshot every step
 default_delay: 400
 
 actions:
@@ -59,7 +59,7 @@ actions:
     value: 06-apply-page
 
   # ═══════════════════════════════════════════════════
-  # STEP 6: Pipeline page (empty — no tracked apps yet)
+  # STEP 6: Pipeline page (empty - no tracked apps yet)
   # ═══════════════════════════════════════════════════
   - type: Navigate
     value: pipeline
@@ -86,7 +86,7 @@ actions:
     value: 09-profile-ai-settings
 
   # ═══════════════════════════════════════════════════
-  # STEP 8: Back to resume — final state with quality + AI detection
+  # STEP 8: Back to resume - final state with quality + AI detection
   # ═══════════════════════════════════════════════════
   - type: Navigate
     value: resume

@@ -146,7 +146,7 @@ git commit -m "feat: scaffold solution with all projects and references"
 
 ---
 
-## Task 2: Core Domain Models — Resume Schema
+## Task 2: Core Domain Models - Resume Schema
 
 **Files:**
 - Create: `src/lucidRESUME.Core/Models/Resume/ResumeDocument.cs`
@@ -192,7 +192,7 @@ public class ResumeDocumentTests
 ```bash
 dotnet test tests/lucidRESUME.Core.Tests --filter "ResumeDocumentTests"
 ```
-Expected: FAIL — types not found
+Expected: FAIL - types not found
 
 **Step 3: Implement models**
 
@@ -412,7 +412,7 @@ git commit -m "feat: add core resume domain models and extracted entity"
 
 ---
 
-## Task 3: Core Domain Models — UserProfile & JobDescription
+## Task 3: Core Domain Models - UserProfile & JobDescription
 
 **Files:**
 - Create: `src/lucidRESUME.Core/Models/Profile/UserProfile.cs`
@@ -648,7 +648,7 @@ git commit -m "feat: add UserProfile and JobDescription domain models"
 - Create: `src/lucidRESUME.Core/Interfaces/IAiTailoringService.cs`
 - Create: `src/lucidRESUME.Core/Persistence/IAppStore.cs`
 
-**Step 1: No test for interfaces — implement directly**
+**Step 1: No test for interfaces - implement directly**
 
 ```csharp
 // src/lucidRESUME.Core/Interfaces/IDoclingClient.cs
@@ -752,7 +752,7 @@ public interface IAiTailoringService
 // src/lucidRESUME.Core/Persistence/IAppStore.cs
 namespace lucidRESUME.Core.Persistence;
 
-/// Single-user local store — all data lives in one JSON file.
+/// Single-user local store - all data lives in one JSON file.
 public interface IAppStore
 {
     Task<AppState> LoadAsync(CancellationToken ct = default);
@@ -838,7 +838,7 @@ Expected: FAIL
 **Step 3: Add System.Text.Json to Core**
 
 ```bash
-# Already included in .NET 10 BCL — no package needed
+# Already included in .NET 10 BCL - no package needed
 ```
 
 **Step 4: Implement JsonAppStore**
@@ -893,7 +893,7 @@ git commit -m "feat: add JSON-backed local app store for single-user persistence
 
 ---
 
-## Task 6: Ingestion — Docling Client
+## Task 6: Ingestion - Docling Client
 
 **Files:**
 - Create: `src/lucidRESUME.Ingestion/Docling/DoclingOptions.cs`
@@ -964,7 +964,7 @@ git commit -m "feat: add Docling client (ported from DocExtractor)"
 
 ---
 
-## Task 7: Extraction Pipeline — Recognizers & NER
+## Task 7: Extraction Pipeline - Recognizers & NER
 
 **Files:**
 - Create: `src/lucidRESUME.Extraction/Recognizers/ResumeRecognizerDetector.cs`
@@ -1342,7 +1342,7 @@ public sealed class JobSpecParser : IJobSpecParser
         job.IsRemote = lower.Contains("fully remote") || lower.Contains("remote: yes") || lower.Contains("100% remote");
         job.IsHybrid = lower.Contains("hybrid");
 
-        // Skills extraction — lines starting with bullet or "required:"
+        // Skills extraction - lines starting with bullet or "required:"
         job.RequiredSkills = ExtractSkillsList(text, "required");
         job.PreferredSkills = ExtractSkillsList(text, "preferred|nice to have|desirable");
 
@@ -1370,7 +1370,7 @@ public sealed class JobSpecParser : IJobSpecParser
 
     private static string StripHtml(string html)
     {
-        // Simple tag stripping — use AngleSharp for production accuracy
+        // Simple tag stripping - use AngleSharp for production accuracy
         return Regex.Replace(html, "<[^>]+>", " ").Trim();
     }
 }
@@ -1811,7 +1811,7 @@ public sealed class MarkdownExporter : IResumeExporter
             sb.AppendLine("\n## Experience");
             foreach (var e in resume.Experience)
             {
-                sb.AppendLine($"\n### {e.Title} — {e.Company}");
+                sb.AppendLine($"\n### {e.Title} - {e.Company}");
                 var dates = $"{e.StartDate?.ToString("MMM yyyy")} – {(e.IsCurrent ? "Present" : e.EndDate?.ToString("MMM yyyy"))}";
                 sb.AppendLine($"*{dates}*");
                 foreach (var a in e.Achievements) sb.AppendLine($"- {a}");
@@ -1822,7 +1822,7 @@ public sealed class MarkdownExporter : IResumeExporter
         {
             sb.AppendLine("\n## Education");
             foreach (var e in resume.Education)
-                sb.AppendLine($"\n**{e.Degree} in {e.FieldOfStudy}** — {e.Institution} ({e.EndDate?.Year})");
+                sb.AppendLine($"\n**{e.Degree} in {e.FieldOfStudy}** - {e.Institution} ({e.EndDate?.Year})");
         }
 
         if (resume.Skills.Count > 0)
@@ -1953,12 +1953,12 @@ public sealed class OllamaTailoringService : IAiTailoringService
         var result = await response.Content.ReadFromJsonAsync<OllamaGenerateResponse>(cancellationToken: ct);
         var tailoredMarkdown = result?.Response ?? resume.RawMarkdown ?? "";
 
-        // Create a new ResumeDocument stamped as tailored — original is preserved
+        // Create a new ResumeDocument stamped as tailored - original is preserved
         var tailored = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
         tailored.SetDoclingOutput(tailoredMarkdown, null, null);
         tailored.MarkTailoredFor(job.JobId);
 
-        // Copy structured data — the LLM output is used for the markdown/export only
+        // Copy structured data - the LLM output is used for the markdown/export only
         // Structured fields stay from the original extraction
         foreach (var entity in resume.Entities)
             tailored.AddEntity(entity);
@@ -2000,7 +2000,7 @@ git commit -m "feat: add Ollama AI tailoring service with honest-only prompt con
 
 ---
 
-## Task 14: Avalonia UI — Shell & Navigation
+## Task 14: Avalonia UI - Shell & Navigation
 
 **Files:**
 - Modify: `src/lucidRESUME/App.axaml`
@@ -2105,7 +2105,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
       </StackPanel>
     </Border>
 
-    <!-- Main content area — swaps based on CurrentPage -->
+    <!-- Main content area - swaps based on CurrentPage -->
     <ContentControl Grid.Column="1" Content="{Binding CurrentPage}"/>
 
   </Grid>
@@ -2214,7 +2214,7 @@ git commit -m "feat: add Avalonia shell with sidebar navigation and page ViewMod
 
 ---
 
-## Task 15: Full Integration — Resume Import Flow (End to End)
+## Task 15: Full Integration - Resume Import Flow (End to End)
 
 **Files:**
 - Modify: `src/lucidRESUME/Views/Pages/ResumePage.axaml`
@@ -2314,7 +2314,7 @@ private async Task ImportResumeAsync()
         state.Resume = Resume;
         await _store.SaveAsync(state);
 
-        StatusMessage = $"Imported successfully — {Resume.Entities.Count} entities extracted.";
+        StatusMessage = $"Imported successfully - {Resume.Entities.Count} entities extracted.";
     }
     catch (Exception ex)
     {
@@ -2345,13 +2345,13 @@ git commit -m "feat: complete resume import flow with file picker and Docling pa
 
 These are tracked here for awareness but are out of scope for the initial implementation:
 
-1. **Phase 2 — Job Description UI**: Full CRUD for job descriptions, paste/URL/search ingestion
-2. **Phase 3 — Match Dashboard**: Visual match scores, skill gap analysis per job
-3. **Phase 4 — AI Tailoring UI**: Generate tailored resume per job with diff view (original vs tailored)
-4. **Phase 5 — LinkedIn Import**: Parse LinkedIn JSON export as an alternative to PDF resume
-5. **Phase 6 — Profile Editor UI**: Full UserProfile editing (preferences, blocklists, career goals)
-6. **Phase 7 — DOCX/PDF Export**: Complete DocxExporter and PdfExporter implementations
-7. **Phase 8 — Reed/Indeed adapters**: Additional job search API adapters
+1. **Phase 2 - Job Description UI**: Full CRUD for job descriptions, paste/URL/search ingestion
+2. **Phase 3 - Match Dashboard**: Visual match scores, skill gap analysis per job
+3. **Phase 4 - AI Tailoring UI**: Generate tailored resume per job with diff view (original vs tailored)
+4. **Phase 5 - LinkedIn Import**: Parse LinkedIn JSON export as an alternative to PDF resume
+5. **Phase 6 - Profile Editor UI**: Full UserProfile editing (preferences, blocklists, career goals)
+6. **Phase 7 - DOCX/PDF Export**: Complete DocxExporter and PdfExporter implementations
+7. **Phase 8 - Reed/Indeed adapters**: Additional job search API adapters
 
 ---
 

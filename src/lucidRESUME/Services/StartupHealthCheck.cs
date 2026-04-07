@@ -140,7 +140,7 @@ public sealed class StartupHealthCheck
 
     private async Task EnsureNerModelsAsync(CancellationToken ct)
     {
-        // General NER (dslim/bert-base-NER) — pre-exported ONNX available on HuggingFace
+        // General NER (dslim/bert-base-NER) - pre-exported ONNX available on HuggingFace
         var generalModelPath = ResolvePath("models/ner/model.onnx");
         var generalVocabPath = ResolvePath("models/ner/vocab.txt");
 
@@ -167,7 +167,7 @@ public sealed class StartupHealthCheck
             }
         }
 
-        // Resume NER (yashpwr/resume-ner-bert-v2) — no pre-exported ONNX; needs Python optimum export
+        // Resume NER (yashpwr/resume-ner-bert-v2) - no pre-exported ONNX; needs Python optimum export
         var resumeModelPath = ResolvePath("models/resume-ner/model.onnx");
         var resumeVocabPath = ResolvePath("models/resume-ner/vocab.txt");
 

@@ -28,10 +28,10 @@ Use the user's extracted resume skills + profile preferences to auto-suggest rol
 | **USAJOBS** | `https://data.usajobs.gov/api/search` | US Gov only | Free | US government positions only |
 
 ### Tier 3: Paid / Skip for now
-- TheirStack (LinkedIn/Glassdoor scraper) — paid
-- Techmap/JobDataFeeds — paid
-- Jooble — API key + approval process
-- WhatJobs — affiliate model
+- TheirStack (LinkedIn/Glassdoor scraper) - paid
+- Techmap/JobDataFeeds - paid
+- Jooble - API key + approval process
+- WhatJobs - affiliate model
 
 ---
 
@@ -240,7 +240,7 @@ Add to `appsettings.json`:
 }
 ```
 
-Adapters with empty keys are auto-disabled via `IsConfigured` check — no errors thrown.
+Adapters with empty keys are auto-disabled via `IsConfigured` check - no errors thrown.
 
 ---
 
@@ -250,7 +250,7 @@ Adapters with empty keys are auto-disabled via `IsConfigured` check — no error
 
 These require zero user setup and should be enabled by default.
 
-**Jobicy** uses RSS — add `System.ServiceModel.Syndication` or parse with `XDocument`.
+**Jobicy** uses RSS - add `System.ServiceModel.Syndication` or parse with `XDocument`.
 
 ### Task 10c: Key-Auth Adapters (Reed, Findwork)
 
@@ -288,7 +288,7 @@ Layer 1: Accept: text/markdown header (zero cost, zero config, always try first)
     → Plain HTTP GET with "Accept: text/markdown" header
     → Cloudflare's "Markdown for Agents" feature (Feb 2026) auto-converts HTML→markdown
       at the CDN edge for any site on Cloudflare with the feature enabled
-    → No API key, no account, no cost — just a header
+    → No API key, no account, no cost - just a header
     → Returns Content-Type: text/markdown + x-markdown-tokens header
     → Works for: many job boards, company career pages, Reed, Adzuna, and any
       Cloudflare Pro/Business/Enterprise hosted site
@@ -356,7 +356,7 @@ Add to `appsettings.json`:
 }
 ```
 
-When `AccountId` and `ApiToken` are empty, Layer 1 is skipped — falls straight to Layer 2. Zero friction for users who don't want to configure it.
+When `AccountId` and `ApiToken` are empty, Layer 1 is skipped - falls straight to Layer 2. Zero friction for users who don't want to configure it.
 
 ### CloudflareBrowserRenderingClient
 
@@ -458,7 +458,7 @@ dotnet add src/lucidRESUME.JobSpec package Microsoft.Playwright
 playwright install chromium
 ```
 
-Playwright is only installed/launched if a URL requires it — lazy init, shown as "Loading job description..." in the UI.
+Playwright is only installed/launched if a URL requires it - lazy init, shown as "Loading job description..." in the UI.
 
 For Glassdoor / totally blocked sites, the app shows:
 ```
@@ -474,7 +474,7 @@ For Glassdoor / totally blocked sites, the app shows:
 <PackageReference Include="Microsoft.Playwright" Version="1.49.0" />
 ```
 
-AngleSharp is already in LucidRAG — copy version from there.
+AngleSharp is already in LucidRAG - copy version from there.
 
 ---
 

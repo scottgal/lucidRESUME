@@ -35,7 +35,7 @@ public sealed class CloudflareBrScraper : IJobPageScraper
     {
         if (!_options.IsConfigured)
         {
-            _logger.LogDebug("[{Scraper}] Not configured — skipping.", Name);
+            _logger.LogDebug("[{Scraper}] Not configured - skipping.", Name);
             return null;
         }
 
@@ -83,7 +83,7 @@ public sealed class CloudflareBrScraper : IJobPageScraper
             return null;
         }
 
-        _logger.LogInformation("[{Scraper}] Success — {Len} chars for {Url}", Name, markdown.Length, uri);
+        _logger.LogInformation("[{Scraper}] Success - {Len} chars for {Url}", Name, markdown.Length, uri);
         return new ScrapeResult { Markdown = markdown };
     }
 

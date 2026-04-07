@@ -11,7 +11,7 @@ public sealed class CloudflareBrOptions
     public string AccountId { get; set; } = "";
     public string ApiToken { get; set; } = "";
     /// <summary>
-    /// Puppeteer waitUntil value — default is "networkidle0".
+    /// Puppeteer waitUntil value - default is "networkidle0".
     /// </summary>
     public string WaitUntil { get; set; } = "networkidle0";
 

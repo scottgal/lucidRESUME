@@ -62,7 +62,7 @@ public sealed partial class SearchPageViewModel : ViewModelBase
             {
                 ManualUrl = url;
                 NeedsManualText = true;
-                StatusMessage = "This site requires manual paste — copy the JD text below.";
+                StatusMessage = "This site requires manual paste - copy the JD text below.";
                 return;
             }
 
@@ -119,7 +119,7 @@ public sealed partial class SearchPageViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Programmatic job add for UX testing — bypasses UI interaction.</summary>
+    /// <summary>Programmatic job add for UX testing - bypasses UI interaction.</summary>
     public async Task AddJobFromTextAsync(string text)
     {
         PastedText = text;

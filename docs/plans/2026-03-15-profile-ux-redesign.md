@@ -30,10 +30,10 @@ ProfileFormDefinition
 ```
 
 **Built-in groups (seeded by ProfileSchemaDefaults):**
-- `identity` — Display Name, Current Title, Years Experience
-- `work-prefs` — Work Style, Preferred Locations, Target Roles, Min Salary, Max Commute, Target Industries, Blocked Industries
-- `skills` — Skills to Emphasise (TagListWithReason), Skills to Avoid (TagListWithReason)
-- `ai-context` — Career Goals (LongText), Additional Context (LongText), Blocked Companies (TagList)
+- `identity` - Display Name, Current Title, Years Experience
+- `work-prefs` - Work Style, Preferred Locations, Target Roles, Min Salary, Max Commute, Target Industries, Blocked Industries
+- `skills` - Skills to Emphasise (TagListWithReason), Skills to Avoid (TagListWithReason)
+- `ai-context` - Career Goals (LongText), Additional Context (LongText), Blocked Companies (TagList)
 
 Fields can be added/removed at runtime. User-added fields are persisted in AppState.
 
@@ -88,7 +88,7 @@ Maps to `WorkPreferences.OpenToRemote / OpenToHybrid / OpenToOnsite`.
 - `Items: ObservableCollection<TagItem>` where `TagItem { Value, Reason? }`
 - `Placeholder` string
 - `AccentColor` brush
-- `AllowReasons` bool — when true, clicking a chip expands an inline reason TextBox
+- `AllowReasons` bool - when true, clicking a chip expands an inline reason TextBox
 
 ### 5. ViewModel
 
@@ -103,11 +103,11 @@ Maps to `WorkPreferences.OpenToRemote / OpenToHybrid / OpenToOnsite`.
 
 | File | Change |
 |------|--------|
-| `Core/Models/Profile/ProfileFormDefinition.cs` | New — schema model |
-| `Core/Models/Profile/ProfileField.cs` | New — field + FieldDataType |
-| `Core/Models/Profile/ProfileSchemaDefaults.cs` | New — built-in field seeder |
-| `Core/Models/Profile/TagItem.cs` | New — tag value + optional reason |
-| `Views/Controls/TagChipEditor.axaml` | New — reusable tag chip control |
-| `Views/Controls/WorkStyleToggleGroup.axaml` | New — remote/hybrid/onsite checkboxes |
-| `Views/Pages/ProfilePage.axaml` | Redesigned — card layout |
-| `ViewModels/Pages/ProfilePageViewModel.cs` | Refactored — autosave, tag collections |
+| `Core/Models/Profile/ProfileFormDefinition.cs` | New - schema model |
+| `Core/Models/Profile/ProfileField.cs` | New - field + FieldDataType |
+| `Core/Models/Profile/ProfileSchemaDefaults.cs` | New - built-in field seeder |
+| `Core/Models/Profile/TagItem.cs` | New - tag value + optional reason |
+| `Views/Controls/TagChipEditor.axaml` | New - reusable tag chip control |
+| `Views/Controls/WorkStyleToggleGroup.axaml` | New - remote/hybrid/onsite checkboxes |
+| `Views/Pages/ProfilePage.axaml` | Redesigned - card layout |
+| `ViewModels/Pages/ProfilePageViewModel.cs` | Refactored - autosave, tag collections |

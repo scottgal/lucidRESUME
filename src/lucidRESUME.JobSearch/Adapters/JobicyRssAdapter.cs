@@ -5,7 +5,7 @@ using lucidRESUME.Core.Models.Jobs;
 
 namespace lucidRESUME.JobSearch.Adapters;
 
-/// <summary>Jobicy — free RSS feed, no API key required</summary>
+/// <summary>Jobicy - free RSS feed, no API key required</summary>
 public sealed class JobicyRssAdapter : IJobSearchAdapter
 {
     private readonly HttpClient _http;

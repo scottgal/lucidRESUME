@@ -80,7 +80,7 @@ public class VoteServiceTests
             profile.VoteDown(AspectType.CultureSignal, "Fast-paced");
         }
 
-        // Neither SalaryBand nor CultureSignal maps to a field — should produce null
+        // Neither SalaryBand nor CultureSignal maps to a field - should produce null
         Assert.Null(_service.BuildAutoFilters(profile));
     }
 

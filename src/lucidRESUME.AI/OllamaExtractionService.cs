@@ -43,9 +43,23 @@ public sealed class OllamaExtractionService : ILlmExtractionService
 
     public async Task<string?> ExtractExperienceSummaryAsync(string text, CancellationToken ct = default)
     {
-        var input = text.Length > 3000 ? text[..3000] : text;
-        var prompt = $"Extract work experience from this resume. " +
-                     $"For each job write one line: COMPANY | TITLE | START_YEAR - END_YEAR\n\n{input}";
+        var input = text.Length > 4000 ? text[..4000] : text;
+        var prompt = $"""
+            Extract ONLY the work experience entries from this resume text.
+            Each job held should be ONE line in this exact format:
+            COMPANY_NAME | JOB_TITLE | START_DATE - END_DATE
+
+            Rules:
+            - Each line is one job/position the person held
+            - Do NOT include bullet points, achievements, or descriptions
+            - Do NOT include education entries
+            - If you cannot find the company name, write "Unknown"
+            - If you cannot find dates, write "Unknown" for that field
+            - Reply with ONLY the formatted lines, no explanation
+
+            Resume text:
+            {input}
+            """;
         return await CallAsync(prompt, ct);
     }
 

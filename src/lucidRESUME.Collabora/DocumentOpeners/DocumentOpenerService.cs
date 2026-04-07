@@ -2,7 +2,7 @@ namespace lucidRESUME.Collabora.DocumentOpeners;
 
 /// <summary>
 /// Discovers locally installed document editors at startup.
-/// Apps are detected once and cached — no runtime polling.
+/// Apps are detected once and cached - no runtime polling.
 /// </summary>
 public sealed class DocumentOpenerService
 {

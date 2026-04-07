@@ -1,10 +1,10 @@
-# ***lucid*RESUME** — Technical Architecture
+# ***lucid*RESUME** - Technical Architecture
 
 ## System Overview
 
-lucidRESUME is a local-first career navigation engine. It ingests resumes and job descriptions, builds evidence-backed skill profiles, matches candidates to roles via multi-vector similarity, and generates actionable career plans — all on the user's own hardware.
+lucidRESUME is a local-first career navigation engine. It ingests resumes and job descriptions, builds evidence-backed skill profiles, matches candidates to roles via multi-vector similarity, and generates actionable career plans - all on the user's own hardware.
 
-The core insight: **skills are not flat keywords**. They have evidence (which job, which bullet, what dates), strength (years, recency, depth), and relationships (co-occurrence in roles creates a graph). Matching isn't string comparison — it's finding the nearest point in a high-dimensional skill space.
+The core insight: **skills are not flat keywords**. They have evidence (which job, which bullet, what dates), strength (years, recency, depth), and relationships (co-occurrence in roles creates a graph). Matching isn't string comparison - it's finding the nearest point in a high-dimensional skill space.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -38,7 +38,7 @@ The core insight: **skills are not flat keywords**. They have evidence (which jo
 
 ### Design Principle: RRF Signal Fusion
 
-Every extractor runs in parallel. Each produces candidates with confidence scores. Reciprocal Rank Fusion picks the best answer per field. No waterfall, no fallthrough — all signals vote.
+Every extractor runs in parallel. Each produces candidates with confidence scores. Reciprocal Rank Fusion picks the best answer per field. No waterfall, no fallthrough - all signals vote.
 
 ```
 Document (PDF/DOCX)
@@ -331,10 +331,10 @@ Single SQLite database (`data.db`) in user's AppData:
 
 | Table | Content |
 |-------|---------|
-| `resume` | JSON blob — singleton |
-| `profile` | JSON blob — singleton |
-| `jobs` | JSON blobs — one per job |
-| `applications` | JSON blobs — one per tracked application |
+| `resume` | JSON blob - singleton |
+| `profile` | JSON blob - singleton |
+| `jobs` | JSON blobs - one per job |
+| `applications` | JSON blobs - one per tracked application |
 | `saved_searches` | JSON blobs |
 | `search_presets` | JSON blobs |
 | `vec_embeddings` | 384-dim float vectors (sqlite-vec) |
@@ -446,14 +446,14 @@ User secrets (`dotnet user-secrets`) for API keys. Environment variables with `L
 
 ## 11. Testing
 
-159 tests across 6 projects. No mocking frameworks — direct service instantiation.
+161 tests across 6 projects. No mocking frameworks - direct service instantiation.
 
 | Project | What it tests |
 |---------|--------------|
 | Core.Tests | AppState persistence, JobApplication model, SQLite round-trip |
 | Extraction.Tests | NER detector, recognizer pipeline |
 | AI.Tests | Embedding service, similarity scoring |
-| Matching.Tests | Skill scoring, filters, aspect voting |
+| Matching.Tests | Skill scoring, filters, aspect voting, quality word-list loading |
 | JobSpec.Tests | JD parsing, salary extraction |
 | EmailTracker.Tests | Email classifier rules, application matcher |
 
@@ -472,6 +472,22 @@ actions:
   - type: Screenshot
     value: jobs-with-career-plan
 ```
+
+---
+
+## 12. Releases & Documentation Archives
+
+Release automation lives in `.github/workflows/release.yml`. A `v*` tag builds self-contained app archives for Windows, macOS, and Linux across x64 and ARM64 runtime IDs:
+
+| Runtime family | Runtime IDs |
+|----------------|-------------|
+| Windows | `win-x64`, `win-arm64` |
+| macOS | `osx-x64`, `osx-arm64` |
+| Linux | `linux-x64`, `linux-arm64` |
+
+Each runtime produces both `.zip` and `.tar.gz` archives with SHA-256 checksum files. The GitHub release page is populated with Markdown notes covering usage, configuration, and macOS Gatekeeper guidance. The workflow also builds a documentation archive containing `lucidRESUME-docs-single-page.md`, which concatenates the README, architecture guide, and in-app user manual into a single offline Markdown page.
+
+Native installers are intentionally out of scope for the current release baseline. MSI, DMG, AppImage, Flatpak, or Snap packaging should be added only after signing, icons, and installer metadata are in place.
 
 ---
 

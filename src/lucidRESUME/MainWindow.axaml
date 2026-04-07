@@ -142,6 +142,18 @@
           <Button Classes="nav-btn" Content="Profile"
                   Command="{Binding NavigateCommand}" CommandParameter="Profile"/>
         </Panel>
+
+        <!-- Separator before Help -->
+        <Border Height="1" Background="{DynamicResource LrBorderBrush}" Margin="8,8"/>
+
+        <Panel>
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Help}"/>
+          <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Help}"/>
+          <Button Classes="nav-btn" Content="? Help"
+                  Command="{Binding NavigateCommand}" CommandParameter="Help"/>
+        </Panel>
       </StackPanel>
       </DockPanel>
     </Border>

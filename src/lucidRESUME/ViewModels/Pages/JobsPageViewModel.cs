@@ -278,7 +278,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         }
         catch
         {
-            // Non-critical — silently skip if JD quality fails
+            // Non-critical - silently skip if JD quality fails
         }
         return Task.CompletedTask;
     }
@@ -306,7 +306,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         }
         catch
         {
-            // Non-critical — silently skip
+            // Non-critical - silently skip
         }
     }
 
@@ -335,7 +335,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         }
         catch (OperationCanceledException)
         {
-            // Selection changed before we finished — discard silently
+            // Selection changed before we finished - discard silently
         }
         catch
         {

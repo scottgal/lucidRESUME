@@ -12,7 +12,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private ViewModelBase _currentPage;
     [ObservableProperty] private string _selectedNav = "Resume";
 
-    // Service status indicators — full display strings for sidebar
+    // Service status indicators - full display strings for sidebar
     [ObservableProperty] private string _embeddingLabel = "Embeddings: checking...";
     [ObservableProperty] private string _embeddingColor = "...";
     [ObservableProperty] private string _nerLabel = "NER: checking...";
@@ -45,6 +45,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ApplyPageViewModel applyPage,
         PipelinePageViewModel pipelinePage,
         ProfilePageViewModel profilePage,
+        HelpPageViewModel helpPage,
         StartupHealthCheck? healthCheck = null,
         SearchWatchPoller? watchPoller = null)
     {
@@ -55,7 +56,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             ["Search"] = searchPage,
             ["Apply"] = applyPage,
             ["Pipeline"] = pipelinePage,
-            ["Profile"] = profilePage
+            ["Profile"] = profilePage,
+            ["Help"] = helpPage
         };
         _currentPage = resumePage;
         _healthCheck = healthCheck;
@@ -103,7 +105,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             EmbeddingColor = _healthCheck.OllamaAvailable ? "Connected" : "Offline";
         }
 
-        // NER status — both models must be ready for full extraction
+        // NER status - both models must be ready for full extraction
         if (_healthCheck.GeneralNerReady && _healthCheck.ResumeNerReady)
         {
             NerLabel = "NER: ready (2 models)";
@@ -112,7 +114,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         else if (_healthCheck.GeneralNerReady)
         {
             NerLabel = "NER: partial (general only)";
-            NerColor = "..."; // yellow — functional but limited
+            NerColor = "..."; // yellow - functional but limited
         }
         else
         {
@@ -191,5 +193,19 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         if (!_pages.TryGetValue(page, out var vm)) return;
         SelectedNav = page;
         CurrentPage = vm;
+    }
+
+    /// <summary>
+    /// Navigate to Help page and scroll to a specific anchor.
+    /// Called from ? buttons on other pages. Parameter format: "help:anchor-name"
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToHelp(string anchor)
+    {
+        if (!_pages.TryGetValue("Help", out var vm)) return;
+        SelectedNav = "Help";
+        CurrentPage = vm;
+        if (vm is Pages.HelpPageViewModel helpVm)
+            helpVm.ShowHelp(anchor);
     }
 }

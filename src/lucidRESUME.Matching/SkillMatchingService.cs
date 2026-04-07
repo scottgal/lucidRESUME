@@ -94,7 +94,7 @@ public sealed class SkillMatchingService : IMatchingService
         }
         catch
         {
-            // Embedding failed — fall back to exact match
+            // Embedding failed - fall back to exact match
             var set      = resumeSkills.ToHashSet(StringComparer.OrdinalIgnoreCase);
             var matched2 = required.Where(s => set.Contains(s)).ToList();
             var missing2 = required.Where(s => !set.Contains(s)).ToList();

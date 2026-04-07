@@ -231,6 +231,7 @@ public partial class App : Application
         services.AddSingleton(new Services.AiSettingsPath(aiSettingsPath));
         services.AddSingleton<ProfilePageViewModel>();
         services.AddSingleton<PipelinePageViewModel>();
+        services.AddSingleton<HelpPageViewModel>();
 
         services.AddTransient<MainWindow>();
     }

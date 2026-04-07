@@ -156,7 +156,7 @@ public sealed class DocxDirectParser : IDocumentParser
     {
         var current = new StringBuilder();
 
-        // Iterate all child elements — Runs contain plain text, Hyperlinks contain linked text
+        // Iterate all child elements - Runs contain plain text, Hyperlinks contain linked text
         foreach (var element in para.ChildElements)
         {
             IEnumerable<Run> runs = element switch
@@ -208,7 +208,7 @@ public sealed class DocxDirectParser : IDocumentParser
     {
         if (text.Length <= 200)
         {
-            // If the whole text is itself a recognised section heading, never split it —
+            // If the whole text is itself a recognised section heading, never split it -
             // e.g. "SKILLS & EXPERTISE" must stay intact so heading detection works.
             if (hints.MapSection(text) != null)
             {
@@ -305,16 +305,16 @@ public sealed class DocxDirectParser : IDocumentParser
                         yield break;
                     }
 
-                    // Don't split if body starts with a connector character — it's a compound
+                    // Don't split if body starts with a connector character - it's a compound
                     // heading like "SKILLS & EXPERTISE" or "EXPERIENCE / HISTORY".
                     if (body[0] == '&' || body[0] == '/' || body[0] == '|'
-                        || body[0] == '-' || body[0] == '–' || body[0] == '—')
+                        || body[0] == '-' || body[0] == '–' || body[0] == '-')
                     {
                         yield return seg;
                         yield break;
                     }
 
-                    // Don't split if body is a single known section keyword — composite
+                    // Don't split if body is a single known section keyword - composite
                     // headings like "Skills summary" or "Work Experience" must stay intact.
                     // But DO split when body has further content: "EXPERIENCE Experience with APIs"
                     // is a section heading followed by body text, not a composite heading.
@@ -433,7 +433,7 @@ public sealed class DocxDirectParser : IDocumentParser
 
     /// <summary>
     /// Detects likely section headings by checking if bold short text contains
-    /// common resume section trigger words. No hardcoded list — uses substring
+    /// common resume section trigger words. No hardcoded list - uses substring
     /// matching against a small set of root tokens that appear in virtually all
     /// resume section headings across languages and formats.
     /// </summary>

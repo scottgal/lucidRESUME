@@ -52,7 +52,7 @@ public class EmailApplicationMatcherTests
     public void Match_DomainPlusTitleInSubject_ReturnsHighConfidence()
     {
         var apps = new[] { MakeApp("Microsoft", "Senior Developer") };
-        var email = MakeEmail("careers@microsoft.com", "Senior Developer — Interview Invite");
+        var email = MakeEmail("careers@microsoft.com", "Senior Developer - Interview Invite");
 
         var result = EmailApplicationMatcher.Match(email, apps);
         Assert.NotNull(result.Application);

@@ -10,7 +10,7 @@ namespace lucidRESUME.Ingestion.Parsing;
 /// schema since Docling's markdown is document-layout-dependent.
 ///
 /// Date extraction uses Microsoft.Recognizers.Text.DateTime (rule-based, offline)
-/// rather than hand-crafted regex — handles all common date formats including
+/// rather than hand-crafted regex - handles all common date formats including
 /// "Jan 2020 – Present", "2019–2022", "2020 - now", "October 2018 to date".
 /// </summary>
 public static class MarkdownSectionParser
@@ -19,7 +19,7 @@ public static class MarkdownSectionParser
     /// Populate resume sections from pre-parsed <see cref="DocumentSection"/> objects
     /// (produced by the direct DOCX/PDF parser).  When sections carry a
     /// <see cref="DocumentSection.SemanticType"/> from template hints, classification
-    /// is skipped entirely — extraction becomes deterministic.
+    /// is skipped entirely - extraction becomes deterministic.
     /// Falls back to heuristic markdown parsing when sections are null/empty.
     /// </summary>
     public static void PopulateSections(
@@ -178,8 +178,8 @@ public static class MarkdownSectionParser
     }
 
     /// <summary>
-    /// When a known section (e.g. Skills) has an empty body — common in two-column
-    /// table CVs where the adjacent column heading immediately follows — collect
+    /// When a known section (e.g. Skills) has an empty body - common in two-column
+    /// table CVs where the adjacent column heading immediately follows - collect
     /// content from the next sections that are unclassified (no semantic type and
     /// no known section classifier match), treating their headings as content lines.
     /// Stops at the first section that has a known semantic type.
@@ -508,10 +508,10 @@ public static class MarkdownSectionParser
             }
 
             // Pattern 2: Sub-heading within experience (e.g. "### Mentorship & Education")
-            // These are subsection labels, not new top-level sections — skip them
+            // These are subsection labels, not new top-level sections - skip them
             if (line.StartsWith("###") && !ResumeDateParser.ContainsDate(line) && !line.Contains('|'))
             {
-                // Just a label — continue collecting achievements for the current job
+                // Just a label - continue collecting achievements for the current job
                 continue;
             }
 
@@ -544,7 +544,7 @@ public static class MarkdownSectionParser
                         current = new WorkExperience();
                         ApplyDateRange(current, prefixRange);
 
-                        // Try "Title, Company (Location)" — split on last comma before paren or end
+                        // Try "Title, Company (Location)" - split on last comma before paren or end
                         var parenIdx = rest.IndexOf('(');
                         var baseText = parenIdx > 0 ? rest[..parenIdx].TrimEnd(',', ' ') : rest;
                         var commaIdx = baseText.LastIndexOf(',');
@@ -585,7 +585,7 @@ public static class MarkdownSectionParser
 
         if (current != null) resume.Experience.Add(current);
 
-        // Pattern 5: flat blob (all jobs in one line) — split on inline date ranges
+        // Pattern 5: flat blob (all jobs in one line) - split on inline date ranges
         if (resume.Experience.Count == 0)
         {
             var blob = string.Join(" ", lines.Select(l => l.Trim()).Where(l => l.Length > 0));
@@ -702,7 +702,7 @@ public static class MarkdownSectionParser
         }
 
         words.Reverse();
-        return string.Join(" ", words).Trim(' ', '-', '–', '—', '|');
+        return string.Join(" ", words).Trim(' ', '-', '–', '-', '|');
     }
 
     private static string? ExtractCompanyName(string text)
@@ -712,9 +712,9 @@ public static class MarkdownSectionParser
         // Strip any date tail the recognizer left unmatched:
         // "– Present", "- current", "– now", etc.
         var t = text.TrimStart();
-        if (t.Length > 0 && (t[0] == '-' || t[0] == '–' || t[0] == '—'))
+        if (t.Length > 0 && (t[0] == '-' || t[0] == '–' || t[0] == '-'))
         {
-            t = t.TrimStart('-', '–', '—', ' ');
+            t = t.TrimStart('-', '–', '-', ' ');
             ReadOnlySpan<string> presentWords = ["present", "current", "now", "to date", "till now"];
             foreach (var word in presentWords)
                 if (t.StartsWith(word, StringComparison.OrdinalIgnoreCase))
@@ -795,7 +795,7 @@ public static class MarkdownSectionParser
         if (current != null) resume.Experience.Add(current);
     }
 
-    // Words that appear as contact-app labels or short noise in table-layout CVs —
+    // Words that appear as contact-app labels or short noise in table-layout CVs -
     // skip these when starting an education entry in flat mode.
     private static readonly HashSet<string> EduNoiseWords = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -843,13 +843,13 @@ public static class MarkdownSectionParser
                     dateAlreadyApplied = true;
                 }
 
-                // "Degree in Field — Institution" or "Institution | Degree"
+                // "Degree in Field - Institution" or "Institution | Degree"
                 if (content.Contains(" in "))
                 {
                     var inIdx = content.IndexOf(" in ");
                     current.Degree = content[..inIdx].Trim();
                     var rest = content[(inIdx + 4)..];
-                    var atIdx = rest.IndexOf(" — ");
+                    var atIdx = rest.IndexOf(" - ");
                     if (atIdx > 0) { current.FieldOfStudy = rest[..atIdx].Trim(); current.Institution = rest[(atIdx + 3)..].Trim(); }
                     else current.FieldOfStudy = rest.Trim();
                 }
@@ -906,7 +906,7 @@ public static class MarkdownSectionParser
     {
         var job = new WorkExperience();
         // Try pipe-separated first: "Company | Title | Location DateRange"
-        // Then em-dash/en-dash: "Company — Title"
+        // Then em-dash/en-dash: "Company - Title"
         var parts = content.Split('|');
         if (parts.Length >= 2)
         {
@@ -916,8 +916,8 @@ public static class MarkdownSectionParser
         }
         else
         {
-            // Try em-dash (—) or en-dash (–) separator
-            var dashIdx = content.IndexOf(" — ", StringComparison.Ordinal);
+            // Try em-dash (-) or en-dash (–) separator
+            var dashIdx = content.IndexOf(" - ", StringComparison.Ordinal);
             if (dashIdx < 0) dashIdx = content.IndexOf(" – ", StringComparison.Ordinal);
 
             if (dashIdx > 0)
@@ -973,7 +973,7 @@ public static class MarkdownSectionParser
             var line = lines[i].Trim();
             if (string.IsNullOrWhiteSpace(line)) { result.Add(lines[i]); continue; }
 
-            // Skip headings and lines with dates — they're handled by existing patterns
+            // Skip headings and lines with dates - they're handled by existing patterns
             if (line.StartsWith('#') || ResumeDateParser.ContainsDate(line))
             {
                 result.Add(lines[i]);
@@ -981,7 +981,7 @@ public static class MarkdownSectionParser
             }
 
             // Candidate: non-heading, non-date line containing a separator (pipe or em/en-dash)
-            bool hasSeparator = line.Contains('|') || line.Contains(" — ") || line.Contains(" – ");
+            bool hasSeparator = line.Contains('|') || line.Contains(" - ") || line.Contains(" – ");
             if (hasSeparator && i + 1 < lines.Count)
             {
                 var nextLine = lines[i + 1].Trim();
@@ -1026,7 +1026,7 @@ public static class MarkdownSectionParser
     private static string StripDateTail(string tail)
     {
         // Trim dash/en-dash/em-dash prefix  (e.g. "-present:", "–now:")
-        var s = tail.TrimStart('-', '–', '—', ' ');
+        var s = tail.TrimStart('-', '–', '-', ' ');
 
         // If a present-reference keyword starts here, skip it and the following separator
         ReadOnlySpan<string> presentWords = ["present", "now", "current", "to date", "till now"];

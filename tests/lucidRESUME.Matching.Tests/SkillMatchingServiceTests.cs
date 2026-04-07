@@ -108,7 +108,7 @@ public class SkillMatchingServiceTests
         var resume = ResumeDocument.Create("cv.pdf", "application/pdf", 0);
 
         var job = JobDescription.Create("Onsite role", new JobSource { Type = JobSourceType.PastedText });
-        job.RequiredSkills = ["Python"]; // not in resume — base score = 0
+        job.RequiredSkills = ["Python"]; // not in resume - base score = 0
 
         var profile = new UserProfile();
         // Downvote to try to push below 0.0

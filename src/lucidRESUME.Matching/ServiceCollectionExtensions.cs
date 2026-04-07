@@ -45,6 +45,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<Graph.CareerPlanner>();
         services.AddSingleton<Graph.SearchQueryGenerator>();
         services.AddSingleton<Graph.AdaptiveQueryWidener>();
+        services.AddSingleton<TaxonomyLearner>();
 
         return services;
     }

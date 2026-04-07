@@ -22,7 +22,7 @@ public sealed class OllamaTailoringService : IAiTailoringService
     private readonly ICoverageAnalyser _coverageAnalyser;
 
     // volatile: written by CheckAvailabilityAsync (potentially background thread),
-    // read by UI thread — ensures visibility without locking.
+    // read by UI thread - ensures visibility without locking.
     private volatile bool _isAvailable;
     public bool IsAvailable => _isAvailable;
 
@@ -85,7 +85,7 @@ public sealed class OllamaTailoringService : IAiTailoringService
             job.Title, job.Company, _options.Model, _options.NumCtx);
 
         // stream=true avoids buffering long think tokens before any output arrives.
-        // think=false disables Qwen3 chain-of-thought — we want the final answer directly.
+        // think=false disables Qwen3 chain-of-thought - we want the final answer directly.
         // num_ctx is tuned in appsettings to fit resume + JD without truncation.
         var request = new
         {
@@ -118,12 +118,12 @@ public sealed class OllamaTailoringService : IAiTailoringService
 
         var tailoredMarkdown = sb.Length > 0 ? sb.ToString().Trim() : resume.RawMarkdown ?? "";
 
-        // Create a new tailored document — original is preserved
+        // Create a new tailored document - original is preserved
         var tailored = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
         tailored.SetDoclingOutput(tailoredMarkdown, null, null);
         tailored.MarkTailoredFor(job.JobId);
 
-        // Copy entity metadata — structured fields stay from original extraction
+        // Copy entity metadata - structured fields stay from original extraction
         foreach (var entity in resume.Entities)
             tailored.AddEntity(entity);
 

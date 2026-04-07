@@ -6,7 +6,7 @@ namespace lucidRESUME.Matching;
 /// <summary>
 /// Classifies a job's employer type from JD text and title.
 /// Rules and keywords are configured in <see cref="CompanyClassifierOptions"/>.
-/// First matching rule wins — a company is one type.
+/// First matching rule wins - a company is one type.
 /// </summary>
 public sealed class CompanyClassifier
 {

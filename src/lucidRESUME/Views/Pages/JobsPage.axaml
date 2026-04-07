@@ -259,13 +259,13 @@
                                 CommandParameter="{Binding}"
                                 Background="Transparent" Foreground="{DynamicResource LrAccentGreenBrush}"
                                 FontSize="12" Padding="6,2"
-                                ToolTip.Tip="Like — boosts similar jobs"/>
+                                ToolTip.Tip="Like - boosts similar jobs"/>
                         <Button Content="▼"
                                 Command="{Binding $parent[ItemsControl].((vm:JobsPageViewModel)DataContext).VoteDownCommand}"
                                 CommandParameter="{Binding}"
                                 Background="Transparent" Foreground="{DynamicResource LrAccentRedBrush}"
                                 FontSize="12" Padding="6,2"
-                                ToolTip.Tip="Dislike — hides at -3"/>
+                                ToolTip.Tip="Dislike - hides at -3"/>
                       </StackPanel>
                     </Grid>
                   </Border>

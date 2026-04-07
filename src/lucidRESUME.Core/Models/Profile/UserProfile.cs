@@ -78,7 +78,7 @@ public sealed class UserProfile
         InvalidateCache();
     }
 
-    /// <summary>O(1) lookup after the first call — cache is built on demand.</summary>
+    /// <summary>O(1) lookup after the first call - cache is built on demand.</summary>
     public int GetVoteScore(AspectType type, string value)
     {
         _voteCache ??= BuildCache();

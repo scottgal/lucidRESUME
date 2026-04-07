@@ -2,6 +2,7 @@ using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Extraction;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Extraction.Pipeline;
+using lucidRESUME.Extraction.Recognizers;
 using lucidRESUME.Parsing;
 using lucidRESUME.Parsing.Templates;
 using Microsoft.Extensions.Logging;
@@ -69,7 +70,7 @@ public sealed class ResumeParser : IResumeParser
             // ── PDF + Docling: use ML-based layout detection ──────────────
             _logger.LogInformation("Converting PDF {File} via Docling (ML layout detection)", fileInfo.Name);
             var docling = await _docling!.ConvertAsync(filePath, ct);
-            // Docling preserves tab characters from PDF layout — normalize to spaces
+            // Docling preserves tab characters from PDF layout - normalize to spaces
             var doclingMd = docling.Markdown?.Replace('\t', ' ') ?? "";
             var doclingText = docling.PlainText?.Replace('\t', ' ');
             resume.SetDoclingOutput(doclingMd, docling.Json, doclingText);
@@ -107,7 +108,7 @@ public sealed class ResumeParser : IResumeParser
         }
         else
         {
-            // ── 2b. No Docling, no direct parser — unsupported ───────────
+            // ── 2b. No Docling, no direct parser - unsupported ───────────
             throw new NotSupportedException(
                 $"Cannot parse '{fileInfo.Name}' without Docling. Enable Docling in settings or use a PDF/DOCX file.");
         }
@@ -142,7 +143,6 @@ public sealed class ResumeParser : IResumeParser
             var raw = await _llm!.ExtractSkillsAsync(text, ct);
             if (!string.IsNullOrWhiteSpace(raw))
             {
-                // Parse the comma-separated response into Skill objects, deduplicated, max 60
                 var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var part in raw.Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries))
                 {
@@ -156,6 +156,78 @@ public sealed class ResumeParser : IResumeParser
                 }
                 if (resume.Skills.Count > 0)
                     _logger.LogInformation("LLM recovered {Count} skills", resume.Skills.Count);
+            }
+        }
+
+        // Experience: ask LLM when structural parser found nothing
+        if (resume.Experience.Count == 0)
+        {
+            _logger.LogDebug("Experience empty — asking LLM for extraction");
+            var raw = await _llm!.ExtractExperienceSummaryAsync(text, ct);
+            if (!string.IsNullOrWhiteSpace(raw))
+            {
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                const int maxEntries = 20; // cap to prevent LLM repetition loops
+
+                foreach (var line in raw.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (resume.Experience.Count >= maxEntries) break;
+
+                    var trimmed = line.Trim().TrimStart('-', '*', '•', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ' ');
+                    if (trimmed.Length < 5) continue;
+
+                    // Dedup: skip if we've seen this exact line (LLM repetition)
+                    if (!seen.Add(trimmed)) continue;
+
+                    // Expected: "COMPANY_NAME | JOB_TITLE | START_DATE - END_DATE"
+                    var parts = trimmed.Split('|', StringSplitOptions.TrimEntries);
+                    if (parts.Length >= 2)
+                    {
+                        // Detect if first part looks like a date (LLM sometimes reverses order)
+                        var firstIsDate = ResumeDateParser.ContainsDate(parts[0]) && !ResumeDateParser.ContainsDate(parts[1]);
+                        var company = firstIsDate ? (parts.Length >= 3 ? parts[2].Trim() : "Unknown") : parts[0].Trim();
+                        var title = firstIsDate ? parts[1].Trim() : (parts.Length >= 2 ? parts[1].Trim() : "Unknown");
+                        var datePart = firstIsDate ? parts[0].Trim() : (parts.Length >= 3 ? parts[2].Trim() : null);
+
+                        // Skip if company == title (LLM confusion)
+                        if (string.Equals(company, title, StringComparison.OrdinalIgnoreCase))
+                            company = "Unknown";
+
+                        var entry = new lucidRESUME.Core.Models.Resume.WorkExperience
+                        {
+                            Company = company,
+                            Title = title
+                        };
+
+                        if (datePart != null)
+                        {
+                            var dateRange = ResumeDateParser.ExtractFirstDateRange(datePart);
+                            if (dateRange != null)
+                            {
+                                entry.StartDate = dateRange.Start;
+                                entry.EndDate = dateRange.End;
+                                entry.IsCurrent = dateRange.IsCurrent;
+                            }
+                        }
+
+                        resume.Experience.Add(entry);
+                    }
+                    else if (trimmed.Contains(',') || trimmed.Contains(" at "))
+                    {
+                        var sep = trimmed.Contains(" at ") ? " at " : ", ";
+                        var idx = trimmed.IndexOf(sep, StringComparison.OrdinalIgnoreCase);
+                        if (idx > 0)
+                        {
+                            resume.Experience.Add(new lucidRESUME.Core.Models.Resume.WorkExperience
+                            {
+                                Title = trimmed[..idx].Trim(),
+                                Company = trimmed[(idx + sep.Length)..].Trim()
+                            });
+                        }
+                    }
+                }
+                if (resume.Experience.Count > 0)
+                    _logger.LogInformation("LLM recovered {Count} experience entries", resume.Experience.Count);
             }
         }
     }

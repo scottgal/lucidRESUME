@@ -115,7 +115,7 @@ public sealed class StructuredDataExtractor
                 result.Location = locality.GetString();
         }
 
-        // jobLocationType — TELECOMMUTE = remote
+        // jobLocationType - TELECOMMUTE = remote
         if (el.TryGetProperty("jobLocationType", out var locType))
         {
             var locTypeStr = locType.GetString() ?? "";

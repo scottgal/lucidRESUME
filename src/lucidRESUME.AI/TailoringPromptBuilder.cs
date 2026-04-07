@@ -59,14 +59,14 @@ public static class TailoringPromptBuilder
 
             if (covered.Count > 0)
             {
-                sb.AppendLine("### Answered — lead with these, strongest first:");
+                sb.AppendLine("### Answered - lead with these, strongest first:");
                 foreach (var e in covered)
                     sb.AppendLine($"- [{e.Requirement.Priority}] {e.Requirement.Text} → \"{e.Evidence}\"");
             }
 
             if (gaps.Count > 0)
             {
-                sb.AppendLine("### Not covered — do NOT fabricate; omit or note as developing:");
+                sb.AppendLine("### Not covered - do NOT fabricate; omit or note as developing:");
                 foreach (var e in gaps)
                     sb.AppendLine($"- {e.Requirement.Text} (not covered in resume)");
             }

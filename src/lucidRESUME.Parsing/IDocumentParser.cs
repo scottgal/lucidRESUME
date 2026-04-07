@@ -43,7 +43,7 @@ public sealed class ParsedDocument
     /// Confidence that the document was fully and correctly parsed.
     /// 1.0 = matched a known template exactly.
     /// 0.5 = structural heuristics only.
-    /// 0.0 = could not parse — caller should fall back to Docling.
+    /// 0.0 = could not parse - caller should fall back to Docling.
     /// </summary>
     public double Confidence { get; init; } = 0.5;
 

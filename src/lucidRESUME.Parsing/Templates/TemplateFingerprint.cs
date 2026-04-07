@@ -7,13 +7,13 @@ using DocumentFormat.OpenXml.Wordprocessing;
 namespace lucidRESUME.Parsing.Templates;
 
 /// <summary>
-/// A structural signature of a Word document's *template definition* — not its content.
+/// A structural signature of a Word document's *template definition* - not its content.
 ///
 /// Two documents produced from the same .dotx template will produce identical (or near-
 /// identical) fingerprints regardless of how much content differs between them.
 ///
 /// Stable components used for fingerprinting:
-///   1. Sorted set of defined style names  (from styles.xml — template-level)
+///   1. Sorted set of defined style names  (from styles.xml - template-level)
 ///   2. Default body font name + size      (Normal style)
 ///   3. Page margins                       (section properties)
 ///   4. Attached template name             (from app.xml <Template>)

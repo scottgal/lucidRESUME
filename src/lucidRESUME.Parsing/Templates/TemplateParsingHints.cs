@@ -90,8 +90,8 @@ public sealed class TemplateParsingHints
     /// True when enough hints exist to drive deterministic extraction.
     ///
     /// Two modes:
-    ///   Style-based — document uses Word heading styles (SectionStyleIds populated).
-    ///   Text-based  — document uses plain paragraphs but section headings are
+    ///   Style-based - document uses Word heading styles (SectionStyleIds populated).
+    ///   Text-based  - document uses plain paragraphs but section headings are
     ///                 ALL-CAPS or match the section keyword map (SectionMap well-populated).
     ///
     /// Both modes produce semantic SemanticType values; only the path to detect headings differs.
@@ -111,7 +111,7 @@ public sealed class TemplateParsingHints
         var key = headingText.Trim().ToLowerInvariant();
         if (SectionMap.TryGetValue(key, out var exact)) return exact;
 
-        // Prefix match — handles "Professional Experience 2020–Present" etc.
+        // Prefix match - handles "Professional Experience 2020–Present" etc.
         foreach (var (k, v) in SectionMap)
         {
             // Forward: key = "professional experience 2020", k = "professional experience"
@@ -123,7 +123,7 @@ public sealed class TemplateParsingHints
                 var tail = key[k.Length..].TrimStart();
                 if (tail.Length == 0 || char.IsDigit(tail[0])
                     || tail[0] == '&' || tail[0] == '/' || tail[0] == '|'
-                    || tail[0] == '-' || tail[0] == '–' || tail[0] == '—')
+                    || tail[0] == '-' || tail[0] == '–' || tail[0] == '-')
                     return v;
             }
 
