@@ -23,7 +23,6 @@ env:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-    environment: nuget  # NuGet trusted publishing environment
 
     steps:
       - uses: actions/checkout@v4
@@ -54,17 +53,14 @@ jobs:
       - name: Pack
         run: dotnet pack ${{ env.PROJECT }} -c Release --no-build -o ./nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
 
-      - name: Get NuGet OIDC token
-        id: nuget-token
-        uses: actions/github-script@v7
+      - name: Login to NuGet (OIDC)
+        id: nuget_login
+        uses: NuGet/login@v1
         with:
-          script: |
-            const token = await core.getIDToken('api://AzureADTokenExchange');
-            core.setSecret(token);
-            core.setOutput('token', token);
+          user: 'mostlylucid'
 
       - name: Push to NuGet (trusted publishing)
-        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ steps.nuget-token.outputs.token }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ steps.nuget_login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
