@@ -1,0 +1,19 @@
+# GitHub API language name → canonical skill taxonomy form
+# Format: github_name: canonical_name
+# Add entries when GitHub's display name doesn't match our taxonomy
+C#: c#
+C++: c++
+Jupyter Notebook: python
+Shell: bash
+Dockerfile: docker
+HCL: terraform
+SCSS: css
+Vue: vue.js
+Makefile: make
+PLpgSQL: postgresql
+TSQL: sql server
+Gherkin: bdd
+Objective-C: objective-c
+Objective-C++: objective-c++
+Vim Script: vim
+Emacs Lisp: emacs

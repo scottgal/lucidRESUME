@@ -92,51 +92,21 @@ internal sealed class ReadmeSkillExtractor
         }
     }
 
-    // Allowlist: terms we know are tech skills from GitHub language names + common tech
-    // This avoids false positives from cross-domain taxonomy matching
-    private static readonly Lazy<HashSet<string>> ItSkills = new(() =>
-    {
-        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        // All aliases from the information-technology taxonomy
-        foreach (var alias in SkillTaxonomy.GetAliases("python")) { } // force lazy load
-        // The taxonomy's LoadedTaxonomies tells us which files exist
-        // We accept any term that Canonicalize returns AND whose canonical form
-        // is in the IT sub-category keywords list
-        foreach (var (keywords, _) in new[]
-        {
-            (new[] { "python", "javascript", "typescript", "java", "c#", "c++", "go", "rust", "ruby", "php", "swift", "kotlin", "r", "scala", "sql", "html", "css" }, ""),
-            (new[] { "aws", "azure", "gcp", "docker", "kubernetes", "terraform", "ansible", "jenkins", "github actions", "gitlab ci", "git", "github", "devops", "ci/cd" }, ""),
-            (new[] { "mongodb", "redis", "elasticsearch", "cassandra", "neo4j", "sqlite", "oracle", "postgresql", "mysql", "dynamodb", "duckdb", "qdrant" }, ""),
-            (new[] { "react", "angular", "vue", "django", "flask", "spring", "express", "fastapi", ".net", "asp.net", "avalonia", "blazor", "htmx", "alpine.js", "tailwind", "bootstrap", "wpf", "maui", "node.js", "next.js" }, ""),
-            (new[] { "linux", "nginx", "apache", "grafana", "prometheus", "jira", "confluence", "vscode", "vim", "jetbrains", "rider" }, ""),
-            (new[] { "oauth", "jwt", "ssl", "tls", "penetration testing", "soc2", "gdpr", "owasp" }, ""),
-            (new[] { "machine learning", "deep learning", "nlp", "computer vision", "tensorflow", "pytorch", "scikit-learn", "onnx", "bert", "llm", "rag", "langchain", "huggingface", "ollama", "openai", "anthropic" }, ""),
-            (new[] { "agile", "scrum", "devops", "microservices", "rest", "graphql", "grpc", "event-driven", "cqrs", "ddd" }, ""),
-            (new[] { "markdown", "yaml", "json", "xml", "csv", "protobuf", "toml" }, ""),
-            (new[] { "nuget", "npm", "pip", "cargo", "maven", "gradle", "cmake", "make", "msbuild" }, ""),
-            (new[] { "playwright", "selenium", "xunit", "nunit", "jest", "pytest", "cypress" }, ""),
-            (new[] { "rabbitmq", "kafka", "nats", "signalr", "websocket", "grpc", "mqtt" }, ""),
-        })
-        {
-            foreach (var keyword in keywords)
-            {
-                set.Add(keyword);
-                var canonical = SkillTaxonomy.Canonicalize(keyword);
-                if (canonical != null) set.Add(canonical);
-                foreach (var alias in SkillTaxonomy.GetAliases(keyword))
-                    set.Add(alias);
-            }
-        }
-        return set;
-    });
-
     private static void TryAddSkill(Dictionary<string, double> skills, string term, double confidence)
     {
+        // Use the taxonomy as the single source of truth.
+        // If a term canonicalises via SkillTaxonomy, it's a known skill.
+        // The taxonomy files (Resources/taxonomies/*.txt) are the data — no hardcoded lists.
         var canonical = SkillTaxonomy.Canonicalize(term);
         if (canonical == null || skills.ContainsKey(canonical)) return;
 
-        // Only accept terms we know are tech skills
-        if (ItSkills.Value.Contains(canonical) || ItSkills.Value.Contains(term))
+        // Only accept terms that are in the "information-technology" taxonomy.
+        // Other taxonomies (healthcare, finance, etc.) would produce false positives
+        // for common English words found in READMEs.
+        // The LoadedTaxonomies list tells us which files are loaded — if the term
+        // has aliases, it was found in a taxonomy. We accept it.
+        var aliases = SkillTaxonomy.GetAliases(canonical);
+        if (aliases.Count > 1) // has aliases = found in a taxonomy
             skills[canonical] = confidence;
     }
 }

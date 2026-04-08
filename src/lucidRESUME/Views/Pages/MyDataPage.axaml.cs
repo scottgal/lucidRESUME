@@ -60,12 +60,11 @@ public partial class MyDataPage : UserControl
         var tickPositions = new List<double>();
         var tickLabels = new List<string>();
 
-        // Only show entries that have dates AND a real company name (not locations)
+        // Only show entries that have dates AND both title and company
         var expList = vm.Experience
             .Where(e => e.StartDate.HasValue
                         && !string.IsNullOrWhiteSpace(e.Company)
-                        && !string.IsNullOrWhiteSpace(e.Title)
-                        && !LooksLikeLocation(e.Company))
+                        && !string.IsNullOrWhiteSpace(e.Title))
             .OrderBy(e => e.StartDate)
             .ToList();
 
@@ -111,17 +110,6 @@ public partial class MyDataPage : UserControl
         plot.HideGrid();
 
         chart.Refresh();
-    }
-
-    private static bool LooksLikeLocation(string value)
-    {
-        // Filter out entries where the "company" is actually a location
-        var locationIndicators = new[] { "remote", "scotland", "england", "uk", "united kingdom", "united states", "canada", "paris", "london", "arizona", "tortola", "redmond", "glasgow", "edinburgh", "dreghorn" };
-        var lower = value.ToLowerInvariant().Trim();
-        // Locations often contain commas (e.g. "Edinburgh, UK") or are just a place name
-        if (lower.Contains(',') && lower.Split(',').All(p => p.Trim().Length < 20))
-            return locationIndicators.Any(loc => lower.Contains(loc));
-        return locationIndicators.Any(loc => lower.Equals(loc, StringComparison.OrdinalIgnoreCase));
     }
 
     private void BuildCommunityChart(MyDataPageViewModel vm)
