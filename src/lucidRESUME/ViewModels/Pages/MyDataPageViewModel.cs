@@ -10,6 +10,7 @@ using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Models.Skills;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.Matching;
+using lucidRESUME.Matching.Graph;
 using lucidRESUME.ViewModels.Pages.MyData;
 using SkiaSharp;
 
@@ -68,6 +69,11 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
     [ObservableProperty] private ISeries[] _categoryPieSeries = [];
     [ObservableProperty] private ISeries[] _topSkillsRadarSeries = [];
     [ObservableProperty] private PolarAxis[] _topSkillsRadarAxes = [];
+
+    // ── Skill Communities ─────────────────────────────────────────────────
+    [ObservableProperty] private ObservableCollection<CommunityCharacterisation> _communities = [];
+    [ObservableProperty] private Dictionary<string, (float X, float Y)> _skillPositions = [];
+    [ObservableProperty] private bool _hasCommunities;
 
     // ── Add Skill ──────────────────────────────────────────────────────────
     [ObservableProperty] private string _newSkillName = "";
@@ -155,6 +161,30 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
 
             // Build charts
             BuildCharts(allVms, _resume.Experience);
+
+            // Build skill communities (UMAP + Leiden characterisation)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var graph = new SkillGraph();
+                    graph.AddResumeLedger(_ledger);
+                    await graph.EmbedAsync(_ledgerBuilder.Embedder);
+                    graph.DetectCommunities();
+
+                    var positions = SkillGraphProjection.ProjectTo2D(graph);
+                    var chars = SkillGraphProjection.CharacteriseCommunities(graph);
+
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        SkillPositions = positions;
+                        Communities = new ObservableCollection<CommunityCharacterisation>(
+                            chars.Values.OrderByDescending(c => c.MemberCount));
+                        HasCommunities = Communities.Count > 0;
+                    });
+                }
+                catch { /* non-blocking */ }
+            });
         }
         finally
         {

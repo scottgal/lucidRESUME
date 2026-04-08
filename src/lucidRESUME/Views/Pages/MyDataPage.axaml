@@ -49,6 +49,40 @@
         </Grid>
       </Border>
 
+      <!-- Skill Communities (UMAP scatter plot) -->
+      <Border IsVisible="{Binding HasCommunities}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,16" Spacing="8">
+            <TextBlock Text="Skill Communities" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <TextBlock Text="Skills projected to 2D via UMAP. Colors = Leiden communities. Nearby skills are semantically related."
+                       Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="10"/>
+            <sp:AvaPlot x:Name="CommunityChart" Height="350"/>
+            <!-- Community labels -->
+            <ItemsControl ItemsSource="{Binding Communities}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="8,3" Margin="2">
+                    <TextBlock FontSize="9" Foreground="{DynamicResource LrSecondaryTextBrush}">
+                      <Run Text="{Binding Label}"/>
+                      <Run Text=" ("/>
+                      <Run Text="{Binding MemberCount}"/>
+                      <Run Text=")"/>
+                    </TextBlock>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
       <!-- No data state -->
       <Border IsVisible="{Binding !HasData}" Background="{DynamicResource LrSurfaceBgBrush}"
               CornerRadius="8" Padding="24">

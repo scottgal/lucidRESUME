@@ -14,6 +14,8 @@ public sealed class SkillLedgerBuilder
 {
     private readonly IEmbeddingService _embedder;
 
+    public IEmbeddingService Embedder => _embedder;
+
     public SkillLedgerBuilder(IEmbeddingService embedder)
     {
         _embedder = embedder;
