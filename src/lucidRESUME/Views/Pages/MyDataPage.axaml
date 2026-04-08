@@ -44,7 +44,7 @@
           <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3"/>
           <StackPanel Grid.Column="1" Margin="20,16" Spacing="4">
             <TextBlock Text="Career Timeline" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
-            <sp:AvaPlot x:Name="GanttChart" Height="300"/>
+            <sp:AvaPlot x:Name="GanttChart" MinHeight="200"/>
           </StackPanel>
         </Grid>
       </Border>

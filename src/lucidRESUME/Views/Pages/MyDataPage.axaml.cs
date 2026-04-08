@@ -60,12 +60,16 @@ public partial class MyDataPage : UserControl
         var tickPositions = new List<double>();
         var tickLabels = new List<string>();
 
-        var expList = vm.Experience.OrderBy(e => e.StartDate).ToList();
+        // Only show entries that have dates AND a company name
+        var expList = vm.Experience
+            .Where(e => e.StartDate.HasValue && !string.IsNullOrWhiteSpace(e.Company))
+            .OrderBy(e => e.StartDate)
+            .ToList();
 
         for (var i = 0; i < expList.Count; i++)
         {
             var exp = expList[i];
-            var start = exp.StartDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Today;
+            var start = exp.StartDate!.Value.ToDateTime(TimeOnly.MinValue);
             var end = exp.IsCurrent
                 ? DateTime.Today
                 : exp.EndDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Today;
@@ -80,10 +84,16 @@ public partial class MyDataPage : UserControl
             });
 
             tickPositions.Add(pos);
-            tickLabels.Add($"{exp.Title ?? ""} — {exp.Company ?? ""}");
+            // Short label: just company name, truncated
+            var company = exp.Company ?? "?";
+            if (company.Length > 20) company = company[..20] + "…";
+            tickLabels.Add(company);
         }
 
         if (bars.Count == 0) return;
+
+        // Scale chart height to number of entries
+        chart.Height = Math.Max(200, expList.Count * 28 + 60);
 
         var barPlot = plot.Add.Bars(bars.ToArray());
         barPlot.Horizontal = true;
@@ -91,7 +101,7 @@ public partial class MyDataPage : UserControl
         plot.Axes.DateTimeTicksBottom();
         plot.Axes.Left.SetTicks(tickPositions.ToArray(), tickLabels.ToArray());
         plot.Axes.Left.TickLabelStyle.ForeColor = ScottPlot.Color.FromHex("#CDD6F4");
-        plot.Axes.Left.TickLabelStyle.FontSize = 9;
+        plot.Axes.Left.TickLabelStyle.FontSize = 10;
         plot.Axes.Bottom.TickLabelStyle.ForeColor = ScottPlot.Color.FromHex("#A6ADC8");
         plot.Axes.Bottom.TickLabelStyle.FontSize = 10;
         plot.Axes.Margins(left: 0);
