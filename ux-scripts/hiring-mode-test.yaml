@@ -1,0 +1,23 @@
+name: hiring-mode-test
+description: Test the Looking/Hiring toggle and employer role entry form
+default_delay: 400
+
+actions:
+  - type: Wait
+    value: "2000"
+
+  # Go to Jobs page
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: hiring-01-looking-mode
+
+  # The toggle should be visible — screenshot shows Looking mode
+  - type: Scroll
+    value: top
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: hiring-02-jobs-toolbar

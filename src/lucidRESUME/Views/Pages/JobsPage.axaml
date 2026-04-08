@@ -71,15 +71,44 @@
     <!-- Main content area -->
     <Grid Grid.Row="2" ColumnDefinitions="300,*">
 
-      <!-- LEFT: job list -->
+      <!-- LEFT: job list (Looking mode) or role list (Hiring mode) -->
       <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource LrBorderBrush}">
         <Panel>
+          <!-- Looking mode empty state -->
           <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
-                      IsVisible="{Binding !Jobs.Count}">
+                      IsVisible="{Binding !Jobs.Count}" IsEnabled="{Binding !IsHiringMode}">
             <TextBlock Text="No jobs yet." Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="15" FontWeight="SemiBold"
-                       HorizontalAlignment="Center"/>
+                       HorizontalAlignment="Center" IsVisible="{Binding !IsHiringMode}"/>
             <TextBlock Text="Run a search above." Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="13"
-                       HorizontalAlignment="Center"/>
+                       HorizontalAlignment="Center" IsVisible="{Binding !IsHiringMode}"/>
+          </StackPanel>
+
+          <!-- Hiring mode empty state -->
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                      IsVisible="{Binding IsHiringMode}">
+            <TextBlock Text="My Roles" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="15" FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       IsVisible="{Binding !HiringRoles.Count}"/>
+            <TextBlock Text="Post your first role using the form." Foreground="{DynamicResource LrSubtleTextBrush}" FontSize="12"
+                       HorizontalAlignment="Center"
+                       IsVisible="{Binding !HiringRoles.Count}"/>
+            <!-- Hiring roles list -->
+            <ScrollViewer IsVisible="{Binding HiringRoles.Count}">
+              <ItemsControl ItemsSource="{Binding HiringRoles}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:JobListItem">
+                    <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="4,2">
+                      <StackPanel Spacing="2">
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+                        <TextBlock FontSize="10" Foreground="{DynamicResource LrSecondaryTextBrush}">
+                          <Run Text="{Binding Company}"/><Run Text=" · "/><Run Text="{Binding Location}"/>
+                        </TextBlock>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
           </StackPanel>
 
           <ScrollViewer IsVisible="{Binding Jobs.Count}">
@@ -113,12 +142,73 @@
         </Panel>
       </Border>
 
-      <!-- RIGHT: job detail -->
+      <!-- RIGHT: job detail (Looking) or role form (Hiring) -->
       <Panel Grid.Column="1">
+
+        <!-- Hiring mode: role entry form -->
+        <ScrollViewer IsVisible="{Binding IsHiringMode}">
+          <StackPanel Margin="20,16" Spacing="12" MaxWidth="600">
+            <TextBlock Text="Post a Role" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <TextBlock Text="Salary and location are required. No 'competitive salary'."
+                       Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+
+            <!-- Title + Company -->
+            <Grid ColumnDefinitions="*,12,*" RowDefinitions="Auto,Auto">
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="Title *" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+              <TextBlock Grid.Row="0" Grid.Column="2" Text="Company" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+              <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringTitle}" Watermark="e.g. Senior .NET Developer" CornerRadius="4" Padding="8,4"/>
+              <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding HiringCompany}" Watermark="e.g. Acme Ltd" CornerRadius="4" Padding="8,4"/>
+            </Grid>
+
+            <!-- Location + Remote -->
+            <Grid ColumnDefinitions="*,12,Auto" RowDefinitions="Auto,Auto">
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="Location *" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+              <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringLocation}" Watermark="e.g. London, UK" CornerRadius="4" Padding="8,4"/>
+              <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <CheckBox Content="Remote" IsChecked="{Binding HiringIsRemote}" FontSize="11"/>
+                <CheckBox Content="Hybrid" IsChecked="{Binding HiringIsHybrid}" FontSize="11"/>
+              </StackPanel>
+            </Grid>
+
+            <!-- Salary (MANDATORY) -->
+            <Border Background="{DynamicResource LrSurfaceBgBrush}" CornerRadius="6" Padding="12,8"
+                    BorderBrush="{DynamicResource LrAccentGreenBrush}" BorderThickness="1">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Salary Range *" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentGreenBrush}" FontSize="12"/>
+                <Grid ColumnDefinitions="*,8,*,8,80" RowDefinitions="Auto,Auto">
+                  <TextBlock Grid.Row="0" Grid.Column="0" Text="Min" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="10"/>
+                  <TextBlock Grid.Row="0" Grid.Column="2" Text="Max" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="10"/>
+                  <TextBlock Grid.Row="0" Grid.Column="4" Text="Currency" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="10"/>
+                  <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringSalaryMin}" Watermark="e.g. 65000" CornerRadius="4" Padding="8,4"/>
+                  <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding HiringSalaryMax}" Watermark="e.g. 85000" CornerRadius="4" Padding="8,4"/>
+                  <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding HiringSalaryCurrency}" Watermark="GBP" CornerRadius="4" Padding="8,4"/>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <!-- Description -->
+            <StackPanel Spacing="4">
+              <TextBlock Text="Job Description" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+              <TextBox Text="{Binding HiringDescription}" AcceptsReturn="True" TextWrapping="Wrap" Height="150"
+                       Watermark="Paste or type the full job description..."
+                       CornerRadius="4" Padding="8,6"/>
+            </StackPanel>
+
+            <!-- Validation error -->
+            <TextBlock Text="{Binding HiringValidationError}" Foreground="{DynamicResource LrAccentRedBrush}" FontSize="11"
+                       IsVisible="{Binding HiringValidationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+            <!-- Save -->
+            <Button Content="Save Role" Command="{Binding SaveHiringRoleCommand}" Padding="16,8" FontSize="12"
+                    HorizontalAlignment="Left"/>
+          </StackPanel>
+        </ScrollViewer>
+
+        <!-- Looking mode: empty state -->
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                     IsVisible="{Binding SelectedJob, Converter={x:Static ObjectConverters.IsNull}}">
           <TextBlock Text="Select a job to view details." Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="15"
-                     HorizontalAlignment="Center"/>
+                     HorizontalAlignment="Center" IsVisible="{Binding !IsHiringMode}"/>
         </StackPanel>
 
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="20,16"
