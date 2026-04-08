@@ -248,7 +248,11 @@
       "Bash(sed -i '' 's/Symbol=\"\"DataBarVertical\"\"/Symbol=\"\"{x:Static fic:Symbol.DataBarVertical}\"\"/g' src/lucidRESUME/MainWindow.axaml)",
       "Bash(sed -i '' 's/Symbol=\"\"Rocket\"\"/Symbol=\"\"{x:Static fic:Symbol.Rocket}\"\"/g' src/lucidRESUME/MainWindow.axaml)",
       "Bash(sed -i '' 's/Symbol=\"\"BriefCase\"\"/Symbol=\"\"{x:Static fic:Symbol.Briefcase}\"\"/g' src/lucidRESUME/MainWindow.axaml)",
-      "Bash(sed -i '' 's/Symbol=\"\"Add\"\"/Symbol=\"\"{x:Static fic:Symbol.Add}\"\"/g' src/lucidRESUME/MainWindow.axaml)"
+      "Bash(sed -i '' 's/Symbol=\"\"Add\"\"/Symbol=\"\"{x:Static fic:Symbol.Add}\"\"/g' src/lucidRESUME/MainWindow.axaml)",
+      "WebFetch(domain:create.microsoft.com)",
+      "WebFetch(domain:word.cloud.microsoft)",
+      "WebFetch(domain:www.coolfreecv.com)",
+      "WebFetch(domain:www.careerreload.com)"
     ]
   }
 }
