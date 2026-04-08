@@ -40,8 +40,14 @@ public sealed class LinkedInZipParser
         using var zip = ZipFile.OpenRead(zipPath);
         var csvs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        const long maxEntrySize = 50 * 1024 * 1024; // 50MB per file — ZIP bomb protection
         foreach (var entry in zip.Entries.Where(e => e.FullName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)))
         {
+            if (entry.Length > maxEntrySize)
+            {
+                _logger.LogWarning("Skipping oversized entry {Name} ({Size}MB)", entry.FullName, entry.Length / 1024 / 1024);
+                continue;
+            }
             await using var stream = entry.Open();
             using var reader = new StreamReader(stream);
             csvs[entry.FullName] = await reader.ReadToEndAsync(ct);

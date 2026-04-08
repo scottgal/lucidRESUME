@@ -1,32 +1,38 @@
+using lucidRESUME.Core.Interfaces;
+
 namespace lucidRESUME.Core.Models.Resume;
 
 /// <summary>
 /// Merges data from a new import into an existing ResumeDocument.
-/// All imports (DOCX, LinkedIn, GitHub, manual) feed the SAME document.
-/// Source tracking on each element for provenance and anomaly detection.
+/// Uses embedding cosine similarity for semantic matching — no brittle string hacks.
 /// </summary>
-public static class ResumeDocumentMerger
+public sealed class ResumeDocumentMerger
 {
-    /// <summary>
-    /// Merge an incoming document into the target, deduplicating and source-tracking.
-    /// Returns any cross-source anomalies detected.
-    /// </summary>
-    public static List<ImportAnomaly> MergeInto(ResumeDocument target, ResumeDocument incoming, string sourceName)
+    private readonly IEmbeddingService _embedder;
+    private const float CompanyMatchThreshold = 0.75f;
+    private const float TitleMatchThreshold = 0.70f;
+    private const int DateOverlapGraceDays = 90;
+
+    public ResumeDocumentMerger(IEmbeddingService embedder)
+    {
+        _embedder = embedder;
+    }
+
+    public async Task<List<ImportAnomaly>> MergeIntoAsync(
+        ResumeDocument target, ResumeDocument incoming, string sourceName, CancellationToken ct = default)
     {
         var anomalies = new List<ImportAnomaly>();
 
-        // Personal info: fill gaps, detect conflicts
         MergePersonalInfo(target.Personal, incoming.Personal, sourceName, anomalies);
 
-        // Experience: match by company+date overlap, merge or add
+        // Experience: semantic match by company + date overlap
         foreach (var exp in incoming.Experience)
         {
             exp.ImportSources.Add(sourceName);
-            var match = FindMatchingExperience(target.Experience, exp);
+            var match = await FindMatchingExperienceAsync(target.Experience, exp, ct);
             if (match != null)
             {
-                // Detect anomalies before merging
-                DetectExperienceAnomalies(match, exp, sourceName, anomalies);
+                await DetectExperienceAnomaliesAsync(match, exp, sourceName, anomalies, ct);
                 MergeExperience(match, exp, sourceName);
             }
             else
@@ -35,12 +41,11 @@ public static class ResumeDocumentMerger
             }
         }
 
-        // Skills: merge by name, track sources
+        // Skills: semantic match by name
         foreach (var skill in incoming.Skills)
         {
             skill.ImportSources.Add(sourceName);
-            var existing = target.Skills.FirstOrDefault(s =>
-                s.Name.Equals(skill.Name, StringComparison.OrdinalIgnoreCase));
+            var existing = await FindMatchingSkillAsync(target.Skills, skill.Name, ct);
             if (existing != null)
             {
                 if (!existing.ImportSources.Contains(sourceName))
@@ -48,6 +53,7 @@ public static class ResumeDocumentMerger
                 existing.Category ??= skill.Category;
                 if (skill.YearsExperience.HasValue)
                     existing.YearsExperience = Math.Max(existing.YearsExperience ?? 0, skill.YearsExperience.Value);
+                existing.EndorsementCount = Math.Max(existing.EndorsementCount, skill.EndorsementCount);
             }
             else
             {
@@ -55,12 +61,11 @@ public static class ResumeDocumentMerger
             }
         }
 
-        // Education: match by institution
+        // Education: semantic match by institution
         foreach (var edu in incoming.Education)
         {
             edu.ImportSources.Add(sourceName);
-            var existing = target.Education.FirstOrDefault(e =>
-                NormalizeCompany(e.Institution ?? "").Equals(NormalizeCompany(edu.Institution ?? ""), StringComparison.OrdinalIgnoreCase));
+            var existing = await FindMatchingEducationAsync(target.Education, edu, ct);
             if (existing != null)
             {
                 if (!existing.ImportSources.Contains(sourceName))
@@ -76,7 +81,7 @@ public static class ResumeDocumentMerger
             }
         }
 
-        // Projects: match by name
+        // Projects: match by name (case-insensitive — project names are specific enough)
         foreach (var proj in incoming.Projects)
         {
             proj.ImportSources.Add(sourceName);
@@ -98,86 +103,103 @@ public static class ResumeDocumentMerger
             }
         }
 
-        // Certifications
         foreach (var cert in incoming.Certifications)
         {
             if (!target.Certifications.Any(c => c.Name.Equals(cert.Name, StringComparison.OrdinalIgnoreCase)))
                 target.Certifications.Add(cert);
         }
 
-        // Entities
         target.Entities.AddRange(incoming.Entities);
 
-        // Append raw text
         if (!string.IsNullOrWhiteSpace(incoming.PlainText))
-            target.PlainText = string.Join("\n\n", new[] { target.PlainText, incoming.PlainText }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            target.PlainText = string.Join("\n\n",
+                new[] { target.PlainText, incoming.PlainText }.Where(s => !string.IsNullOrWhiteSpace(s)));
 
         target.LastModifiedAt = DateTimeOffset.UtcNow;
-
         return anomalies;
     }
 
-    private static void MergePersonalInfo(PersonalInfo target, PersonalInfo incoming, string source, List<ImportAnomaly> anomalies)
+    private async Task<WorkExperience?> FindMatchingExperienceAsync(
+        List<WorkExperience> existing, WorkExperience incoming, CancellationToken ct)
     {
-        // Detect conflicts
-        if (target.FullName != null && incoming.FullName != null &&
-            !target.FullName.Equals(incoming.FullName, StringComparison.OrdinalIgnoreCase))
-        {
-            anomalies.Add(new ImportAnomaly
-            {
-                Type = AnomalyType.NameMismatch,
-                Description = $"Name differs: '{target.FullName}' vs '{incoming.FullName}' (from {source})",
-                Severity = AnomalySeverity.Warning,
-                Source = source,
-            });
-        }
+        if (string.IsNullOrWhiteSpace(incoming.Company)) return null;
 
-        // Fill gaps (don't overwrite existing)
-        target.FullName ??= incoming.FullName;
-        target.Email ??= incoming.Email;
-        target.Phone ??= incoming.Phone;
-        target.Location ??= incoming.Location;
-        target.LinkedInUrl ??= incoming.LinkedInUrl;
-        target.GitHubUrl ??= incoming.GitHubUrl;
-        target.WebsiteUrl ??= incoming.WebsiteUrl;
-        target.Summary ??= incoming.Summary;
-    }
+        var incomingEmb = await _embedder.EmbedAsync(incoming.Company, ct);
 
-    private static WorkExperience? FindMatchingExperience(List<WorkExperience> existing, WorkExperience incoming)
-    {
         foreach (var exp in existing)
         {
-            var ca = NormalizeCompany(exp.Company ?? "");
-            var cb = NormalizeCompany(incoming.Company ?? "");
-            if (ca.Length == 0 || cb.Length == 0) continue;
+            if (string.IsNullOrWhiteSpace(exp.Company)) continue;
 
-            var companySimilar = ca.Contains(cb, StringComparison.OrdinalIgnoreCase)
-                                 || cb.Contains(ca, StringComparison.OrdinalIgnoreCase);
-            if (!companySimilar) continue;
+            var existingEmb = await _embedder.EmbedAsync(exp.Company, ct);
+            var similarity = _embedder.CosineSimilarity(incomingEmb, existingEmb);
 
-            // Date overlap check (90-day grace)
-            if (exp.StartDate is null || incoming.StartDate is null) return exp; // same company, trust it
+            if (similarity < CompanyMatchThreshold) continue;
+
+            // Company matches — check date overlap
+            if (exp.StartDate is null || incoming.StartDate is null) return exp;
             var aEnd = (exp.IsCurrent ? DateOnly.FromDateTime(DateTime.Today) : exp.EndDate ?? DateOnly.FromDateTime(DateTime.Today)).DayNumber;
             var bEnd = (incoming.IsCurrent ? DateOnly.FromDateTime(DateTime.Today) : incoming.EndDate ?? DateOnly.FromDateTime(DateTime.Today)).DayNumber;
-            if (exp.StartDate.Value.DayNumber <= bEnd + 90 && incoming.StartDate.Value.DayNumber <= aEnd + 90)
+            if (exp.StartDate.Value.DayNumber <= bEnd + DateOverlapGraceDays &&
+                incoming.StartDate.Value.DayNumber <= aEnd + DateOverlapGraceDays)
                 return exp;
         }
         return null;
     }
 
-    private static void DetectExperienceAnomalies(WorkExperience existing, WorkExperience incoming, string source, List<ImportAnomaly> anomalies)
+    private async Task<Skill?> FindMatchingSkillAsync(List<Skill> existing, string skillName, CancellationToken ct)
     {
-        // Title mismatch
-        if (existing.Title != null && incoming.Title != null &&
-            !existing.Title.Equals(incoming.Title, StringComparison.OrdinalIgnoreCase))
+        // Fast exact match first
+        var exact = existing.FirstOrDefault(s => s.Name.Equals(skillName, StringComparison.OrdinalIgnoreCase));
+        if (exact != null) return exact;
+
+        // Semantic match for aliases ("K8s" ≈ "Kubernetes")
+        var incomingEmb = await _embedder.EmbedAsync(skillName, ct);
+        foreach (var skill in existing)
         {
-            anomalies.Add(new ImportAnomaly
+            var existingEmb = await _embedder.EmbedAsync(skill.Name, ct);
+            if (_embedder.CosineSimilarity(incomingEmb, existingEmb) >= 0.85f)
+                return skill;
+        }
+        return null;
+    }
+
+    private async Task<Education?> FindMatchingEducationAsync(
+        List<Education> existing, Education incoming, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(incoming.Institution)) return null;
+
+        var incomingEmb = await _embedder.EmbedAsync(incoming.Institution, ct);
+        foreach (var edu in existing)
+        {
+            if (string.IsNullOrWhiteSpace(edu.Institution)) continue;
+            var existingEmb = await _embedder.EmbedAsync(edu.Institution, ct);
+            if (_embedder.CosineSimilarity(incomingEmb, existingEmb) >= CompanyMatchThreshold)
+                return edu;
+        }
+        return null;
+    }
+
+    private async Task DetectExperienceAnomaliesAsync(
+        WorkExperience existing, WorkExperience incoming, string source,
+        List<ImportAnomaly> anomalies, CancellationToken ct)
+    {
+        // Title mismatch — use semantic similarity
+        if (existing.Title != null && incoming.Title != null)
+        {
+            var simTitle = _embedder.CosineSimilarity(
+                await _embedder.EmbedAsync(existing.Title, ct),
+                await _embedder.EmbedAsync(incoming.Title, ct));
+
+            if (simTitle < TitleMatchThreshold)
             {
-                Type = AnomalyType.TitleMismatch,
-                Description = $"Title differs for {existing.Company}: '{existing.Title}' vs '{incoming.Title}' (from {source})",
-                Severity = AnomalySeverity.Info,
-                Source = source,
-            });
+                anomalies.Add(new ImportAnomaly
+                {
+                    Type = AnomalyType.TitleMismatch,
+                    Description = $"Title differs for {existing.Company}: '{existing.Title}' vs '{incoming.Title}' (similarity {simTitle:P0}, from {source})",
+                    Severity = AnomalySeverity.Info,
+                    Source = source,
+                });
+            }
         }
 
         // Date mismatch (>3 months difference)
@@ -197,44 +219,54 @@ public static class ResumeDocumentMerger
         }
     }
 
+    private static void MergePersonalInfo(PersonalInfo target, PersonalInfo incoming, string source, List<ImportAnomaly> anomalies)
+    {
+        if (target.FullName != null && incoming.FullName != null &&
+            !target.FullName.Equals(incoming.FullName, StringComparison.OrdinalIgnoreCase))
+        {
+            anomalies.Add(new ImportAnomaly
+            {
+                Type = AnomalyType.NameMismatch,
+                Description = $"Name differs: '{target.FullName}' vs '{incoming.FullName}' (from {source})",
+                Severity = AnomalySeverity.Warning,
+                Source = source,
+            });
+        }
+
+        target.FullName ??= incoming.FullName;
+        target.Email ??= incoming.Email;
+        target.Phone ??= incoming.Phone;
+        target.Location ??= incoming.Location;
+        target.LinkedInUrl ??= incoming.LinkedInUrl;
+        target.GitHubUrl ??= incoming.GitHubUrl;
+        target.WebsiteUrl ??= incoming.WebsiteUrl;
+        target.Summary ??= incoming.Summary;
+    }
+
     private static void MergeExperience(WorkExperience target, WorkExperience incoming, string source)
     {
         if (!target.ImportSources.Contains(source))
             target.ImportSources.Add(source);
 
-        // Keep longer title
         if ((incoming.Title?.Length ?? 0) > (target.Title?.Length ?? 0))
             target.Title = incoming.Title;
 
         target.Location ??= incoming.Location;
 
-        // Extend date range
         if (incoming.StartDate.HasValue && (target.StartDate is null || incoming.StartDate < target.StartDate))
             target.StartDate = incoming.StartDate;
         if (incoming.IsCurrent) target.IsCurrent = true;
         if (!target.IsCurrent && incoming.EndDate.HasValue && (target.EndDate is null || incoming.EndDate > target.EndDate))
             target.EndDate = incoming.EndDate;
 
-        // Merge technologies
         foreach (var tech in incoming.Technologies)
             if (!target.Technologies.Contains(tech, StringComparer.OrdinalIgnoreCase))
                 target.Technologies.Add(tech);
 
-        // Merge unique achievements
         foreach (var ach in incoming.Achievements)
             if (!target.Achievements.Any(a => a.Contains(ach, StringComparison.OrdinalIgnoreCase)
                                                || ach.Contains(a, StringComparison.OrdinalIgnoreCase)))
                 target.Achievements.Add(ach);
-    }
-
-    private static string NormalizeCompany(string name)
-    {
-        var suffixes = new[] { " ltd", " limited", " inc", " corp", " plc", " gmbh", " ab", " llc", " pty" };
-        var lower = name.ToLowerInvariant().Trim().TrimEnd('.');
-        foreach (var suffix in suffixes)
-            if (lower.EndsWith(suffix))
-                lower = lower[..^suffix.Length].TrimEnd(',', ' ');
-        return lower;
     }
 }
 

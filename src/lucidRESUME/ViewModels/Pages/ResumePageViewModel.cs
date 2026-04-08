@@ -280,8 +280,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             }
             else
             {
-                // Subsequent import — merge into existing
-                var anomalies = Core.Models.Resume.ResumeDocumentMerger.MergeInto(target, incoming, sourceName);
+                // Subsequent import — merge into existing using semantic matching
+                var merger = new Core.Models.Resume.ResumeDocumentMerger(_ledgerBuilder.Embedder);
+                var anomalies = await merger.MergeIntoAsync(target, incoming, sourceName);
                 Resume = target;
                 await _store.MutateAsync(s => s.AddOrReplaceResume(target, select: true));
 

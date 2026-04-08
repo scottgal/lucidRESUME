@@ -211,12 +211,12 @@ public sealed class SkillGraph
         Nodes[b].Edges[a] = w2 + weight;
     }
 
-    private static double ModularityGain(SkillNode node, int targetCommunity,
+    private double ModularityGain(SkillNode node, int targetCommunity,
         List<SkillNode> allNodes, double totalWeight)
     {
-        // Sum of edges from node to nodes in target community
+        // Sum of edges from node to nodes in target community — O(1) lookup via Nodes dict
         var ki_in = node.Edges
-            .Where(kv => Nodes_GetCommunity(allNodes, kv.Key) == targetCommunity)
+            .Where(kv => Nodes.TryGetValue(kv.Key, out var n) && n.CommunityId == targetCommunity)
             .Sum(kv => kv.Value);
         var ki = node.Edges.Values.Sum();
         var sigma_tot = allNodes
@@ -225,7 +225,4 @@ public sealed class SkillGraph
 
         return ki_in / totalWeight - (sigma_tot * ki) / (2 * totalWeight * totalWeight);
     }
-
-    private static int Nodes_GetCommunity(List<SkillNode> nodes, string name) =>
-        nodes.FirstOrDefault(n => n.SkillName.Equals(name, StringComparison.OrdinalIgnoreCase))?.CommunityId ?? -1;
 }

@@ -80,7 +80,8 @@ public sealed class GitHubApiClient
                     return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64));
             }
         }
-        catch (Exception) when (true) { /* no README, bad base64, etc. */ }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { /* no README, bad base64, etc. */ }
         return null;
     }
 

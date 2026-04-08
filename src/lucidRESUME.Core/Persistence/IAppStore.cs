@@ -210,14 +210,20 @@ public sealed class AppState
         return aStart <= bEnd + graceDays && bStart <= aEnd + graceDays;
     }
 
+    private static readonly string[] CompanySuffixes =
+        [" ltd", " limited", " inc", " incorporated", " corp", " corporation",
+         " plc", " gmbh", " ab", " llc", " pty", " co", " sa", " ag"];
+
+    /// <summary>
+    /// Simple string normalization for backwards-compat dedup.
+    /// The primary merge path uses embedding cosine similarity (ResumeDocumentMerger).
+    /// </summary>
     private static string NormalizeCompany(string name)
     {
-        // Strip common suffixes: Ltd, Limited, Inc, Corp, Plc, GmbH, AB, etc.
-        var suffixes = new[] { " ltd", " limited", " inc", " corp", " plc", " gmbh", " ab", " llc", " pty" };
         var lower = name.ToLowerInvariant().Trim().TrimEnd('.');
-        foreach (var suffix in suffixes)
+        foreach (var suffix in CompanySuffixes)
             if (lower.EndsWith(suffix))
-                lower = lower[..^suffix.Length].TrimEnd(',', ' ');
+                return lower[..^suffix.Length].TrimEnd(',', ' ');
         return lower;
     }
 

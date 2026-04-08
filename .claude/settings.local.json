@@ -241,7 +241,8 @@
       "Bash(xcode-select -p)",
       "Bash(.gitignore:*)",
       "Bash(gh repo:*)",
-      "Bash(unzip -p ~/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip \"Positions.csv\")"
+      "Bash(unzip -p ~/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip \"Positions.csv\")",
+      "Bash(chmod:*)"
     ]
   }
 }
