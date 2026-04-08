@@ -15,5 +15,9 @@ root.Subcommands.Add(TailorCommand.Build());
 root.Subcommands.Add(DriftCommand.Build());
 root.Subcommands.Add(EvidenceCommand.Build());
 root.Subcommands.Add(ExplainCommand.Build());
+root.Subcommands.Add(ValidateCommand.Build());
+root.Subcommands.Add(ExtractJdCommand.Build());
+root.Subcommands.Add(AnonymizeCommand.Build());
+root.Subcommands.Add(RankCommand.Build());
 
 return await root.Parse(args).InvokeAsync();

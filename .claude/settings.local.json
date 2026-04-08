@@ -252,7 +252,11 @@
       "WebFetch(domain:create.microsoft.com)",
       "WebFetch(domain:word.cloud.microsoft)",
       "WebFetch(domain:www.coolfreecv.com)",
-      "WebFetch(domain:www.careerreload.com)"
+      "WebFetch(domain:www.careerreload.com)",
+      "Bash(sed -i '' 's/formatOpt.SetDefaultValue\\(\"\"markdown\"\"\\);//' src/lucidRESUME.Cli/Commands/AnonymizeCommand.cs)",
+      "Bash(sed -i '' 's/new Option<string>\\(\"\"--format\"\"\\) { Description/new Option<string>\\(\"\"--format\"\", \\(\\) => \"\"markdown\"\"\\) { Description/' src/lucidRESUME.Cli/Commands/AnonymizeCommand.cs)",
+      "Bash(sed -i '' 's/limitOpt.SetDefaultValue\\(20\\);//' src/lucidRESUME.Cli/Commands/RankCommand.cs)",
+      "Bash(sed -i '' 's/new Option<int>\\(\"\"--limit\"\"\\) { Description/new Option<int>\\(\"\"--limit\"\", \\(\\) => 20\\) { Description/' src/lucidRESUME.Cli/Commands/RankCommand.cs)"
     ]
   }
 }
