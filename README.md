@@ -112,7 +112,20 @@ JSON Resume (standard schema), Markdown, **DOCX** (Word via OpenXml), and **PDF*
 ### Documentation
 - [Release & Archive Guide](docs/release.md) - release workflow, platform archives, and single-page docs archive.
 - [Technical Architecture](docs/architecture.md) - modules, data flow, persistence, and extraction pipeline.
+- [Document Layout Detection](docs/layout-detection.md) - DocLayNet YOLO model, structural hashing, template communities.
 - [In-App User Manual](src/lucidRESUME/Resources/user-manual.md) - the same help content embedded in the desktop app.
+
+### CLI
+
+```bash
+lucidresume parse      --file cv.docx [--output result.json]
+lucidresume tailor     --resume cv.docx --job "JD text" [--output tailored.md]
+lucidresume drift      --resume1 old.docx --resume2 new.docx
+lucidresume export     --file cv.docx --format pdf|docx|markdown|json
+lucidresume match      --resume cv.docx --job "JD text"
+lucidresume github-import --username scottgal
+lucidresume batch-test --dir resumes/
+```
 
 ---
 
@@ -168,13 +181,13 @@ Requires [.NET 10 SDK](https://dotnet.microsoft.com/download). See [docs/release
 
 **Multi-signal RRF fusion**: structural analysis + ONNX NER (2 models: `dslim/bert-base-NER` + `yashpwr/resume-ner-bert-v2`) + LLM recovery + regex patterns - all run in parallel, fused by reciprocal rank fusion. Same pattern for both resume and JD extraction.
 
-ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) power semantic matching throughout. Docling (Docker) adds ML-based PDF layout detection for complex documents; PdfPig with column detection as local fallback.
+ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) power semantic matching throughout. **[DocLayNet YOLO model](docs/layout-detection.md)** detects document structure from rendered page images — titles, section headers, tables, lists — producing a structural hash for template identification. Docling (Docker) adds ML-based PDF layout detection for complex documents; PdfPig with column detection as local fallback.
 
 ### Architecture
 
 ```
-lucidRESUME (Avalonia UI - 6 pages: My CV, Jobs, Add Job, Apply, Pipeline, Profile)
-    ├── Ingestion        Resume parsing, Docling client, image cache
+lucidRESUME (Avalonia UI - 9 pages: My CV, My Data, Career, Jobs, Add Job, Apply, Pipeline, Profile, Help)
+    ├── Ingestion        Resume parsing, DocLayNet layout detection, Morph preview, LinkedIn import
     ├── Extraction       ONNX NER (2 models) + Microsoft.Recognizers pipeline
     ├── Parsing          DOCX/PDF/TXT extraction, ATS pattern detection, template learning
     ├── JobSpec          JD parsing (RRF fusion: Structural + NER + LLM), URL scraping
@@ -205,7 +218,7 @@ lucidRESUME (Avalonia UI - 6 pages: My CV, Jobs, Add Job, Apply, Pipeline, Profi
 ## Tests
 
 ```bash
-dotnet test    # 183 tests across 7 projects
+dotnet test    # 183+ tests across 7 projects
 ```
 
 | Project | Tests | Coverage |
@@ -250,7 +263,7 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 - [x] PDF export of tailored resumes (QuestPDF, professional formatting)
 - [x] LinkedIn data export import (ZIP archive with full profile)
 - [x] GitHub repo skills import (languages, topics, README analysis via lucidRAG)
-- [ ] DocLayNet ONNX model for offline PDF layout detection (no Docker)
+- [x] DocLayNet ONNX model for document layout detection (YOLOv10m, 58MB, structural hashing)
 
 ---
 

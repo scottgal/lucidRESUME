@@ -47,16 +47,39 @@ xattr -dr com.apple.quarantine ~/Applications/lucidRESUME
 ### Supported Formats
 
 - **PDF** - including two-column layouts, LaTeX-generated, and scanned documents (with Docling)
-- **DOCX** - Microsoft Word and compatible editors
+- **DOCX** - Microsoft Word and compatible editors. Preview powered by [Morph](https://github.com/SimonCropp/Morph) — no LibreOffice needed.
 - **TXT** - plain text resumes
+- **LinkedIn ZIP** - drop your LinkedIn data export archive and it auto-detects and imports positions, skills, education, projects, and contact info
+- **GitHub** - import skills from your GitHub repos via the Profile page
 
 ### How to Import
+
+**Drag and drop** any file onto the app window to import. Or:
 
 1. Go to the **My CV** page
 2. **Choose your import mode** from the dropdown next to the Import button:
    - **Fast** - structural parsing + NER only. Sub-second. No external services needed. Best for well-formatted DOCX resumes and clean PDFs.
    - **AI** - adds LLM fallback for missing fields. Takes 3-10 seconds. Requires Ollama or a cloud API key. Best for messy PDFs, non-standard formats, or resumes where Fast mode missed experience/skills.
 3. Click **Import Resume** and select your file
+
+### Unified Candidate Document
+
+All imports merge into a **single candidate document**. Whether you import a DOCX resume, a LinkedIn archive, or GitHub repos, the data is merged using semantic matching (embedding cosine similarity):
+
+- **Experience**: matched by company name + date overlap
+- **Skills**: matched by name (handles aliases like "K8s" ≈ "Kubernetes")
+- **Education**: matched by institution
+- **Projects**: matched by name
+
+Each element tracks which imports contributed to it (e.g. "LinkedIn + Scott_Galloway_CTO.docx").
+
+### Import Review
+
+When importing into an existing document, you'll see a **review page** showing what would change. You can accept or reject individual items before they enter your data.
+
+### Document Layout Detection
+
+The app uses a DocLayNet YOLO model to understand your resume's visual structure — detecting titles, section headers, tables, columns, and list items. This produces a structural hash that correctly identifies different template layouts even when they use identical fonts.
 
 The extraction pipeline runs automatically:
 
@@ -124,6 +147,59 @@ The ledger flags issues:
 - **Stale** - last evidence is 5+ years old
 
 These aren't errors - they're signals that your resume could be stronger. A presentation gap (the evidence exists but isn't highlighted) is different from a true gap (you don't have the skill).
+
+---
+
+<!-- help:my-data -->
+## My Data Dashboard
+
+The **My Data** page shows everything extracted about you in one place:
+
+### Skills Dashboard
+- **Category pie chart** - visual breakdown of your skill categories (Languages, Frameworks, Cloud, etc.)
+- **Career Timeline** - Gantt chart showing your roles positioned by date
+- **Skill Communities** - UMAP projection of your skills colored by Leiden community clusters
+
+### Skill Ledger
+- Filter by category or search by name
+- Click any skill to expand and see every piece of evidence (which job, which bullet, what date range, what confidence)
+- Dismiss skills that were incorrectly detected
+- Add skills manually
+- Tier badges: Strong (green), Moderate (yellow), Weak (red)
+
+### Corrections
+- **Dismiss** skills or individual evidence entries — stored separately so re-imports don't lose your corrections
+- **Add manual skills** — creates evidence with Manual source
+- Personal info fields are editable — changes stored as overrides
+
+---
+
+<!-- help:career-planner -->
+## Career Planner
+
+The **Career** page analyses the gap between your skills and a target job:
+
+1. Select a job from the dropdown
+2. The planner classifies each gap:
+   - **Quick Wins** (low effort) — presentation gaps, just reword your resume
+   - **Side Projects** (medium effort) — adjacent skills in the same Leiden community
+   - **New Learning** (high effort) — true gaps requiring dedicated study
+3. Each recommendation shows the skill, gap type, and specific actionable advice
+
+---
+
+<!-- help:hiring-mode -->
+## Hiring Mode
+
+The Jobs page has a **Looking / Hiring** toggle:
+
+- **Looking** - the candidate view you're used to (browsing jobs, matching)
+- **Hiring** - for posting roles you're hiring for
+
+In Hiring mode:
+- **Salary and location are mandatory** — no "competitive salary"
+- Enter title, company, location, remote/hybrid, salary range, and description
+- The JD parser auto-extracts skills from the description
 
 ---
 
@@ -412,6 +488,20 @@ The app connects to `http://localhost:11434` by default. Change this on the Prof
 - **Current Title** - helps the AI frame your experience
 - **Years of Experience** - calibrates resume length recommendations
 - **Career Goals** - guides tailoring emphasis
+
+### Theme
+
+Choose **System**, **Light**, or **Dark** from the dropdown at the top of the Profile page.
+
+### GitHub Import
+
+Enter your GitHub username and click **Import** to extract skills from your public repos:
+- Languages (weighted by bytes — C# dominant across 22 repos counts more than 1 repo)
+- Topics from repo metadata
+- README analysis via lucidRAG (BERT mode, no LLM needed)
+- Per-project profiles with technologies, skills, and time ranges
+
+Supports personal access tokens for private repos and higher rate limits.
 
 ### Work Preferences
 
