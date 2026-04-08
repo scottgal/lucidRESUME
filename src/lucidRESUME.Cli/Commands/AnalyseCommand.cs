@@ -51,7 +51,7 @@ public static class AnalyseCommand
             var jobParser = services.GetRequiredService<IJobSpecParser>();
 
             Console.Error.WriteLine($"Parsing resume: {resume.Name}");
-            var resumeDoc = await resumeParser.ParseAsync(resume.FullName, ct);
+            var resumeDoc = await Infrastructure.ParseHelper.ParseAndAwaitAsync(resumeParser, resume.FullName, ct);
             if (resumeDoc.LlmEnhancementTask != null) await resumeDoc.LlmEnhancementTask;
 
             Console.Error.WriteLine("Parsing job spec...");

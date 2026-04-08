@@ -53,7 +53,7 @@ public static class ParseCommand
             var parser = services.GetRequiredService<IResumeParser>();
 
             Console.Error.WriteLine($"Parsing {file.Name}...");
-            var resume = await parser.ParseAsync(file.FullName, ct);
+            var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(parser, file.FullName, ct);
             if (resume.LlmEnhancementTask != null)
                 await resume.LlmEnhancementTask;
 

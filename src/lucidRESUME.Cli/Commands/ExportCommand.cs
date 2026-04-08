@@ -60,7 +60,7 @@ public static class ExportCommand
             var exporters = services.GetServices<IResumeExporter>();
 
             Console.Error.WriteLine($"Parsing {file.Name}...");
-            var resume = await resumeParser.ParseAsync(file.FullName, ct);
+            var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(resumeParser, file.FullName, ct);
 
             var fmt = format.ToLowerInvariant() switch
             {

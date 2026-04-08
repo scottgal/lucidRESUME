@@ -36,7 +36,7 @@ public static class MatchCommand
             var matcher = sp.GetRequiredService<SkillLedgerMatcher>();
 
             Console.WriteLine($"Parsing resume: {resumeFile.Name}");
-            var resume = await parser.ParseAsync(resumeFile.FullName, ct);
+            var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(parser, resumeFile.FullName, ct);
             if (resume.LlmEnhancementTask != null)
                 await resume.LlmEnhancementTask;
 

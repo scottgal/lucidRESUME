@@ -53,9 +53,9 @@ public static class TailorCommand
             var qualityAnalyser = services.GetRequiredService<IResumeQualityAnalyser>();
             var compressor = services.GetRequiredService<SemanticCompressor>();
 
-            // Parse resume
+            // Parse resume (awaits LLM skill recovery if triggered)
             Console.Error.WriteLine($"Parsing {resumeFile.Name}...");
-            var resume = await resumeParser.ParseAsync(resumeFile.FullName, ct);
+            var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(resumeParser, resumeFile.FullName, ct);
             Console.Error.WriteLine($"  {resume.Skills.Count} skills, {resume.Experience.Count} positions");
 
             // Parse JD
