@@ -13,5 +13,7 @@ root.Subcommands.Add(BatchTestCommand.Build());
 root.Subcommands.Add(GitHubImportCommand.Build());
 root.Subcommands.Add(TailorCommand.Build());
 root.Subcommands.Add(DriftCommand.Build());
+root.Subcommands.Add(EvidenceCommand.Build());
+root.Subcommands.Add(ExplainCommand.Build());
 
 return await root.Parse(args).InvokeAsync();

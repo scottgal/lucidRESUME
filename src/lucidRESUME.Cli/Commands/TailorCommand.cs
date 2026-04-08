@@ -19,7 +19,7 @@ public static class TailorCommand
         var resumeOpt = new Option<FileInfo>("--resume") { Required = true, Description = "Resume file (PDF or DOCX)" };
         resumeOpt.Aliases.Add("-r");
 
-        var jobOpt = new Option<string>("--job") { Required = true, Description = "Job description text or URL" };
+        var jobOpt = new Option<string?>("--job") { Description = "Job description text or URL" };
         jobOpt.Aliases.Add("-j");
 
         var outputOpt = new Option<FileInfo?>("--output") { Description = "Output file (default: stdout)" };
@@ -28,18 +28,30 @@ public static class TailorCommand
         var configOpt = new Option<FileInfo?>("--config") { Description = "Path to lucidresume.json config" };
         var evalOnlyOpt = new Option<bool>("--eval-only") { Description = "Only evaluate quality, don't tailor" };
 
+        var jobFileOpt = new Option<FileInfo?>("--job-file") { Description = "Job description file (alternative to --job)" };
+
         var cmd = new Command("tailor", "Tailor a resume for a specific job description")
         {
-            resumeOpt, jobOpt, outputOpt, configOpt, evalOnlyOpt
+            resumeOpt, jobOpt, jobFileOpt, outputOpt, configOpt, evalOnlyOpt
         };
 
         cmd.SetAction(async (result, ct) =>
         {
             var resumeFile = result.GetValue(resumeOpt)!;
-            var jobText = result.GetValue(jobOpt)!;
+            var jobText = result.GetValue(jobOpt);
+            var jobFile = result.GetValue(jobFileOpt);
             var output = result.GetValue(outputOpt);
             var config = result.GetValue(configOpt);
             var evalOnly = result.GetValue(evalOnlyOpt);
+
+            // Resolve JD from --job or --job-file
+            if (string.IsNullOrWhiteSpace(jobText) && jobFile is { Exists: true })
+                jobText = await File.ReadAllTextAsync(jobFile.FullName, ct);
+            if (string.IsNullOrWhiteSpace(jobText))
+            {
+                Console.Error.WriteLine("Provide --job \"text\" or --job-file jd.txt");
+                return;
+            }
 
             if (!resumeFile.Exists)
             {
