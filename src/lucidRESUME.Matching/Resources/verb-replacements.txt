@@ -1,0 +1,24 @@
+# Weak verb → strong verb replacement suggestions
+# Format: weak_phrase: strong_replacement
+# Used by the fix command to auto-improve bullet points.
+# One mapping per line. Case-insensitive matching.
+helped: supported
+worked on: delivered
+was responsible for: managed
+was involved in: contributed to
+assisted with: supported
+participated in: contributed to
+handled: managed
+did: executed
+made: developed
+got: achieved
+used: leveraged
+dealt with: resolved
+looked at: analysed
+went to: attended
+took part in: contributed to
+put together: assembled
+set up: established
+came up with: designed
+figured out: resolved
+ran: led
