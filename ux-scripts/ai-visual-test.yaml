@@ -1,0 +1,109 @@
+name: ai-visual-test-loop
+description: |
+  AI-powered visual testing — take screenshots at key points and use
+  the screenshot content to verify the UI looks correct.
+  Each screenshot is named for what should be visible.
+  A human or LLM reviewer checks the screenshots after.
+default_delay: 400
+
+actions:
+  - type: Wait
+    value: "2000"
+
+  # ═══════════════════════════════════════════════════════════════
+  # TEST 1: Import DOCX — expect page preview + quality analysis
+  # ═══════════════════════════════════════════════════════════════
+  - type: ImportFile
+    value: test-data/resumes/Scott_Galloway_CTO.docx
+  - type: Wait
+    value: "5000"
+  - type: Screenshot
+    value: ai-test-01-EXPECT-docx-preview-with-page-image-and-quality-score
+
+  # ═══════════════════════════════════════════════════════════════
+  # TEST 2: Import LinkedIn — expect merged data, not duplicates
+  # ═══════════════════════════════════════════════════════════════
+  - type: ImportFile
+    value: /Users/scottgalloway/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip
+  - type: Wait
+    value: "3000"
+  - type: Screenshot
+    value: ai-test-02-EXPECT-linkedin-merged-into-existing-not-separate
+
+  # ═══════════════════════════════════════════════════════════════
+  # TEST 3: My Data — expect dashboard with PIE CHART and GANTT
+  # ═══════════════════════════════════════════════════════════════
+  - type: Navigate
+    value: mydata
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: ai-test-03-EXPECT-skills-dashboard-with-colorful-pie-chart
+
+  - type: Scroll
+    value: "25%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: ai-test-04-EXPECT-gantt-chart-with-date-positioned-horizontal-bars
+
+  # ═══════════════════════════════════════════════════════════════
+  # TEST 4: My Data — expect skill ledger with evidence counts
+  # ═══════════════════════════════════════════════════════════════
+  - type: Scroll
+    value: "50%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: ai-test-05-EXPECT-skill-list-with-strength-scores-and-evidence-counts
+
+  # ═══════════════════════════════════════════════════════════════
+  # TEST 5: Career page — expect gap analysis UI
+  # ═══════════════════════════════════════════════════════════════
+  - type: Navigate
+    value: career
+  - type: Wait
+    value: "1000"
+  - type: Screenshot
+    value: ai-test-06-EXPECT-career-planner-with-job-selector
+
+  # ═══════════════════════════════════════════════════════════════
+  # TEST 6: Jobs page — expect Looking/Hiring toggle visible
+  # ═══════════════════════════════════════════════════════════════
+  - type: Navigate
+    value: jobs
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: ai-test-07-EXPECT-jobs-page-with-looking-hiring-toggle
+
+  # ═══════════════════════════════════════════════════════════════
+  # TEST 7: Profile page — expect GitHub import card
+  # ═══════════════════════════════════════════════════════════════
+  - type: Navigate
+    value: profile
+  - type: Wait
+    value: "500"
+  - type: Scroll
+    value: bottom
+  - type: Wait
+    value: "400"
+  - type: Screenshot
+    value: ai-test-08-EXPECT-profile-with-github-import-and-ai-provider
+
+  # ═══════════════════════════════════════════════════════════════
+  # TEST 8: All nav items accessible
+  # ═══════════════════════════════════════════════════════════════
+  - type: Navigate
+    value: help
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: ai-test-09-EXPECT-help-page-with-content
+
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: ai-test-10-EXPECT-pipeline-page-loads-without-crash

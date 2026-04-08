@@ -6,6 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="lucidRESUME.GitHub.Tests" />
+  </ItemGroup>
+
   <PropertyGroup>
     <!-- Use slim build to exclude Playwright, DuckDB, ImageSharp etc. -->
     <CompleteBuild>false</CompleteBuild>
