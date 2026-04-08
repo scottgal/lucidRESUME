@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
+using SkiaSharp;
 
 namespace lucidRESUME.Ingestion.Layout;
 
@@ -122,19 +123,57 @@ public sealed class DocumentLayoutDetector : IDisposable
 
     private static float[]? PreprocessImage(string imagePath)
     {
-        // Simple image loading using System.IO — the actual pixel processing
-        // would need SkiaSharp for resize/normalize. For now return null
-        // to indicate we need the bytes-based path.
-        return null;
+        using var stream = File.OpenRead(imagePath);
+        using var bitmap = SKBitmap.Decode(stream);
+        if (bitmap is null) return null;
+        return BitmapToTensor(bitmap);
     }
 
     private static float[]? PreprocessBytes(byte[] imageBytes, int width, int height)
     {
-        // Resize to InputSize x InputSize and normalize to [0,1] in CHW format
-        // This is a simplified version — a proper implementation would use SkiaSharp
-        // For YOLOv10: input is [1, 3, 640, 640] float32, normalized [0,1]
-        // TODO: implement proper resize+normalize with SkiaSharp
-        return null;
+        using var bitmap = SKBitmap.Decode(imageBytes);
+        if (bitmap is null) return null;
+        return BitmapToTensor(bitmap);
+    }
+
+    /// <summary>
+    /// Resize bitmap to InputSize x InputSize and convert to CHW float tensor normalised [0,1].
+    /// YOLO expects: [1, 3, 640, 640] with channels = RGB, values in [0, 1].
+    /// </summary>
+    private static float[] BitmapToTensor(SKBitmap original)
+    {
+        // Resize with letterboxing (maintain aspect ratio, pad with grey)
+        using var resized = new SKBitmap(InputSize, InputSize);
+        var scaleX = (float)InputSize / original.Width;
+        var scaleY = (float)InputSize / original.Height;
+        var scale = Math.Min(scaleX, scaleY);
+        var newW = (int)(original.Width * scale);
+        var newH = (int)(original.Height * scale);
+        var padX = (InputSize - newW) / 2;
+        var padY = (InputSize - newH) / 2;
+
+        using var canvas = new SKCanvas(resized);
+        canvas.Clear(new SKColor(114, 114, 114)); // YOLO standard grey padding
+        var destRect = new SKRect(padX, padY, padX + newW, padY + newH);
+        canvas.DrawBitmap(original, destRect);
+
+        // Convert to CHW float array normalised [0,1]
+        var tensor = new float[3 * InputSize * InputSize];
+        var pixels = resized.Pixels;
+
+        for (var y = 0; y < InputSize; y++)
+        {
+            for (var x = 0; x < InputSize; x++)
+            {
+                var pixel = pixels[y * InputSize + x];
+                var idx = y * InputSize + x;
+                tensor[0 * InputSize * InputSize + idx] = pixel.Red / 255f;   // R channel
+                tensor[1 * InputSize * InputSize + idx] = pixel.Green / 255f; // G channel
+                tensor[2 * InputSize * InputSize + idx] = pixel.Blue / 255f;  // B channel
+            }
+        }
+
+        return tensor;
     }
 
     private List<LayoutRegion> ParseDetections(Tensor<float> output, string imagePath)

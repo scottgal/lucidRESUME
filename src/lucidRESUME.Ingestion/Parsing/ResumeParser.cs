@@ -16,6 +16,7 @@ public sealed class ResumeParser : IResumeParser
     private readonly IDocumentImageCache _imageCache;
     private readonly ParserSelector _parserSelector;
     private readonly TemplateRegistry _templateRegistry;
+    private readonly Layout.DocumentLayoutDetector? _layoutDetector;
     private readonly ILlmExtractionService? _llm;
     private readonly ILogger<ResumeParser> _logger;
 
@@ -26,6 +27,7 @@ public sealed class ResumeParser : IResumeParser
         TemplateRegistry templateRegistry,
         ILogger<ResumeParser> logger,
         IDoclingClient? docling = null,
+        Layout.DocumentLayoutDetector? layoutDetector = null,
         ILlmExtractionService? llm = null)
     {
         _docling = docling;
@@ -33,6 +35,7 @@ public sealed class ResumeParser : IResumeParser
         _imageCache = imageCache;
         _parserSelector = parserSelector;
         _templateRegistry = templateRegistry;
+        _layoutDetector = layoutDetector;
         _llm = llm;
         _logger = logger;
     }
@@ -131,6 +134,57 @@ public sealed class ResumeParser : IResumeParser
 
         // ── 4. Section parsing ────────────────────────────────────────────
         MarkdownSectionParser.PopulateSections(resume, markdown, structuredSections);
+
+        // ── 4b. Layout detection from page images
+        // Uses DocLayNet YOLO model to detect document regions and build a structural hash.
+        // If no cached images exist, renders via Morph for DOCX files.
+        if (_layoutDetector is not null && mode != ParseMode.Fast)
+        {
+            try
+            {
+                string? pageImagePath = null;
+
+                // Try cached page images first
+                if (resume.ImageCacheKey is not null)
+                    pageImagePath = _imageCache.GetCachedPagePath(resume.ImageCacheKey, 1);
+
+                // If no cached image, render DOCX via Morph on the fly
+                if (pageImagePath is null
+                    && Path.GetExtension(filePath).Equals(".docx", StringComparison.OrdinalIgnoreCase))
+                {
+                    var tempDir = Path.Combine(Path.GetTempPath(), "lucidRESUME-layout", Path.GetFileNameWithoutExtension(filePath));
+                    var converter = new global::WordRender.Skia.DocumentConverter();
+                    var result = converter.ConvertToImages(filePath, tempDir, new global::WordRender.ConversionOptions
+                    {
+                        Dpi = 150,
+                        FontWidthScale = 1.07,
+                        FontFallback = _ => "Arial",
+                    });
+                    if (result.ImagePaths.Count > 0)
+                        pageImagePath = result.ImagePaths[0];
+                }
+
+                if (pageImagePath is not null && File.Exists(pageImagePath))
+                {
+                    var regions = await _layoutDetector.DetectAsync(pageImagePath, ct);
+                    if (regions.Count > 0)
+                    {
+                        var layoutHash = Layout.DocumentLayoutHash.Compute(regions);
+                        _logger.LogInformation("Layout detection: {Count} regions, hash={Hash}", regions.Count, layoutHash);
+
+                        // Log region summary for debugging
+                        var summary = regions.GroupBy(r => r.Label)
+                            .Select(g => $"{g.Key}:{g.Count()}")
+                            .ToList();
+                        _logger.LogDebug("Layout regions: {Summary}", string.Join(", ", summary));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Layout detection skipped");
+            }
+        }
 
         // ── 5. LLM fallback — only in AI/Full mode and when structural extraction has gaps
         // Fast mode: never calls LLM (sub-second parse, no external services)
