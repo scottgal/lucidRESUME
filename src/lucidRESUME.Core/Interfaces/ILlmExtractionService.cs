@@ -14,4 +14,10 @@ public interface ILlmExtractionService
 
     /// <summary>Returns a plain-text summary of work experience, or null on failure.</summary>
     Task<string?> ExtractExperienceSummaryAsync(string text, CancellationToken ct = default);
+
+    /// <summary>
+    /// Extracts the candidate's full name from a small text chunk (first few lines of a resume).
+    /// Returns just the name, or null on failure.
+    /// </summary>
+    Task<string?> ExtractNameAsync(string headerText, CancellationToken ct = default);
 }

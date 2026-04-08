@@ -29,9 +29,11 @@ public static class ServiceCollectionExtensions
             new OnnxNerDetector(generalNerOpts, sp.GetRequiredService<ILoggerFactory>().CreateLogger<OnnxNerDetector>()));
 
         // Resume NER (yashpwr/resume-ner-bert-v2): Skills, Degree, JobTitle, etc.
+        // This is a CASED model (bert-base-cased) — LowerCase must be false.
         var resumeNerSection = config.GetSection("OnnxNer");
         var resumeNerOpts = new OnnxNerOptions();
         resumeNerSection.Bind(resumeNerOpts);
+        resumeNerOpts.LowerCase = false; // bert-base-cased — do NOT lowercase input
         if (string.IsNullOrEmpty(resumeNerOpts.ModelPath))
             resumeNerOpts.ModelPath = "models/resume-ner/model.onnx";
         if (string.IsNullOrEmpty(resumeNerOpts.VocabPath))

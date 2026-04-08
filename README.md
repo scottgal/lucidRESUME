@@ -115,16 +115,26 @@ JSON Resume (standard schema), Markdown, **DOCX** (Word via OpenXml), and **PDF*
 - [Document Layout Detection](docs/layout-detection.md) - DocLayNet YOLO model, structural hashing, template communities.
 - [In-App User Manual](src/lucidRESUME/Resources/user-manual.md) - the same help content embedded in the desktop app.
 
-### CLI
+### CLI (17 Commands)
 
 ```bash
-lucidresume parse      --file cv.docx [--output result.json]
-lucidresume tailor     --resume cv.docx --job "JD text" [--output tailored.md]
-lucidresume drift      --resume1 old.docx --resume2 new.docx
-lucidresume export     --file cv.docx --format pdf|docx|markdown|json
-lucidresume match      --resume cv.docx --job "JD text"
-lucidresume github-import --username scottgal
-lucidresume batch-test --dir resumes/
+lucidresume parse          --file cv.docx [--output result.json]
+lucidresume evidence       --resume cv.docx [--output ledger.json]
+lucidresume match          --resume cv.docx --job "JD text"
+lucidresume compound-match --resume cv.docx --jobs-dir jds/
+lucidresume explain        --resume cv.docx --job "JD text"
+lucidresume tailor         --resume cv.docx --job "JD text" [--output tailored.md]
+lucidresume drift          --resume1 old.docx --resume2 new.docx
+lucidresume export         --file cv.docx --format pdf|docx|markdown|json
+lucidresume validate       --resume cv.docx
+lucidresume fix            --resume cv.docx [--output fixed.md]
+lucidresume generate       --resume cv.docx --prompt "2 page cloud resume"
+lucidresume anonymize      --resume cv.docx [--output anon.json]
+lucidresume rank           --dir resumes/ --job "JD text"
+lucidresume search         --prompt "senior .NET developer remote"
+lucidresume extract-jd     --job "JD text" [--output jd.json]
+lucidresume github-import  --username scottgal
+lucidresume batch-test     --dir resumes/
 ```
 
 ---
@@ -179,7 +189,7 @@ Requires [.NET 10 SDK](https://dotnet.microsoft.com/download). See [docs/release
 
 ### Extraction
 
-**Multi-signal RRF fusion**: structural analysis + ONNX NER (2 models: `dslim/bert-base-NER` + `yashpwr/resume-ner-bert-v2`) + LLM recovery + regex patterns - all run in parallel, fused by reciprocal rank fusion. Same pattern for both resume and JD extraction.
+**Multi-signal RRF fusion**: structural analysis + ONNX NER (2 models: `dslim/bert-base-NER` + `yashpwr/resume-ner-bert-v2`) + LLM recovery + regex patterns — all run in parallel, fused by reciprocal rank fusion. Same pattern for resume extraction, JD extraction, and person name resolution. Name extraction fuses NER entities, markdown headings, positional data, and email cross-referencing; LLM backstop catches the rest. 92% accuracy across 26 multilingual test resumes.
 
 ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) power semantic matching throughout. **[DocLayNet YOLO model](docs/layout-detection.md)** detects document structure from rendered page images — titles, section headers, tables, lists — producing a structural hash for template identification. Docling (Docker) adds ML-based PDF layout detection for complex documents; PdfPig with column detection as local fallback.
 
@@ -264,6 +274,9 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 - [x] LinkedIn data export import (ZIP archive with full profile)
 - [x] GitHub repo skills import (languages, topics, README analysis via lucidRAG)
 - [x] DocLayNet ONNX model for document layout detection (YOLOv10m, 58MB, structural hashing)
+- [x] RRF fusion name extraction (NER + positional + heading + email + LLM backstop — 92% accuracy)
+- [x] Full CLI toolkit (17 commands: parse, evidence, match, explain, tailor, rank, fix, generate, etc.)
+- [x] Batch testing and quality evaluation across 26 multilingual resumes
 
 ---
 

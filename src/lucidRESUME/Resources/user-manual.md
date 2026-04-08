@@ -81,12 +81,15 @@ When importing into an existing document, you'll see a **review page** showing w
 
 The app uses a DocLayNet YOLO model to understand your resume's visual structure — detecting titles, section headers, tables, columns, and list items. This produces a structural hash that correctly identifies different template layouts even when they use identical fonts.
 
-The extraction pipeline runs automatically:
+The extraction pipeline runs automatically using **RRF fusion** — multiple signals run in parallel and vote on the result:
 
 1. **Text extraction** - pulls raw text from the document
 2. **Section classification** - identifies Experience, Education, Skills, etc.
 3. **Entity extraction** - NER models find skills, job titles, companies, dates
-4. **Evidence linking** - connects each skill to where and when it appeared
+4. **Name extraction** - fuses NER entities, heading text, positional data, and email cross-referencing. LLM backstop when confidence is low — never fails.
+5. **Evidence linking** - connects each skill to where and when it appeared
+
+Multi-source agreement boosts confidence. The same pattern is used for resume parsing, JD extraction, and person name resolution.
 
 <!-- help:resume-multiple -->
 ### Multiple Resume Variants

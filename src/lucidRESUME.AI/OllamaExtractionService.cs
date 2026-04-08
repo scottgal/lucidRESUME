@@ -63,6 +63,22 @@ public sealed class OllamaExtractionService : ILlmExtractionService
         return await CallAsync(prompt, ct);
     }
 
+    public async Task<string?> ExtractNameAsync(string headerText, CancellationToken ct = default)
+    {
+        var input = headerText.Length > 500 ? headerText[..500] : headerText;
+        var prompt = $"""
+            What is the person's full name in this resume header? Reply with ONLY the name, nothing else.
+            If you cannot determine the name, reply with just "UNKNOWN".
+
+            {input}
+            """;
+        var result = await CallAsync(prompt, ct);
+        if (string.IsNullOrWhiteSpace(result) || result.Contains("UNKNOWN", StringComparison.OrdinalIgnoreCase))
+            return null;
+        // Clean: remove quotes, trailing periods, etc.
+        return result.Trim('"', '\'', '.', ' ', '\n', '\r');
+    }
+
     private async Task<string?> CallAsync(string prompt, CancellationToken ct)
     {
         try

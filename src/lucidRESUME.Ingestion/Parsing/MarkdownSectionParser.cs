@@ -377,8 +377,33 @@ public static class MarkdownSectionParser
         if (firstHeading == null) return;
         var raw = firstHeading.TrimStart('#').Trim();
         var namePart = raw.Split('|')[0].Trim();
-        if (namePart.Length > 2 && !IsKnownSection(namePart) && !namePart.Contains('@'))
-            resume.Personal.FullName = namePart.Split('.')[0].Trim();
+        if (namePart.Length <= 2 || IsKnownSection(namePart) || namePart.Contains('@')) return;
+
+        // Handle concatenated names from PDF extraction: "petermüller" → "Peter Müller"
+        if (!namePart.Contains(' ') && namePart.Length >= 4 && namePart.Length <= 30
+            && !namePart.Any(char.IsDigit))
+        {
+            var parts = new List<string>();
+            var start = 0;
+            for (var i = 1; i < namePart.Length; i++)
+            {
+                if (char.IsUpper(namePart[i]) && char.IsLower(namePart[i - 1]))
+                {
+                    parts.Add(namePart[start..i]);
+                    start = i;
+                }
+            }
+            parts.Add(namePart[start..]);
+
+            if (parts.Count >= 2)
+            {
+                resume.Personal.FullName = string.Join(' ', parts.Select(p =>
+                    char.ToUpper(p[0]) + p[1..]));
+                return;
+            }
+        }
+
+        resume.Personal.FullName = namePart.Split('.')[0].Trim();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
