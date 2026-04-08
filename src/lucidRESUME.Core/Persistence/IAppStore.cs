@@ -39,6 +39,7 @@ public sealed class AppState
     public List<JobApplication> Applications { get; set; } = [];
     public List<SearchWatch> SearchWatches { get; set; } = [];
     public UserOverrides Overrides { get; set; } = new();
+    public EmployerProfile? EmployerProfile { get; set; }
 
     // Returns built-ins + custom presets merged
     [JsonIgnore]

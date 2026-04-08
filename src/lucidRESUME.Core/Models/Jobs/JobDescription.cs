@@ -32,6 +32,9 @@ public sealed class JobDescription
     /// <summary>Classified employer type - populated by ResumeCoverageAnalyser on first analysis.</summary>
     public CompanyType CompanyType { get; set; } = CompanyType.Unknown;
 
+    /// <summary>True if this is a role the user is hiring for (employer mode), false if applying to.</summary>
+    public bool IsEmployerRole { get; set; }
+
     // Application tracking
     public double? MatchScore { get; set; }
     public bool IsBlocked { get; set; }

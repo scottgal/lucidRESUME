@@ -60,6 +60,23 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     /// <summary>Set after construction to allow navigation to the Apply page.</summary>
     public Action<string>? NavigateTo { get; set; }
 
+    // ── Looking / Hiring Toggle ──────────────────────────────────────────
+    [ObservableProperty] private bool _isHiringMode;
+    [ObservableProperty] private IReadOnlyList<JobListItem> _hiringRoles = [];
+    [ObservableProperty] private JobListItem? _selectedHiringRole;
+
+    // Hiring mode — editable fields for new/selected role
+    [ObservableProperty] private string _hiringTitle = "";
+    [ObservableProperty] private string _hiringCompany = "";
+    [ObservableProperty] private string _hiringLocation = "";
+    [ObservableProperty] private bool _hiringIsRemote;
+    [ObservableProperty] private bool _hiringIsHybrid;
+    [ObservableProperty] private decimal? _hiringSalaryMin;
+    [ObservableProperty] private decimal? _hiringSalaryMax;
+    [ObservableProperty] private string _hiringSalaryCurrency = "GBP";
+    [ObservableProperty] private string _hiringDescription = "";
+    [ObservableProperty] private string? _hiringValidationError;
+
     [ObservableProperty] private IReadOnlyList<JobListItem> _jobs = [];
     [ObservableProperty] private JobListItem? _selectedJob;
     [ObservableProperty] private bool _isLoading;
@@ -174,8 +191,14 @@ public sealed partial class JobsPageViewModel : ViewModelBase
                 j));
         }
 
-        Jobs = jobItems.AsReadOnly();
-        StatusMessage = $"{state.Jobs.Count} saved job(s).";
+        // Split into Looking (candidate) and Hiring (employer) views
+        Jobs = jobItems.Where(j => !j.FullJob.IsEmployerRole).ToList().AsReadOnly();
+        HiringRoles = jobItems.Where(j => j.FullJob.IsEmployerRole).ToList().AsReadOnly();
+
+        var totalCount = Jobs.Count + HiringRoles.Count;
+        StatusMessage = IsHiringMode
+            ? $"{HiringRoles.Count} role(s) you're hiring for."
+            : $"{Jobs.Count} saved job(s).";
 
         // Generate search suggestions from skill communities
         _ = GenerateSearchSuggestionsAsync(state);
@@ -511,6 +534,53 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         AspectType.CultureSignal => "Culture",
         _                        => type.ToString()
     };
+
+    // ── Hiring Mode ────────────────────────────────────────────────────────
+
+    partial void OnIsHiringModeChanged(bool value) => _ = LoadSavedAsync();
+
+    [RelayCommand]
+    private async Task SaveHiringRole()
+    {
+        // Validate mandatory fields
+        if (string.IsNullOrWhiteSpace(HiringTitle))
+        { HiringValidationError = "Title is required."; return; }
+        if (string.IsNullOrWhiteSpace(HiringLocation) && !HiringIsRemote)
+        { HiringValidationError = "Location is required (or mark as Remote)."; return; }
+        if (!HiringSalaryMin.HasValue || !HiringSalaryMax.HasValue || HiringSalaryMin <= 0 || HiringSalaryMax <= 0)
+        { HiringValidationError = "Salary range is required. No 'competitive salary'."; return; }
+        if (HiringSalaryMin > HiringSalaryMax)
+        { HiringValidationError = "Salary min must be less than max."; return; }
+
+        HiringValidationError = null;
+
+        var jd = JobDescription.Create(HiringDescription, new JobSource
+        {
+            Type = JobSourceType.EmployerDirect,
+        });
+        jd.Title = HiringTitle.Trim();
+        jd.Company = HiringCompany.Trim();
+        jd.Location = HiringIsRemote ? "Remote" : HiringLocation.Trim();
+        jd.IsRemote = HiringIsRemote;
+        jd.IsHybrid = HiringIsHybrid;
+        jd.Salary = new SalaryRange(HiringSalaryMin, HiringSalaryMax, HiringSalaryCurrency);
+        jd.IsEmployerRole = true;
+
+        await _store.MutateAsync(state => state.Jobs.Add(jd));
+
+        // Clear form
+        HiringTitle = "";
+        HiringCompany = "";
+        HiringLocation = "";
+        HiringIsRemote = false;
+        HiringIsHybrid = false;
+        HiringSalaryMin = null;
+        HiringSalaryMax = null;
+        HiringDescription = "";
+        StatusMessage = $"Role '{jd.Title}' saved.";
+
+        await LoadSavedAsync();
+    }
 }
 
 public sealed record SearchSuggestionItem(
