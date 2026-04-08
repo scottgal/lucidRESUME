@@ -1,0 +1,113 @@
+# University tier groups — factual membership in prestige associations
+# Format: tier_level: group_name: university_name
+# Tier 1 = globally elite, Tier 2 = nationally top, Tier 3 = well-regarded
+# This is NOT a ranking — it's association membership which is factual/public.
+
+# === TIER 1: Globally elite (consistently top 50 worldwide) ===
+
+# UK — Russell Group (top subset)
+1:Russell Group:University of Oxford
+1:Russell Group:University of Cambridge
+1:Russell Group:Imperial College London
+1:Russell Group:UCL
+1:Russell Group:London School of Economics
+1:Russell Group:University of Edinburgh
+1:Russell Group:King's College London
+
+# US — Ivy League + top peers
+1:Ivy League:Harvard University
+1:Ivy League:MIT
+1:Ivy League:Stanford University
+1:Ivy League:Princeton University
+1:Ivy League:Yale University
+1:Ivy League:Columbia University
+1:Ivy League:University of Pennsylvania
+1:Ivy League:Cornell University
+1:Top US:Caltech
+1:Top US:University of Chicago
+1:Top US:Duke University
+1:Top US:Johns Hopkins University
+1:Top US:UC Berkeley
+1:Top US:UCLA
+
+# China — C9 League
+1:C9 League:Peking University
+1:C9 League:Tsinghua University
+1:C9 League:Fudan University
+1:C9 League:Zhejiang University
+1:C9 League:Shanghai Jiao Tong University
+1:C9 League:Nanjing University
+
+# Australia — Group of Eight
+1:Group of Eight:University of Melbourne
+1:Group of Eight:University of Sydney
+1:Group of Eight:Australian National University
+1:Group of Eight:University of Queensland
+
+# India — IITs (top tier)
+1:IIT:IIT Bombay
+1:IIT:IIT Delhi
+1:IIT:IIT Madras
+1:IIT:IIT Kanpur
+1:IIT:IIT Kharagpur
+
+# Japan
+1:Top Japan:University of Tokyo
+1:Top Japan:Kyoto University
+
+# Singapore
+1:Top Singapore:National University of Singapore
+1:Top Singapore:Nanyang Technological University
+
+# Canada — U15
+1:U15:University of Toronto
+1:U15:McGill University
+1:U15:University of British Columbia
+
+# Europe
+1:Top Europe:ETH Zurich
+1:Top Europe:EPFL
+1:Top Europe:TU Munich
+
+# === TIER 2: Nationally top / regionally strong ===
+
+# UK — Rest of Russell Group
+2:Russell Group:University of Manchester
+2:Russell Group:University of Bristol
+2:Russell Group:University of Warwick
+2:Russell Group:University of Glasgow
+2:Russell Group:University of Birmingham
+2:Russell Group:University of Sheffield
+2:Russell Group:University of Nottingham
+2:Russell Group:University of Leeds
+2:Russell Group:University of Liverpool
+2:Russell Group:Queen Mary University of London
+2:Russell Group:University of Southampton
+2:Russell Group:Newcastle University
+2:Russell Group:Cardiff University
+2:Russell Group:Queen's University Belfast
+2:Russell Group:University of Exeter
+2:Russell Group:University of York
+
+# US — AAU members (broad selection)
+2:AAU:Georgia Tech
+2:AAU:Carnegie Mellon University
+2:AAU:University of Michigan
+2:AAU:University of Illinois
+2:AAU:University of Wisconsin-Madison
+2:AAU:University of Washington
+2:AAU:Purdue University
+2:AAU:University of Texas at Austin
+2:AAU:University of Minnesota
+
+# India — NITs, IIMs
+2:NIT:NIT Trichy
+2:NIT:NIT Warangal
+2:NIT:NIT Surathkal
+2:IIM:IIM Ahmedabad
+2:IIM:IIM Bangalore
+2:IIM:IIM Calcutta
+
+# === TIER 3: Well-regarded institutions ===
+# (Too many to list — anything with degree-granting accreditation
+# that doesn't fall into Tier 1 or 2 is Tier 3 by default)

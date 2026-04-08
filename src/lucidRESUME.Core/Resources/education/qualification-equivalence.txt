@@ -1,0 +1,129 @@
+# Qualification equivalence mapping — ISCED 2011 levels
+# Format: isced_level: country_code: qualification_name
+# Source: UNESCO ISCED 2011 mappings, ESCO, EQF referencing reports
+# ISCED levels: 1=Primary, 2=Lower Secondary, 3=Upper Secondary,
+#               4=Post-secondary non-tertiary, 5=Short-cycle tertiary,
+#               6=Bachelor, 7=Master, 8=Doctoral
+
+# === ISCED 3 — Upper Secondary ===
+3:GB:GCSE
+3:GB:O-Level
+3:US:High School Diploma
+3:US:GED
+3:IN:SSC
+3:IN:10th Standard
+3:DE:Mittlere Reife
+3:FR:Brevet
+3:JP:High School Diploma
+
+# === ISCED 4 — Post-secondary non-tertiary ===
+4:GB:A-Level
+4:GB:Scottish Highers
+4:GB:BTEC Level 3
+4:US:AP Courses
+4:DE:Abitur
+4:FR:Baccalauréat
+4:IN:HSC
+4:IN:12th Standard
+4:IN:ISC
+4:NL:VWO
+4:AU:HSC
+4:AU:VCE
+4:SG:GCE A-Level
+4:JP:Certificate of Upper Secondary Education
+
+# === ISCED 5 — Short-cycle tertiary ===
+5:GB:HND
+5:GB:HNC
+5:GB:Foundation Degree
+5:US:Associate Degree
+5:FR:BTS
+5:FR:DUT
+5:JP:Associate Degree
+5:AU:Advanced Diploma
+
+# === ISCED 6 — Bachelor's ===
+6:GB:BSc
+6:GB:BA
+6:GB:BEng
+6:GB:LLB
+6:GB:BSc (Hons)
+6:US:Bachelor of Science
+6:US:Bachelor of Arts
+6:US:BBA
+6:DE:Bachelor
+6:FR:Licence
+6:IN:B.Tech
+6:IN:BE
+6:IN:BSc
+6:IN:BA
+6:IN:BCA
+6:IN:B.Com
+6:JP:Gakushi
+6:CN:Bachelor
+6:AU:Bachelor Degree
+6:SG:Bachelor Degree
+6:NL:Bachelor
+6:SE:Kandidatexamen
+6:IT:Laurea Triennale
+6:ES:Grado
+6:BR:Bacharelado
+6:KR:Haksa
+
+# === ISCED 7 — Master's ===
+7:GB:MSc
+7:GB:MA
+7:GB:MEng
+7:GB:MBA
+7:GB:MPhil
+7:GB:LLM
+7:GB:PGCE
+7:GB:PgDip
+7:US:Master of Science
+7:US:Master of Arts
+7:US:MBA
+7:US:JD
+7:DE:Master
+7:DE:Diplom
+7:DE:Magister
+7:DE:Staatsexamen
+7:FR:Master
+7:FR:DEA
+7:FR:DESS
+7:FR:Diplôme d'Ingénieur
+7:IN:M.Tech
+7:IN:ME
+7:IN:MSc
+7:IN:MA
+7:IN:MCA
+7:IN:MBA
+7:JP:Shushi
+7:CN:Master
+7:AU:Master Degree
+7:SE:Magisterexamen
+7:IT:Laurea Magistrale
+7:ES:Máster
+7:BR:Mestrado
+7:KR:Seoksa
+
+# === ISCED 8 — Doctoral ===
+8:GB:PhD
+8:GB:DPhil
+8:GB:EngD
+8:GB:EdD
+8:US:PhD
+8:US:MD
+8:US:EdD
+8:US:DBA
+8:DE:Promotion
+8:DE:Dr.
+8:DE:Doktorgrad
+8:FR:Doctorat
+8:IN:PhD
+8:IN:D.Phil
+8:JP:Hakushi
+8:CN:Doctorate
+8:AU:PhD
+8:IT:Dottorato di Ricerca
+8:BR:Doutorado
+8:KR:Baksa
