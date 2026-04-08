@@ -21,5 +21,6 @@ root.Subcommands.Add(AnonymizeCommand.Build());
 root.Subcommands.Add(RankCommand.Build());
 root.Subcommands.Add(FixCommand.Build());
 root.Subcommands.Add(GenerateCommand.Build());
+root.Subcommands.Add(SearchCommand.Build());
 
 return await root.Parse(args).InvokeAsync();
