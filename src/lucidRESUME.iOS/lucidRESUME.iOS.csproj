@@ -12,6 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\lucidRESUME\lucidRESUME.csproj" />
+    <ProjectReference Include="..\lucidRESUME\lucidRESUME.csproj" Properties="BuildingForMobile=true" />
   </ItemGroup>
 </Project>
