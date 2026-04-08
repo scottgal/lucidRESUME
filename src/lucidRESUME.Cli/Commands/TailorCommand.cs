@@ -86,9 +86,19 @@ public static class TailorCommand
 
             // Tailor
             var tailoringService = services.GetService<IAiTailoringService>();
-            if (tailoringService is null || !tailoringService.IsAvailable)
+            if (tailoringService is null)
             {
-                Console.Error.WriteLine("No AI provider available. Start Ollama or configure API keys.");
+                Console.Error.WriteLine("No AI provider registered.");
+                return;
+            }
+
+            // Trigger availability check (services start with IsAvailable=false until checked)
+            if (tailoringService is AI.OllamaTailoringService ollama)
+                await ollama.CheckAvailabilityAsync(ct);
+
+            if (!tailoringService.IsAvailable)
+            {
+                Console.Error.WriteLine("AI provider not reachable. Start Ollama or configure API keys.");
                 Console.Error.WriteLine("Use --eval-only to skip tailoring.");
                 return;
             }
