@@ -39,7 +39,22 @@ public partial class App : Application
 
         var jobsPage = _provider.GetRequiredService<JobsPageViewModel>();
         var mainVm = _provider.GetRequiredService<MainWindowViewModel>();
+        var resumePage = _provider.GetRequiredService<ResumePageViewModel>();
         jobsPage.NavigateTo = page => mainVm.NavigateCommand.Execute(page);
+
+        // Wire import review: parse → preview → review page → apply/cancel → back to resume
+        resumePage.ShowImportReview = (target, preview) =>
+        {
+            var reviewVm = _provider.GetRequiredService<ImportReviewPageViewModel>();
+            reviewVm.LoadPreview(target, preview);
+            reviewVm.OnApplied = () =>
+            {
+                mainVm.NavigateCommand.Execute("Resume");
+                _ = resumePage.ImportFromPathAsync(target.FileName); // re-show the resume
+            };
+            reviewVm.OnCancelled = () => mainVm.NavigateCommand.Execute("Resume");
+            mainVm.ShowTransientPage(reviewVm);
+        };
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

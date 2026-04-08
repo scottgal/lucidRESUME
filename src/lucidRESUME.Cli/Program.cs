@@ -12,5 +12,6 @@ root.Subcommands.Add(TuneCommand.Build());
 root.Subcommands.Add(BatchTestCommand.Build());
 root.Subcommands.Add(GitHubImportCommand.Build());
 root.Subcommands.Add(TailorCommand.Build());
+root.Subcommands.Add(DriftCommand.Build());
 
 return await root.Parse(args).InvokeAsync();

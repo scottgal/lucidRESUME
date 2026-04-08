@@ -43,6 +43,23 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     public ObservableCollection<TagItem> SkillsToEmphasise { get; } = [];
     public ObservableCollection<TagItem> SkillsToAvoid { get; } = [];
 
+    // ── Theme ─────────────────────────────────────────────────────────────────
+    public IReadOnlyList<string> ThemeOptions { get; } = ["System", "Light", "Dark"];
+    [ObservableProperty] private string _selectedTheme = "System";
+
+    partial void OnSelectedThemeChanged(string value)
+    {
+        if (_isLoading) return;
+        var app = Avalonia.Application.Current;
+        if (app is null) return;
+        app.RequestedThemeVariant = value switch
+        {
+            "Light" => Avalonia.Styling.ThemeVariant.Light,
+            "Dark" => Avalonia.Styling.ThemeVariant.Dark,
+            _ => Avalonia.Styling.ThemeVariant.Default,
+        };
+    }
+
     // ── Toast ─────────────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isSaved;
 

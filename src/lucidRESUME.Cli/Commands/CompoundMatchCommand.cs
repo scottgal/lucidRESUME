@@ -53,7 +53,7 @@ public static class CompoundMatchCommand
                 }
 
                 Console.WriteLine($"\n--- Ingesting: {Path.GetFileName(file)} ---");
-                var resume = await parser.ParseAsync(file, ct);
+                var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(parser, file, ct);
                 if (resume.LlmEnhancementTask != null) await resume.LlmEnhancementTask;
                 var ledger = await ledgerBuilder.BuildAsync(resume, ct);
 
@@ -116,7 +116,7 @@ public static class CompoundMatchCommand
             foreach (var file in resumeFiles)
             {
                 if (!File.Exists(file)) continue;
-                var resume = await parser.ParseAsync(file, ct);
+                var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(parser, file, ct);
                 if (resume.LlmEnhancementTask != null) await resume.LlmEnhancementTask;
                 var singleLedger = await ledgerBuilder.BuildAsync(resume, ct);
                 var singleResult = await matcher.MatchAsync(singleLedger, jdLedger, ct);

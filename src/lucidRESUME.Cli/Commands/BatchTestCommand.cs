@@ -57,7 +57,7 @@ public static class BatchTestCommand
                 var fileSw = Stopwatch.StartNew();
                 try
                 {
-                    var resume = await parser.ParseAsync(file.FullName, ct);
+                    var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(parser, file.FullName, ct);
                     if (resume.LlmEnhancementTask != null)
                         await resume.LlmEnhancementTask;
                     SkillCategoriser.Categorise(resume);

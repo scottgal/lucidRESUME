@@ -8,9 +8,16 @@
   <ScrollViewer Background="{DynamicResource LrPageBgBrush}">
     <StackPanel Margin="24,16" Spacing="20" MaxWidth="720">
 
-      <!-- Page heading -->
-      <TextBlock Text="Profile" FontSize="22" FontWeight="Bold"
-                 Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,8"/>
+      <!-- Page heading + theme toggle -->
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="Profile" FontSize="22" FontWeight="Bold"
+                   Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,8"/>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+          <TextBlock Text="Theme:" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11" VerticalAlignment="Center"/>
+          <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}"
+                    MinWidth="90" FontSize="11"/>
+        </StackPanel>
+      </Grid>
 
       <!-- Card 1: Identity -->
       <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"

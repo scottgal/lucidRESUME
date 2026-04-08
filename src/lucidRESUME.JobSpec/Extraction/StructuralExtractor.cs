@@ -25,7 +25,13 @@ public static class StructuralExtractor
                 if (parts.Length == 2 && parts[0].Length > 2 && parts[1].Length > 2)
                 {
                     candidates.Add(new("title", parts[0], 0.9, "structural"));
-                    candidates.Add(new("company", parts[1], 0.85, "structural"));
+                    // Don't treat work arrangements as company names
+                    var secondLower = parts[1].ToLowerInvariant().Trim();
+                    if (secondLower is "remote" or "hybrid" or "onsite" or "on-site"
+                        or "fully remote" or "100% remote" or "work from home")
+                        candidates.Add(new("remote", "true", 0.9, "structural"));
+                    else
+                        candidates.Add(new("company", parts[1], 0.85, "structural"));
                     break;
                 }
             }

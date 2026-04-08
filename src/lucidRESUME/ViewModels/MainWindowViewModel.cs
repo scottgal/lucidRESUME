@@ -199,6 +199,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         CurrentPage = vm;
     }
 
+    /// <summary>Show a transient page (not in nav) like Import Review.</summary>
+    public void ShowTransientPage(ViewModelBase vm)
+    {
+        CurrentPage = vm;
+    }
+
     /// <summary>
     /// Navigate to Help page and scroll to a specific anchor.
     /// Called from ? buttons on other pages. Parameter format: "help:anchor-name"
