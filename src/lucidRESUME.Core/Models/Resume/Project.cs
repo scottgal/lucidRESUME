@@ -8,4 +8,7 @@ public sealed class Project
     public List<string> Technologies { get; set; } = [];
     public string? Url { get; set; }
     public DateOnly? Date { get; set; }
+
+    /// <summary>Import sources that contributed to this entry.</summary>
+    public List<string> ImportSources { get; set; } = [];
 }

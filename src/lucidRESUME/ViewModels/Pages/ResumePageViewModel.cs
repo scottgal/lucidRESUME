@@ -248,23 +248,49 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
         try
         {
-            // Route: LinkedIn ZIP export or resume file?
+            // Parse incoming data
+            Core.Models.Resume.ResumeDocument incoming;
+            string sourceName;
+
             if (LinkedInZipParser.IsLinkedInExport(path))
             {
                 StatusMessage = $"Importing LinkedIn data…";
-                Resume = await _linkedInParser.ParseAsync(path);
-                await ShowResumeAsync(Resume, null);
-                StatusMessage = $"LinkedIn import: {Resume.Skills.Count} skills, {Resume.Experience.Count} positions";
+                incoming = await _linkedInParser.ParseAsync(path);
+                sourceName = "LinkedIn";
             }
             else
             {
                 StatusMessage = $"Parsing {Path.GetFileName(path)}…";
-                Resume = await ParseResumeAsync(path, ParseMode.AI);
-                await ShowResumeAsync(Resume, path);
-                StatusMessage = $"Imported {Path.GetFileName(path)}";
+                incoming = await ParseResumeAsync(path, ParseMode.AI);
+                sourceName = Path.GetFileName(path);
             }
 
-            await SaveImportedResumeAsync(Resume);
+            // Merge into the single unified candidate document
+            var state = await _store.LoadAsync();
+            var target = state.SelectedResume;
+            if (target == null)
+            {
+                // First import — use incoming as the base
+                foreach (var exp in incoming.Experience) exp.ImportSources.Add(sourceName);
+                foreach (var skill in incoming.Skills) skill.ImportSources.Add(sourceName);
+                foreach (var edu in incoming.Education) edu.ImportSources.Add(sourceName);
+                foreach (var proj in incoming.Projects) proj.ImportSources.Add(sourceName);
+                Resume = incoming;
+                await _store.MutateAsync(s => s.AddOrReplaceResume(Resume, select: true));
+            }
+            else
+            {
+                // Subsequent import — merge into existing
+                var anomalies = Core.Models.Resume.ResumeDocumentMerger.MergeInto(target, incoming, sourceName);
+                Resume = target;
+                await _store.MutateAsync(s => s.AddOrReplaceResume(target, select: true));
+
+                if (anomalies.Count > 0)
+                    StatusMessage = $"Merged from {sourceName} ({anomalies.Count} anomalies detected)";
+            }
+
+            await ShowResumeAsync(Resume, path);
+            StatusMessage ??= $"Imported {sourceName}: {Resume.Skills.Count} skills, {Resume.Experience.Count} positions";
 
             // Index embeddings in background (non-blocking)
             if (_store is Core.Persistence.SqliteAppStore sqlStore)

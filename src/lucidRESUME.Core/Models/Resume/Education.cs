@@ -11,4 +11,7 @@ public sealed class Education
     public double? Gpa { get; set; }
     public int? GraduationYear { get; set; }
     public List<string> Highlights { get; set; } = [];
+
+    /// <summary>Import sources that contributed to this entry.</summary>
+    public List<string> ImportSources { get; set; } = [];
 }
