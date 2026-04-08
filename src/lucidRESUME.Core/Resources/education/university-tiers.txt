@@ -76,6 +76,22 @@
 2:Russell Group:University of Bristol
 2:Russell Group:University of Warwick
 2:Russell Group:University of Glasgow
+
+# Scotland — Ancient universities + strong modern institutions
+1:Ancient Scottish:University of St Andrews
+2:Ancient Scottish:University of Aberdeen
+2:Scottish:University of Strathclyde
+2:Scottish:Heriot-Watt University
+2:Scottish:University of Dundee
+2:Scottish:University of Stirling
+2:Scottish:Edinburgh Napier University
+2:Scottish:Glasgow Caledonian University
+2:Scottish:Robert Gordon University
+2:Scottish:University of the West of Scotland
+2:Scottish:Abertay University
+2:Scottish:Queen Margaret University
+2:Scottish:University of the Highlands and Islands
+
 2:Russell Group:University of Birmingham
 2:Russell Group:University of Sheffield
 2:Russell Group:University of Nottingham

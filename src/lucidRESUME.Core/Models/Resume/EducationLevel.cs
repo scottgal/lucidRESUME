@@ -49,12 +49,15 @@ public static class EducationLevelClassifier
         (["hnd", "hnc", "btec", "nvq", "city & guilds", "diplôme", "vocational", "technical diploma",
           "advanced diploma"], EducationLevel.Vocational),
 
-        // Post-secondary
+        // Post-secondary (includes Scottish Highers)
         (["a-level", "a level", "ib diploma", "international baccalaureate", "abitur", "baccalauréat",
-          "hsc", "higher secondary", "12th"], EducationLevel.PostSecondary),
+          "hsc", "higher secondary", "12th",
+          "scottish higher", "advanced higher", "sqa higher", "csys", "leaving cert"], EducationLevel.PostSecondary),
 
-        // Secondary
-        (["gcse", "o-level", "o level", "high school", "ssc", "secondary", "10th", "matric"], EducationLevel.SecondarySchool),
+        // Secondary (includes Scottish Standard Grades and National 5s)
+        (["gcse", "o-level", "o level", "o-grade", "high school", "ssc", "secondary", "10th", "matric",
+          "standard grade", "national 5", "intermediate 2", "intermediate 1", "national 4",
+          "junior cert"], EducationLevel.SecondarySchool),
     ];
 
     /// <summary>

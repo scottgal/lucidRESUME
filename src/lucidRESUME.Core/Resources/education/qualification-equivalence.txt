@@ -6,8 +6,19 @@
 #               6=Bachelor, 7=Master, 8=Doctoral
 
 # === ISCED 3 — Upper Secondary ===
+# England, Wales, Northern Ireland
 3:GB:GCSE
 3:GB:O-Level
+3:GB:CSE
+# Scotland — National Qualifications (SQA)
+3:SCO:Standard Grade
+3:SCO:National 5
+3:SCO:Intermediate 2
+3:SCO:Intermediate 1
+3:SCO:National 4
+3:SCO:O-Grade
+3:SCO:SCE Ordinary Grade
+# Other
 3:US:High School Diploma
 3:US:GED
 3:IN:SSC
@@ -15,12 +26,37 @@
 3:DE:Mittlere Reife
 3:FR:Brevet
 3:JP:High School Diploma
+3:IE:Junior Certificate
+3:IE:Junior Cert
 
 # === ISCED 4 — Post-secondary non-tertiary ===
+# England, Wales, Northern Ireland
 4:GB:A-Level
-4:GB:Scottish Highers
+4:GB:AS-Level
 4:GB:BTEC Level 3
+4:GB:BTEC National
+4:GB:City & Guilds Level 3
+4:GB:Access to Higher Education
+# Scotland — SQA Highers and Advanced Highers
+4:SCO:Scottish Higher
+4:SCO:Higher
+4:SCO:Highers
+4:SCO:Advanced Higher
+4:SCO:Advanced Highers
+4:SCO:CSYS
+4:SCO:Certificate of Sixth Year Studies
+4:SCO:SCE Higher Grade
+4:SCO:SQA Higher
+4:SCO:SQA Advanced Higher
+4:SCO:National Certificate
+4:SCO:HNC
+4:SCO:Scottish HNC
+# Ireland
+4:IE:Leaving Certificate
+4:IE:Leaving Cert
+# Other
 4:US:AP Courses
+4:US:IB Diploma
 4:DE:Abitur
 4:FR:Baccalauréat
 4:IN:HSC
@@ -29,25 +65,48 @@
 4:NL:VWO
 4:AU:HSC
 4:AU:VCE
+4:AU:ATAR
 4:SG:GCE A-Level
 4:JP:Certificate of Upper Secondary Education
 
 # === ISCED 5 — Short-cycle tertiary ===
+# UK-wide
 5:GB:HND
 5:GB:HNC
 5:GB:Foundation Degree
+5:GB:DipHE
+5:GB:BTEC Higher National
+# Scotland specific
+5:SCO:Scottish HND
+5:SCO:SQA HND
+5:SCO:SQA Professional Development Award
+5:SCO:SVQ Level 4
+# Other
 5:US:Associate Degree
 5:FR:BTS
 5:FR:DUT
 5:JP:Associate Degree
 5:AU:Advanced Diploma
+5:IE:Higher Certificate
 
 # === ISCED 6 — Bachelor's ===
+# Note: Scottish Honours degrees are 4 years (vs 3 in England).
+# Scottish Ordinary degrees (3 years) are also ISCED 6.
 6:GB:BSc
 6:GB:BA
 6:GB:BEng
 6:GB:LLB
 6:GB:BSc (Hons)
+6:GB:BA (Hons)
+6:GB:BEng (Hons)
+# IMPORTANT: Scottish MA from ancient universities (St Andrews, Glasgow, Aberdeen, Edinburgh)
+# is an UNDERGRADUATE degree (ISCED 6), NOT a postgraduate qualification.
+# This is a historical anomaly — do NOT map "MA" from these to ISCED 7.
+6:SCO:MA (Hons)
+6:SCO:Scottish MA
+6:SCO:Ordinary Degree
+6:SCO:General Degree
+6:SCO:Graduate Diploma
 6:US:Bachelor of Science
 6:US:Bachelor of Arts
 6:US:BBA
