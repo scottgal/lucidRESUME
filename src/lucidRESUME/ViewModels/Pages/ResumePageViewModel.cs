@@ -39,6 +39,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private string? _loadedFilePath;
     private bool _suppressResumeSelectionSave;
 
+    /// <summary>Set by App.axaml.cs to navigate to the import review page.</summary>
+    public Action<Core.Models.Resume.ResumeDocument, Core.Models.Resume.ImportPreview>? ShowImportReview { get; set; }
+
     // LibreOffice-generated page image paths (fallback when Docling unavailable)
     private string[] _libreOfficePageImages = [];
 
@@ -280,14 +283,21 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             }
             else
             {
-                // Subsequent import — merge into existing using semantic matching
+                // Subsequent import — show review page for user to approve/reject
                 var merger = new Core.Models.Resume.ResumeDocumentMerger(_ledgerBuilder.Embedder);
-                var anomalies = await merger.MergeIntoAsync(target, incoming, sourceName);
-                Resume = target;
-                await _store.MutateAsync(s => s.AddOrReplaceResume(target, select: true));
+                var preview = await merger.PreviewMergeAsync(target, incoming, sourceName);
 
-                if (anomalies.Count > 0)
-                    StatusMessage = $"Merged from {sourceName} ({anomalies.Count} anomalies detected)";
+                if (preview.TotalNewItems + preview.TotalMergeItems > 0)
+                {
+                    // Navigate to import review page
+                    StatusMessage = $"Reviewing {sourceName}: {preview.TotalNewItems} new, {preview.TotalMergeItems} to merge";
+                    ShowImportReview?.Invoke(target, preview);
+                    return; // resume page will re-show after review completes
+                }
+                else
+                {
+                    StatusMessage = $"No new data found in {sourceName}";
+                }
             }
 
             await ShowResumeAsync(Resume, path);

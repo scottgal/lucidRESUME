@@ -18,6 +18,207 @@ public sealed class ResumeDocumentMerger
         _embedder = embedder;
     }
 
+    /// <summary>
+    /// Preview what a merge would change WITHOUT modifying the target.
+    /// Returns an ImportPreview with accept/reject toggles on every item.
+    /// </summary>
+    public async Task<ImportPreview> PreviewMergeAsync(
+        ResumeDocument target, ResumeDocument incoming, string sourceName, CancellationToken ct = default)
+    {
+        var preview = new ImportPreview { SourceName = sourceName, Incoming = incoming };
+
+        // Personal info changes
+        PreviewPersonalInfo(target.Personal, incoming.Personal, sourceName, preview);
+
+        // Experience: classify as new or merge
+        foreach (var exp in incoming.Experience)
+        {
+            var match = await FindMatchingExperienceAsync(target.Experience, exp, ct);
+            if (match != null)
+            {
+                var titleDiffers = match.Title != null && exp.Title != null &&
+                    !match.Title.Equals(exp.Title, StringComparison.OrdinalIgnoreCase);
+                var datesDiffer = match.StartDate.HasValue && exp.StartDate.HasValue &&
+                    Math.Abs(match.StartDate.Value.DayNumber - exp.StartDate.Value.DayNumber) > 90;
+                var newAchievements = exp.Achievements.Count(a =>
+                    !match.Achievements.Any(ma => ma.Contains(a, StringComparison.OrdinalIgnoreCase)
+                                                   || a.Contains(ma, StringComparison.OrdinalIgnoreCase)));
+                var newTechs = exp.Technologies.Count(t =>
+                    !match.Technologies.Contains(t, StringComparer.OrdinalIgnoreCase));
+
+                preview.MergedExperience.Add(new ExperienceMergePreview
+                {
+                    Existing = match,
+                    Incoming = exp,
+                    TitleDiffers = titleDiffers,
+                    DatesDiffer = datesDiffer,
+                    NewAchievementsCount = newAchievements,
+                    NewTechnologiesCount = newTechs,
+                });
+
+                if (titleDiffers)
+                    preview.Anomalies.Add(new ImportAnomaly
+                    {
+                        Type = AnomalyType.TitleMismatch,
+                        Description = $"Title differs for {match.Company}: '{match.Title}' vs '{exp.Title}'",
+                        Severity = AnomalySeverity.Info, Source = sourceName,
+                    });
+                if (datesDiffer)
+                    preview.Anomalies.Add(new ImportAnomaly
+                    {
+                        Type = AnomalyType.DateMismatch,
+                        Description = $"Start date differs for {match.Company}: {match.StartDate:MMM yyyy} vs {exp.StartDate:MMM yyyy}",
+                        Severity = AnomalySeverity.Warning, Source = sourceName,
+                    });
+            }
+            else
+            {
+                preview.NewExperience.Add(new ReviewableItem<WorkExperience> { Item = exp });
+            }
+        }
+
+        // Skills
+        foreach (var skill in incoming.Skills)
+        {
+            var existing = await FindMatchingSkillAsync(target.Skills, skill.Name, ct);
+            if (existing != null)
+            {
+                preview.UpdatedSkills.Add(new SkillUpdatePreview
+                {
+                    Existing = existing,
+                    Incoming = skill,
+                    EndorsementChanged = skill.EndorsementCount > existing.EndorsementCount,
+                    YearsChanged = (skill.YearsExperience ?? 0) > (existing.YearsExperience ?? 0),
+                });
+            }
+            else
+            {
+                preview.NewSkills.Add(new ReviewableItem<Skill> { Item = skill });
+            }
+        }
+
+        // Education
+        foreach (var edu in incoming.Education)
+        {
+            var existing = await FindMatchingEducationAsync(target.Education, edu, ct);
+            if (existing == null)
+                preview.NewEducation.Add(new ReviewableItem<Education> { Item = edu });
+        }
+
+        // Projects
+        foreach (var proj in incoming.Projects)
+        {
+            var existing = target.Projects.FirstOrDefault(p =>
+                p.Name.Equals(proj.Name, StringComparison.OrdinalIgnoreCase));
+            if (existing == null)
+                preview.NewProjects.Add(new ReviewableItem<Project> { Item = proj });
+        }
+
+        // Personal info name conflict
+        if (target.Personal.FullName != null && incoming.Personal.FullName != null &&
+            !target.Personal.FullName.Equals(incoming.Personal.FullName, StringComparison.OrdinalIgnoreCase))
+        {
+            preview.Anomalies.Add(new ImportAnomaly
+            {
+                Type = AnomalyType.NameMismatch,
+                Description = $"Name differs: '{target.Personal.FullName}' vs '{incoming.Personal.FullName}'",
+                Severity = AnomalySeverity.Warning, Source = sourceName,
+            });
+        }
+
+        return preview;
+    }
+
+    /// <summary>
+    /// Apply only the accepted items from a preview to the target document.
+    /// </summary>
+    public void ApplyPreview(ResumeDocument target, ImportPreview preview)
+    {
+        var source = preview.SourceName;
+
+        // Personal info
+        foreach (var change in preview.PersonalInfoChanges.Where(c => c.IsAccepted && c.IncomingValue != null))
+        {
+            switch (change.FieldName)
+            {
+                case "FullName": target.Personal.FullName = change.IncomingValue; break;
+                case "Email": target.Personal.Email = change.IncomingValue; break;
+                case "Phone": target.Personal.Phone = change.IncomingValue; break;
+                case "Location": target.Personal.Location = change.IncomingValue; break;
+                case "LinkedInUrl": target.Personal.LinkedInUrl = change.IncomingValue; break;
+                case "GitHubUrl": target.Personal.GitHubUrl = change.IncomingValue; break;
+                case "WebsiteUrl": target.Personal.WebsiteUrl = change.IncomingValue; break;
+                case "Summary": target.Personal.Summary = change.IncomingValue; break;
+            }
+        }
+
+        // New experience
+        foreach (var item in preview.NewExperience.Where(i => i.IsAccepted))
+        {
+            item.Item.ImportSources.Add(source);
+            target.Experience.Add(item.Item);
+        }
+
+        // Merged experience
+        foreach (var merge in preview.MergedExperience.Where(m => m.IsAccepted))
+            MergeExperience(merge.Existing, merge.Incoming, source);
+
+        // New skills
+        foreach (var item in preview.NewSkills.Where(i => i.IsAccepted))
+        {
+            item.Item.ImportSources.Add(source);
+            target.Skills.Add(item.Item);
+        }
+
+        // Updated skills
+        foreach (var update in preview.UpdatedSkills.Where(u => u.IsAccepted))
+        {
+            if (!update.Existing.ImportSources.Contains(source))
+                update.Existing.ImportSources.Add(source);
+            update.Existing.Category ??= update.Incoming.Category;
+            if (update.Incoming.YearsExperience.HasValue)
+                update.Existing.YearsExperience = Math.Max(update.Existing.YearsExperience ?? 0, update.Incoming.YearsExperience.Value);
+            update.Existing.EndorsementCount = Math.Max(update.Existing.EndorsementCount, update.Incoming.EndorsementCount);
+        }
+
+        // Education
+        foreach (var item in preview.NewEducation.Where(i => i.IsAccepted))
+        {
+            item.Item.ImportSources.Add(source);
+            target.Education.Add(item.Item);
+        }
+
+        // Projects
+        foreach (var item in preview.NewProjects.Where(i => i.IsAccepted))
+        {
+            item.Item.ImportSources.Add(source);
+            target.Projects.Add(item.Item);
+        }
+
+        target.LastModifiedAt = DateTimeOffset.UtcNow;
+    }
+
+    private static void PreviewPersonalInfo(PersonalInfo current, PersonalInfo incoming, string source, ImportPreview preview)
+    {
+        void Check(string field, string? cur, string? inc)
+        {
+            if (inc == null) return;
+            if (cur == null)
+                preview.PersonalInfoChanges.Add(new FieldChange { FieldName = field, CurrentValue = cur, IncomingValue = inc });
+            else if (!cur.Equals(inc, StringComparison.OrdinalIgnoreCase))
+                preview.PersonalInfoChanges.Add(new FieldChange { FieldName = field, CurrentValue = cur, IncomingValue = inc, IsConflict = true });
+        }
+
+        Check("FullName", current.FullName, incoming.FullName);
+        Check("Email", current.Email, incoming.Email);
+        Check("Phone", current.Phone, incoming.Phone);
+        Check("Location", current.Location, incoming.Location);
+        Check("LinkedInUrl", current.LinkedInUrl, incoming.LinkedInUrl);
+        Check("GitHubUrl", current.GitHubUrl, incoming.GitHubUrl);
+        Check("WebsiteUrl", current.WebsiteUrl, incoming.WebsiteUrl);
+        Check("Summary", current.Summary, incoming.Summary);
+    }
+
     public async Task<List<ImportAnomaly>> MergeIntoAsync(
         ResumeDocument target, ResumeDocument incoming, string sourceName, CancellationToken ct = default)
     {

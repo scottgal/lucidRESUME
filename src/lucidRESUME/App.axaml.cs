@@ -234,6 +234,8 @@ public partial class App : Application
         services.AddSingleton<ProfilePageViewModel>();
         services.AddSingleton<MyDataPageViewModel>();
         services.AddSingleton<CareerPlannerPageViewModel>();
+        services.AddTransient<ImportReviewPageViewModel>();
+        services.AddTransient<lucidRESUME.Core.Models.Resume.ResumeDocumentMerger>();
         services.AddSingleton<PipelinePageViewModel>();
         services.AddSingleton<HelpPageViewModel>();
 

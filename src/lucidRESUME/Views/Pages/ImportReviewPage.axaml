@@ -1,0 +1,196 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:resume="using:lucidRESUME.Core.Models.Resume"
+             x:DataType="vm:ImportReviewPageViewModel"
+             x:Class="lucidRESUME.Views.Pages.ImportReviewPage">
+
+  <ScrollViewer Background="{DynamicResource LrPageBgBrush}">
+    <StackPanel Margin="24,16" Spacing="16" MaxWidth="800">
+
+      <!-- Header -->
+      <TextBlock Text="Review Import" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+
+      <!-- Summary card -->
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}"
+              BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,14" Spacing="8">
+            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}">
+              <Run Text="Importing from: "/><Run Text="{Binding SourceName}" FontWeight="Bold"/>
+            </TextBlock>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Border CornerRadius="10" Background="{DynamicResource LrAccentGreenBrush}" Padding="8,2">
+                <TextBlock FontSize="11" Foreground="White">
+                  <Run Text="{Binding NewItemCount}"/><Run Text=" new items"/>
+                </TextBlock>
+              </Border>
+              <Border CornerRadius="10" Background="{DynamicResource LrAccentBlueBrush}" Padding="8,2">
+                <TextBlock FontSize="11" Foreground="White">
+                  <Run Text="{Binding MergeItemCount}"/><Run Text=" to merge"/>
+                </TextBlock>
+              </Border>
+              <Border CornerRadius="10" Background="{DynamicResource LrAccentYellowBrush}" Padding="8,2"
+                      IsVisible="{Binding AnomalyCount}">
+                <TextBlock FontSize="11" Foreground="White">
+                  <Run Text="{Binding AnomalyCount}"/><Run Text=" conflicts"/>
+                </TextBlock>
+              </Border>
+            </StackPanel>
+            <TextBlock Text="Review the detected data below. Uncheck anything that's wrong."
+                       FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Anomalies -->
+      <Border IsVisible="{Binding AnomalyCount}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrAccentYellowBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentYellowBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,14" Spacing="4">
+            <TextBlock Text="Conflicts Detected" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrAccentYellowBrush}"/>
+            <ItemsControl ItemsSource="{Binding Anomalies}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="resume:ImportAnomaly">
+                  <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"
+                             TextWrapping="Wrap" Margin="0,2"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Personal Info Changes -->
+      <Border IsVisible="{Binding PersonalInfoChanges.Count}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,14" Spacing="6">
+            <TextBlock Text="Personal Info" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <ItemsControl ItemsSource="{Binding PersonalInfoChanges}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="resume:FieldChange">
+                  <Grid ColumnDefinitions="Auto,8,100,8,*" Margin="0,2">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding IsAccepted}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="{Binding FieldName}" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource LrSecondaryTextBrush}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="4" Spacing="1">
+                      <TextBlock FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}"
+                                 IsVisible="{Binding CurrentValue, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <Run Text="Current: "/><Run Text="{Binding CurrentValue}"/>
+                      </TextBlock>
+                      <TextBlock FontSize="10" Foreground="{DynamicResource LrAccentGreenBrush}">
+                        <Run Text="New: "/><Run Text="{Binding IncomingValue}"/>
+                      </TextBlock>
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- New Experience -->
+      <Border IsVisible="{Binding NewExperience.Count}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentPurpleBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,14" Spacing="6">
+            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}">
+              <Run Text="New Positions ("/><Run Text="{Binding NewExperience.Count}"/><Run Text=")"/>
+            </TextBlock>
+            <ItemsControl ItemsSource="{Binding NewExperience}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="8,5" Margin="0,2">
+                    <Grid ColumnDefinitions="Auto,8,*">
+                      <CheckBox Grid.Column="0" IsChecked="{Binding IsAccepted}" VerticalAlignment="Top"/>
+                      <StackPanel Grid.Column="2" Spacing="1">
+                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}">
+                          <Run Text="{Binding Item.Title}"/><Run Text=" — "/><Run Text="{Binding Item.Company}"/>
+                        </TextBlock>
+                        <TextBlock FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}">
+                          <Run Text="{Binding Item.StartDate, StringFormat='{}{0:MMM yyyy}'}"/>
+                          <Run Text=" – "/>
+                          <Run Text="{Binding Item.EndDate, StringFormat='{}{0:MMM yyyy}', TargetNullValue='Present'}"/>
+                        </TextBlock>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- New Skills -->
+      <Border IsVisible="{Binding NewSkills.Count}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentGreenBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,14" Spacing="6">
+            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}">
+              <Run Text="New Skills ("/><Run Text="{Binding NewSkills.Count}"/><Run Text=")"/>
+            </TextBlock>
+            <ItemsControl ItemsSource="{Binding NewSkills}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="12" Padding="8,3" Margin="2">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                      <CheckBox IsChecked="{Binding IsAccepted}" Padding="0" MinWidth="0"/>
+                      <TextBlock Text="{Binding Item.Name}" FontSize="11" VerticalAlignment="Center"
+                                 Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- New Education -->
+      <Border IsVisible="{Binding NewEducation.Count}" Background="{DynamicResource LrSurfaceBgBrush}"
+              BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="3,*">
+          <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3"/>
+          <StackPanel Grid.Column="1" Margin="20,14" Spacing="6">
+            <TextBlock Text="Education" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+            <ItemsControl ItemsSource="{Binding NewEducation}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="8,4" Margin="0,2">
+                    <Grid ColumnDefinitions="Auto,8,*">
+                      <CheckBox Grid.Column="0" IsChecked="{Binding IsAccepted}" VerticalAlignment="Center"/>
+                      <TextBlock Grid.Column="2" FontSize="11" Foreground="{DynamicResource LrPrimaryTextBrush}">
+                        <Run Text="{Binding Item.Degree}"/><Run Text=" — "/><Run Text="{Binding Item.Institution}"/>
+                      </TextBlock>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Action bar -->
+      <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8">
+        <Button Content="Apply Selected" Command="{Binding ApplySelectedCommand}" Padding="16,8"
+                Background="{DynamicResource LrAccentGreenBrush}" Foreground="White"/>
+        <Button Content="Apply All" Command="{Binding ApplyAllCommand}" Padding="16,8"/>
+        <Button Content="Cancel" Command="{Binding CancelCommand}" Padding="16,8"
+                Background="Transparent" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
