@@ -243,7 +243,12 @@
       "Bash(gh repo:*)",
       "Bash(unzip -p ~/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip \"Positions.csv\")",
       "Bash(chmod:*)",
-      "Bash(basename -a /Users/scottgalloway/RiderProjects/lucidRESUME/src/lucidRESUME.Cli/Commands/*.cs)"
+      "Bash(basename -a /Users/scottgalloway/RiderProjects/lucidRESUME/src/lucidRESUME.Cli/Commands/*.cs)",
+      "Bash(sed -i '' 's/Symbol=\"\"Document\"\"/Symbol=\"\"{x:Static fic:Symbol.Document}\"\"/g' src/lucidRESUME/MainWindow.axaml)",
+      "Bash(sed -i '' 's/Symbol=\"\"DataBarVertical\"\"/Symbol=\"\"{x:Static fic:Symbol.DataBarVertical}\"\"/g' src/lucidRESUME/MainWindow.axaml)",
+      "Bash(sed -i '' 's/Symbol=\"\"Rocket\"\"/Symbol=\"\"{x:Static fic:Symbol.Rocket}\"\"/g' src/lucidRESUME/MainWindow.axaml)",
+      "Bash(sed -i '' 's/Symbol=\"\"BriefCase\"\"/Symbol=\"\"{x:Static fic:Symbol.Briefcase}\"\"/g' src/lucidRESUME/MainWindow.axaml)",
+      "Bash(sed -i '' 's/Symbol=\"\"Add\"\"/Symbol=\"\"{x:Static fic:Symbol.Add}\"\"/g' src/lucidRESUME/MainWindow.axaml)"
     ]
   }
 }

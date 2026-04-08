@@ -2,6 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:lucidRESUME.ViewModels"
         xmlns:local="using:lucidRESUME"
+        xmlns:fi="using:FluentIcons.Avalonia.Fluent"
+        xmlns:fic="using:FluentIcons.Common"
         x:DataType="vm:MainWindowViewModel"
         x:Class="lucidRESUME.MainWindow"
         Title="lucidRESUME" Width="1200" Height="800"
@@ -100,64 +102,96 @@
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Resume}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Resume}"/>
-          <Button Classes="nav-btn" Content="My CV"
-                  Command="{Binding NavigateCommand}" CommandParameter="Resume"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Resume">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.Document}" FontSize="16"/>
+              <TextBlock Text="My CV" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=MyData}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=MyData}"/>
-          <Button Classes="nav-btn" Content="My Data"
-                  Command="{Binding NavigateCommand}" CommandParameter="MyData"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="MyData">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.DataBarVertical}" FontSize="16"/>
+              <TextBlock Text="My Data" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Career}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Career}"/>
-          <Button Classes="nav-btn" Content="Career"
-                  Command="{Binding NavigateCommand}" CommandParameter="Career"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Career">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.Rocket}" FontSize="16"/>
+              <TextBlock Text="Career" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Jobs}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Jobs}"/>
-          <Button Classes="nav-btn" Content="Jobs"
-                  Command="{Binding NavigateCommand}" CommandParameter="Jobs"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Jobs">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.Briefcase}" FontSize="16"/>
+              <TextBlock Text="Jobs" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Search}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Search}"/>
-          <Button Classes="nav-btn" Content="Add Job"
-                  Command="{Binding NavigateCommand}" CommandParameter="Search"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Search">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.Add}" FontSize="16"/>
+              <TextBlock Text="Add Job" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Apply}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Apply}"/>
-          <Button Classes="nav-btn" Content="Apply"
-                  Command="{Binding NavigateCommand}" CommandParameter="Apply"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Apply">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.Send}" FontSize="16"/>
+              <TextBlock Text="Apply" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Pipeline}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Pipeline}"/>
-          <Button Classes="nav-btn" Content="Pipeline"
-                  Command="{Binding NavigateCommand}" CommandParameter="Pipeline"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Pipeline">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.DataFunnel}" FontSize="16"/>
+              <TextBlock Text="Pipeline" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Profile}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Profile}"/>
-          <Button Classes="nav-btn" Content="Profile"
-                  Command="{Binding NavigateCommand}" CommandParameter="Profile"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Profile">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.Settings}" FontSize="16"/>
+              <TextBlock Text="Profile" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
 
         <!-- Separator before Help -->
@@ -168,8 +202,12 @@
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Help}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Help}"/>
-          <Button Classes="nav-btn" Content="? Help"
-                  Command="{Binding NavigateCommand}" CommandParameter="Help"/>
+          <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Help">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <fi:SymbolIcon Symbol="{x:Static fic:Symbol.QuestionCircle}" FontSize="16"/>
+              <TextBlock Text="Help" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
         </Panel>
       </StackPanel>
       </DockPanel>
