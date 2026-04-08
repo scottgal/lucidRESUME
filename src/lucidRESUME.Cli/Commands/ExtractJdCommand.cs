@@ -83,6 +83,16 @@ public static class ExtractJdCommand
                 companyType = jd.CompanyType.ToString(),
             };
 
+            // Archetype matching if taxonomy available
+            var taxonomy = sp.GetService<lucidRESUME.Core.Interfaces.ISkillTaxonomy>();
+            if (taxonomy is not null && jd.RequiredSkills.Count > 0)
+            {
+                var archetypes = taxonomy.GetArchetypeMatches(jd.RequiredSkills);
+                Console.Error.WriteLine("\nRole archetypes:");
+                foreach (var (role, pct, matched, total) in archetypes.Take(5))
+                    Console.Error.WriteLine($"  {pct:P0} {role} ({matched}/{total} skills)");
+            }
+
             var json = JsonSerializer.Serialize(extracted, JsonOpts);
 
             if (output is not null)

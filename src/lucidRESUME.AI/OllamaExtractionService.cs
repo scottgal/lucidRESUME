@@ -63,6 +63,11 @@ public sealed class OllamaExtractionService : ILlmExtractionService
         return await CallAsync(prompt, ct);
     }
 
+    public async Task<string?> ExtractJsonAsync(string prompt, CancellationToken ct = default)
+    {
+        return await CallAsync(prompt, ct, maxResponseLength: 4000);
+    }
+
     public async Task<string?> ExtractNameAsync(string headerText, CancellationToken ct = default)
     {
         var input = headerText.Length > 500 ? headerText[..500] : headerText;
@@ -79,7 +84,7 @@ public sealed class OllamaExtractionService : ILlmExtractionService
         return result.Trim('"', '\'', '.', ' ', '\n', '\r');
     }
 
-    private async Task<string?> CallAsync(string prompt, CancellationToken ct)
+    private async Task<string?> CallAsync(string prompt, CancellationToken ct, int maxResponseLength = 2000)
     {
         try
         {
@@ -109,7 +114,7 @@ public sealed class OllamaExtractionService : ILlmExtractionService
                 if (chunk is null) continue;
                 if (!string.IsNullOrEmpty(chunk.Response))
                     sb.Append(chunk.Response);
-                if (chunk.Done || sb.Length > 2000) break; // cap to avoid runaway generation
+                if (chunk.Done || sb.Length > maxResponseLength) break; // cap to avoid runaway generation
             }
 
             _isAvailable = true;

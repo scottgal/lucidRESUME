@@ -14,17 +14,19 @@ public sealed class JobSpecParser : IJobSpecParser
     private readonly ScrapeStrategySelector _strategySelector;
     private readonly IEnumerable<IEntityDetector>? _detectors;
     private readonly ILlmExtractionService? _llm;
+    private readonly ISkillTaxonomy? _taxonomy;
     private readonly FusionOptions _fusionOpts;
 
     public JobSpecParser(ILogger<JobSpecParser> logger, ScrapeStrategySelector strategySelector,
         IEnumerable<IEntityDetector> detectors, IOptions<FusionOptions>? fusionOpts = null,
-        ILlmExtractionService? llm = null)
+        ILlmExtractionService? llm = null, ISkillTaxonomy? taxonomy = null)
     {
         ArgumentNullException.ThrowIfNull(strategySelector);
         _logger = logger;
         _strategySelector = strategySelector;
         _detectors = detectors;
         _llm = llm;
+        _taxonomy = taxonomy;
         _fusionOpts = fusionOpts?.Value ?? new FusionOptions();
     }
 
@@ -39,33 +41,54 @@ public sealed class JobSpecParser : IJobSpecParser
     {
         var job = JobDescription.Create(text, new JobSource { Type = JobSourceType.PastedText });
 
-        // Run all extractors in parallel - each produces candidates with confidence
+        // Run all extractors in parallel — each produces candidates with confidence
         var allCandidates = new List<JdFieldCandidate>();
 
-        // Layer 1: Structural (fast, high confidence for obvious stuff)
+        // Layer 1: Structural (fast, high confidence for obvious patterns)
         allCandidates.AddRange(StructuralExtractor.Extract(text));
 
-        // Layer 2+3: NER + LLM in parallel
+        // Layer 2+3+4: NER + LLM + Taxonomy centroids — ALL run in parallel
+        // LLM always runs if available (don't gate on IsAvailable — let it try and fail gracefully)
         var tasks = new List<Task<List<JdFieldCandidate>>>();
         if (_detectors is not null)
             tasks.Add(NerExtractor.ExtractAsync(text, _detectors, ct));
-        if (_llm is { IsAvailable: true })
+        if (_llm is not null)
             tasks.Add(LlmExtractor.ExtractAsync(text, _llm, ct));
+        if (_taxonomy is not null)
+            tasks.Add(TaxonomyCentroidExtractAsync(text, ct));
 
         var results = await Task.WhenAll(tasks);
         foreach (var r in results)
             allCandidates.AddRange(r);
 
-        // Fuse all signals via RRF with configurable weights
+        // Fuse all signals via RRF
         var fused = JdFieldFuser.Fuse(allCandidates, _fusionOpts);
         ApplyFusedFields(job, fused);
 
         _logger.LogInformation(
-            "JD parsed: {Title} at {Company}, {SkillCount} skills, {Sources} total candidates from {Layers} layers",
-            job.Title, job.Company, job.RequiredSkills.Count, allCandidates.Count,
-            allCandidates.Select(c => c.Source.Split(':')[0]).Distinct().Count());
+            "JD parsed: {Title} at {Company}, {SkillCount} skills ({PreferredCount} preferred), {Total} candidates from {Layers} layers",
+            job.Title, job.Company, job.RequiredSkills.Count, job.PreferredSkills.Count,
+            allCandidates.Count, allCandidates.Select(c => c.Source.Split(':')[0]).Distinct().Count());
 
         return job;
+    }
+
+    /// <summary>Layer 4: Taxonomy centroid matching — finds known skills in text.</summary>
+    private async Task<List<JdFieldCandidate>> TaxonomyCentroidExtractAsync(string text, CancellationToken ct)
+    {
+        var candidates = new List<JdFieldCandidate>();
+        if (_taxonomy is null) return candidates;
+
+        try
+        {
+            // Fast exact match against 5,630 known skills
+            var exactMatches = _taxonomy.FindSkillsExact(text);
+            foreach (var skill in exactMatches)
+                candidates.Add(new("skill", skill, 0.75, "taxonomy"));
+        }
+        catch { /* taxonomy failure is non-fatal */ }
+
+        return candidates;
     }
 
     public async Task<JobDescription> ParseFromUrlAsync(string url, CancellationToken ct = default)
@@ -128,16 +151,30 @@ public sealed class JobSpecParser : IJobSpecParser
     private static void ApplyFusedFields(JobDescription job, FusedJdFields fused)
     {
         if (fused.Title is not null) job.Title = fused.Title.Value;
-        if (fused.Company is not null) job.Company = fused.Company.Value;
+        // Only accept company if confidence is reasonable (multi-source or high-confidence single source)
+        // NER ORG on uncased text produces garbage; structural first-line split can grab wrong phrase
+        if (fused.Company is not null && fused.Company.Confidence >= 0.70)
+            job.Company = fused.Company.Value;
         if (fused.Location is not null) job.Location = fused.Location.Value;
         if (fused.IsRemote) job.IsRemote = true;
+        if (fused.IsHybrid) job.IsHybrid = true;
         if (fused.YearsExperience.HasValue) job.RequiredYearsExperience = fused.YearsExperience;
         if (fused.SalaryMin.HasValue)
-            job.Salary = new SalaryRange(fused.SalaryMin.Value, fused.SalaryMax ?? fused.SalaryMin.Value);
+        {
+            var currency = fused.SalaryCurrency ?? "GBP";
+            var period = fused.SalaryPeriod ?? "annual";
+            job.Salary = new SalaryRange(fused.SalaryMin.Value, fused.SalaryMax ?? fused.SalaryMin.Value, currency, period);
+        }
         if (fused.Skills.Count > 0)
             job.RequiredSkills = fused.Skills.Select(s => s.Value).ToList();
         if (fused.PreferredSkills.Count > 0)
             job.PreferredSkills = fused.PreferredSkills.Select(s => s.Value).ToList();
+        if (fused.Responsibilities.Count > 0)
+            job.Responsibilities = fused.Responsibilities.Select(s => s.Value).ToList();
+        if (fused.Benefits.Count > 0)
+            job.Benefits = fused.Benefits.Select(s => s.Value).ToList();
+        if (fused.Education is not null)
+            job.RequiredEducation = fused.Education.Value;
     }
 
     // -------------------------------------------------------------------------
@@ -300,4 +337,5 @@ public sealed class JobSpecParser : IJobSpecParser
         }
         return items;
     }
+
 }

@@ -20,4 +20,11 @@ public interface ILlmExtractionService
     /// Returns just the name, or null on failure.
     /// </summary>
     Task<string?> ExtractNameAsync(string headerText, CancellationToken ct = default);
+
+    /// <summary>
+    /// Extracts structured JD fields as JSON. Returns raw JSON string or null on failure.
+    /// Prompt is pre-built by the caller — this just sends it and returns the response.
+    /// </summary>
+    Task<string?> ExtractJsonAsync(string prompt, CancellationToken ct = default) =>
+        ExtractSkillsAsync(prompt, ct); // Default implementation reuses skills endpoint
 }

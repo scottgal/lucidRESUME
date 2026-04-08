@@ -1,0 +1,1544 @@
+# Role|Priority|Skill — from Kaggle job_skills_priority_updated.xlsx
+# 1542 entries with high/medium/low priority classification
+Backend Developer|high|API Development
+Backend Developer|high|Azure
+Backend Developer|high|Backend System Design
+Backend Developer|high|CI/CD Pipelines
+Backend Developer|high|Cloud Platforms (AWS
+Backend Developer|high|Database Design
+Backend Developer|high|Django
+Backend Developer|high|Docker
+Backend Developer|high|Express.js
+Backend Developer|high|FastAPI
+Backend Developer|high|Flask
+Backend Developer|high|GCP)
+Backend Developer|high|Java
+Backend Developer|high|Kubernetes
+Backend Developer|high|Microservices Architecture
+Backend Developer|high|MySQL)
+Backend Developer|high|NoSQL (MongoDB
+Backend Developer|high|Node.js
+Backend Developer|high|Performance Optimization
+Backend Developer|high|PostgreSQL
+Backend Developer|high|Python
+Backend Developer|high|REST APIs
+Backend Developer|high|SQL
+Backend Developer|high|Spring Boot
+Backend Developer|low|AI/ML Pipelines
+Backend Developer|low|Agile/Scrum Methodologies
+Backend Developer|low|Azure Functions)
+Backend Developer|low|Backend Architecture Design
+Backend Developer|low|Cloud-Native Tooling (Terraform
+Backend Developer|low|CloudFormation)
+Backend Developer|low|Communication
+Backend Developer|low|DevOps Basics
+Backend Developer|low|ERP/Finance Systems Knowledge
+Backend Developer|low|Event-Driven Architecture
+Backend Developer|low|HIPAA/GDPR Awareness
+Backend Developer|low|LangChain
+Backend Developer|low|LangGraph
+Backend Developer|low|Mentorship
+Backend Developer|low|Observability
+Backend Developer|low|Problem-Solving)
+Backend Developer|low|Root Cause Analysis
+Backend Developer|low|Serverless Backend (AWS Lambda
+Backend Developer|low|Soft Skills (Collaboration
+Backend Developer|low|System Reliability
+Backend Developer|low|Technical Leadership
+Backend Developer|low|Third-Party API Integration
+Backend Developer|medium|Apollo Server
+Backend Developer|medium|Authentication & Authorization (OAuth2
+Backend Developer|medium|Backend–Mobile Integration
+Backend Developer|medium|CI/CD Tools (Jenkins
+Backend Developer|medium|Celery
+Backend Developer|medium|Datadog)
+Backend Developer|medium|Deployment Troubleshooting
+Backend Developer|medium|Elasticsearch
+Backend Developer|medium|GitHub
+Backend Developer|medium|GitHub Actions)
+Backend Developer|medium|GitLab)
+Backend Developer|medium|GraphQL
+Backend Developer|medium|Hibernate)
+Backend Developer|medium|Integration Testing
+Backend Developer|medium|JUnit)
+Backend Developer|medium|JWT
+Backend Developer|medium|Logging & Monitoring (CloudWatch
+Backend Developer|medium|Messaging Systems (Kafka
+Backend Developer|medium|New Relic
+Backend Developer|medium|ORM Tools (Entity Framework
+Backend Developer|medium|Pytest
+Backend Developer|medium|RBAC)
+Backend Developer|medium|RabbitMQ)
+Backend Developer|medium|Redis
+Backend Developer|medium|SQLAlchemy
+Backend Developer|medium|Testing Frameworks (Unit Testing
+Backend Developer|medium|Version Control (Git
+Database Administrator|high|AWS RDS
+Database Administrator|high|Analytical Skills
+Database Administrator|high|Ansible
+Database Administrator|high|Automation
+Database Administrator|high|Azure SQL
+Database Administrator|high|Backup and Recovery
+Database Administrator|high|Bash
+Database Administrator|high|CI/CD
+Database Administrator|high|Cloud Platforms
+Database Administrator|high|Cluster Management
+Database Administrator|high|Communication Skills
+Database Administrator|high|Compliance
+Database Administrator|high|DDL
+Database Administrator|high|DML
+Database Administrator|high|Data Governance
+Database Administrator|high|Data Integrity
+Database Administrator|high|Data Modeling
+Database Administrator|high|Database Administration
+Database Administrator|high|Database Management
+Database Administrator|high|Database Monitoring
+Database Administrator|high|Database Security
+Database Administrator|high|DevOps
+Database Administrator|high|Disaster Recovery
+Database Administrator|high|Docker
+Database Administrator|high|Functions
+Database Administrator|high|GCP Cloud SQL
+Database Administrator|high|High Availability
+Database Administrator|high|Incident Management
+Database Administrator|high|Indexing
+Database Administrator|high|Kubernetes
+Database Administrator|high|Linux
+Database Administrator|high|Monitoring
+Database Administrator|high|MySQL
+Database Administrator|high|NoSQL
+Database Administrator|high|Oracle
+Database Administrator|high|Performance Analysis
+Database Administrator|high|Performance Tuning
+Database Administrator|high|PostgreSQL
+Database Administrator|high|Python
+Database Administrator|high|Query Optimization
+Database Administrator|high|Query Tuning
+Database Administrator|high|RDBMS
+Database Administrator|high|Replication
+Database Administrator|high|Root Cause Analysis
+Database Administrator|high|SQL Scripting
+Database Administrator|high|SQL Server
+Database Administrator|high|Schema Management
+Database Administrator|high|Stored Procedures
+Database Administrator|high|Terraform
+Database Administrator|high|Troubleshooting
+Database Administrator|high|Views
+Database Administrator|low|.NET
+Database Administrator|low|AI Awareness
+Database Administrator|low|ALM Administration
+Database Administrator|low|Accounting
+Database Administrator|low|Adaptability
+Database Administrator|low|Agile
+Database Administrator|low|Angular
+Database Administrator|low|Attention to Detail
+Database Administrator|low|CSS3
+Database Administrator|low|Calendar Management
+Database Administrator|low|Call Center Operations
+Database Administrator|low|Communication Skills
+Database Administrator|low|DRS
+Database Administrator|low|Dialer Administration
+Database Administrator|low|Domo Administration
+Database Administrator|low|ESG Awareness
+Database Administrator|low|ESXi
+Database Administrator|low|Emerging Technologies
+Database Administrator|low|Essbase
+Database Administrator|low|Expense Reporting
+Database Administrator|low|Finance
+Database Administrator|low|Front-End Development
+Database Administrator|low|HTML5
+Database Administrator|low|Horizon VDI
+Database Administrator|low|Hyperion Administration
+Database Administrator|low|IT Project Management
+Database Administrator|low|Interpersonal Skills
+Database Administrator|low|Java
+Database Administrator|low|JavaScript
+Database Administrator|low|Kanban
+Database Administrator|low|Leadership
+Database Administrator|low|Lease Administration
+Database Administrator|low|Metadata Management
+Database Administrator|low|NSX
+Database Administrator|low|Node.js
+Database Administrator|low|Oracle Hyperion
+Database Administrator|low|Organizational Skills
+Database Administrator|low|People Management
+Database Administrator|low|Power BI Gateways
+Database Administrator|low|Presentation Skills
+Database Administrator|low|Problem-Solving
+Database Administrator|low|RESTful APIs
+Database Administrator|low|React
+Database Administrator|low|SRM
+Database Administrator|low|Scrum
+Database Administrator|low|Server-Side Development
+Database Administrator|low|Stakeholder Communication
+Database Administrator|low|Team Motivation
+Database Administrator|low|Travel Arrangements
+Database Administrator|low|User Experience (UX)
+Database Administrator|low|VMware
+Database Administrator|low|Vue.js
+Database Administrator|low|Workforce Management
+Database Administrator|low|vCenter
+Database Administrator|low|vSAN
+Database Administrator|low|vSphere
+Database Administrator|medium|AI Tools
+Database Administrator|medium|Advanced Excel
+Database Administrator|medium|Automation Tools
+Database Administrator|medium|BI Concepts
+Database Administrator|medium|CRM Administration
+Database Administrator|medium|Capacity Planning
+Database Administrator|medium|Cloud Data Platforms
+Database Administrator|medium|Collaboration
+Database Administrator|medium|Communication Skills
+Database Administrator|medium|Cost Optimization
+Database Administrator|medium|Cross-Functional Collaboration
+Database Administrator|medium|DBOps
+Database Administrator|medium|Dashboard Development
+Database Administrator|medium|Data Cleansing
+Database Administrator|medium|Data Entry
+Database Administrator|medium|Data Hygiene
+Database Administrator|medium|Data Operations
+Database Administrator|medium|Data Validation
+Database Administrator|medium|Data Warehousing
+Database Administrator|medium|Database Migration
+Database Administrator|medium|Databricks
+Database Administrator|medium|Databricks Administration
+Database Administrator|medium|Delta Lake
+Database Administrator|medium|Documentation
+Database Administrator|medium|ETL
+Database Administrator|medium|HubSpot
+Database Administrator|medium|Leadership Skills
+Database Administrator|medium|Mentoring
+Database Administrator|medium|Microsoft Office 365
+Database Administrator|medium|Operational Reporting
+Database Administrator|medium|PostgreSQL Architecture
+Database Administrator|medium|Power BI
+Database Administrator|medium|Problem Solving
+Database Administrator|medium|Project Coordination
+Database Administrator|medium|Reliability Engineering
+Database Administrator|medium|Reporting
+Database Administrator|medium|SOP Documentation
+Database Administrator|medium|SQL Development
+Database Administrator|medium|SSIS
+Database Administrator|medium|SSRS
+Database Administrator|medium|SharePoint
+Database Administrator|medium|Snowflake
+Database Administrator|medium|Stakeholder Management
+Database Administrator|medium|System Optimization
+Database Administrator|medium|Tableau
+Database Administrator|medium|Team Management
+Database Administrator|medium|Technical Support
+Database Administrator|medium|Time Management
+Database Administrator|medium|Unity Catalog
+DevOps Engineer|high|AKS
+DevOps Engineer|high|AWS
+DevOps Engineer|high|Ansible
+DevOps Engineer|high|ArgoCD
+DevOps Engineer|high|Automation
+DevOps Engineer|high|Azure
+DevOps Engineer|high|Azure DevOps
+DevOps Engineer|high|Bash
+DevOps Engineer|high|CI/CD Pipelines
+DevOps Engineer|high|Cloud Architecture
+DevOps Engineer|high|Cloud Networking
+DevOps Engineer|high|Cloud Security
+DevOps Engineer|high|CloudFormation
+DevOps Engineer|high|Compliance (SOC2
+DevOps Engineer|high|Containerization
+DevOps Engineer|high|Cost Optimization
+DevOps Engineer|high|DevOps
+DevOps Engineer|high|Disaster Recovery
+DevOps Engineer|high|Docker
+DevOps Engineer|high|EKS
+DevOps Engineer|high|ELK/EFK Stack
+DevOps Engineer|high|GCP
+DevOps Engineer|high|GDPR
+DevOps Engineer|high|GKE
+DevOps Engineer|high|GitHub Actions
+DevOps Engineer|high|GitLab CI
+DevOps Engineer|high|GitOps
+DevOps Engineer|high|Grafana
+DevOps Engineer|high|Helm
+DevOps Engineer|high|High Availability
+DevOps Engineer|high|IAM
+DevOps Engineer|high|ISO
+DevOps Engineer|high|Infrastructure as Code (IaC)
+DevOps Engineer|high|Jenkins
+DevOps Engineer|high|Kubernetes
+DevOps Engineer|high|Linux
+DevOps Engineer|high|Mentoring
+DevOps Engineer|high|Monitoring
+DevOps Engineer|high|Observability
+DevOps Engineer|high|Performance Optimization
+DevOps Engineer|high|PowerShell
+DevOps Engineer|high|Prometheus
+DevOps Engineer|high|Python
+DevOps Engineer|high|SOX)
+DevOps Engineer|high|Scalability
+DevOps Engineer|high|Secrets Management
+DevOps Engineer|high|Serverless Architecture
+DevOps Engineer|high|Site Reliability Engineering (SRE)
+DevOps Engineer|high|Technical Leadership
+DevOps Engineer|high|Terraform
+DevOps Engineer|high|Troubleshooting
+DevOps Engineer|high|Windows
+DevOps Engineer|low|ADDIE
+DevOps Engineer|low|AWS CodeArtifact
+DevOps Engineer|low|Agile/Scrum
+DevOps Engineer|low|Angular
+DevOps Engineer|low|Artifact Management (Artifactory
+DevOps Engineer|low|Azure Data Factory (ADF)
+DevOps Engineer|low|Azure Data Lake Storage
+DevOps Engineer|low|Azure Synapse Analytics
+DevOps Engineer|low|BPMN
+DevOps Engineer|low|BRD/FRD
+DevOps Engineer|low|Backward Design
+DevOps Engineer|low|Business Analysis
+DevOps Engineer|low|CBAP/CCBA/CSPO
+DevOps Engineer|low|Certificate Management
+DevOps Engineer|low|Cloud Build
+DevOps Engineer|low|Cloud Functions
+DevOps Engineer|low|Confluence
+DevOps Engineer|low|Databricks
+DevOps Engineer|low|Developer Enablement
+DevOps Engineer|low|Documentation
+DevOps Engineer|low|ERP/CRM Integration (SAP
+DevOps Engineer|low|Fortify on Demand
+DevOps Engineer|low|Functional & Non-Functional Requirements
+DevOps Engineer|low|Gatling)
+DevOps Engineer|low|Generative AI Integration (ChatGPT
+DevOps Engineer|low|GitHub Copilot
+DevOps Engineer|low|GitHub Packages)
+DevOps Engineer|low|Go
+DevOps Engineer|low|IIS
+DevOps Engineer|low|Instructional Design
+DevOps Engineer|low|IoT Solutions
+DevOps Engineer|low|Java
+DevOps Engineer|low|Jira
+DevOps Engineer|low|Liberty Server
+DevOps Engineer|low|Load Testing Tools (JMeter
+DevOps Engineer|low|Microservices Architecture
+DevOps Engineer|low|Microsoft Fabric
+DevOps Engineer|low|NetSparker)
+DevOps Engineer|low|Node.js
+DevOps Engineer|low|OpenAI API)
+DevOps Engineer|low|Performance Testing
+DevOps Engineer|low|Rust
+DevOps Engineer|low|SAFe
+DevOps Engineer|low|Security Tools (Snyk
+DevOps Engineer|low|SonarQube
+DevOps Engineer|low|Spring Boot
+DevOps Engineer|low|Telephony (Amazon Connect)
+DevOps Engineer|low|Trivy
+DevOps Engineer|low|TypeScript
+DevOps Engineer|low|UML)
+DevOps Engineer|low|Workflow Tools (RaMP
+DevOps Engineer|low|Zoho)
+DevOps Engineer|low|k6
+DevOps Engineer|medium|AI/ML Workloads
+DevOps Engineer|medium|API Gateways
+DevOps Engineer|medium|ARM Templates
+DevOps Engineer|medium|AWS KMS
+DevOps Engineer|medium|Alerting
+DevOps Engineer|medium|Auto-Scaling
+DevOps Engineer|medium|Automation Frameworks
+DevOps Engineer|medium|Azure Bicep
+DevOps Engineer|medium|Azure Key Vault
+DevOps Engineer|medium|Backup Strategies
+DevOps Engineer|medium|Blue-Green Deployment
+DevOps Engineer|medium|CI/CD Pipeline Design
+DevOps Engineer|medium|Canary Deployment
+DevOps Engineer|medium|Cloud Cost Governance
+DevOps Engineer|medium|Cloud Migration
+DevOps Engineer|medium|CloudWatch
+DevOps Engineer|medium|Cloudflare
+DevOps Engineer|medium|Data Analytics Architectures
+DevOps Engineer|medium|Data Lake Architectures
+DevOps Engineer|medium|Dynatrace
+DevOps Engineer|medium|Enterprise Landing Zones
+DevOps Engineer|medium|Environment Provisioning
+DevOps Engineer|medium|HashiCorp Vault
+DevOps Engineer|medium|Hybrid Cloud Deployments
+DevOps Engineer|medium|Ingress Controllers
+DevOps Engineer|medium|Load Balancing
+DevOps Engineer|medium|Logging
+DevOps Engineer|medium|Multi-Cloud Deployments
+DevOps Engineer|medium|Networking Protocols
+DevOps Engineer|medium|Observability Tools
+DevOps Engineer|medium|PaaS Services
+DevOps Engineer|medium|Pulumi
+DevOps Engineer|medium|Red Hat OpenShift
+DevOps Engineer|medium|Role-Based Access Control (RBAC)
+DevOps Engineer|medium|Root Cause Analysis (RCA)
+DevOps Engineer|medium|Security Automation
+DevOps Engineer|medium|Service Mesh
+DevOps Engineer|medium|State Management
+DevOps Engineer|medium|TLS/SSL
+DevOps Engineer|medium|Terraform Modules
+DevOps Engineer|medium|VNet
+DevOps Engineer|medium|VPNs
+DevOps Engineer|medium|Vault
+DevOps Engineer|medium|Virtual Machines (VMs)
+DevOps Engineer|medium|Workflow Orchestration
+Flutter Developer|high|API Integration
+Flutter Developer|high|Android Development
+Flutter Developer|high|App Lifecycle Management
+Flutter Developer|high|App Store Deployment
+Flutter Developer|high|Bloc
+Flutter Developer|high|Clean Architecture
+Flutter Developer|high|Cross-Platform Development
+Flutter Developer|high|Cubit
+Flutter Developer|high|Dart
+Flutter Developer|high|Debugging
+Flutter Developer|high|Firebase
+Flutter Developer|high|Firebase Authentication
+Flutter Developer|high|Firestore
+Flutter Developer|high|Flutter
+Flutter Developer|high|Flutter Architecture
+Flutter Developer|high|Flutter SDK
+Flutter Developer|high|Git
+Flutter Developer|high|JSON Handling
+Flutter Developer|high|MVVM
+Flutter Developer|high|Mobile App Development
+Flutter Developer|high|Mobile Architecture
+Flutter Developer|high|Object-Oriented Programming
+Flutter Developer|high|Performance Optimization
+Flutter Developer|high|Play Store Deployment
+Flutter Developer|high|Provider
+Flutter Developer|high|Push Notifications
+Flutter Developer|high|REST APIs
+Flutter Developer|high|Responsive UI Design
+Flutter Developer|high|Riverpod
+Flutter Developer|high|State Management
+Flutter Developer|high|Stateful Widgets
+Flutter Developer|high|Stateless Widgets
+Flutter Developer|high|UI Development
+Flutter Developer|high|Version Control
+Flutter Developer|high|Widgets
+Flutter Developer|high|iOS Development
+Flutter Developer|low|AI/LLM Integration
+Flutter Developer|low|ARB Files
+Flutter Developer|low|Accessibility
+Flutter Developer|low|Audio Applications
+Flutter Developer|low|Azure
+Flutter Developer|low|Biometrics
+Flutter Developer|low|Brokerage Platforms
+Flutter Developer|low|Certificate Pinning
+Flutter Developer|low|Cloud Platforms (AWS
+Flutter Developer|low|Containers
+Flutter Developer|low|DevTools Frame Analysis
+Flutter Developer|low|Encryption
+Flutter Developer|low|Feature Flags
+Flutter Developer|low|FinTech Domain Knowledge
+Flutter Developer|low|GCP)
+Flutter Developer|low|GPU Optimization
+Flutter Developer|low|Game Development (Flame
+Flutter Developer|low|Golden Tests
+Flutter Developer|low|Internationalization
+Flutter Developer|low|Localization
+Flutter Developer|low|Media Applications
+Flutter Developer|low|Microservices Architecture
+Flutter Developer|low|Monetization Systems
+Flutter Developer|low|OWASP Mobile Top 10
+Flutter Developer|low|Obfuscation
+Flutter Developer|low|Portfolio Analytics
+Flutter Developer|low|ProGuard
+Flutter Developer|low|Product Roadmap Planning
+Flutter Developer|low|Protobuf
+Flutter Developer|low|Pub-Sub Architecture
+Flutter Developer|low|Remote Configuration
+Flutter Developer|low|Rive)
+Flutter Developer|low|Server-Sent Events
+Flutter Developer|low|Shader Optimization
+Flutter Developer|low|Speech-to-Text
+Flutter Developer|low|Startup Experience
+Flutter Developer|low|Structured Logging
+Flutter Developer|low|Subscription Models
+Flutter Developer|low|Telemetry
+Flutter Developer|low|Text-to-Speech
+Flutter Developer|low|Theming
+Flutter Developer|low|Trading Systems
+Flutter Developer|low|WealthTech
+Flutter Developer|low|XMPP
+Flutter Developer|low|gRPC
+Flutter Developer|medium|Analytics
+Flutter Developer|medium|Animations
+Flutter Developer|medium|Async Programming
+Flutter Developer|medium|Authentication Flows
+Flutter Developer|medium|Background Tasks
+Flutter Developer|medium|Battery Optimization
+Flutter Developer|medium|Bitrise
+Flutter Developer|medium|BuildContext
+Flutter Developer|medium|CI/CD Pipelines
+Flutter Developer|medium|Codemagic
+Flutter Developer|medium|Crash Reporting
+Flutter Developer|medium|Custom Widgets
+Flutter Developer|medium|Drift
+Flutter Developer|medium|Fastlane
+Flutter Developer|medium|Firebase Analytics
+Flutter Developer|medium|Firebase Crashlytics
+Flutter Developer|medium|GPS & Location Services
+Flutter Developer|medium|GitHub Actions
+Flutter Developer|medium|Google Maps API
+Flutter Developer|medium|GraphQL
+Flutter Developer|medium|Hive
+Flutter Developer|medium|Integration Testing
+Flutter Developer|medium|Isolates
+Flutter Developer|medium|Java
+Flutter Developer|medium|Kotlin
+Flutter Developer|medium|Layout & Constraints
+Flutter Developer|medium|Local Database
+Flutter Developer|medium|Material Design
+Flutter Developer|medium|Memory Management
+Flutter Developer|medium|Native Integration
+Flutter Developer|medium|OTP Authentication
+Flutter Developer|medium|Objective-C
+Flutter Developer|medium|Offline Storage
+Flutter Developer|medium|Payment Gateway Integration
+Flutter Developer|medium|Platform Channels
+Flutter Developer|medium|Real-Time Data Handling
+Flutter Developer|medium|SQLite
+Flutter Developer|medium|Secure Storage
+Flutter Developer|medium|Streams
+Flutter Developer|medium|Swift
+Flutter Developer|medium|Testing
+Flutter Developer|medium|Third-Party SDK Integration
+Flutter Developer|medium|Threading
+Flutter Developer|medium|UI/UX Integration
+Flutter Developer|medium|Unit Testing
+Flutter Developer|medium|WebSockets
+Flutter Developer|medium|Widget Testing
+Full Stack Developer|high|API Development
+Full Stack Developer|high|Backend Development
+Full Stack Developer|high|CSS
+Full Stack Developer|high|Communication Skills
+Full Stack Developer|high|Debugging
+Full Stack Developer|high|Frontend Development
+Full Stack Developer|high|Full Stack Development
+Full Stack Developer|high|Git
+Full Stack Developer|high|HTML
+Full Stack Developer|high|JavaScript
+Full Stack Developer|high|MongoDB
+Full Stack Developer|high|MySQL
+Full Stack Developer|high|Node.js
+Full Stack Developer|high|PostgreSQL
+Full Stack Developer|high|Problem Solving
+Full Stack Developer|high|REST API/RESTful APIs
+Full Stack Developer|high|React.js
+Full Stack Developer|high|SQL
+Full Stack Developer|high|Web Development
+Full Stack Developer|low|AI Coding Tools
+Full Stack Developer|low|Accessibility (WCAG)
+Full Stack Developer|low|Agora RTC
+Full Stack Developer|low|Android Development
+Full Stack Developer|low|BigQuery
+Full Stack Developer|low|CMS tools
+Full Stack Developer|low|CloudWatch
+Full Stack Developer|low|Computer Vision
+Full Stack Developer|low|Core Web Vitals
+Full Stack Developer|low|Cypress
+Full Stack Developer|low|Dart
+Full Stack Developer|low|Data Dashboards.
+Full Stack Developer|low|Datadog
+Full Stack Developer|low|Django
+Full Stack Developer|low|DynamoDB
+Full Stack Developer|low|ELK
+Full Stack Developer|low|FHIR
+Full Stack Developer|low|FastAPI
+Full Stack Developer|low|Figma
+Full Stack Developer|low|Firebase
+Full Stack Developer|low|Flask
+Full Stack Developer|low|Flutter
+Full Stack Developer|low|Gutenberg
+Full Stack Developer|low|HL7
+Full Stack Developer|low|Headless Commerce
+Full Stack Developer|low|HubSpot integration
+Full Stack Developer|low|Infrastructure-as-Code
+Full Stack Developer|low|Intercom
+Full Stack Developer|low|Jest
+Full Stack Developer|low|Jetpack Compose
+Full Stack Developer|low|Kafka
+Full Stack Developer|low|Kotlin
+Full Stack Developer|low|LLM Integration
+Full Stack Developer|low|LMS integration
+Full Stack Developer|low|LangGraph
+Full Stack Developer|low|Laravel
+Full Stack Developer|low|Looker
+Full Stack Developer|low|Meltano
+Full Stack Developer|low|Micro-frontends
+Full Stack Developer|low|Mocha
+Full Stack Developer|low|Model Fine-tuning
+Full Stack Developer|low|Module Federation
+Full Stack Developer|low|Multi-agent Systems
+Full Stack Developer|low|Neo4j
+Full Stack Developer|low|Notion API
+Full Stack Developer|low|PHP
+Full Stack Developer|low|PWA
+Full Stack Developer|low|Payment Integrations
+Full Stack Developer|low|Pinecone
+Full Stack Developer|low|Playwright
+Full Stack Developer|low|RTSP
+Full Stack Developer|low|React Native
+Full Stack Developer|low|Redis
+Full Stack Developer|low|Ruby on Rails
+Full Stack Developer|low|S3
+Full Stack Developer|low|SNS
+Full Stack Developer|low|SQS
+Full Stack Developer|low|Salesforce integration
+Full Stack Developer|low|Scientific Computing
+Full Stack Developer|low|Semantic Search
+Full Stack Developer|low|Shadcn UI
+Full Stack Developer|low|Shopify Plus
+Full Stack Developer|low|Sidekiq
+Full Stack Developer|low|Snowflake
+Full Stack Developer|low|Spring Boot
+Full Stack Developer|low|Stripe Connect
+Full Stack Developer|low|TailwindCSS
+Full Stack Developer|low|Terraform
+Full Stack Developer|low|Twilio
+Full Stack Developer|low|Video Analytics
+Full Stack Developer|low|Vite
+Full Stack Developer|low|Voice Technologies
+Full Stack Developer|low|WP-CLI
+Full Stack Developer|low|WebSockets
+Full Stack Developer|low|Webpack
+Full Stack Developer|low|WordPress APIs
+Full Stack Developer|medium|AWS
+Full Stack Developer|medium|Agile
+Full Stack Developer|medium|Angular
+Full Stack Developer|medium|Authentication
+Full Stack Developer|medium|Azure
+Full Stack Developer|medium|CI/CD
+Full Stack Developer|medium|Cloud Deployment
+Full Stack Developer|medium|Database Design
+Full Stack Developer|medium|DevOps
+Full Stack Developer|medium|Docker
+Full Stack Developer|medium|Express.js
+Full Stack Developer|medium|GCP
+Full Stack Developer|medium|GraphQL
+Full Stack Developer|medium|Integration Testing
+Full Stack Developer|medium|JWT
+Full Stack Developer|medium|Kubernetes
+Full Stack Developer|medium|Microservices
+Full Stack Developer|medium|Next.js
+Full Stack Developer|medium|OAuth
+Full Stack Developer|medium|Python
+Full Stack Developer|medium|Redux
+Full Stack Developer|medium|Responsive Design
+Full Stack Developer|medium|Scrum
+Full Stack Developer|medium|System Design
+Full Stack Developer|medium|TypeScript
+Full Stack Developer|medium|Unit Testing
+Full Stack Developer|medium|Vue.js
+Java Developer|high|AWS
+Java Developer|high|Backend Development
+Java Developer|high|CI/CD
+Java Developer|high|Core Java
+Java Developer|high|Debugging
+Java Developer|high|Docker
+Java Developer|high|Git
+Java Developer|high|Hibernate
+Java Developer|high|JPA
+Java Developer|high|Java
+Java Developer|high|Java 8+
+Java Developer|high|Kafka
+Java Developer|high|Microservices
+Java Developer|high|MySQL
+Java Developer|high|OOP
+Java Developer|high|Performance Optimization
+Java Developer|high|PostgreSQL
+Java Developer|high|Problem Solving
+Java Developer|high|REST APIs
+Java Developer|high|SQL
+Java Developer|high|Scalability
+Java Developer|high|Spring Boot
+Java Developer|high|Spring Data JPA
+Java Developer|high|Spring Framework
+Java Developer|high|Spring Security
+Java Developer|high|System Design
+Java Developer|low|AI/ML Integration
+Java Developer|low|Airflow
+Java Developer|low|Android
+Java Developer|low|Appian
+Java Developer|low|AutoGen
+Java Developer|low|BPMN
+Java Developer|low|Camunda
+Java Developer|low|Data Ingestion Pipelines
+Java Developer|low|Drools
+Java Developer|low|Drupal
+Java Developer|low|Golang
+Java Developer|low|Hadoop
+Java Developer|low|IoT Integration
+Java Developer|low|Joomla
+Java Developer|low|Kotlin
+Java Developer|low|LangChain
+Java Developer|low|Laravel
+Java Developer|low|Legacy System Modernization
+Java Developer|low|Manufacturing Applications
+Java Developer|low|Media Streaming
+Java Developer|low|NLP
+Java Developer|low|OpenAI APIs
+Java Developer|low|PHP
+Java Developer|low|POS Systems
+Java Developer|low|Pega
+Java Developer|low|RAG
+Java Developer|low|Regulatory/KYC Systems
+Java Developer|low|Ruby on Rails
+Java Developer|low|SCADA
+Java Developer|low|Spark
+Java Developer|low|Storm
+Java Developer|low|Telecom Domain
+Java Developer|low|UI Modernization
+Java Developer|low|Web Scraping
+Java Developer|low|WebRTC
+Java Developer|medium|API Gateway
+Java Developer|medium|Agile
+Java Developer|medium|Angular
+Java Developer|medium|Azure
+Java Developer|medium|Caching
+Java Developer|medium|Cloud Platforms
+Java Developer|medium|Containerization
+Java Developer|medium|Distributed Systems
+Java Developer|medium|Event-Driven Architecture
+Java Developer|medium|GCP
+Java Developer|medium|Gradle
+Java Developer|medium|GraphQL
+Java Developer|medium|Integration Testing
+Java Developer|medium|JUnit
+Java Developer|medium|JWT
+Java Developer|medium|Jenkins
+Java Developer|medium|Kubernetes
+Java Developer|medium|Logging
+Java Developer|medium|Maven
+Java Developer|medium|Mockito
+Java Developer|medium|MongoDB
+Java Developer|medium|Monitoring
+Java Developer|medium|OAuth 2.0
+Java Developer|medium|RabbitMQ
+Java Developer|medium|React
+Java Developer|medium|Redis
+Java Developer|medium|Scrum
+Java Developer|medium|Security
+Java Developer|medium|Unit Testing
+JavaScript Developer|high|API Development
+JavaScript Developer|high|Backend Development
+JavaScript Developer|high|CSS3
+JavaScript Developer|high|Database Management
+JavaScript Developer|high|Debugging
+JavaScript Developer|high|Frontend Development
+JavaScript Developer|high|Full Stack Development
+JavaScript Developer|high|Git
+JavaScript Developer|high|HTML5
+JavaScript Developer|high|JavaScript
+JavaScript Developer|high|MongoDB
+JavaScript Developer|high|MySQL
+JavaScript Developer|high|Node.js
+JavaScript Developer|high|Performance Optimization
+JavaScript Developer|high|PostgreSQL
+JavaScript Developer|high|REST APIs
+JavaScript Developer|high|React.js
+JavaScript Developer|high|Responsive Design
+JavaScript Developer|high|TypeScript
+JavaScript Developer|high|Version Control
+JavaScript Developer|high|Web Application Development
+JavaScript Developer|low|Adaptability
+JavaScript Developer|low|Agentic AI
+JavaScript Developer|low|CMS
+JavaScript Developer|low|Cognitive Search
+JavaScript Developer|low|Communication Skills
+JavaScript Developer|low|Drip
+JavaScript Developer|low|Edge Computing
+JavaScript Developer|low|Elasticsearch
+JavaScript Developer|low|Generative AI
+JavaScript Developer|low|Hadoop
+JavaScript Developer|low|Laravel
+JavaScript Developer|low|Leadership
+JavaScript Developer|low|Mentoring
+JavaScript Developer|low|Milvus
+JavaScript Developer|low|Open Source Contributions
+JavaScript Developer|low|Organizational Skills
+JavaScript Developer|low|PHP
+JavaScript Developer|low|Prompt Engineering
+JavaScript Developer|low|RAG
+JavaScript Developer|low|Redis
+JavaScript Developer|low|SAP BTP
+JavaScript Developer|low|SAP CAP
+JavaScript Developer|low|SAP Fiori
+JavaScript Developer|low|SAP HANA
+JavaScript Developer|low|SAP UI5
+JavaScript Developer|low|Salesforce Integration
+JavaScript Developer|low|Shopify
+JavaScript Developer|low|Strategic Thinking
+JavaScript Developer|low|Stripe
+JavaScript Developer|low|Team Collaboration.
+JavaScript Developer|low|Time Management
+JavaScript Developer|low|Unstructured Data Processing
+JavaScript Developer|low|Vector Databases
+JavaScript Developer|low|WordPress
+JavaScript Developer|low|Zapier
+JavaScript Developer|medium|AWS
+JavaScript Developer|medium|Agile Methodology
+JavaScript Developer|medium|Angular
+JavaScript Developer|medium|Authentication
+JavaScript Developer|medium|Authorization
+JavaScript Developer|medium|Azure
+JavaScript Developer|medium|Babel
+JavaScript Developer|medium|Bootstrap
+JavaScript Developer|medium|CI/CD
+JavaScript Developer|medium|Cloud Platforms
+JavaScript Developer|medium|Code Refactoring
+JavaScript Developer|medium|Code Review
+JavaScript Developer|medium|Docker
+JavaScript Developer|medium|Express.js
+JavaScript Developer|medium|GraphQL
+JavaScript Developer|medium|Integration Testing
+JavaScript Developer|medium|JWT
+JavaScript Developer|medium|Kubernetes
+JavaScript Developer|medium|Microservices Architecture
+JavaScript Developer|medium|NPM
+JavaScript Developer|medium|Next.js
+JavaScript Developer|medium|OAuth
+JavaScript Developer|medium|Redux
+JavaScript Developer|medium|Scalability
+JavaScript Developer|medium|Security
+JavaScript Developer|medium|State Management
+JavaScript Developer|medium|Tailwind CSS
+JavaScript Developer|medium|Testing
+JavaScript Developer|medium|Third-Party API Integration
+JavaScript Developer|medium|Unit Testing
+JavaScript Developer|medium|Vue.js
+JavaScript Developer|medium|Webpack
+Machine Learning|high|API Development
+Machine Learning|high|Artificial Intelligence
+Machine Learning|high|Big Data
+Machine Learning|high|CI/CD
+Machine Learning|high|Cloud Platforms (AWS/Azure/GCP)
+Machine Learning|high|Computer Vision
+Machine Learning|high|Cross-Validation
+Machine Learning|high|Data Analysis
+Machine Learning|high|Data Cleaning
+Machine Learning|high|Data Engineering
+Machine Learning|high|Data Pipelines
+Machine Learning|high|Data Preprocessing
+Machine Learning|high|Data Processing
+Machine Learning|high|Data Science
+Machine Learning|high|Deep Learning
+Machine Learning|high|Distributed Systems
+Machine Learning|high|Docker
+Machine Learning|high|ETL
+Machine Learning|high|Embeddings
+Machine Learning|high|Experiment Tracking
+Machine Learning|high|FastAPI
+Machine Learning|high|Feature Engineering
+Machine Learning|high|Generative AI
+Machine Learning|high|Git
+Machine Learning|high|Hyperparameter Tuning
+Machine Learning|high|Kubernetes
+Machine Learning|high|Large Language Models (LLMs)
+Machine Learning|high|ML Lifecycle
+Machine Learning|high|ML Pipelines
+Machine Learning|high|MLOps
+Machine Learning|high|Machine Learning
+Machine Learning|high|Model Deployment
+Machine Learning|high|Model Evaluation
+Machine Learning|high|Model Monitoring
+Machine Learning|high|Model Optimization
+Machine Learning|high|Model Serving
+Machine Learning|high|Model Training
+Machine Learning|high|NLP
+Machine Learning|high|NumPy
+Machine Learning|high|Pandas
+Machine Learning|high|Predictive Modeling
+Machine Learning|high|Production ML Systems
+Machine Learning|high|Prompt Engineering
+Machine Learning|high|PyTorch
+Machine Learning|high|Python
+Machine Learning|high|RAG
+Machine Learning|high|SQL
+Machine Learning|high|Scalable AI Systems
+Machine Learning|high|Scikit-learn
+Machine Learning|high|Spark
+Machine Learning|high|Statistical Modeling
+Machine Learning|high|TensorFlow
+Machine Learning|high|Transformers
+Machine Learning|high|Vector Databases
+Machine Learning|low|AIP
+Machine Learning|low|Azure Blob Storage
+Machine Learning|low|Azure File Share
+Machine Learning|low|Banking Domain
+Machine Learning|low|Business Case Analysis
+Machine Learning|low|C++
+Machine Learning|low|Chip Design
+Machine Learning|low|Contract Lifecycle Management
+Machine Learning|low|Copilot Agents
+Machine Learning|low|Copilot Studio
+Machine Learning|low|Customer-Oriented Approach
+Machine Learning|low|DLP
+Machine Learning|low|Denodo
+Machine Learning|low|Documentation
+Machine Learning|low|Executive Communication
+Machine Learning|low|Express.js
+Machine Learning|low|French
+Machine Learning|low|GraphQL
+Machine Learning|low|ILT
+Machine Learning|low|Inclusion & Diversity
+Machine Learning|low|Java
+Machine Learning|low|Jupyter Notebook
+Machine Learning|low|Legal Tech
+Machine Learning|low|Logistics Domain
+Machine Learning|low|Looker
+Machine Learning|low|M365 Administration
+Machine Learning|low|M365 Archive
+Machine Learning|low|M365 Backup
+Machine Learning|low|M365 Tenant Management
+Machine Learning|low|Matplotlib
+Machine Learning|low|Mentoring
+Machine Learning|low|Microsoft 365
+Machine Learning|low|Microsoft Copilot
+Machine Learning|low|Microsoft Teams
+Machine Learning|low|Nest.js
+Machine Learning|low|Node.js
+Machine Learning|low|OPC
+Machine Learning|low|OneDrive
+Machine Learning|low|OpenShift
+Machine Learning|low|Power BI
+Machine Learning|low|PowerShell
+Machine Learning|low|Proposal Development
+Machine Learning|low|React
+Machine Learning|low|Research Publications
+Machine Learning|low|SAM
+Machine Learning|low|Scala
+Machine Learning|low|Seaborn
+Machine Learning|low|Semiconductor Manufacturing
+Machine Learning|low|Sensitivity Labeling
+Machine Learning|low|SharePoint Online
+Machine Learning|low|Spanish
+Machine Learning|low|Stakeholder Management
+Machine Learning|low|Tableau
+Machine Learning|low|Team Leadership
+Machine Learning|low|Technical Guides
+Machine Learning|low|Training Delivery
+Machine Learning|low|VLSI
+Machine Learning|low|Wafer Defects
+Machine Learning|low|WebSocket
+Machine Learning|medium|A/B Testing
+Machine Learning|medium|AI Governance
+Machine Learning|medium|API Deployment
+Machine Learning|medium|ASR
+Machine Learning|medium|Airflow
+Machine Learning|medium|Alerting
+Machine Learning|medium|Autoscaling
+Machine Learning|medium|Backend Development
+Machine Learning|medium|BigQuery
+Machine Learning|medium|Containerization
+Machine Learning|medium|Cost Optimization
+Machine Learning|medium|Dagster
+Machine Learning|medium|Data Governance
+Machine Learning|medium|Data Quality
+Machine Learning|medium|Data Validation
+Machine Learning|medium|Databricks
+Machine Learning|medium|Delta Lake
+Machine Learning|medium|Drift Detection
+Machine Learning|medium|Error Analysis
+Machine Learning|medium|Explainability (SHAP/LIME)
+Machine Learning|medium|FAISS
+Machine Learning|medium|Feast
+Machine Learning|medium|Feature Stores
+Machine Learning|medium|Flink
+Machine Learning|medium|GANs
+Machine Learning|medium|GPU Scaling
+Machine Learning|medium|Geospatial Modeling
+Machine Learning|medium|Graph Methods
+Machine Learning|medium|Grid Systems
+Machine Learning|medium|H3
+Machine Learning|medium|Hadoop
+Machine Learning|medium|IAM
+Machine Learning|medium|Information Retrieval
+Machine Learning|medium|Infrastructure as Code
+Machine Learning|medium|Kafka
+Machine Learning|medium|Knowledge Graphs
+Machine Learning|medium|Kubeflow
+Machine Learning|medium|LSTM
+Machine Learning|medium|LangChain
+Machine Learning|medium|LlamaIndex
+Machine Learning|medium|Logging
+Machine Learning|medium|MLflow
+Machine Learning|medium|Microservices Integration
+Machine Learning|medium|Milvus
+Machine Learning|medium|Monitoring
+Machine Learning|medium|Multimodal AI
+Machine Learning|medium|Neo4j
+Machine Learning|medium|Pinecone
+Machine Learning|medium|Prefect
+Machine Learning|medium|Real-Time Inference
+Machine Learning|medium|Real-Time Optimization
+Machine Learning|medium|Recommendation Systems
+Machine Learning|medium|Reinforcement Learning
+Machine Learning|medium|Responsible AI
+Machine Learning|medium|Secrets Management
+Machine Learning|medium|Security Architecture
+Machine Learning|medium|Serverless Architecture
+Machine Learning|medium|Snowflake
+Machine Learning|medium|Speech Models
+Machine Learning|medium|System Design
+Machine Learning|medium|TCN
+Machine Learning|medium|TTS
+Machine Learning|medium|Tecton
+Machine Learning|medium|Terraform
+Machine Learning|medium|Time Series Forecasting
+Machine Learning|medium|Transfer Learning
+Machine Learning|medium|VAEs
+Machine Learning|medium|Weaviate
+Network Administrator|high|Active Directory
+Network Administrator|high|BGP
+Network Administrator|high|Backup & Recovery
+Network Administrator|high|DHCP
+Network Administrator|high|DNS
+Network Administrator|high|Disaster Recovery
+Network Administrator|high|Firewalls
+Network Administrator|high|Infrastructure Management
+Network Administrator|high|LAN
+Network Administrator|high|Linux/Windows Server
+Network Administrator|high|NAT
+Network Administrator|high|Network Administration
+Network Administrator|high|Network Infrastructure
+Network Administrator|high|Network Monitoring
+Network Administrator|high|Network Security
+Network Administrator|high|Network Troubleshooting
+Network Administrator|high|OSPF
+Network Administrator|high|Performance Monitoring
+Network Administrator|high|Routers
+Network Administrator|high|Routing
+Network Administrator|high|Server Administration
+Network Administrator|high|Switches
+Network Administrator|high|Switching
+Network Administrator|high|TCP/IP
+Network Administrator|high|VLAN
+Network Administrator|high|VPN
+Network Administrator|high|WAN
+Network Administrator|low|Analytical Skills
+Network Administrator|low|CCNP
+Network Administrator|low|Certifications (CCNA
+Network Administrator|low|Collaboration
+Network Administrator|low|Communication Skills
+Network Administrator|low|Customer Service
+Network Administrator|low|Documentation
+Network Administrator|low|General IT Support
+Network Administrator|low|Hardware Repair
+Network Administrator|low|Helpdesk
+Network Administrator|low|MCSA)
+Network Administrator|low|Network+
+Network Administrator|low|Office Tools
+Network Administrator|low|Organizational Skills
+Network Administrator|low|Problem Solving
+Network Administrator|low|Project Management
+Network Administrator|low|RHCE
+Network Administrator|low|Remote Collaboration
+Network Administrator|low|Reporting
+Network Administrator|low|Team Coordination
+Network Administrator|low|Training Staff
+Network Administrator|low|Vendor Management
+Network Administrator|medium|Automation & Scripting (Python
+Network Administrator|medium|Azure
+Network Administrator|medium|Bash
+Network Administrator|medium|CI/CD)
+Network Administrator|medium|Capacity Planning
+Network Administrator|medium|Cloud Platforms (AWS
+Network Administrator|medium|Compliance
+Network Administrator|medium|DevOps Tools (Git
+Network Administrator|medium|Endpoint Security
+Network Administrator|medium|GCP)
+Network Administrator|medium|Grafana
+Network Administrator|medium|IDS/IPS
+Network Administrator|medium|Identity Management
+Network Administrator|medium|Incident Management
+Network Administrator|medium|Load Balancing
+Network Administrator|medium|MPLS
+Network Administrator|medium|Monitoring Tools (Prometheus
+Network Administrator|medium|NetFlow)
+Network Administrator|medium|Network Design
+Network Administrator|medium|Patch Management
+Network Administrator|medium|PowerShell)
+Network Administrator|medium|SD-WAN
+Network Administrator|medium|SNMP
+Network Administrator|medium|Security Hardening
+Network Administrator|medium|Storage Solutions
+Network Administrator|medium|Syslog
+Network Administrator|medium|Virtualization (VMware)
+Network Administrator|medium|Zabbix
+Node js developer|high|API Development
+Node js developer|high|Asynchronous Programming
+Node js developer|high|Authentication
+Node js developer|high|Authorization
+Node js developer|high|Backend Development
+Node js developer|high|Database Design
+Node js developer|high|Database Management
+Node js developer|high|Debugging
+Node js developer|high|Error Handling
+Node js developer|high|Event-Driven Architecture
+Node js developer|high|Express.js
+Node js developer|high|JWT
+Node js developer|high|JavaScript
+Node js developer|high|MVC Architecture
+Node js developer|high|Microservices
+Node js developer|high|MongoDB
+Node js developer|high|MySQL
+Node js developer|high|NoSQL
+Node js developer|high|Node.js
+Node js developer|high|Performance Optimization
+Node js developer|high|PostgreSQL
+Node js developer|high|RESTful APIs
+Node js developer|high|SQL
+Node js developer|high|Scalable Application Design
+Node js developer|high|Security Implementation
+Node js developer|high|Server-Side Development
+Node js developer|high|Testing
+Node js developer|high|TypeScript
+Node js developer|high|Version Control (Git)
+Node js developer|low|Analytical Skills
+Node js developer|low|Client Interaction
+Node js developer|low|Code Reviews
+Node js developer|low|Collaboration
+Node js developer|low|Communication Skills
+Node js developer|low|Continuous Learning
+Node js developer|low|Documentation
+Node js developer|low|Knowledge Sharing
+Node js developer|low|Leadership
+Node js developer|low|Mentoring
+Node js developer|low|Organizational Skills
+Node js developer|low|Problem Solving
+Node js developer|low|Project Management
+Node js developer|low|Remote Collaboration
+Node js developer|low|Stakeholder Management
+Node js developer|medium|API Gateway
+Node js developer|medium|Agile
+Node js developer|medium|Angular
+Node js developer|medium|Azure
+Node js developer|medium|CI/CD
+Node js developer|medium|CSS3
+Node js developer|medium|Caching
+Node js developer|medium|Cloud Platforms (AWS
+Node js developer|medium|CloudFormation)
+Node js developer|medium|Deployment
+Node js developer|medium|DevOps
+Node js developer|medium|Distributed Systems
+Node js developer|medium|Docker
+Node js developer|medium|Frontend Integration (React
+Node js developer|medium|GCP)
+Node js developer|medium|GraphQL
+Node js developer|medium|HTML5
+Node js developer|medium|Infrastructure as Code (Terraform
+Node js developer|medium|Kubernetes
+Node js developer|medium|Message Queues (Kafka
+Node js developer|medium|Mongoose)
+Node js developer|medium|Monitoring & Logging
+Node js developer|medium|ORM/ODM (Sequelize
+Node js developer|medium|Prisma
+Node js developer|medium|RabbitMQ)
+Node js developer|medium|Redis
+Node js developer|medium|Scrum
+Node js developer|medium|Serverless (AWS Lambda)
+Node js developer|medium|System Design
+Node js developer|medium|TypeORM
+Node js developer|medium|Vue)
+Node js developer|medium|WebSockets
+PHP Developer|high|API Development
+PHP Developer|high|Authentication
+PHP Developer|high|Authorization
+PHP Developer|high|Backend Development
+PHP Developer|high|Clean Code
+PHP Developer|high|CodeIgniter
+PHP Developer|high|Core PHP
+PHP Developer|high|Database Design
+PHP Developer|high|Debugging
+PHP Developer|high|Laravel
+PHP Developer|high|MVC Architecture
+PHP Developer|high|MySQL
+PHP Developer|high|Object-Oriented Programming (OOP)
+PHP Developer|high|PHP
+PHP Developer|high|Performance Optimization
+PHP Developer|high|Query Optimization
+PHP Developer|high|REST APIs
+PHP Developer|high|SQL
+PHP Developer|high|Secure Coding
+PHP Developer|high|Server-Side Development
+PHP Developer|high|Software Development
+PHP Developer|high|Symfony
+PHP Developer|high|Version Control (Git)
+PHP Developer|high|Web Application Development
+PHP Developer|low|Analytical Skills
+PHP Developer|low|Communication Skills
+PHP Developer|low|Continuous Learning
+PHP Developer|low|Customer Focus
+PHP Developer|low|Documentation
+PHP Developer|low|Domain Knowledge (FinTech
+PHP Developer|low|Excel
+PHP Developer|low|Healthcare)
+PHP Developer|low|Leadership
+PHP Developer|low|Mentoring
+PHP Developer|low|Office Tools (Google Docs
+PHP Developer|low|PowerPoint)
+PHP Developer|low|Problem Solving
+PHP Developer|low|Project Management
+PHP Developer|low|Remote Collaboration
+PHP Developer|low|Result-Oriented Mindset.
+PHP Developer|low|Strategic Thinking
+PHP Developer|low|Team Collaboration
+PHP Developer|low|Technical Writing
+PHP Developer|low|Time Management
+PHP Developer|medium|AJAX
+PHP Developer|medium|Agile
+PHP Developer|medium|Azure)
+PHP Developer|medium|Behat)
+PHP Developer|medium|Bootstrap
+PHP Developer|medium|CDN
+PHP Developer|medium|CI/CD
+PHP Developer|medium|CSS
+PHP Developer|medium|CSS3
+PHP Developer|medium|Caching
+PHP Developer|medium|Cloud Platforms (AWS
+PHP Developer|medium|Docker
+PHP Developer|medium|Frontend Integration
+PHP Developer|medium|GCP
+PHP Developer|medium|HTML
+PHP Developer|medium|HTML5
+PHP Developer|medium|JSON
+PHP Developer|medium|JavaScript
+PHP Developer|medium|Kubernetes
+PHP Developer|medium|Microservices
+PHP Developer|medium|Payment Gateway Integration
+PHP Developer|medium|Pest
+PHP Developer|medium|Plugin Development
+PHP Developer|medium|Queues
+PHP Developer|medium|Redis
+PHP Developer|medium|SDLC
+PHP Developer|medium|SaaS Development
+PHP Developer|medium|Scalability
+PHP Developer|medium|Scrum
+PHP Developer|medium|Security Compliance
+PHP Developer|medium|System Design
+PHP Developer|medium|Testing (PHPUnit
+PHP Developer|medium|Theme Development
+PHP Developer|medium|Third-Party API Integration
+PHP Developer|medium|Web Services
+PHP Developer|medium|WordPress
+PHP Developer|medium|jQuery
+Python Developer|high|API Development
+Python Developer|high|Algorithms
+Python Developer|high|Authentication
+Python Developer|high|Authorization
+Python Developer|high|Azure
+Python Developer|high|Backend Development
+Python Developer|high|CI/CD
+Python Developer|high|Cloud Platforms (AWS
+Python Developer|high|Data Structures
+Python Developer|high|Database Management
+Python Developer|high|Debugging
+Python Developer|high|Deployment
+Python Developer|high|Django
+Python Developer|high|Docker
+Python Developer|high|FastAPI
+Python Developer|high|Flask
+Python Developer|high|GCP)
+Python Developer|high|Git
+Python Developer|high|Microservices Architecture
+Python Developer|high|NoSQL
+Python Developer|high|Object-Oriented Programming (OOP)
+Python Developer|high|Performance Optimization
+Python Developer|high|PostgreSQL
+Python Developer|high|Pytest
+Python Developer|high|Python
+Python Developer|high|RESTful APIs
+Python Developer|high|SQL
+Python Developer|high|Scalable Application Development
+Python Developer|high|Security Implementation
+Python Developer|high|Software Development
+Python Developer|high|System Design
+Python Developer|high|Unit Testing
+Python Developer|high|Version Control
+Python Developer|low|Analytical Thinking
+Python Developer|low|Attention to Detail
+Python Developer|low|Certifications
+Python Developer|low|Communication Skills
+Python Developer|low|Cross-Functional Collaboration
+Python Developer|low|Customer Interaction
+Python Developer|low|Documentation
+Python Developer|low|Domain Knowledge (Finance
+Python Developer|low|GIS)
+Python Developer|low|Insurance
+Python Developer|low|Leadership
+Python Developer|low|Mentoring
+Python Developer|low|Project Management
+Python Developer|low|Remote Work Skills
+Python Developer|low|Retail
+Python Developer|low|Stakeholder Communication
+Python Developer|low|Team Collaboration
+Python Developer|medium|API Gateway
+Python Developer|medium|Airflow
+Python Developer|medium|Apache Spark
+Python Developer|medium|Artificial Intelligence
+Python Developer|medium|Automation
+Python Developer|medium|Big Data
+Python Developer|medium|Dash
+Python Developer|medium|Data Analysis
+Python Developer|medium|Data Engineering
+Python Developer|medium|DevOps
+Python Developer|medium|Distributed Systems
+Python Developer|medium|ETL Pipelines
+Python Developer|medium|GraphQL
+Python Developer|medium|Hugging Face Transformers
+Python Developer|medium|Infrastructure as Code
+Python Developer|medium|Kubernetes
+Python Developer|medium|LangChain
+Python Developer|medium|LangGraph
+Python Developer|medium|Large Language Models (LLMs)
+Python Developer|medium|Logging
+Python Developer|medium|MLOps
+Python Developer|medium|Machine Learning
+Python Developer|medium|Message Queues (Kafka
+Python Developer|medium|Monitoring
+Python Developer|medium|NLP
+Python Developer|medium|NLU
+Python Developer|medium|NumPy
+Python Developer|medium|Pandas
+Python Developer|medium|Plotly
+Python Developer|medium|Prompt Engineering
+Python Developer|medium|PySpark
+Python Developer|medium|RabbitMQ)
+Python Developer|medium|Selenium
+Python Developer|medium|Serverless Architecture
+Python Developer|medium|Streamlit
+Python Developer|medium|Terraform
+Python Developer|medium|Web Scraping
+Software Engineer|high|API Development
+Software Engineer|high|Algorithms
+Software Engineer|high|Backend Development
+Software Engineer|high|C#
+Software Engineer|high|C++
+Software Engineer|high|Data Structures
+Software Engineer|high|Database Management
+Software Engineer|high|Debugging
+Software Engineer|high|Frontend Development
+Software Engineer|high|Full-Stack Development
+Software Engineer|high|Git
+Software Engineer|high|Go
+Software Engineer|high|JavaScript
+Software Engineer|high|Kotlin)
+Software Engineer|high|Microservices Architecture
+Software Engineer|high|NoSQL
+Software Engineer|high|Object-Oriented Programming (OOP)
+Software Engineer|high|Programming Languages (Java
+Software Engineer|high|Python
+Software Engineer|high|RESTful APIs
+Software Engineer|high|SQL
+Software Engineer|high|Software Development
+Software Engineer|high|Software Development Life Cycle (SDLC)
+Software Engineer|high|System Design
+Software Engineer|low|Agile/Scrum Methodology
+Software Engineer|low|Business Domain Knowledge
+Software Engineer|low|Client Requirement Analysis
+Software Engineer|low|Collaboration
+Software Engineer|low|Communication Skills
+Software Engineer|low|Confluence)
+Software Engineer|low|Documentation
+Software Engineer|low|Leadership Skills
+Software Engineer|low|Mentoring
+Software Engineer|low|Office/Productivity Tools
+Software Engineer|low|Project Management Tools (Jira
+Software Engineer|low|Reporting Tools
+Software Engineer|low|Teamwork
+Software Engineer|low|UI/UX Design
+Software Engineer|medium|.NET
+Software Engineer|medium|AI/ML Integration
+Software Engineer|medium|Angular
+Software Engineer|medium|Automation Testing
+Software Engineer|medium|Azure
+Software Engineer|medium|CI/CD
+Software Engineer|medium|Cloud Platforms (AWS
+Software Engineer|medium|Deployment
+Software Engineer|medium|DevOps
+Software Engineer|medium|Distributed Systems
+Software Engineer|medium|Django
+Software Engineer|medium|Docker
+Software Engineer|medium|Event-Driven Architecture
+Software Engineer|medium|Express
+Software Engineer|medium|Flutter)
+Software Engineer|medium|Frameworks & Libraries (Spring Boot
+Software Engineer|medium|GCP)
+Software Engineer|medium|JUnit
+Software Engineer|medium|Jest)
+Software Engineer|medium|Kubernetes
+Software Engineer|medium|Message Queues (Kafka
+Software Engineer|medium|Mobile Development (Android
+Software Engineer|medium|Monitoring
+Software Engineer|medium|NestJS
+Software Engineer|medium|Next.js
+Software Engineer|medium|Node.js
+Software Engineer|medium|Performance Optimization
+Software Engineer|medium|Playwright
+Software Engineer|medium|Prompt Engineering
+Software Engineer|medium|RabbitMQ
+Software Engineer|medium|React
+Software Engineer|medium|React Native)
+Software Engineer|medium|SQS)
+Software Engineer|medium|Selenium
+Software Engineer|medium|Testing (Unit Testing
+Software Engineer|medium|iOS
+Wordpress Developer|high|Back-End Development
+Wordpress Developer|high|Bug Fixing
+Wordpress Developer|high|CSS
+Wordpress Developer|high|Custom Plugin Development
+Wordpress Developer|high|Custom Post Types
+Wordpress Developer|high|Custom Theme Development
+Wordpress Developer|high|Front-End Development
+Wordpress Developer|high|HTML
+Wordpress Developer|high|JavaScript
+Wordpress Developer|high|MySQL
+Wordpress Developer|high|PHP
+Wordpress Developer|high|Performance Optimization
+Wordpress Developer|high|Plugin Development
+Wordpress Developer|high|Responsive Web Design
+Wordpress Developer|high|Theme Customization
+Wordpress Developer|high|Troubleshooting
+Wordpress Developer|high|Website Development
+Wordpress Developer|high|Website Security
+Wordpress Developer|high|WordPress CMS
+Wordpress Developer|high|WordPress Development
+Wordpress Developer|high|WordPress Hooks & Filters
+Wordpress Developer|high|WordPress REST API
+Wordpress Developer|low|Adaptability
+Wordpress Developer|low|ClickUp
+Wordpress Developer|low|Client Interaction
+Wordpress Developer|low|Communication Skills
+Wordpress Developer|low|Creative Design Skills
+Wordpress Developer|low|Documentation
+Wordpress Developer|low|Graphic Design
+Wordpress Developer|low|Mailchimp Integration
+Wordpress Developer|low|Marketing Integrations
+Wordpress Developer|low|Multitasking
+Wordpress Developer|low|Notion
+Wordpress Developer|low|On-Time Delivery
+Wordpress Developer|low|Photoshop Basics
+Wordpress Developer|low|Project Management
+Wordpress Developer|low|Remote Work Experience
+Wordpress Developer|low|Slack
+Wordpress Developer|low|Task Ownership
+Wordpress Developer|low|Team Collaboration
+Wordpress Developer|low|Time Management
+Wordpress Developer|low|Training or Mentoring
+Wordpress Developer|low|Willingness to Learn
+Wordpress Developer|medium|ACF (Advanced Custom Fields)
+Wordpress Developer|medium|API Integration
+Wordpress Developer|medium|Adobe XD
+Wordpress Developer|medium|CDN Integration
+Wordpress Developer|medium|Caching
+Wordpress Developer|medium|Core Web Vitals Optimization
+Wordpress Developer|medium|Cross-Browser Compatibility
+Wordpress Developer|medium|DNS Management
+Wordpress Developer|medium|Database Optimization
+Wordpress Developer|medium|Debugging Tools
+Wordpress Developer|medium|Deployment Workflows
+Wordpress Developer|medium|Divi
+Wordpress Developer|medium|Figma to WordPress
+Wordpress Developer|medium|Git/Version Control
+Wordpress Developer|medium|Google Analytics
+Wordpress Developer|medium|Google Search Console
+Wordpress Developer|medium|Gutenberg)
+Wordpress Developer|medium|Hosting Management
+Wordpress Developer|medium|Lazy Loading
+Wordpress Developer|medium|Mobile Optimization
+Wordpress Developer|medium|Page Builders (Elementor
+Wordpress Developer|medium|SEO Best Practices
+Wordpress Developer|medium|SSL Configuration
+Wordpress Developer|medium|Technical SEO
+Wordpress Developer|medium|Third-Party Integration
+Wordpress Developer|medium|UI Implementation
+Wordpress Developer|medium|WPBakery
+Wordpress Developer|medium|Website Maintenance
+Wordpress Developer|medium|Website Migration
+Wordpress Developer|medium|WooCommerce
+Wordpress Developer|medium|cPanel
+iOS Developer|high|API Integration
+iOS Developer|high|App Store Deployment
+iOS Developer|high|Backend Integration
+iOS Developer|high|Debugging
+iOS Developer|high|Git
+iOS Developer|high|MVVM
+iOS Developer|high|Mobile Application Development
+iOS Developer|high|Mobile Architecture
+iOS Developer|high|Mobile Development
+iOS Developer|high|Objective-C
+iOS Developer|high|Performance Optimization
+iOS Developer|high|Push Notifications
+iOS Developer|high|REST APIs
+iOS Developer|high|Swift
+iOS Developer|high|SwiftUI
+iOS Developer|high|UI Development
+iOS Developer|high|UIKit
+iOS Developer|high|Version Control
+iOS Developer|high|Xcode
+iOS Developer|high|iOS
+iOS Developer|high|iOS Development
+iOS Developer|low|Android
+iOS Developer|low|Android Studio
+iOS Developer|low|BLoC
+iOS Developer|low|Calendar Modules
+iOS Developer|low|Cloud Services
+iOS Developer|low|Communication Skills
+iOS Developer|low|Containers
+iOS Developer|low|Cross-Functional Collaboration
+iOS Developer|low|Dart
+iOS Developer|low|Dio
+iOS Developer|low|Docker
+iOS Developer|low|Documentation
+iOS Developer|low|FinTech
+iOS Developer|low|Flutter
+iOS Developer|low|Forms Development
+iOS Developer|low|Hive
+iOS Developer|low|JavaScript
+iOS Developer|low|Kotlin
+iOS Developer|low|Kubernetes
+iOS Developer|low|Messaging Modules
+iOS Developer|low|Microservices
+iOS Developer|low|Problem Solving
+iOS Developer|low|Product Management Interaction
+iOS Developer|low|Provider
+iOS Developer|low|React Native
+iOS Developer|low|Reporting Modules
+iOS Developer|low|Riverpod
+iOS Developer|low|SAP BTP
+iOS Developer|low|SAP MDK
+iOS Developer|low|SQLite
+iOS Developer|low|Serverless
+iOS Developer|low|SharedPreferences
+iOS Developer|low|Stakeholder Management
+iOS Developer|low|Team Collaboration
+iOS Developer|low|Trading Platforms
+iOS Developer|low|TypeScript
+iOS Developer|medium|Agile Methodology
+iOS Developer|medium|Analytics
+iOS Developer|medium|Apple Design Guidelines
+iOS Developer|medium|Application Responsiveness
+iOS Developer|medium|CI/CD
+iOS Developer|medium|Clean Architecture
+iOS Developer|medium|Code Quality
+iOS Developer|medium|Code Review
+iOS Developer|medium|Combine
+iOS Developer|medium|Coordinator Pattern
+iOS Developer|medium|Core Data
+iOS Developer|medium|Crash Monitoring
+iOS Developer|medium|Dependency Management
+iOS Developer|medium|Firebase Integration
+iOS Developer|medium|GraphQL
+iOS Developer|medium|Instruments
+iOS Developer|medium|Memory Optimization
+iOS Developer|medium|Release Management
+iOS Developer|medium|Scrum
+iOS Developer|medium|Swift Concurrency
+iOS Developer|medium|Swift Package Manager
+iOS Developer|medium|Testing Frameworks
+iOS Developer|medium|Third-Party Libraries
+iOS Developer|medium|Threading
+iOS Developer|medium|UI/UX Implementation
+iOS Developer|medium|URLSession
+iOS Developer|medium|XCTest
+iOS Developer|medium|XCUITest

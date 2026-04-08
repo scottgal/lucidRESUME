@@ -6,9 +6,6 @@ namespace lucidRESUME.JobSpec.Extraction;
 /// </summary>
 public static class JdFieldFuser
 {
-    /// <summary>
-    /// Fuses candidates per field type using configurable weights.
-    /// </summary>
     public static FusedJdFields Fuse(IReadOnlyList<JdFieldCandidate> candidates, FusionOptions? options = null)
     {
         var opts = options ?? new FusionOptions();
@@ -20,7 +17,6 @@ public static class JdFieldFuser
         {
             var fieldType = group.Key.ToLowerInvariant();
 
-            // Group by normalized value, fuse confidence across sources
             var fused = group
                 .GroupBy(c => Normalize(c.Value))
                 .Select(g =>
@@ -31,7 +27,7 @@ public static class JdFieldFuser
                     var rrfScore = maxConfidence + sourceBoost;
 
                     return new FusedCandidate(
-                        g.First().Value, // original casing from highest-confidence source
+                        g.First().Value,
                         Math.Min(1.0, rrfScore),
                         sources);
                 })
@@ -52,9 +48,10 @@ public static class JdFieldFuser
                 case "remote":
                     result.IsRemote = fused.Any(f => f.Value.Contains("true", StringComparison.OrdinalIgnoreCase)
                                                      || f.Value.Contains("remote", StringComparison.OrdinalIgnoreCase));
+                    result.IsHybrid = fused.Any(f => f.Value.Contains("hybrid", StringComparison.OrdinalIgnoreCase));
                     break;
                 case "yearsexp":
-                    if (int.TryParse(fused.FirstOrDefault()?.Value, out var yrs))
+                    if (int.TryParse(fused.FirstOrDefault()?.Value, out var yrs) && yrs is > 0 and < 50)
                         result.YearsExperience = yrs;
                     break;
                 case "salary_min":
@@ -63,11 +60,32 @@ public static class JdFieldFuser
                 case "salary_max":
                     result.SalaryMax = decimal.TryParse(fused.FirstOrDefault()?.Value, out var sMax) ? sMax : null;
                     break;
+                case "salary_currency":
+                    result.SalaryCurrency = fused.FirstOrDefault()?.Value;
+                    break;
+                case "salary_period":
+                    result.SalaryPeriod = fused.FirstOrDefault()?.Value;
+                    break;
                 case "skill":
                     result.Skills = fused;
                     break;
                 case "preferredskill":
                     result.PreferredSkills = fused;
+                    break;
+                case "responsibility":
+                    result.Responsibilities = fused;
+                    break;
+                case "benefit":
+                    result.Benefits = fused;
+                    break;
+                case "education":
+                    result.Education = fused.FirstOrDefault();
+                    break;
+                case "seniority":
+                    result.SeniorityLevel = fused.FirstOrDefault();
+                    break;
+                case "industry":
+                    result.Industry = fused.FirstOrDefault();
                     break;
             }
         }
@@ -89,9 +107,17 @@ public sealed class FusedJdFields
     public FusedCandidate? Company { get; set; }
     public FusedCandidate? Location { get; set; }
     public bool IsRemote { get; set; }
+    public bool IsHybrid { get; set; }
     public int? YearsExperience { get; set; }
     public List<FusedCandidate> Skills { get; set; } = [];
     public List<FusedCandidate> PreferredSkills { get; set; } = [];
+    public List<FusedCandidate> Responsibilities { get; set; } = [];
+    public List<FusedCandidate> Benefits { get; set; } = [];
     public decimal? SalaryMin { get; set; }
     public decimal? SalaryMax { get; set; }
+    public string? SalaryCurrency { get; set; }
+    public string? SalaryPeriod { get; set; }
+    public FusedCandidate? Education { get; set; }
+    public FusedCandidate? SeniorityLevel { get; set; }
+    public FusedCandidate? Industry { get; set; }
 }
