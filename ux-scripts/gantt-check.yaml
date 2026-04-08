@@ -1,0 +1,23 @@
+name: gantt-check
+description: Import DOCX only, check Gantt shows job titles not skills
+default_delay: 400
+
+actions:
+  - type: Wait
+    value: "2000"
+  - type: ImportFile
+    value: test-data/resumes/Scott_Galloway_CTO.docx
+  - type: Wait
+    value: "4000"
+  - type: Navigate
+    value: mydata
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: gantt-check-top
+  - type: Scroll
+    value: "25%"
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: gantt-check-gantt
