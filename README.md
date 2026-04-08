@@ -30,33 +30,9 @@ No invented skills. No guessing. Just structured inference over your actual work
 
 This is the foundation everything else builds on - matching, tailoring, gap analysis, career direction.
 
----
-
-## Screenshots
-
-| Resume Import | Jobs & Matching |
-|--------------|-----------------|
-| ![Resume page](docs/screenshots/resume-page.png) | ![Jobs page](docs/screenshots/jobs-page.png) |
-
-| Add Job | Apply & Tailor |
-|---------|---------------|
-| ![Add Job](docs/screenshots/add-job-page.png) | ![Apply page](docs/screenshots/apply-page.png) |
-
-| Pipeline (ATS) | Profile & AI Settings |
-|----------------|----------------------|
-| ![Pipeline](docs/screenshots/pipeline-page.png) | ![AI Settings](docs/screenshots/ai-settings.png) |
-
-| DOCX Preview (Morph) | My Data — Skill Ledger |
-|---------------------|----------------------|
-| ![DOCX Preview](docs/screenshots/docx-preview.png) | ![My Data](docs/screenshots/my-data-page.png) |
-
-| My Data — Skills & Experience | LinkedIn Import |
-|-------------------------------|----------------|
-| ![Skills detail](docs/screenshots/my-data-skills.png) | ![LinkedIn Import](docs/screenshots/linkedin-import.png) |
-
-| LinkedIn → My Data |
-|--------------------|
-| ![LinkedIn My Data](docs/screenshots/linkedin-mydata.png) |
+| | |
+|---|---|
+| ![DOCX Preview](docs/screenshots/docx-preview.png) | ![My Data Dashboard](docs/screenshots/my-data-page.png) |
 
 ---
 
@@ -77,15 +53,22 @@ Every major job site wants your email, your browsing history, and permission to 
 ## What It Does
 
 ### Resume Import
+
+![Resume import with DOCX preview](docs/screenshots/docx-preview.png)
+
 - **Drag and drop** any file onto the app to import — resumes, LinkedIn exports, anything
 - Import PDF or DOCX resumes
 - **DOCX preview** powered by [Morph](https://github.com/SimonCropp/Morph) — cross-platform document-to-image rendering in pure C#, no LibreOffice needed
 - **LinkedIn data export** — drop your LinkedIn ZIP archive and it auto-detects and imports your full profile: positions, skills (with endorsement counts), education, projects, contact info
+- All imports merge into a **single unified candidate document** using embedding cosine similarity — no duplicates, full source tracking
 - Handles two-column, LaTeX, complex formatting
 - Template learning: learns your resume's structure on first parse, deterministic on subsequent imports
 - Multilingual: German, French, Spanish, Portuguese, Chinese, Dutch, Japanese, Korean
 
 ### Skill Ledger
+
+![My Data — skills dashboard with pie chart, Gantt timeline, and skill communities](docs/screenshots/my-data-page.png)
+
 - **Provenance chain**: skill -> which job -> which date range -> which bullet point
 - **Calculated years**: sum of non-overlapping date ranges where the skill appears
 - **Evidence strength**: combining years, role count, recency, confidence
@@ -93,6 +76,9 @@ Every major job site wants your email, your browsing history, and permission to 
 - **Presentation gap vs true gap**: "you have adjacent skills" vs "you don't have this at all"
 
 ### Smart Matching
+
+![Jobs page with Looking/Hiring toggle](docs/screenshots/jobs-page.png)
+
 - Multi-vector cosine similarity between resume and JD skill ledgers
 - 3-layer matching: substring -> embedding similarity -> achievement-text keyword search
 - Per-skill match detail with similarity scores, evidence strength, calculated years
@@ -110,6 +96,9 @@ Every major job site wants your email, your browsing history, and permission to 
 - Translation with sliding context and glossary
 
 ### Personal ATS (Pipeline)
+
+![Pipeline tracking](docs/screenshots/pipeline-page.png)
+
 - **Stage pipeline**: Saved -> Applied -> Screening -> Interview -> Offer -> Accepted/Rejected/Withdrawn/Ghosted
 - Timeline per application, funnel visualization, stale detection
 - **Email integration** (IMAP via MailKit): auto-detects confirmations, interviews, rejections, offers
@@ -207,7 +196,7 @@ lucidRESUME (Avalonia UI - 6 pages: My CV, Jobs, Add Job, Apply, Pipeline, Profi
 |---------|-------|-----|
 | **RRF Signal Fusion** | Resume + JD extraction | Multiple extractors vote, best candidate wins |
 | **Skill Ledger** | Matching module | Every skill backed by evidence with provenance |
-| **Skill Graph + Communities** | Career planner | Louvain clustering reveals skill neighborhoods |
+| **Skill Graph + Communities** | Career planner | Leiden community detection with UMAP visualisation |
 | **Template Learning** | DOCX parser | First parse learns structure, subsequent parses are deterministic |
 | **ATS Pattern Detection** | PDF parser | YAML rulesets identify resume templates/ATS systems |
 
@@ -216,17 +205,18 @@ lucidRESUME (Avalonia UI - 6 pages: My CV, Jobs, Add Job, Apply, Pipeline, Profi
 ## Tests
 
 ```bash
-dotnet test    # 161 tests across 6 projects
+dotnet test    # 183 tests across 7 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 44 | Persistence, models, round-trip |
-| Extraction.Tests | 23 | NER, recognizers, pipeline |
+| Core.Tests | 47 | Persistence, models, multi-resume, round-trip |
+| Extraction.Tests | 23 | NER, recognizers, RRF fusion pipeline |
 | AI.Tests | 16 | Embeddings, matching |
 | Matching.Tests | 50 | Skill scoring, filters, voting, quality word lists |
 | JobSpec.Tests | 3 | JD parsing, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
+| GitHub.Tests | 19 | Language map, LinkedIn parser, document merger |
 
 ---
 
