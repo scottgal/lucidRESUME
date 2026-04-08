@@ -83,12 +83,39 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
     {
         _store = store;
         _ledgerBuilder = ledgerBuilder;
-        _ = LoadAsync();
+        _ = SafeLoadAsync();
+    }
+
+    private async Task SafeLoadAsync()
+    {
+        try { await LoadAsync(); }
+        catch (Exception ex) { StatusMessage = $"Load failed: {ex.Message}"; }
+    }
+
+    [ObservableProperty] private string? _statusMessage;
+    private bool _isLoadingData; // guard to prevent save during load
+
+    // Fix #1: Save personal info edits to overrides
+    partial void OnFullNameChanged(string value) => SavePersonalOverride(nameof(FullName), value);
+    partial void OnEmailChanged(string value) => SavePersonalOverride(nameof(Email), value);
+    partial void OnPhoneChanged(string value) => SavePersonalOverride(nameof(Phone), value);
+    partial void OnLocationChanged(string value) => SavePersonalOverride(nameof(Location), value);
+    partial void OnLinkedInChanged(string value) => SavePersonalOverride(nameof(LinkedIn), value);
+    partial void OnGitHubChanged(string value) => SavePersonalOverride(nameof(GitHub), value);
+    partial void OnWebsiteChanged(string value) => SavePersonalOverride(nameof(Website), value);
+    partial void OnSummaryChanged(string value) => SavePersonalOverride(nameof(Summary), value);
+
+    private void SavePersonalOverride(string field, string value)
+    {
+        if (_isLoadingData) return;
+        _overrides.PersonalInfoOverrides[field] = value;
+        ScheduleSave();
     }
 
     private async Task LoadAsync()
     {
         IsLoading = true;
+        _isLoadingData = true;
         try
         {
             var state = await _store.LoadAsync();
@@ -132,7 +159,7 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
 
             // Populate skills
             var allVms = _ledger.Entries.Select(e =>
-                new SkillLedgerEntryVm(e, OnSkillDismissed, ScheduleSave)).ToList();
+                new SkillLedgerEntryVm(e, OnSkillDismissed, OnSkillUndismissed, ScheduleSave)).ToList();
             AllSkills = new ObservableCollection<SkillLedgerEntryVm>(allVms);
 
             // Categories
@@ -189,6 +216,7 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+            _isLoadingData = false;
         }
     }
 
@@ -221,6 +249,13 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
         ScheduleSave();
     }
 
+    private void OnSkillUndismissed(SkillLedgerEntryVm skill)
+    {
+        _overrides.DismissedSkills.Remove(skill.SkillName);
+        ApplyFilters();
+        ScheduleSave();
+    }
+
     [RelayCommand]
     private void AddSkill()
     {
@@ -248,7 +283,7 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
             ],
         };
 
-        var vm = new SkillLedgerEntryVm(entry, OnSkillDismissed, ScheduleSave);
+        var vm = new SkillLedgerEntryVm(entry, OnSkillDismissed, OnSkillUndismissed, ScheduleSave);
         AllSkills.Insert(0, vm);
         ApplyFilters();
         NewSkillName = "";

@@ -8,12 +8,14 @@ public sealed partial class SkillLedgerEntryVm : ObservableObject
 {
     private readonly SkillLedgerEntry _entry;
     private readonly Action<SkillLedgerEntryVm> _onDismiss;
+    private readonly Action<SkillLedgerEntryVm> _onUndismiss;
     private readonly Action _onChanged;
 
-    public SkillLedgerEntryVm(SkillLedgerEntry entry, Action<SkillLedgerEntryVm> onDismiss, Action onChanged)
+    public SkillLedgerEntryVm(SkillLedgerEntry entry, Action<SkillLedgerEntryVm> onDismiss, Action<SkillLedgerEntryVm> onUndismiss, Action onChanged)
     {
         _entry = entry;
         _onDismiss = onDismiss;
+        _onUndismiss = onUndismiss;
         _onChanged = onChanged;
         Evidence = entry.Evidence.Select(e => new SkillEvidenceVm(e)).ToList();
     }
@@ -49,7 +51,7 @@ public sealed partial class SkillLedgerEntryVm : ObservableObject
     private void Undismiss()
     {
         IsDismissed = false;
-        _onChanged();
+        _onUndismiss(this);
     }
 
     [RelayCommand]

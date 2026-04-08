@@ -76,7 +76,7 @@ public sealed class LinkedInZipParser
         resume.Personal.Location = Get(row, "Geo Location");
         resume.Personal.Summary = Get(row, "Summary");
         resume.Personal.WebsiteUrl = Get(row, "Websites")?.Replace("[COMPANY:", "").TrimEnd(']');
-        resume.Personal.LinkedInUrl = "https://linkedin.com/in/"; // will be enriched if available
+        // LinkedIn export doesn't include the profile URL — leave null rather than an incomplete URL
     }
 
     private static void ParsePositions(Dictionary<string, string> csvs, ResumeDocument resume)
@@ -179,11 +179,10 @@ public sealed class LinkedInZipParser
                 endorsements[skill] = endorsements.GetValueOrDefault(skill) + 1;
         }
 
-        // Set YearsExperience as endorsement count proxy (capped)
         foreach (var skill in resume.Skills)
         {
             if (endorsements.TryGetValue(skill.Name, out var count))
-                skill.YearsExperience = Math.Min(count, 99); // store endorsement count for now
+                skill.EndorsementCount = count;
         }
     }
 

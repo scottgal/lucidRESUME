@@ -159,7 +159,7 @@
                 <DataTemplate x:DataType="mydata:SkillLedgerEntryVm">
                   <Border Margin="0,2" CornerRadius="4" Padding="0"
                           Background="{DynamicResource LrCardBgBrush}"
-                          Opacity="{Binding IsDismissed, Converter={x:Static BoolConverters.Not}}">
+                          IsEnabled="{Binding !IsDismissed}">
                     <StackPanel>
                       <!-- Main row -->
                       <Button Padding="10,6" Cursor="Hand" Background="Transparent"

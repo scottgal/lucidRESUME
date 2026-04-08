@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
         // Register lucidRAG DocSummarizer for README analysis (BERT mode, no LLM needed)
         services.AddDocSummarizer();
 
-        services.AddSingleton<GitHubSkillImporter>();
+        services.AddTransient<GitHubSkillImporter>();
 
         return services;
     }

@@ -230,7 +230,18 @@
       "Bash(gunzip)",
       "Bash(dotnet script:*)",
       "WebFetch(domain:sergey-tihon.github.io)",
-      "Bash(unzip -l ~/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip)"
+      "Bash(unzip -l ~/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip)",
+      "WebFetch(domain:livecharts.dev)",
+      "WebFetch(domain:scottplot.net)",
+      "WebFetch(domain:deepwiki.com)",
+      "Bash(src/lucidRESUME.Android/Resources/values/styles.xml:*)",
+      "Bash(sudo dotnet:*)",
+      "Read(//usr/local/share/dotnet/metadata/workloads/**)",
+      "Read(//usr/local/share/dotnet/packs/**)",
+      "Bash(xcode-select -p)",
+      "Bash(.gitignore:*)",
+      "Bash(gh repo:*)",
+      "Bash(unzip -p ~/Downloads/Basic_LinkedInDataExport_04-07-2026.zip.zip \"Positions.csv\")"
     ]
   }
 }

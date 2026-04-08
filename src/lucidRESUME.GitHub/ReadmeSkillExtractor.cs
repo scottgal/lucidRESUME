@@ -59,6 +59,7 @@ internal sealed class ReadmeSkillExtractor
                     TryAddSkill(skills, org, 0.6);
             }
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception)
         {
             // Fall back to simple taxonomy scanning of the raw markdown
