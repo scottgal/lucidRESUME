@@ -61,3 +61,5 @@ test-output/
 
 ## Private commercial planning notes
 docs/private/
+# Personal resumes — keep locally, not in git
+test-data/resumes/Scott*
