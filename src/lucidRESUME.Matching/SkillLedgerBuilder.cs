@@ -13,12 +13,14 @@ namespace lucidRESUME.Matching;
 public sealed class SkillLedgerBuilder
 {
     private readonly IEmbeddingService _embedder;
+    private readonly SkillTaxonomyService? _taxonomy;
 
     public IEmbeddingService Embedder => _embedder;
 
-    public SkillLedgerBuilder(IEmbeddingService embedder)
+    public SkillLedgerBuilder(IEmbeddingService embedder, SkillTaxonomyService? taxonomy = null)
     {
         _embedder = embedder;
+        _taxonomy = taxonomy;
     }
 
     public async Task<SkillLedger> BuildAsync(ResumeDocument resume, CancellationToken ct = default)
@@ -55,7 +57,25 @@ public sealed class SkillLedgerBuilder
             }
         }
 
-        // Pre-embed all known skill names (from Skills section + NER) for semantic matching
+        // 1c. Discover skills from taxonomy centroid matching over full resume text
+        // This finds skills mentioned in prose that NER and the skills section missed
+        if (_taxonomy is not null && resume.RawMarkdown is not null)
+        {
+            var taxonomySkills = _taxonomy.FindSkillsExact(resume.RawMarkdown);
+            foreach (var skill in taxonomySkills)
+            {
+                if (entries.ContainsKey(skill)) continue; // Already found by NER or skills section
+                var entry = GetOrCreate(entries, skill);
+                entry.Evidence.Add(new SkillEvidence
+                {
+                    SourceText = skill,
+                    Source = EvidenceSource.NerExtracted, // Treated as discovered from text
+                    Confidence = 0.70
+                });
+            }
+        }
+
+        // Pre-embed all known skill names (from Skills section + NER + taxonomy) for semantic matching
         var skillEmbeddings = new Dictionary<string, float[]>();
         foreach (var skillName in entries.Keys.ToList())
         {
