@@ -15,11 +15,13 @@ public sealed class JobSpecParser : IJobSpecParser
     private readonly IEnumerable<IEntityDetector>? _detectors;
     private readonly ILlmExtractionService? _llm;
     private readonly ISkillTaxonomy? _taxonomy;
+    private readonly IEntityLookup? _entityLookup;
     private readonly FusionOptions _fusionOpts;
 
     public JobSpecParser(ILogger<JobSpecParser> logger, ScrapeStrategySelector strategySelector,
         IEnumerable<IEntityDetector> detectors, IOptions<FusionOptions>? fusionOpts = null,
-        ILlmExtractionService? llm = null, ISkillTaxonomy? taxonomy = null)
+        ILlmExtractionService? llm = null, ISkillTaxonomy? taxonomy = null,
+        IEntityLookup? entityLookup = null)
     {
         ArgumentNullException.ThrowIfNull(strategySelector);
         _logger = logger;
@@ -27,6 +29,7 @@ public sealed class JobSpecParser : IJobSpecParser
         _detectors = detectors;
         _llm = llm;
         _taxonomy = taxonomy;
+        _entityLookup = entityLookup;
         _fusionOpts = fusionOpts?.Value ?? new FusionOptions();
     }
 
@@ -60,6 +63,15 @@ public sealed class JobSpecParser : IJobSpecParser
         var results = await Task.WhenAll(tasks);
         foreach (var r in results)
             allCandidates.AddRange(r);
+
+        // Layer 5: Entity lookup — find known companies/locations in text
+        if (_entityLookup is not null)
+        {
+            foreach (var company in _entityLookup.FindCompaniesInText(text))
+                allCandidates.Add(new("company", company, 0.80, "entity-lookup"));
+            foreach (var location in _entityLookup.FindLocationsInText(text))
+                allCandidates.Add(new("location", location, 0.70, "entity-lookup"));
+        }
 
         // Fuse all signals via RRF
         var fused = JdFieldFuser.Fuse(allCandidates, _fusionOpts);
@@ -148,13 +160,16 @@ public sealed class JobSpecParser : IJobSpecParser
         return job;
     }
 
-    private static void ApplyFusedFields(JobDescription job, FusedJdFields fused)
+    private void ApplyFusedFields(JobDescription job, FusedJdFields fused)
     {
         if (fused.Title is not null) job.Title = fused.Title.Value;
-        // Only accept company if confidence is reasonable (multi-source or high-confidence single source)
-        // NER ORG on uncased text produces garbage; structural first-line split can grab wrong phrase
-        if (fused.Company is not null && fused.Company.Confidence >= 0.70)
-            job.Company = fused.Company.Value;
+        // Accept company if: high confidence, OR if entity lookup confirms it's a real company
+        if (fused.Company is not null)
+        {
+            var isKnown = _entityLookup?.IsKnownCompany(fused.Company.Value) ?? false;
+            if (fused.Company.Confidence >= 0.70 || isKnown)
+                job.Company = fused.Company.Value;
+        }
         if (fused.Location is not null) job.Location = fused.Location.Value;
         if (fused.IsRemote) job.IsRemote = true;
         if (fused.IsHybrid) job.IsHybrid = true;

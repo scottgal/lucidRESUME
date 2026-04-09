@@ -48,6 +48,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<TaxonomyLearner>();
         services.AddSingleton<SkillTaxonomyService>();
         services.AddSingleton<ISkillTaxonomy>(sp => sp.GetRequiredService<SkillTaxonomyService>());
+        services.AddSingleton<EntityLookupService>();
+        services.AddSingleton<IEntityLookup>(sp => sp.GetRequiredService<EntityLookupService>());
 
         return services;
     }

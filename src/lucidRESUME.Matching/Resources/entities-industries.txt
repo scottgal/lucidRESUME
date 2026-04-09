@@ -1,0 +1,145 @@
+# 144 industries from LinkedIn
+Accounting
+Administration of Justice
+Advertising Services
+Airlines and Aviation
+Alternative Dispute Resolution
+Alternative Medicine
+Animation and Post-production
+Appliances, Electrical, and Electronics Manufacturing
+Architecture and Planning
+Armed Forces
+Artists and Writers
+Automation Machinery Manufacturing
+Aviation and Aerospace Component Manufacturing
+Banking
+Beverage Manufacturing
+Biotechnology Research
+Book and Periodical Publishing
+Broadcast Media Production and Distribution
+Business Consulting and Services
+Chemical Manufacturing
+Civic and Social Organizations
+Civil Engineering
+Computer Games
+Computer Hardware Manufacturing
+Computer Networking Products
+Computer and Network Security
+Computers and Electronics Manufacturing
+Construction
+Consumer Services
+Dairy Product Manufacturing
+Defense and Space Manufacturing
+Design Services
+E-Learning Providers
+Education Administration Programs
+Entertainment Providers
+Environmental Services
+Events Services
+Executive Offices
+Facilities Services
+Farming
+Financial Services
+Fisheries
+Food and Beverage Manufacturing
+Food and Beverage Services
+Freight and Package Transportation
+Fundraising
+Furniture and Home Furnishings Manufacturing
+Gambling Facilities and Casinos
+Glass, Ceramics and Concrete Manufacturing
+Government Administration
+Government Relations Services
+Graphic Design
+Higher Education
+Hospitality
+Hospitals and Health Care
+Human Resources Services
+IT Services and IT Consulting
+Individual and Family Services
+Industrial Machinery Manufacturing
+Information Services
+Insurance
+International Affairs
+International Trade and Development
+Investment Banking
+Investment Management
+Law Enforcement
+Law Practice
+Leasing Non-residential Real Estate
+Legal Services
+Legislative Offices
+Libraries
+Machinery Manufacturing
+Manufacturing
+Maritime Transportation
+Market Research
+Media Production
+Medical Equipment Manufacturing
+Medical Practices
+Mental Health Care
+Mining
+Mobile Gaming Apps
+Motor Vehicle Manufacturing
+Museums, Historical Sites, and Zoos
+Musicians
+Nanotechnology Research
+Newspaper Publishing
+Non-profit Organizations
+Oil and Gas
+Online Audio and Video Media
+Outsourcing and Offshoring Consulting
+Packaging and Containers Manufacturing
+Paper and Forest Product Manufacturing
+Performing Arts
+Personal Care Product Manufacturing
+Pharmaceutical Manufacturing
+Philanthropic Fundraising Services
+Photography
+Plastics Manufacturing
+Political Organizations
+Primary and Secondary Education
+Printing Services
+Professional Training and Coaching
+Public Policy Offices
+Public Relations and Communications Services
+Public Safety
+Railroad Equipment Manufacturing
+Real Estate
+Recreational Facilities
+Religious Institutions
+Renewable Energy Semiconductor Manufacturing
+Research Services
+Restaurants
+Retail
+Retail Apparel and Fashion
+Retail Groceries
+Retail Luxury Goods and Jewelry
+Retail Office Equipment
+Security and Investigations
+Semiconductor Manufacturing
+Shipbuilding
+Software Development
+Spectator Sports
+Sporting Goods Manufacturing
+Staffing and Recruiting
+Strategic Management Services
+Technology, Information and Internet
+Telecommunications
+Textile Manufacturing
+Think Tanks
+Tobacco Manufacturing
+Translation and Localization
+Transportation, Logistics, Supply Chain and Storage
+Travel Arrangements
+Truck Transportation
+Utilities
+Venture Capital and Private Equity Principals
+Veterinary Services
+Warehousing and Storage
+Wellness and Fitness Services
+Wholesale
+Wholesale Building Materials
+Wholesale Import and Export
+Wireless Services
+Writing and Editing
