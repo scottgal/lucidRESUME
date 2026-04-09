@@ -81,15 +81,15 @@ When importing into an existing document, you'll see a **review page** showing w
 
 The app uses a DocLayNet YOLO model to understand your resume's visual structure — detecting titles, section headers, tables, columns, and list items. This produces a structural hash that correctly identifies different template layouts even when they use identical fonts.
 
-The extraction pipeline runs automatically using **RRF fusion** — multiple signals run in parallel and vote on the result:
+The extraction pipeline runs automatically using **5-layer RRF fusion** — all signals run in parallel and vote on the result:
 
-1. **Text extraction** - pulls raw text from the document
-2. **Section classification** - identifies Experience, Education, Skills, etc.
-3. **Entity extraction** - NER models find skills, job titles, companies, dates
-4. **Name extraction** - fuses NER entities, heading text, positional data, and email cross-referencing. LLM backstop when confidence is low — never fails.
-5. **Evidence linking** - connects each skill to where and when it appeared
+1. **Structural** - text extraction, section classification, pattern matching
+2. **NER** - two BERT models find skills, job titles, companies, dates, locations
+3. **Skill taxonomy** - 19,983 known skills (from 1.3M real job postings) matched against your text. Cross-industry — not just tech.
+4. **LLM backstop** - when other signals are weak, the LLM extracts what they missed. Never fails.
+5. **Entity lookup** - 11K known companies + 7K locations validate and boost NER candidates
 
-Multi-source agreement boosts confidence. The same pattern is used for resume parsing, JD extraction, and person name resolution.
+Multi-source agreement boosts confidence. The same 5-layer pattern is used for resume parsing, JD extraction, and person name resolution.
 
 <!-- help:resume-multiple -->
 ### Multiple Resume Variants

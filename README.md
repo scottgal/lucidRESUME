@@ -189,7 +189,9 @@ Requires [.NET 10 SDK](https://dotnet.microsoft.com/download). See [docs/release
 
 ### Extraction
 
-**Multi-signal RRF fusion**: structural analysis + ONNX NER (2 models: `dslim/bert-base-NER` + `yashpwr/resume-ner-bert-v2`) + LLM recovery + regex patterns — all run in parallel, fused by reciprocal rank fusion. Same pattern for resume extraction, JD extraction, and person name resolution. Name extraction fuses NER entities, markdown headings, positional data, and email cross-referencing; LLM backstop catches the rest. 92% accuracy across 26 multilingual test resumes.
+**5-layer RRF fusion** for both resume and JD extraction: structural patterns + ONNX NER (2 models) + **skill taxonomy centroids** (19,983 skills from 1.3M LinkedIn jobs) + LLM backstop + **entity lookup** (11K companies, 7K locations). All signals run in parallel, fused by reciprocal rank fusion with multi-source confidence boosting.
+
+**Skill taxonomy**: preloaded from Kaggle datasets via DuckDB — 16 role archetypes, cross-industry coverage (not just tech), priority classification. Used by both resume AND JD parsers to find skills embedded in prose. Plain-text JDs went from 0 to 60+ extracted skills.
 
 ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) power semantic matching throughout. **[DocLayNet YOLO model](docs/layout-detection.md)** detects document structure from rendered page images — titles, section headers, tables, lists — producing a structural hash for template identification. Docling (Docker) adds ML-based PDF layout detection for complex documents; PdfPig with column detection as local fallback.
 
@@ -200,9 +202,9 @@ lucidRESUME (Avalonia UI - 9 pages: My CV, My Data, Career, Jobs, Add Job, Apply
     ├── Ingestion        Resume parsing, DocLayNet layout detection, Morph preview, LinkedIn import
     ├── Extraction       ONNX NER (2 models) + Microsoft.Recognizers pipeline
     ├── Parsing          DOCX/PDF/TXT extraction, ATS pattern detection, template learning
-    ├── JobSpec          JD parsing (RRF fusion: Structural + NER + LLM), URL scraping
+    ├── JobSpec          JD parsing (5-layer RRF: Structural + NER + Taxonomy + LLM + Entity), URL scraping
     ├── JobSearch        7 job board adapters + orchestrator + deduplicator
-    ├── Matching         Skill ledger, skill graph, career planner, coverage analysis
+    ├── Matching         Skill ledger, skill graph, career planner, taxonomy centroids, entity lookup
     ├── AI               Ollama/Anthropic/OpenAI providers, AI detection, de-AI, translation
     ├── EmailTracker     IMAP scanning, email classification, application matching
     ├── Export           JSON Resume + Markdown + DOCX + PDF exporters
@@ -217,7 +219,9 @@ lucidRESUME (Avalonia UI - 9 pages: My CV, My Data, Career, Jobs, Add Job, Apply
 
 | Pattern | Where | Why |
 |---------|-------|-----|
-| **RRF Signal Fusion** | Resume + JD extraction | Multiple extractors vote, best candidate wins |
+| **5-Layer RRF Fusion** | Resume + JD extraction | Structural + NER + Taxonomy + LLM + Entity Lookup vote, best candidate wins |
+| **Skill Taxonomy** | Matching module | 19,983 skills from 1.3M LinkedIn jobs — cross-industry, not just tech |
+| **Entity Lookup** | JD parser | 11K companies + 7K locations from LinkedIn/Adzuna validate NER candidates |
 | **Skill Ledger** | Matching module | Every skill backed by evidence with provenance |
 | **Skill Graph + Communities** | Career planner | Leiden community detection with UMAP visualisation |
 | **Template Learning** | DOCX parser | First parse learns structure, subsequent parses are deterministic |
@@ -277,6 +281,9 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 - [x] RRF fusion name extraction (NER + positional + heading + email + LLM backstop — 92% accuracy)
 - [x] Full CLI toolkit (17 commands: parse, evidence, match, explain, tailor, rank, fix, generate, etc.)
 - [x] Batch testing and quality evaluation across 26 multilingual resumes
+- [x] Skill taxonomy centroids (19,983 skills from 1.3M LinkedIn jobs + Kaggle role archetypes)
+- [x] Entity lookup (11K companies, 7K locations, 144 industries from LinkedIn/Adzuna via DuckDB)
+- [x] 5-layer JD parser (Structural + NER + Taxonomy + LLM + Entity — 0→60+ skills from plain text)
 
 ---
 
