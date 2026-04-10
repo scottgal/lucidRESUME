@@ -9,7 +9,7 @@
 
     <!-- NuGet metadata -->
     <PackageId>Mostlylucid.Avalonia.UITesting</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>Scott Galloway</Authors>
     <Description>UI testing, screenshot snapshots, script playback, recording, video capture, REPL, and MCP server for Avalonia desktop apps.</Description>
     <PackageTags>avalonia;ui-testing;screenshots;snapshots;automation;desktop;mcp</PackageTags>
@@ -37,6 +37,9 @@
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
+
+    <!-- Override transitive Tmds.DBus.Protocol 0.21.2 (GHSA-xrw6-gwf8-vvr9). Avalonia 11.3.x pulls 0.21.2. -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.92.0" />
   </ItemGroup>
 
 </Project>

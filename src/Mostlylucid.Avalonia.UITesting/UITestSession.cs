@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Mostlylucid.Avalonia.UITesting.Players;
 using Mostlylucid.Avalonia.UITesting.Video;
 
 namespace Mostlylucid.Avalonia.UITesting;
@@ -19,7 +20,10 @@ public sealed class UITestSession : IAsyncDisposable
     private readonly string _screenshotDir;
     private readonly Action<string>? _log;
     private readonly UITestContext _context;
+    private readonly Lazy<PointerSimulator> _pointer = new(() => new PointerSimulator());
     private GifRecorder? _activeVideoRecorder;
+
+    public PointerSimulator Pointer => _pointer.Value;
 
     public Window Window => _window;
     public object? ViewModel => _viewModel;
@@ -145,10 +149,138 @@ public sealed class UITestSession : IAsyncDisposable
 
     public async Task MouseMoveAsync(double x, double y, string? windowId = null)
     {
-        // Mouse move is best-effort - Avalonia's PointerEventArgs constructor is internal.
-        // Log intent for script replay; actual replay uses ScriptPlayer coordinates.
+        var window = _context.FindWindow(windowId) ?? _window;
+        await Pointer.MoveAsync(window, x, y);
         _log?.Invoke($"Mouse moved to: ({x}, {y})");
-        await Task.CompletedTask;
+    }
+
+    public async Task MouseDownAsync(double x, double y, MouseButton button = MouseButton.Left, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await Pointer.DownAsync(window, x, y, button);
+        _log?.Invoke($"Mouse down [{button}] at: ({x}, {y})");
+    }
+
+    public async Task MouseUpAsync(double x, double y, MouseButton button = MouseButton.Left, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await Pointer.UpAsync(window, x, y, button);
+        _log?.Invoke($"Mouse up [{button}] at: ({x}, {y})");
+    }
+
+    public async Task MouseClickAsync(double x, double y, MouseButton button = MouseButton.Left, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await Pointer.ClickAsync(window, x, y, button);
+        _log?.Invoke($"Mouse click [{button}] at: ({x}, {y})");
+    }
+
+    public async Task DragAsync(double x1, double y1, double x2, double y2, MouseButton button = MouseButton.Left, int steps = 10, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await Pointer.DragAsync(window, x1, y1, x2, y2, steps, 16, button);
+        _log?.Invoke($"Drag [{button}]: ({x1},{y1}) → ({x2},{y2})");
+    }
+
+    public async Task WheelAsync(double x, double y, double deltaX, double deltaY, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await Pointer.WheelAsync(window, x, y, deltaX, deltaY);
+        _log?.Invoke($"Wheel at ({x},{y}) Δ=({deltaX},{deltaY})");
+    }
+
+    public async Task PinchAsync(double x, double y, double totalScaleDelta, int steps = 10, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        for (int i = 0; i < steps; i++)
+            await Pointer.MagnifyAsync(window, x, y, totalScaleDelta / steps);
+        _log?.Invoke($"Pinch at ({x},{y}) Δ={totalScaleDelta}");
+    }
+
+    public async Task RotateAsync(double x, double y, double totalAngleDegrees, int steps = 10, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        for (int i = 0; i < steps; i++)
+            await Pointer.RotateAsync(window, x, y, totalAngleDegrees / steps);
+        _log?.Invoke($"Rotate at ({x},{y}) Δ={totalAngleDegrees}°");
+    }
+
+    public async Task SwipeAsync(double x, double y, double deltaX, double deltaY, int steps = 5, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        for (int i = 0; i < steps; i++)
+            await Pointer.SwipeAsync(window, x, y, deltaX / steps, deltaY / steps);
+        _log?.Invoke($"Swipe at ({x},{y}) Δ=({deltaX},{deltaY})");
+    }
+
+    public async Task TouchTapAsync(double x, double y, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await Pointer.TouchTapAsync(window, x, y);
+        _log?.Invoke($"Touch tap at ({x},{y})");
+    }
+
+    public async Task TouchDragAsync(double x1, double y1, double x2, double y2, int steps = 10, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await Pointer.TouchDragAsync(window, x1, y1, x2, y2, steps);
+        _log?.Invoke($"Touch drag: ({x1},{y1}) → ({x2},{y2})");
+    }
+
+    // === Window operations ===
+
+    public async Task ResizeWindowAsync(double width, double height, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await RunOnUIThreadAsync(() => { window.Width = width; window.Height = height; });
+        _log?.Invoke($"Window resized to {width}x{height}");
+    }
+
+    public async Task MoveWindowAsync(int x, int y, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await RunOnUIThreadAsync(() => window.Position = new PixelPoint(x, y));
+        _log?.Invoke($"Window moved to ({x},{y})");
+    }
+
+    public async Task SetWindowStateAsync(WindowState state, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await RunOnUIThreadAsync(() => window.WindowState = state);
+        _log?.Invoke($"Window state: {state}");
+    }
+
+    public Task MinimizeWindowAsync(string? windowId = null) => SetWindowStateAsync(WindowState.Minimized, windowId);
+    public Task MaximizeWindowAsync(string? windowId = null) => SetWindowStateAsync(WindowState.Maximized, windowId);
+    public Task RestoreWindowAsync(string? windowId = null) => SetWindowStateAsync(WindowState.Normal, windowId);
+    public Task FullScreenWindowAsync(string? windowId = null) => SetWindowStateAsync(WindowState.FullScreen, windowId);
+
+    public async Task FocusWindowAsync(string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await RunOnUIThreadAsync(() => { window.Activate(); window.Focus(); });
+        _log?.Invoke("Window focused");
+    }
+
+    public async Task CloseWindowAsync(string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await RunOnUIThreadAsync(() => window.Close());
+        _log?.Invoke("Window closed");
+    }
+
+    public async Task SetWindowTitleAsync(string title, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        await RunOnUIThreadAsync(() => window.Title = title);
+        _log?.Invoke($"Window title: {title}");
+    }
+
+    public async Task<(double Width, double Height, int X, int Y, WindowState State)> GetWindowInfoAsync(string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        return await RunOnUIThreadAsync(() =>
+            (window.Width, window.Height, window.Position.X, window.Position.Y, window.WindowState));
     }
 
     public async Task<T?> GetPropertyAsync<T>(string path)

@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Mostlylucid.Avalonia.UITesting.Players;
 using Mostlylucid.Avalonia.UITesting.Recorders;
 using Mostlylucid.Avalonia.UITesting.Scripts;
 
@@ -18,6 +19,7 @@ public sealed class UITestRepl
     private readonly string? _consoleImagePath;
     private bool _running = true;
     private UIRecorder? _recorder;
+    private readonly Lazy<PointerSimulator> _pointer = new(() => new PointerSimulator());
 
     public UITestRepl(UITestContext context, string screenshotDir = "ux-screenshots", string? consoleImagePath = null)
     {
@@ -88,7 +90,211 @@ public sealed class UITestRepl
             "resume" => ResumeRecord(),
             "save" => SaveRecord(args),
             "windows" => await ListWindowsAsync(),
+            "move" or "mousemove" => await MouseMoveCmdAsync(args),
+            "down" or "mousedown" => await MouseDownCmdAsync(args),
+            "up" or "mouseup" => await MouseUpCmdAsync(args),
+            "mclick" or "mouseclick" => await MouseClickCmdAsync(args),
+            "drag" => await DragCmdAsync(args),
+            "wheel" => await WheelCmdAsync(args),
+            "pinch" => await PinchCmdAsync(args),
+            "rotate" => await RotateCmdAsync(args),
+            "swipe" => await SwipeCmdAsync(args),
+            "tap" or "touchtap" => await TouchTapCmdAsync(args),
+            "tdrag" or "touchdrag" => await TouchDragCmdAsync(args),
+            "hover" => await HoverCmdAsync(args),
+            "wresize" => await WindowResizeCmdAsync(args),
+            "wmove" => await WindowMoveCmdAsync(args),
+            "wmin" => await WindowStateCmdAsync(WindowState.Minimized),
+            "wmax" => await WindowStateCmdAsync(WindowState.Maximized),
+            "wnormal" => await WindowStateCmdAsync(WindowState.Normal),
+            "wfull" => await WindowStateCmdAsync(WindowState.FullScreen),
+            "wfocus" => await WindowFocusCmdAsync(),
+            "wclose" => await WindowCloseCmdAsync(),
+            "wtitle" => await WindowTitleCmdAsync(args),
+            "winfo" => await WindowInfoCmdAsync(),
             _ => $"Unknown command: {cmd}. Type 'help' for commands."
+        };
+    }
+
+    private async Task<string> WindowResizeCmdAsync(string[] args)
+    {
+        if (args.Length < 2) return "Usage: wresize <width> <height>";
+        var w = double.Parse(args[0]); var h = double.Parse(args[1]);
+        await _ctx.RunOnUIThreadAsync(() => { var win = RequireWindow(); win.Width = w; win.Height = h; });
+        return $"Resized to {w}x{h}";
+    }
+
+    private async Task<string> WindowMoveCmdAsync(string[] args)
+    {
+        if (args.Length < 2) return "Usage: wmove <x> <y>";
+        var x = int.Parse(args[0]); var y = int.Parse(args[1]);
+        await _ctx.RunOnUIThreadAsync(() => RequireWindow().Position = new PixelPoint(x, y));
+        return $"Moved to ({x},{y})";
+    }
+
+    private async Task<string> WindowStateCmdAsync(WindowState state)
+    {
+        await _ctx.RunOnUIThreadAsync(() => RequireWindow().WindowState = state);
+        return $"State: {state}";
+    }
+
+    private async Task<string> WindowFocusCmdAsync()
+    {
+        await _ctx.RunOnUIThreadAsync(() => { var w = RequireWindow(); w.Activate(); w.Focus(); });
+        return "Focused";
+    }
+
+    private async Task<string> WindowCloseCmdAsync()
+    {
+        await _ctx.RunOnUIThreadAsync(() => RequireWindow().Close());
+        return "Closed";
+    }
+
+    private async Task<string> WindowTitleCmdAsync(string[] args)
+    {
+        if (args.Length == 0) return "Usage: wtitle <title>";
+        var title = string.Join(" ", args);
+        await _ctx.RunOnUIThreadAsync(() => RequireWindow().Title = title);
+        return $"Title: {title}";
+    }
+
+    private async Task<string> WindowInfoCmdAsync()
+    {
+        return await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var w = RequireWindow();
+            return $"size={w.Width}x{w.Height} pos=({w.Position.X},{w.Position.Y}) state={w.WindowState} title=\"{w.Title}\"";
+        });
+    }
+
+    private Window RequireWindow() => _ctx.MainWindow ?? throw new InvalidOperationException("No main window");
+
+    private async Task<string> MouseMoveCmdAsync(string[] args)
+    {
+        if (args.Length < 2) return "Usage: move <x> <y>";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        await _pointer.Value.MoveAsync(RequireWindow(), x, y);
+        return $"Moved to ({x},{y})";
+    }
+
+    private async Task<string> MouseDownCmdAsync(string[] args)
+    {
+        if (args.Length < 2) return "Usage: down <x> <y> [button]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var btn = args.Length > 2 ? ParseButton(args[2]) : MouseButton.Left;
+        await _pointer.Value.DownAsync(RequireWindow(), x, y, btn);
+        return $"Down [{btn}] at ({x},{y})";
+    }
+
+    private async Task<string> MouseUpCmdAsync(string[] args)
+    {
+        if (args.Length < 2) return "Usage: up <x> <y> [button]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var btn = args.Length > 2 ? ParseButton(args[2]) : MouseButton.Left;
+        await _pointer.Value.UpAsync(RequireWindow(), x, y, btn);
+        return $"Up [{btn}] at ({x},{y})";
+    }
+
+    private async Task<string> MouseClickCmdAsync(string[] args)
+    {
+        if (args.Length < 2) return "Usage: mclick <x> <y> [button]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var btn = args.Length > 2 ? ParseButton(args[2]) : MouseButton.Left;
+        await _pointer.Value.ClickAsync(RequireWindow(), x, y, btn);
+        return $"Click [{btn}] at ({x},{y})";
+    }
+
+    private async Task<string> DragCmdAsync(string[] args)
+    {
+        if (args.Length < 4) return "Usage: drag <x1> <y1> <x2> <y2> [button] [steps]";
+        var x1 = double.Parse(args[0]); var y1 = double.Parse(args[1]);
+        var x2 = double.Parse(args[2]); var y2 = double.Parse(args[3]);
+        var btn = args.Length > 4 ? ParseButton(args[4]) : MouseButton.Left;
+        var steps = args.Length > 5 && int.TryParse(args[5], out var s) ? s : 10;
+        await _pointer.Value.DragAsync(RequireWindow(), x1, y1, x2, y2, steps, 16, btn);
+        return $"Drag [{btn}] ({x1},{y1}) → ({x2},{y2})";
+    }
+
+    private async Task<string> WheelCmdAsync(string[] args)
+    {
+        if (args.Length < 3) return "Usage: wheel <x> <y> <dy> [dx]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var dy = double.Parse(args[2]);
+        var dx = args.Length > 3 ? double.Parse(args[3]) : 0;
+        await _pointer.Value.WheelAsync(RequireWindow(), x, y, dx, dy);
+        return $"Wheel ({x},{y}) Δ=({dx},{dy})";
+    }
+
+    private async Task<string> PinchCmdAsync(string[] args)
+    {
+        if (args.Length < 3) return "Usage: pinch <x> <y> <scale> [steps]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var scale = double.Parse(args[2]);
+        var steps = args.Length > 3 && int.TryParse(args[3], out var s) ? s : 10;
+        for (int i = 0; i < steps; i++)
+            await _pointer.Value.MagnifyAsync(RequireWindow(), x, y, scale / steps);
+        return $"Pinch Δ={scale}";
+    }
+
+    private async Task<string> RotateCmdAsync(string[] args)
+    {
+        if (args.Length < 3) return "Usage: rotate <x> <y> <angleDegrees> [steps]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var angle = double.Parse(args[2]);
+        var steps = args.Length > 3 && int.TryParse(args[3], out var s) ? s : 10;
+        for (int i = 0; i < steps; i++)
+            await _pointer.Value.RotateAsync(RequireWindow(), x, y, angle / steps);
+        return $"Rotate Δ={angle}°";
+    }
+
+    private async Task<string> SwipeCmdAsync(string[] args)
+    {
+        if (args.Length < 4) return "Usage: swipe <x> <y> <dx> <dy> [steps]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var dx = double.Parse(args[2]); var dy = double.Parse(args[3]);
+        var steps = args.Length > 4 && int.TryParse(args[4], out var s) ? s : 5;
+        for (int i = 0; i < steps; i++)
+            await _pointer.Value.SwipeAsync(RequireWindow(), x, y, dx / steps, dy / steps);
+        return $"Swipe Δ=({dx},{dy})";
+    }
+
+    private async Task<string> TouchTapCmdAsync(string[] args)
+    {
+        if (args.Length < 2) return "Usage: tap <x> <y>";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        await _pointer.Value.TouchTapAsync(RequireWindow(), x, y);
+        return $"Touch tap ({x},{y})";
+    }
+
+    private async Task<string> TouchDragCmdAsync(string[] args)
+    {
+        if (args.Length < 4) return "Usage: tdrag <x1> <y1> <x2> <y2> [steps]";
+        var x1 = double.Parse(args[0]); var y1 = double.Parse(args[1]);
+        var x2 = double.Parse(args[2]); var y2 = double.Parse(args[3]);
+        var steps = args.Length > 4 && int.TryParse(args[4], out var s) ? s : 10;
+        await _pointer.Value.TouchDragAsync(RequireWindow(), x1, y1, x2, y2, steps);
+        return $"Touch drag ({x1},{y1}) → ({x2},{y2})";
+    }
+
+    private async Task<string> HoverCmdAsync(string[] args)
+    {
+        if (args.Length < 2) return "Usage: hover <x> <y> [lingerMs]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var linger = args.Length > 2 && int.TryParse(args[2], out var ms) ? ms : 250;
+        await _pointer.Value.HoverAsync(RequireWindow(), x, y, linger);
+        return $"Hover ({x},{y}) {linger}ms";
+    }
+
+    private static MouseButton ParseButton(string? button)
+    {
+        if (string.IsNullOrEmpty(button)) return MouseButton.Left;
+        return button.ToLowerInvariant() switch
+        {
+            "right" or "rmb" => MouseButton.Right,
+            "middle" or "mmb" => MouseButton.Middle,
+            "x1" or "back" => MouseButton.XButton1,
+            "x2" or "forward" => MouseButton.XButton2,
+            _ => MouseButton.Left
         };
     }
 
@@ -120,6 +326,25 @@ public sealed class UITestRepl
               resume                  Resume recording
               save <file.yaml>        Save recorded script
               windows                 List tracked windows
+              move <x> <y>            Move pointer to coords
+              down <x> <y> [btn]      Press mouse button at coords (left/right/middle/x1/x2)
+              up <x> <y> [btn]        Release mouse button at coords
+              mclick <x> <y> [btn]    Click at coords with button
+              drag <x1> <y1> <x2> <y2> [btn] [steps]   Drag with interpolated movement
+              wheel <x> <y> <dy> [dx]  Mouse wheel scroll
+              pinch <x> <y> <scale> [steps]   Touchpad pinch (magnify)
+              rotate <x> <y> <deg> [steps]    Touchpad rotate
+              swipe <x> <y> <dx> <dy> [steps] Touchpad swipe
+              tap <x> <y>             Touch tap
+              tdrag <x1> <y1> <x2> <y2> [steps]   Touch drag
+              hover <x> <y> [ms]      Hover at coords with linger
+              wresize <w> <h>         Resize window
+              wmove <x> <y>           Move window to screen coords
+              wmin / wmax / wnormal / wfull   Window state
+              wfocus                  Activate and focus window
+              wclose                  Close window
+              wtitle <title>          Set window title
+              winfo                   Show window size/pos/state
               exit                    Exit REPL
             """;
     }

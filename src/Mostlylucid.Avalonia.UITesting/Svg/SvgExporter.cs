@@ -341,9 +341,11 @@ public sealed class SvgExporter
     private static string ReconstructPathData(PathGeometry pg)
     {
         var sb = new System.Text.StringBuilder();
+        if (pg.Figures is null) return sb.ToString();
         foreach (var figure in pg.Figures)
         {
             sb.Append($"M{F(figure.StartPoint.X)},{F(figure.StartPoint.Y)}");
+            if (figure.Segments is null) continue;
             foreach (var segment in figure.Segments)
             {
                 switch (segment)
@@ -554,7 +556,8 @@ public sealed class SvgExporter
             xml.WriteAttributeString("id", id);
             xml.WriteAttributeString("cx", F(rgb.Center.Point.X));
             xml.WriteAttributeString("cy", F(rgb.Center.Point.Y));
-            xml.WriteAttributeString("r", F(rgb.Radius));
+            // Use RadiusX as the SVG single-radius approximation (RadiusY ignored — SVG <radialGradient> r is scalar).
+            xml.WriteAttributeString("r", F(rgb.RadiusX.Scalar));
 
             if (rgb.GradientOrigin != rgb.Center)
             {

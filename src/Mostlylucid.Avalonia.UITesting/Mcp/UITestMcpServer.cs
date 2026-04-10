@@ -9,6 +9,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Mostlylucid.Avalonia.UITesting.Players;
 using Mostlylucid.Avalonia.UITesting.Recorders;
 using Mostlylucid.Avalonia.UITesting.Video;
 
@@ -22,6 +23,7 @@ public sealed class UITestMcpServer
     private bool _running = true;
     private UIRecorder? _recorder;
     private GifRecorder? _videoRecorder;
+    private readonly Lazy<PointerSimulator> _pointer = new(() => new PointerSimulator());
 
     public UITestMcpServer(UITestContext context, string screenshotDir = "ux-screenshots", string? consoleImagePath = null)
     {
@@ -134,7 +136,7 @@ public sealed class UITestMcpServer
             Tool("ui_hover", "Hover over a named control",
                 ("name", "string", "Control name", true)),
 
-            // Mouse (pixel-level)
+            // Mouse (pixel-level — real input dispatched through Avalonia's input pipeline)
             Tool("ui_mouse_move", "Move mouse to exact coordinates on window",
                 ("x", "number", "X coordinate", true),
                 ("y", "number", "Y coordinate", true),
@@ -143,6 +145,108 @@ public sealed class UITestMcpServer
             Tool("ui_mouse_click", "Click at exact coordinates on window",
                 ("x", "number", "X coordinate", true),
                 ("y", "number", "Y coordinate", true),
+                ("button", "string", "Mouse button: left (default), right, middle, x1, x2", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_mouse_down", "Press a mouse button at exact coordinates (does not release)",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("button", "string", "Mouse button: left (default), right, middle, x1, x2", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_mouse_up", "Release a mouse button at exact coordinates",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("button", "string", "Mouse button: left (default), right, middle, x1, x2", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_drag", "Press, drag with interpolated movement, then release",
+                ("x1", "number", "Start X", true),
+                ("y1", "number", "Start Y", true),
+                ("x2", "number", "End X", true),
+                ("y2", "number", "End Y", true),
+                ("button", "string", "Mouse button (default left)", false),
+                ("steps", "number", "Number of intermediate moves (default 10)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_wheel", "Inject a real mouse wheel event at coordinates",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("dx", "number", "Horizontal delta (default 0)", false),
+                ("dy", "number", "Vertical delta (positive=up, default -1)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            // Touchpad gestures (cross-platform)
+            Tool("ui_pinch", "Touchpad pinch (magnify) gesture at coordinates",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("scale", "number", "Total scale delta (e.g. 0.2 = 20% larger)", true),
+                ("steps", "number", "Number of gesture frames (default 10)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_rotate", "Touchpad rotate gesture at coordinates",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("angle", "number", "Total rotation in degrees", true),
+                ("steps", "number", "Number of gesture frames (default 10)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_swipe", "Touchpad swipe gesture",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("dx", "number", "Horizontal swipe delta", true),
+                ("dy", "number", "Vertical swipe delta", true),
+                ("steps", "number", "Number of gesture frames (default 5)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            // Touch input
+            Tool("ui_touch_tap", "Single-finger touch tap at coordinates",
+                ("x", "number", "X coordinate", true),
+                ("y", "number", "Y coordinate", true),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_touch_drag", "Single-finger touch drag",
+                ("x1", "number", "Start X", true),
+                ("y1", "number", "Start Y", true),
+                ("x2", "number", "End X", true),
+                ("y2", "number", "End Y", true),
+                ("steps", "number", "Number of intermediate moves (default 10)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            // Window operations
+            Tool("ui_window_resize", "Resize a window",
+                ("width", "number", "Width in DIPs", true),
+                ("height", "number", "Height in DIPs", true),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_move", "Move a window to screen coordinates",
+                ("x", "number", "Screen X (pixels)", true),
+                ("y", "number", "Screen Y (pixels)", true),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_minimize", "Minimize a window",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_maximize", "Maximize a window",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_restore", "Restore a window to normal state",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_fullscreen", "Put window into full screen",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_focus", "Activate and focus a window",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_close", "Close a window",
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_set_title", "Set the window title",
+                ("title", "string", "New title", true),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_window_info", "Get window size, position, and state",
                 ("window", "string", "Window name/title (optional)", false)),
 
             // Vision - THE KEY FEATURE for LLMs
@@ -243,7 +347,26 @@ public sealed class UITestMcpServer
                 "ui_scroll" => TextResult(await ScrollAsync(GetArg(args, "direction"), GetArg(args, "target"))),
                 "ui_hover" => TextResult(await HoverAsync(GetArg(args, "name"))),
                 "ui_mouse_move" => TextResult(await MouseMoveAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "window"))),
-                "ui_mouse_click" => TextResult(await MouseClickAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "window"))),
+                "ui_mouse_click" => TextResult(await MouseClickAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "button"), GetArg(args, "window"))),
+                "ui_mouse_down" => TextResult(await MouseDownAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "button"), GetArg(args, "window"))),
+                "ui_mouse_up" => TextResult(await MouseUpAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "button"), GetArg(args, "window"))),
+                "ui_drag" => TextResult(await DragAsync(GetDouble(args, "x1"), GetDouble(args, "y1"), GetDouble(args, "x2"), GetDouble(args, "y2"), GetArg(args, "button"), GetInt(args, "steps", 10), GetArg(args, "window"))),
+                "ui_wheel" => TextResult(await WheelAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetDouble(args, "dx", 0), GetDouble(args, "dy", -1), GetArg(args, "window"))),
+                "ui_pinch" => TextResult(await PinchAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetDouble(args, "scale"), GetInt(args, "steps", 10), GetArg(args, "window"))),
+                "ui_rotate" => TextResult(await RotateAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetDouble(args, "angle"), GetInt(args, "steps", 10), GetArg(args, "window"))),
+                "ui_swipe" => TextResult(await SwipeAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetDouble(args, "dx"), GetDouble(args, "dy"), GetInt(args, "steps", 5), GetArg(args, "window"))),
+                "ui_touch_tap" => TextResult(await TouchTapAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetArg(args, "window"))),
+                "ui_touch_drag" => TextResult(await TouchDragAsync(GetDouble(args, "x1"), GetDouble(args, "y1"), GetDouble(args, "x2"), GetDouble(args, "y2"), GetInt(args, "steps", 10), GetArg(args, "window"))),
+                "ui_window_resize" => TextResult(await WindowResizeAsync(GetDouble(args, "width"), GetDouble(args, "height"), GetArg(args, "window"))),
+                "ui_window_move" => TextResult(await WindowMoveAsync(GetInt(args, "x"), GetInt(args, "y"), GetArg(args, "window"))),
+                "ui_window_minimize" => TextResult(await WindowStateAsync(WindowState.Minimized, GetArg(args, "window"))),
+                "ui_window_maximize" => TextResult(await WindowStateAsync(WindowState.Maximized, GetArg(args, "window"))),
+                "ui_window_restore" => TextResult(await WindowStateAsync(WindowState.Normal, GetArg(args, "window"))),
+                "ui_window_fullscreen" => TextResult(await WindowStateAsync(WindowState.FullScreen, GetArg(args, "window"))),
+                "ui_window_focus" => TextResult(await WindowFocusAsync(GetArg(args, "window"))),
+                "ui_window_close" => TextResult(await WindowCloseAsync(GetArg(args, "window"))),
+                "ui_window_set_title" => TextResult(await WindowSetTitleAsync(GetArg(args, "title"), GetArg(args, "window"))),
+                "ui_window_info" => TextResult(await WindowInfoAsync(GetArg(args, "window"))),
                 "ui_see" => await SeeAsync(GetArg(args, "name"), GetArg(args, "window"), GetInt(args, "max_width", 120), GetInt(args, "max_height", 40)),
                 "ui_screenshot" => TextResult(await CaptureScreenshotAsync(GetArg(args, "name"), GetArg(args, "window"))),
                 "ui_svg" => TextResult(await CaptureSvgAsync(GetArg(args, "name"), GetArg(args, "window"))),
@@ -374,24 +497,184 @@ public sealed class UITestMcpServer
 
     private async Task<string> HoverAsync(string name)
     {
-        return await _ctx.RunOnUIThreadAsync(() =>
-        {
-            var control = _ctx.FindControl(name);
-            if (control == null) return $"Control not found: {name}";
-            return $"Hover logged: {name} (at {control.Bounds.X},{control.Bounds.Y} {control.Bounds.Width}x{control.Bounds.Height})";
-        });
+        var control = await _ctx.RunOnUIThreadAsync(() => _ctx.FindControl(name));
+        if (control == null) return $"Control not found: {name}";
+        var window = await _ctx.RunOnUIThreadAsync(() => FindWindowOf(control));
+        if (window == null) return $"No parent window for control: {name}";
+
+        var (cx, cy) = await GetControlCenterAsync(control, window);
+        await _pointer.Value.HoverAsync(window, cx, cy);
+        return $"Hovered over {name} at ({cx:F0}, {cy:F0})";
     }
 
     private async Task<string> MouseMoveAsync(double x, double y, string? windowId)
     {
-        // Mouse position actions are recorded for intent/documentation.
-        return $"Mouse move logged: ({x}, {y})";
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _pointer.Value.MoveAsync(window, x, y);
+        return $"Mouse moved to ({x}, {y})";
     }
 
-    private async Task<string> MouseClickAsync(double x, double y, string? windowId)
+    private async Task<string> MouseClickAsync(double x, double y, string? buttonName, string? windowId)
     {
-        // Coordinate-based clicks are logged. Use ui_click with control names for reliable interaction.
-        return $"Mouse click logged at ({x}, {y}). Use ui_click with a control name for reliable interaction.";
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        var button = ParseButton(buttonName);
+        await _pointer.Value.ClickAsync(window, x, y, button);
+        return $"Mouse click [{button}] at ({x}, {y})";
+    }
+
+    private async Task<string> MouseDownAsync(double x, double y, string? buttonName, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        var button = ParseButton(buttonName);
+        await _pointer.Value.DownAsync(window, x, y, button);
+        return $"Mouse down [{button}] at ({x}, {y})";
+    }
+
+    private async Task<string> MouseUpAsync(double x, double y, string? buttonName, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        var button = ParseButton(buttonName);
+        await _pointer.Value.UpAsync(window, x, y, button);
+        return $"Mouse up [{button}] at ({x}, {y})";
+    }
+
+    private async Task<string> DragAsync(double x1, double y1, double x2, double y2, string? buttonName, int steps, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        var button = ParseButton(buttonName);
+        await _pointer.Value.DragAsync(window, x1, y1, x2, y2, steps, 16, button);
+        return $"Dragged [{button}] ({x1},{y1}) → ({x2},{y2}) in {steps} steps";
+    }
+
+    private async Task<string> WheelAsync(double x, double y, double dx, double dy, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _pointer.Value.WheelAsync(window, x, y, dx, dy);
+        return $"Wheel at ({x},{y}) Δ=({dx},{dy})";
+    }
+
+    private async Task<string> PinchAsync(double x, double y, double scale, int steps, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        for (int i = 0; i < steps; i++)
+            await _pointer.Value.MagnifyAsync(window, x, y, scale / steps);
+        return $"Pinch at ({x},{y}) Δ={scale} over {steps} frames";
+    }
+
+    private async Task<string> RotateAsync(double x, double y, double angle, int steps, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        for (int i = 0; i < steps; i++)
+            await _pointer.Value.RotateAsync(window, x, y, angle / steps);
+        return $"Rotate at ({x},{y}) Δ={angle}° over {steps} frames";
+    }
+
+    private async Task<string> SwipeAsync(double x, double y, double dx, double dy, int steps, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        for (int i = 0; i < steps; i++)
+            await _pointer.Value.SwipeAsync(window, x, y, dx / steps, dy / steps);
+        return $"Swipe at ({x},{y}) Δ=({dx},{dy})";
+    }
+
+    private async Task<string> TouchTapAsync(double x, double y, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _pointer.Value.TouchTapAsync(window, x, y);
+        return $"Touch tap at ({x},{y})";
+    }
+
+    private async Task<string> TouchDragAsync(double x1, double y1, double x2, double y2, int steps, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _pointer.Value.TouchDragAsync(window, x1, y1, x2, y2, steps);
+        return $"Touch drag ({x1},{y1}) → ({x2},{y2}) in {steps} steps";
+    }
+
+    // === Window operations ===
+
+    private async Task<string> WindowResizeAsync(double width, double height, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _ctx.RunOnUIThreadAsync(() => { window.Width = width; window.Height = height; });
+        return $"Window resized to {width}x{height}";
+    }
+
+    private async Task<string> WindowMoveAsync(int x, int y, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _ctx.RunOnUIThreadAsync(() => window.Position = new PixelPoint(x, y));
+        return $"Window moved to ({x},{y})";
+    }
+
+    private async Task<string> WindowStateAsync(WindowState state, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _ctx.RunOnUIThreadAsync(() => window.WindowState = state);
+        return $"Window state: {state}";
+    }
+
+    private async Task<string> WindowFocusAsync(string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _ctx.RunOnUIThreadAsync(() => { window.Activate(); window.Focus(); });
+        return "Window focused";
+    }
+
+    private async Task<string> WindowCloseAsync(string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _ctx.RunOnUIThreadAsync(() => window.Close());
+        return "Window closed";
+    }
+
+    private async Task<string> WindowSetTitleAsync(string title, string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        await _ctx.RunOnUIThreadAsync(() => window.Title = title);
+        return $"Window title: {title}";
+    }
+
+    private async Task<string> WindowInfoAsync(string? windowId)
+    {
+        var window = ResolveWindow(windowId) ?? throw new InvalidOperationException("No window");
+        return await _ctx.RunOnUIThreadAsync(() =>
+            $"size={window.Width}x{window.Height} pos=({window.Position.X},{window.Position.Y}) state={window.WindowState} title=\"{window.Title}\"");
+    }
+
+    private Window? ResolveWindow(string? windowId) => _ctx.FindWindow(windowId) ?? _ctx.MainWindow;
+
+    private static Window? FindWindowOf(Control? control)
+    {
+        while (control != null)
+        {
+            if (control is Window w) return w;
+            control = control.Parent as Control;
+        }
+        return null;
+    }
+
+    private static async Task<(double X, double Y)> GetControlCenterAsync(Control control, Window window)
+    {
+        return await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            var topLeft = control.TranslatePoint(new Point(0, 0), window) ?? new Point(0, 0);
+            var b = control.Bounds;
+            return (topLeft.X + b.Width / 2, topLeft.Y + b.Height / 2);
+        });
+    }
+
+    private static MouseButton ParseButton(string? button)
+    {
+        if (string.IsNullOrEmpty(button)) return MouseButton.Left;
+        return button.ToLowerInvariant() switch
+        {
+            "right" or "rmb" => MouseButton.Right,
+            "middle" or "mmb" => MouseButton.Middle,
+            "x1" or "back" => MouseButton.XButton1,
+            "x2" or "forward" => MouseButton.XButton2,
+            _ => MouseButton.Left
+        };
     }
 
     // === Vision (the key feature for LLMs) ===

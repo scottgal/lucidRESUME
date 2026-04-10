@@ -493,9 +493,25 @@ LLM: ui_screenshot(name: "jobs-verified")
 | `Assert` | control name | visible:true/enabled:true/text:value | Assert control state |
 | `StartVideo` | | fps (default 5) | Start GIF recording |
 | `StopVideo` | | filename | Stop and save video |
-| `MouseMove` | | | Move to x,y coords |
-| `MouseDown` | | | Press at x,y |
-| `MouseUp` | | | Release at x,y |
+| `MouseMove` | | | Real pointer move to x,y |
+| `MouseDown` | | button (opt) | Real pointer press at x,y (left/right/middle/x1/x2) |
+| `MouseUp` | | button (opt) | Real pointer release at x,y |
+| `Drag` | | button (opt) | Press at x,y → drag to x2,y2 with `steps` interpolated moves |
+| `Wheel` | | "dy" or "dx,dy" | Real mouse wheel at x,y |
+| `Pinch` | | scale delta | Touchpad pinch (magnify) at x,y |
+| `Rotate` | | angle degrees | Touchpad rotate at x,y |
+| `Swipe` | | "dx,dy" or x2/y2 | Touchpad swipe at x,y |
+| `TouchTap` | | | Single-finger touch tap at x,y |
+| `TouchDown` / `TouchMove` / `TouchUp` | | | Single-finger touch primitives |
+| `TouchDrag` | | | Touch press at x,y → drag to x2,y2 |
+| `WindowResize` | | | Resize window to x (width) × y (height) |
+| `WindowMove` | | | Move window to screen coords (x, y) |
+| `WindowMinimize` / `WindowMaximize` / `WindowRestore` / `WindowSetFullScreen` | | | Change window state |
+| `WindowFocus` | | | Activate and focus window |
+| `WindowClose` | | | Close window |
+| `WindowSetTitle` | | new title | Set window title |
+
+All pointer/touch/gesture/wheel actions are dispatched through Avalonia's real input pipeline (`IInputManager.ProcessInput`), so they trigger hit-testing, `IsPointerOver`, capture, click counting, drag detection, and gesture recognition exactly the same as real OS input. Cross-platform on Windows, macOS, and Linux.
 
 ### Script Structure
 

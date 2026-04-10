@@ -23,16 +23,24 @@ public static class UITestingExtensions
 
         appBuilder.AfterSetup(_ =>
         {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                var args = desktop.Args ?? Array.Empty<string>();
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return;
 
-                if (args.HasArg("--ux-test") || args.HasArg("--ux-repl") || args.HasArg("--ux-mcp"))
-                {
-                    var startup = new UITestingStartup(options, args);
-                    startup.AttachToApplication();
-                }
+            var args = desktop.Args ?? Array.Empty<string>();
+
+            if (!args.HasArg("--ux-test") && !args.HasArg("--ux-repl") && !args.HasArg("--ux-mcp"))
+                return;
+
+            // AfterSetup runs BEFORE OnFrameworkInitializationCompleted, so desktop.MainWindow
+            // is still null at this point. Hook the Startup event, which fires after
+            // App.OnFrameworkInitializationCompleted has set MainWindow but before the main loop runs.
+            void OnStartup(object? sender, ControlledApplicationLifetimeStartupEventArgs e)
+            {
+                desktop.Startup -= OnStartup;
+                var startup = new UITestingStartup(options, args);
+                startup.AttachToApplication();
             }
+            desktop.Startup += OnStartup;
         });
 
         return appBuilder;

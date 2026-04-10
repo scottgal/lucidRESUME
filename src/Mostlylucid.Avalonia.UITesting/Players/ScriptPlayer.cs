@@ -21,6 +21,7 @@ public sealed class ScriptPlayer
     private Window? _window;
     private Action<string>? _navigateAction;
     private readonly UITestContext _context;
+    private readonly PointerSimulator _pointer = new();
     private GifRecorder? _videoRecorder;
 
     public event EventHandler<string>? Log;
@@ -157,6 +158,63 @@ public sealed class ScriptPlayer
                 case ActionType.MouseUp:
                     await ExecuteMouseUpAsync(action);
                     break;
+                case ActionType.Drag:
+                    await ExecuteDragAsync(action);
+                    break;
+                case ActionType.Wheel:
+                    await ExecuteWheelAsync(action);
+                    break;
+                case ActionType.Pinch:
+                    await ExecutePinchAsync(action);
+                    break;
+                case ActionType.Rotate:
+                    await ExecuteRotateAsync(action);
+                    break;
+                case ActionType.Swipe:
+                    await ExecuteSwipeAsync(action);
+                    break;
+                case ActionType.TouchTap:
+                    await ExecuteTouchTapAsync(action);
+                    break;
+                case ActionType.TouchDown:
+                    await ExecuteTouchDownAsync(action);
+                    break;
+                case ActionType.TouchMove:
+                    await ExecuteTouchMoveAsync(action);
+                    break;
+                case ActionType.TouchUp:
+                    await ExecuteTouchUpAsync(action);
+                    break;
+                case ActionType.TouchDrag:
+                    await ExecuteTouchDragAsync(action);
+                    break;
+                case ActionType.WindowResize:
+                    await ExecuteWindowResizeAsync(action);
+                    break;
+                case ActionType.WindowMove:
+                    await ExecuteWindowMoveAsync(action);
+                    break;
+                case ActionType.WindowMinimize:
+                    await ExecuteWindowStateAsync(action, WindowState.Minimized);
+                    break;
+                case ActionType.WindowMaximize:
+                    await ExecuteWindowStateAsync(action, WindowState.Maximized);
+                    break;
+                case ActionType.WindowRestore:
+                    await ExecuteWindowStateAsync(action, WindowState.Normal);
+                    break;
+                case ActionType.WindowClose:
+                    await ExecuteWindowCloseAsync(action);
+                    break;
+                case ActionType.WindowFocus:
+                    await ExecuteWindowFocusAsync(action);
+                    break;
+                case ActionType.WindowSetTitle:
+                    await ExecuteWindowSetTitleAsync(action);
+                    break;
+                case ActionType.WindowSetFullScreen:
+                    await ExecuteWindowStateAsync(action, WindowState.FullScreen);
+                    break;
                 case ActionType.StartVideo:
                     await ExecuteStartVideoAsync(action);
                     break;
@@ -218,13 +276,28 @@ public sealed class ScriptPlayer
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            if (control is Button button && button.Command?.CanExecute(button.CommandParameter) == true)
+            if (control is Button button)
             {
-                button.Command.Execute(button.CommandParameter);
+                // Always raise ClickEvent so the Button's own Click handler (XAML Click="...")
+                // runs. Then ALSO invoke any bound Command. This matches what a real pointer
+                // press+release would do — both paths fire on a real click.
+                button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                if (button.Command?.CanExecute(button.CommandParameter) == true)
+                    button.Command.Execute(button.CommandParameter);
+            }
+            else if (control is ToggleButton toggle)
+            {
+                toggle.IsChecked = !(toggle.IsChecked ?? false);
+                toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
             else if (control is TabItem tabItem)
             {
                 tabItem.IsSelected = true;
+            }
+            else if (control is RadioButton radio)
+            {
+                radio.IsChecked = true;
+                radio.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
             else
             {
@@ -251,15 +324,22 @@ public sealed class ScriptPlayer
 
     private async Task ExecuteRightClickAsync(UIAction action)
     {
-        var window = GetTargetWindow(action.WindowId);
-        var control = FindControl(action.Target, window);
-        if (control == null)
-            throw new InvalidOperationException($"Control not found: {action.Target}");
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for RightClick");
 
-        await Dispatcher.UIThread.InvokeAsync(() =>
+        // Coordinate-based right click takes precedence when X/Y are supplied.
+        if (action.X.HasValue && action.Y.HasValue)
         {
-            control.RaiseEvent(new RoutedEventArgs(InputElement.TappedEvent));
-        });
+            await _pointer.ClickAsync(window, action.X.Value, action.Y.Value, MouseButton.Right);
+            await Task.Delay(50);
+            return;
+        }
+
+        var control = FindControl(action.Target, window)
+            ?? throw new InvalidOperationException($"Control not found: {action.Target}");
+
+        var (cx, cy) = await GetControlCenterAsync(control, window);
+        await _pointer.ClickAsync(window, cx, cy, MouseButton.Right);
         await Task.Delay(50);
     }
 
@@ -301,10 +381,24 @@ public sealed class ScriptPlayer
 
     private async Task ExecuteHoverAsync(UIAction action)
     {
-        // Hover is recorded for intent - Avalonia doesn't expose PointerEventArgs constructors publicly.
-        // The action is logged and can trigger hover-sensitive bindings via automation peers in future.
-        Log?.Invoke(this, $"    Hover: {action.Target} (logged for replay)");
-        await Task.Delay(50);
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Hover");
+
+        double x, y;
+        if (action.X.HasValue && action.Y.HasValue)
+        {
+            (x, y) = (action.X.Value, action.Y.Value);
+        }
+        else
+        {
+            var control = FindControl(action.Target, window)
+                ?? throw new InvalidOperationException($"Control not found: {action.Target}");
+            (x, y) = await GetControlCenterAsync(control, window);
+        }
+
+        var linger = action.DelayMs > 0 ? action.DelayMs : 250;
+        await _pointer.HoverAsync(window, x, y, linger);
+        Log?.Invoke(this, $"    Hover: ({x:F0}, {y:F0}) linger={linger}ms");
     }
 
     private async Task ExecuteScrollAsync(UIAction action)
@@ -403,24 +497,281 @@ public sealed class ScriptPlayer
 
     private async Task ExecuteMouseMoveAsync(UIAction action)
     {
-        // Mouse move positions are recorded for documentation/replay logging.
-        // Avalonia doesn't expose public PointerEventArgs constructors.
-        Log?.Invoke(this, $"    MouseMove: ({action.X}, {action.Y})");
-        await Task.CompletedTask;
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for MouseMove");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        await _pointer.MoveAsync(window, x, y);
+        Log?.Invoke(this, $"    MouseMove: ({x:F0}, {y:F0})");
     }
 
     private async Task ExecuteMouseDownAsync(UIAction action)
     {
-        // MouseDown at coordinates - logged for replay intent.
-        // For actual click behavior, use Click action with control names.
-        Log?.Invoke(this, $"    MouseDown: ({action.X}, {action.Y})");
-        await Task.CompletedTask;
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for MouseDown");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        var button = ParseButton(action.Button);
+        await _pointer.DownAsync(window, x, y, button);
+        Log?.Invoke(this, $"    MouseDown[{button}]: ({x:F0}, {y:F0})");
     }
 
     private async Task ExecuteMouseUpAsync(UIAction action)
     {
-        Log?.Invoke(this, $"    MouseUp: ({action.X}, {action.Y})");
-        await Task.CompletedTask;
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for MouseUp");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        var button = ParseButton(action.Button);
+        await _pointer.UpAsync(window, x, y, button);
+        Log?.Invoke(this, $"    MouseUp[{button}]: ({x:F0}, {y:F0})");
+    }
+
+    private async Task ExecuteDragAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Drag");
+
+        if (!action.X.HasValue || !action.Y.HasValue || !action.X2.HasValue || !action.Y2.HasValue)
+            throw new InvalidOperationException("Drag requires X, Y, X2, Y2");
+
+        var button = ParseButton(action.Button);
+        var steps = action.Steps ?? 10;
+        await _pointer.DragAsync(window, action.X.Value, action.Y.Value, action.X2.Value, action.Y2.Value, steps, 16, button);
+        Log?.Invoke(this, $"    Drag[{button}]: ({action.X:F0},{action.Y:F0}) → ({action.X2:F0},{action.Y2:F0}) steps={steps}");
+    }
+
+    private async Task ExecuteWheelAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Wheel");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+
+        // Value carries delta. Format: "dx,dy" or "dy" alone (positive = up).
+        double dx = 0, dy = -1;
+        if (!string.IsNullOrEmpty(action.Value))
+        {
+            var parts = action.Value.Split(',', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length == 1 && double.TryParse(parts[0], out var single))
+            {
+                dy = single;
+            }
+            else if (parts.Length == 2
+                     && double.TryParse(parts[0], out var px)
+                     && double.TryParse(parts[1], out var py))
+            {
+                dx = px; dy = py;
+            }
+        }
+
+        await _pointer.WheelAsync(window, x, y, dx, dy);
+        Log?.Invoke(this, $"    Wheel: ({x:F0},{y:F0}) Δ=({dx},{dy})");
+    }
+
+    private async Task ExecutePinchAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Pinch");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        var scaleDelta = double.TryParse(action.Value, out var s) ? s : 0.1;
+        var steps = action.Steps ?? 10;
+        for (int i = 0; i < steps; i++)
+        {
+            await _pointer.MagnifyAsync(window, x, y, scaleDelta / steps);
+            await Task.Delay(16);
+        }
+        Log?.Invoke(this, $"    Pinch: ({x:F0},{y:F0}) total scale Δ={scaleDelta}");
+    }
+
+    private async Task ExecuteRotateAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Rotate");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        var angle = double.TryParse(action.Value, out var a) ? a : 30.0;
+        var steps = action.Steps ?? 10;
+        for (int i = 0; i < steps; i++)
+        {
+            await _pointer.RotateAsync(window, x, y, angle / steps);
+            await Task.Delay(16);
+        }
+        Log?.Invoke(this, $"    Rotate: ({x:F0},{y:F0}) total Δ={angle}°");
+    }
+
+    private async Task ExecuteSwipeAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Swipe");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+
+        double dx = 0, dy = 0;
+        if (action.X2.HasValue && action.Y2.HasValue)
+        {
+            dx = action.X2.Value - x;
+            dy = action.Y2.Value - y;
+        }
+        else if (!string.IsNullOrEmpty(action.Value))
+        {
+            var parts = action.Value.Split(',', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length == 2 && double.TryParse(parts[0], out var px) && double.TryParse(parts[1], out var py))
+            {
+                dx = px; dy = py;
+            }
+        }
+
+        var steps = action.Steps ?? 5;
+        for (int i = 0; i < steps; i++)
+        {
+            await _pointer.SwipeAsync(window, x, y, dx / steps, dy / steps);
+            await Task.Delay(16);
+        }
+        Log?.Invoke(this, $"    Swipe: ({x:F0},{y:F0}) Δ=({dx},{dy})");
+    }
+
+    private async Task ExecuteTouchTapAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for TouchTap");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        await _pointer.TouchTapAsync(window, x, y);
+        Log?.Invoke(this, $"    TouchTap: ({x:F0}, {y:F0})");
+    }
+
+    private async Task ExecuteTouchDownAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for TouchDown");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        await _pointer.TouchDownAsync(window, x, y);
+        Log?.Invoke(this, $"    TouchDown: ({x:F0}, {y:F0})");
+    }
+
+    private async Task ExecuteTouchMoveAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for TouchMove");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        await _pointer.TouchMoveAsync(window, x, y);
+        Log?.Invoke(this, $"    TouchMove: ({x:F0}, {y:F0})");
+    }
+
+    private async Task ExecuteTouchUpAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for TouchUp");
+        var (x, y) = await ResolveCoordinatesAsync(action, window);
+        await _pointer.TouchUpAsync(window, x, y);
+        Log?.Invoke(this, $"    TouchUp: ({x:F0}, {y:F0})");
+    }
+
+    private async Task ExecuteTouchDragAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for TouchDrag");
+        if (!action.X.HasValue || !action.Y.HasValue || !action.X2.HasValue || !action.Y2.HasValue)
+            throw new InvalidOperationException("TouchDrag requires X, Y, X2, Y2");
+        var steps = action.Steps ?? 10;
+        await _pointer.TouchDragAsync(window, action.X.Value, action.Y.Value, action.X2.Value, action.Y2.Value, steps);
+        Log?.Invoke(this, $"    TouchDrag: ({action.X:F0},{action.Y:F0}) → ({action.X2:F0},{action.Y2:F0})");
+    }
+
+    private async Task ExecuteWindowResizeAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for WindowResize");
+        if (!action.X.HasValue || !action.Y.HasValue)
+            throw new InvalidOperationException("WindowResize requires X (width) and Y (height)");
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            window.Width = action.X.Value;
+            window.Height = action.Y.Value;
+        });
+        Log?.Invoke(this, $"    WindowResize: {action.X}x{action.Y}");
+    }
+
+    private async Task ExecuteWindowMoveAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for WindowMove");
+        if (!action.X.HasValue || !action.Y.HasValue)
+            throw new InvalidOperationException("WindowMove requires X and Y screen coordinates");
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            window.Position = new PixelPoint((int)action.X.Value, (int)action.Y.Value);
+        });
+        Log?.Invoke(this, $"    WindowMove: ({action.X},{action.Y})");
+    }
+
+    private async Task ExecuteWindowStateAsync(UIAction action, WindowState state)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException($"No target window for {state}");
+        await Dispatcher.UIThread.InvokeAsync(() => window.WindowState = state);
+        Log?.Invoke(this, $"    WindowState: {state}");
+    }
+
+    private async Task ExecuteWindowCloseAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for WindowClose");
+        await Dispatcher.UIThread.InvokeAsync(() => window.Close());
+        Log?.Invoke(this, "    WindowClose");
+    }
+
+    private async Task ExecuteWindowFocusAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for WindowFocus");
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            window.Activate();
+            window.Focus();
+        });
+        Log?.Invoke(this, "    WindowFocus");
+    }
+
+    private async Task ExecuteWindowSetTitleAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for WindowSetTitle");
+        var title = action.Value ?? "";
+        await Dispatcher.UIThread.InvokeAsync(() => window.Title = title);
+        Log?.Invoke(this, $"    WindowSetTitle: {title}");
+    }
+
+    private async Task<(double X, double Y)> ResolveCoordinatesAsync(UIAction action, Window window)
+    {
+        if (action.X.HasValue && action.Y.HasValue)
+            return (action.X.Value, action.Y.Value);
+
+        if (!string.IsNullOrEmpty(action.Target))
+        {
+            var control = FindControl(action.Target, window)
+                ?? throw new InvalidOperationException($"Control not found: {action.Target}");
+            return await GetControlCenterAsync(control, window);
+        }
+
+        throw new InvalidOperationException($"{action.Type} requires either X/Y or a Target control name");
+    }
+
+    private static async Task<(double X, double Y)> GetControlCenterAsync(Control control, Window window)
+    {
+        return await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            var topLeft = control.TranslatePoint(new Point(0, 0), window) ?? new Point(0, 0);
+            var bounds = control.Bounds;
+            return (topLeft.X + bounds.Width / 2, topLeft.Y + bounds.Height / 2);
+        });
+    }
+
+    private static MouseButton ParseButton(string? button)
+    {
+        if (string.IsNullOrEmpty(button)) return MouseButton.Left;
+        return button.ToLowerInvariant() switch
+        {
+            "right" or "rmb" or "secondary" => MouseButton.Right,
+            "middle" or "wheel" or "mmb" => MouseButton.Middle,
+            "x1" or "xbutton1" or "back" => MouseButton.XButton1,
+            "x2" or "xbutton2" or "forward" => MouseButton.XButton2,
+            _ => MouseButton.Left
+        };
     }
 
     private async Task ExecuteStartVideoAsync(UIAction action)

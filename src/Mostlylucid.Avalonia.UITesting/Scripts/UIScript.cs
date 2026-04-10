@@ -16,6 +16,25 @@ public enum ActionType
     MouseMove,
     MouseDown,
     MouseUp,
+    Drag,
+    Wheel,
+    Pinch,
+    Rotate,
+    Swipe,
+    TouchTap,
+    TouchDown,
+    TouchMove,
+    TouchUp,
+    TouchDrag,
+    WindowResize,
+    WindowMove,
+    WindowMinimize,
+    WindowMaximize,
+    WindowRestore,
+    WindowClose,
+    WindowFocus,
+    WindowSetTitle,
+    WindowSetFullScreen,
     StartVideo,
     StopVideo,
     Svg
@@ -30,6 +49,14 @@ public class UIAction
     public string? Description { get; set; }
     public double? X { get; set; }
     public double? Y { get; set; }
+    /// <summary>End X for Drag actions.</summary>
+    public double? X2 { get; set; }
+    /// <summary>End Y for Drag actions.</summary>
+    public double? Y2 { get; set; }
+    /// <summary>Mouse button for pointer actions: "left" (default), "right", "middle".</summary>
+    public string? Button { get; set; }
+    /// <summary>Number of intermediate move events for Drag (default 10).</summary>
+    public int? Steps { get; set; }
     public string? WindowId { get; set; }
 }
 
