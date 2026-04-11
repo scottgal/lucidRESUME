@@ -112,8 +112,61 @@ public sealed class UITestRepl
             "wclose" => await WindowCloseCmdAsync(),
             "wtitle" => await WindowTitleCmdAsync(args),
             "winfo" => await WindowInfoCmdAsync(),
+            "snip" => await SnipRegionCmdAsync(args),
+            "snipctl" => await SnipControlCmdAsync(args),
+            "snipgroup" => await SnipGroupCmdAsync(args),
             _ => $"Unknown command: {cmd}. Type 'help' for commands."
         };
+    }
+
+    private async Task<string> SnipRegionCmdAsync(string[] args)
+    {
+        if (args.Length < 4) return "Usage: snip <x> <y> <width> <height> [name] [padding]";
+        var x = double.Parse(args[0]); var y = double.Parse(args[1]);
+        var w = double.Parse(args[2]); var h = double.Parse(args[3]);
+        var name = args.Length > 4 ? args[4] : $"snip_{DateTime.UtcNow:HHmmss_fff}";
+        var padding = args.Length > 5 && double.TryParse(args[5], out var p) ? p : 0;
+        var filePath = Path.Combine(_screenshotDir, $"{name}.png");
+        var rect = new Rect(x, y, w, h);
+        if (padding > 0) rect = rect.Inflate(padding);
+        var path = await ScreenshotCapture.CaptureRegionAsync(RequireWindow(), filePath, rect);
+        return $"Snip → {path}";
+    }
+
+    private async Task<string> SnipControlCmdAsync(string[] args)
+    {
+        if (args.Length < 1) return "Usage: snipctl <control> [name] [padding]";
+        var controlName = args[0];
+        var name = args.Length > 1 ? args[1] : $"snip_{controlName}_{DateTime.UtcNow:HHmmss_fff}";
+        var padding = args.Length > 2 && double.TryParse(args[2], out var p) ? p : 0;
+        var control = await _ctx.RunOnUIThreadAsync(() => _ctx.FindControl(controlName));
+        if (control == null) return $"Control not found: {controlName}";
+        var filePath = Path.Combine(_screenshotDir, $"{name}.png");
+        var path = await ScreenshotCapture.CaptureControlAsync(RequireWindow(), control, filePath, padding);
+        return $"Snip {controlName} → {path}";
+    }
+
+    private async Task<string> SnipGroupCmdAsync(string[] args)
+    {
+        if (args.Length < 1) return "Usage: snipgroup <name1,name2,...> [name] [padding]";
+        var names = args[0].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var name = args.Length > 1 ? args[1] : $"snip_group_{DateTime.UtcNow:HHmmss_fff}";
+        var padding = args.Length > 2 && double.TryParse(args[2], out var p) ? p : 0;
+        var window = RequireWindow();
+        var controls = await _ctx.RunOnUIThreadAsync(() =>
+        {
+            var list = new List<Control>();
+            foreach (var n in names)
+            {
+                var c = _ctx.FindControl(n, window);
+                if (c == null) throw new InvalidOperationException($"Control not found: {n}");
+                list.Add(c);
+            }
+            return list;
+        });
+        var filePath = Path.Combine(_screenshotDir, $"{name}.png");
+        var path = await ScreenshotCapture.CaptureControlsAsync(window, controls, filePath, padding);
+        return $"Snip group → {path}";
     }
 
     private async Task<string> WindowResizeCmdAsync(string[] args)
@@ -345,6 +398,9 @@ public sealed class UITestRepl
               wclose                  Close window
               wtitle <title>          Set window title
               winfo                   Show window size/pos/state
+              snip <x> <y> <w> <h> [name] [padding]   Snip a region of the window to PNG
+              snipctl <control> [name] [padding]      Snip one control's bounds to PNG
+              snipgroup <c1,c2,...> [name] [padding]  Snip the bounding box of multiple controls
               exit                    Exit REPL
             """;
     }

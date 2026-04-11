@@ -57,6 +57,8 @@ public class UIAction
     public string? Button { get; set; }
     /// <summary>Number of intermediate move events for Drag (default 10).</summary>
     public int? Steps { get; set; }
+    /// <summary>Extra DIPs to inflate around a snipped region or control bounds.</summary>
+    public double? Padding { get; set; }
     public string? WindowId { get; set; }
 }
 

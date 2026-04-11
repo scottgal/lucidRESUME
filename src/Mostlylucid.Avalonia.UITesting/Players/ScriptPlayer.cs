@@ -462,7 +462,40 @@ public sealed class ScriptPlayer
     private async Task ExecuteScreenshotAsync(UIAction action, UIActionResult result)
     {
         var name = action.Value ?? $"screenshot_{DateTime.UtcNow:HHmmss_fff}";
-        result.ScreenshotPath = await CaptureScreenshotAsync(name, action.WindowId);
+        var window = GetTargetWindow(action.WindowId);
+        if (window == null)
+        {
+            result.ScreenshotPath = "";
+            return;
+        }
+
+        var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var padding = action.Padding ?? 0;
+
+        // Snip a control by name → its bounds (+ optional padding)
+        if (!string.IsNullOrEmpty(action.Target))
+        {
+            var control = FindControl(action.Target, window)
+                ?? throw new InvalidOperationException($"Snip target control not found: {action.Target}");
+            result.ScreenshotPath = await ScreenshotCapture.CaptureControlAsync(window, control, filePath, padding);
+            Log?.Invoke(this, $"    Snip control {action.Target} → {Path.GetFileName(filePath)}");
+            return;
+        }
+
+        // Snip an explicit rect via X/Y/X2/Y2
+        if (action.X.HasValue && action.Y.HasValue && action.X2.HasValue && action.Y2.HasValue)
+        {
+            var rect = new Rect(action.X.Value, action.Y.Value,
+                action.X2.Value - action.X.Value, action.Y2.Value - action.Y.Value);
+            if (padding > 0) rect = rect.Inflate(padding);
+            result.ScreenshotPath = await ScreenshotCapture.CaptureRegionAsync(window, filePath, rect);
+            Log?.Invoke(this, $"    Snip region {rect} → {Path.GetFileName(filePath)}");
+            return;
+        }
+
+        // Otherwise full window
+        result.ScreenshotPath = await ScreenshotCapture.CaptureWindowAsync(window, filePath);
     }
 
     private async Task ExecuteAssertAsync(UIAction action)

@@ -303,23 +303,57 @@ public sealed class UITestSession : IAsyncDisposable
     {
         var safeName = name ?? $"screenshot_{DateTime.UtcNow:HHmmss_fff}";
         var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var window = _context.FindWindow(windowId) ?? _window;
+        var path = await ScreenshotCapture.CaptureWindowAsync(window, filePath);
+        _log?.Invoke($"Screenshot: {path}");
+        return path;
+    }
 
-        await RunOnUIThreadAsync(() =>
+    /// <summary>
+    /// Snip a rectangular region of the window — useful for documentation/manuals
+    /// where you want one panel rather than the whole window.
+    /// </summary>
+    public async Task<string> SnipRegionAsync(double x, double y, double width, double height, string? name = null, string? windowId = null, double padding = 0)
+    {
+        var safeName = name ?? $"snip_{DateTime.UtcNow:HHmmss_fff}";
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var window = _context.FindWindow(windowId) ?? _window;
+        var rect = new Rect(x, y, width, height);
+        if (padding > 0) rect = rect.Inflate(padding);
+        var path = await ScreenshotCapture.CaptureRegionAsync(window, filePath, rect);
+        _log?.Invoke($"Snip {rect}: {path}");
+        return path;
+    }
+
+    /// <summary>Snip a single named control's bounds, with optional padding.</summary>
+    public async Task<string> SnipControlAsync(string controlName, string? name = null, double padding = 0, string? windowId = null)
+    {
+        var safeName = name ?? $"snip_{controlName}_{DateTime.UtcNow:HHmmss_fff}";
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var window = _context.FindWindow(windowId) ?? _window;
+        var control = _context.FindControl(controlName, window)
+            ?? throw new InvalidOperationException($"Control not found: {controlName}");
+        var path = await ScreenshotCapture.CaptureControlAsync(window, control, filePath, padding);
+        _log?.Invoke($"Snip {controlName}: {path}");
+        return path;
+    }
+
+    /// <summary>Snip the bounding box of multiple named controls (e.g. a label + textbox + button group).</summary>
+    public async Task<string> SnipControlsAsync(IEnumerable<string> controlNames, string? name = null, double padding = 0, string? windowId = null)
+    {
+        var safeName = name ?? $"snip_group_{DateTime.UtcNow:HHmmss_fff}";
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var window = _context.FindWindow(windowId) ?? _window;
+        var controls = new List<Control>();
+        foreach (var n in controlNames)
         {
-            var window = _context.FindWindow(windowId) ?? _window;
-            window.UpdateLayout();
-            var size = new PixelSize((int)window.Bounds.Width, (int)window.Bounds.Height);
-            var dpi = new Vector(96, 96);
-
-            using var bitmap = new RenderTargetBitmap(size, dpi);
-            bitmap.Render(window);
-
-            using var stream = File.Create(filePath);
-            bitmap.Save(stream);
-        });
-
-        _log?.Invoke($"Screenshot: {filePath}");
-        return filePath;
+            var c = _context.FindControl(n, window)
+                ?? throw new InvalidOperationException($"Control not found: {n}");
+            controls.Add(c);
+        }
+        var path = await ScreenshotCapture.CaptureControlsAsync(window, controls, filePath, padding);
+        _log?.Invoke($"Snip group [{string.Join(",", controlNames)}]: {path}");
+        return path;
     }
 
     public async Task<string> SvgAsync(string? name = null, string? windowId = null)

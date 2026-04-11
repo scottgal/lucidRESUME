@@ -488,7 +488,7 @@ LLM: ui_screenshot(name: "jobs-verified")
 | `Hover` | control name | | Hover over control |
 | `Scroll` | ScrollViewer (opt) | up/down/top/bottom | Scroll |
 | `Wait` | | milliseconds | Wait |
-| `Screenshot` | | filename | Capture PNG |
+| `Screenshot` | control name (opt) | filename | Capture PNG. Snips a single control if `target` set, an X/Y/X2/Y2 rect if all four coords set, otherwise the full window. `padding` inflates the snip. |
 | `Svg` | | filename | Export SVG |
 | `Assert` | control name | visible:true/enabled:true/text:value | Assert control state |
 | `StartVideo` | | fps (default 5) | Start GIF recording |
@@ -512,6 +512,38 @@ LLM: ui_screenshot(name: "jobs-verified")
 | `WindowSetTitle` | | new title | Set window title |
 
 All pointer/touch/gesture/wheel actions are dispatched through Avalonia's real input pipeline (`IInputManager.ProcessInput`), so they trigger hit-testing, `IsPointerOver`, capture, click counting, drag detection, and gesture recognition exactly the same as real OS input. Cross-platform on Windows, macOS, and Linux.
+
+### Snipping (regions, controls, manuals)
+
+The `Screenshot` action and the `UITestSession.Snip*` / MCP `ui_snip_*` / REPL `snip*` commands can capture a region of a window instead of the whole thing — useful when you're producing manuals or docs and want a single button or panel rather than the whole window. Snipping renders the window once via `RenderTargetBitmap`, then crops the rendered bitmap with SkiaSharp.
+
+```yaml
+# Snip one control with 8px padding
+- type: Screenshot
+  target: SaveButton
+  value: save-button
+  padding: 8
+
+# Snip an explicit rect
+- type: Screenshot
+  value: header-area
+  x: 0
+  y: 0
+  x2: 1200
+  y2: 80
+```
+
+```bash
+# REPL
+ui> snipctl SaveButton save-button 8
+ui> snip 0 0 1200 80 header-area
+ui> snipgroup HeaderLogo,HeaderTitle,HeaderNav header
+
+# MCP
+ui_snip_control name=SaveButton padding=8
+ui_snip_region x=0 y=0 width=1200 height=80
+ui_snip_controls names="HeaderLogo,HeaderTitle,HeaderNav"
+```
 
 ### Script Structure
 

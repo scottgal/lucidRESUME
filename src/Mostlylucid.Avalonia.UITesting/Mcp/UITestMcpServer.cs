@@ -260,6 +260,27 @@ public sealed class UITestMcpServer
                 ("name", "string", "Optional filename", false),
                 ("window", "string", "Window name/title (optional)", false)),
 
+            Tool("ui_snip_region", "Snip a rectangular region of the window to PNG (for manuals/docs)",
+                ("x", "number", "X in DIPs", true),
+                ("y", "number", "Y in DIPs", true),
+                ("width", "number", "Width in DIPs", true),
+                ("height", "number", "Height in DIPs", true),
+                ("name", "string", "Optional filename", false),
+                ("padding", "number", "Extra DIPs around the region (default 0)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_snip_control", "Snip a single named control's bounds to PNG",
+                ("name", "string", "Control name", true),
+                ("file", "string", "Optional output filename", false),
+                ("padding", "number", "Extra DIPs around the control (default 0)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
+            Tool("ui_snip_controls", "Snip the bounding box of multiple controls (comma-separated names)",
+                ("names", "string", "Comma-separated control names", true),
+                ("file", "string", "Optional output filename", false),
+                ("padding", "number", "Extra DIPs around the group (default 0)", false),
+                ("window", "string", "Window name/title (optional)", false)),
+
             Tool("ui_svg", "Export the current UI as an SVG file by walking the visual tree. Produces a scalable vector representation of the UI layout, text, shapes, and colors - no Skia dependency.",
                 ("name", "string", "Optional filename", false),
                 ("window", "string", "Window name/title (optional)", false)),
@@ -369,6 +390,9 @@ public sealed class UITestMcpServer
                 "ui_window_info" => TextResult(await WindowInfoAsync(GetArg(args, "window"))),
                 "ui_see" => await SeeAsync(GetArg(args, "name"), GetArg(args, "window"), GetInt(args, "max_width", 120), GetInt(args, "max_height", 40)),
                 "ui_screenshot" => TextResult(await CaptureScreenshotAsync(GetArg(args, "name"), GetArg(args, "window"))),
+                "ui_snip_region" => TextResult(await SnipRegionAsync(GetDouble(args, "x"), GetDouble(args, "y"), GetDouble(args, "width"), GetDouble(args, "height"), GetArg(args, "name"), GetDouble(args, "padding", 0), GetArg(args, "window"))),
+                "ui_snip_control" => TextResult(await SnipControlAsync(GetArg(args, "name"), GetArg(args, "file"), GetDouble(args, "padding", 0), GetArg(args, "window"))),
+                "ui_snip_controls" => TextResult(await SnipControlsAsync(GetArg(args, "names"), GetArg(args, "file"), GetDouble(args, "padding", 0), GetArg(args, "window"))),
                 "ui_svg" => TextResult(await CaptureSvgAsync(GetArg(args, "name"), GetArg(args, "window"))),
                 "ui_screenshot_base64" => await ScreenshotBase64Async(GetArg(args, "name"), GetArg(args, "window")),
                 "ui_tree" => TextResult(await GetTreeAsync(GetArg(args, "window"))),
@@ -1024,20 +1048,53 @@ public sealed class UITestMcpServer
     {
         var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
         var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow!;
+        return await ScreenshotCapture.CaptureWindowAsync(window, filePath);
+    }
 
-        await _ctx.RunOnUIThreadAsync(() =>
+    private async Task<string> SnipRegionAsync(double x, double y, double width, double height, string? name, double padding, string? windowId)
+    {
+        var safeName = string.Join("_", (string.IsNullOrEmpty(name) ? $"snip_{DateTime.UtcNow:HHmmss_fff}" : name).Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow ?? throw new InvalidOperationException("No window");
+        var rect = new Rect(x, y, width, height);
+        if (padding > 0) rect = rect.Inflate(padding);
+        var path = await ScreenshotCapture.CaptureRegionAsync(window, filePath, rect);
+        return $"Snipped region {rect}: {path}";
+    }
+
+    private async Task<string> SnipControlAsync(string controlName, string? file, double padding, string? windowId)
+    {
+        var safeName = string.Join("_", (string.IsNullOrEmpty(file) ? $"snip_{controlName}_{DateTime.UtcNow:HHmmss_fff}" : file).Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow ?? throw new InvalidOperationException("No window");
+        var control = await _ctx.RunOnUIThreadAsync(() => _ctx.FindControl(controlName, window));
+        if (control == null) return $"Control not found: {controlName}";
+        var path = await ScreenshotCapture.CaptureControlAsync(window, control, filePath, padding);
+        return $"Snipped {controlName}: {path}";
+    }
+
+    private async Task<string> SnipControlsAsync(string namesCsv, string? file, double padding, string? windowId)
+    {
+        if (string.IsNullOrEmpty(namesCsv)) return "Need at least one control name";
+        var safeName = string.Join("_", (string.IsNullOrEmpty(file) ? $"snip_group_{DateTime.UtcNow:HHmmss_fff}" : file).Split(Path.GetInvalidFileNameChars()));
+        var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
+        var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow ?? throw new InvalidOperationException("No window");
+
+        var names = namesCsv.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var controls = await _ctx.RunOnUIThreadAsync(() =>
         {
-            var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow!;
-            window.UpdateLayout();
-            var size = new PixelSize((int)window.Bounds.Width, (int)window.Bounds.Height);
-            var dpi = new Vector(96, 96);
-            using var bitmap = new RenderTargetBitmap(size, dpi);
-            bitmap.Render(window);
-            using var stream = File.Create(filePath);
-            bitmap.Save(stream);
+            var list = new List<Control>();
+            foreach (var n in names)
+            {
+                var c = _ctx.FindControl(n, window);
+                if (c == null) throw new InvalidOperationException($"Control not found: {n}");
+                list.Add(c);
+            }
+            return list;
         });
-
-        return filePath;
+        var path = await ScreenshotCapture.CaptureControlsAsync(window, controls, filePath, padding);
+        return $"Snipped group [{namesCsv}]: {path}";
     }
 
     private async Task<string> CaptureSvgAsync(string name, string? windowId = null)
