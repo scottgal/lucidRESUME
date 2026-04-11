@@ -1,5 +1,8 @@
 # ***lucid*RESUME**
 
+[![Mostlylucid.Avalonia.UITesting on NuGet](https://img.shields.io/nuget/v/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=Mostlylucid.Avalonia.UITesting)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
+[![NuGet downloads](https://img.shields.io/nuget/dt/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
+
 **Your job search. Your data. Your machine.**
 
 ***lucid*RESUME** is a free, open-source desktop app that builds a structured, evidence-based model of your skills from your actual work - then uses it to:
@@ -249,7 +252,10 @@ dotnet test    # 183+ tests across 7 projects
 
 ## UX Testing
 
-Built-in UI automation for scripted testing:
+[![Mostlylucid.Avalonia.UITesting on NuGet](https://img.shields.io/nuget/v/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=Mostlylucid.Avalonia.UITesting)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
+[![NuGet downloads](https://img.shields.io/nuget/dt/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
+
+The UI automation layer is published as a standalone NuGet package — **[Mostlylucid.Avalonia.UITesting](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)** — so any Avalonia desktop app can use it. Real pointer/touch/wheel/gesture input via Avalonia's `IInputManager`, region/control snipping for manuals, YAML scripts, GIF video, REPL, and an MCP server. Source lives in [`src/Mostlylucid.Avalonia.UITesting/`](src/Mostlylucid.Avalonia.UITesting/README.md).
 
 ```bash
 # Run a YAML test script

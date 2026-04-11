@@ -1,5 +1,8 @@
 # Mostlylucid.Avalonia.UITesting
 
+[![NuGet](https://img.shields.io/nuget/v/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
+[![NuGet downloads](https://img.shields.io/nuget/dt/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
+
 A complete UI testing toolkit for [Avalonia](https://avaloniaui.net/) desktop apps. Screenshot snapshots, YAML script playback, interaction recording, animated GIF video capture, interactive REPL, and an MCP server that lets LLMs see and drive your UI.
 
 Built for [lucidRESUME](https://github.com/scottgal/lucidRESUME) and extracted as a standalone package so any Avalonia app can use it.

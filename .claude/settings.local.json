@@ -256,7 +256,10 @@
       "Bash(sed -i '' 's/formatOpt.SetDefaultValue\\(\"\"markdown\"\"\\);//' src/lucidRESUME.Cli/Commands/AnonymizeCommand.cs)",
       "Bash(sed -i '' 's/new Option<string>\\(\"\"--format\"\"\\) { Description/new Option<string>\\(\"\"--format\"\", \\(\\) => \"\"markdown\"\"\\) { Description/' src/lucidRESUME.Cli/Commands/AnonymizeCommand.cs)",
       "Bash(sed -i '' 's/limitOpt.SetDefaultValue\\(20\\);//' src/lucidRESUME.Cli/Commands/RankCommand.cs)",
-      "Bash(sed -i '' 's/new Option<int>\\(\"\"--limit\"\"\\) { Description/new Option<int>\\(\"\"--limit\"\", \\(\\) => 20\\) { Description/' src/lucidRESUME.Cli/Commands/RankCommand.cs)"
+      "Bash(sed -i '' 's/new Option<int>\\(\"\"--limit\"\"\\) { Description/new Option<int>\\(\"\"--limit\"\", \\(\\) => 20\\) { Description/' src/lucidRESUME.Cli/Commands/RankCommand.cs)",
+      "Read(//private/tmp/inspect/**)",
+      "Bash(sed -i '' 's|ref/net8.0|lib/net8.0|' inspect.csproj)",
+      "Bash(gh workflow:*)"
     ]
   }
 }
