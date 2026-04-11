@@ -412,13 +412,24 @@ public sealed class ScriptPlayer
     private async Task ExecuteScrollAsync(UIAction action)
     {
         var window = GetTargetWindow(action.WindowId);
+        if (window == null) return;
+
+        // Resolve the target via the locator engine so namescope-isolated
+        // ScrollViewers (inside UserControls, popups, templated parts) are found.
+        ScrollViewer? sv = null;
+        if (!string.IsNullOrEmpty(action.Target))
+        {
+            var control = await LocateAsync(action.Target, window);
+            sv = control as ScrollViewer ?? control.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+        }
+        else
+        {
+            sv = FindFirstScrollViewer(window);
+        }
 
         var tcs = new TaskCompletionSource();
         Dispatcher.UIThread.Post(() =>
         {
-            ScrollViewer? sv = action.Target != null
-                ? window?.FindControl<ScrollViewer>(action.Target)
-                : FindFirstScrollViewer(window);
 
             if (sv != null)
             {

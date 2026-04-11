@@ -2,7 +2,9 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 
 namespace Mostlylucid.Avalonia.UITesting.Locators;
@@ -23,11 +25,80 @@ public sealed class NameLocator : Locator
             if (c.Name == Name) yield return c;
     }
 
+    /// <summary>
+    /// Walk every control reachable from <paramref name="root"/>, regardless of
+    /// XAML namescope, template materialization, or container realization.
+    ///
+    /// Avalonia's namescopes are per-XAML-file, so a UserControl's named children
+    /// are invisible to the parent Window's <c>FindControl&lt;T&gt;(name)</c> —
+    /// which is why locators can't rely on namescope lookup. This walker traverses
+    /// the union of:
+    ///
+    /// <list type="bullet">
+    ///   <item>The visual tree (rendered children, including templated parts)</item>
+    ///   <item>The logical tree (XAML structure even before measure/arrange)</item>
+    ///   <item>Realized <see cref="ItemsControl"/> containers</item>
+    ///   <item>Templated parts produced by calling <c>ApplyTemplate</c></item>
+    ///   <item><see cref="Popup.Child"/> when popups are present (closed or open)</item>
+    /// </list>
+    ///
+    /// A reference-equality visited set prevents cycles when the visual and
+    /// logical trees overlap.
+    /// </summary>
     internal static IEnumerable<Control> Walk(Control root)
     {
-        yield return root;
-        foreach (var d in root.GetVisualDescendants().OfType<Control>())
-            yield return d;
+        var visited = new HashSet<Control>(ReferenceEqualityComparer.Instance);
+        var stack = new Stack<Control>();
+        stack.Push(root);
+
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            if (!visited.Add(current)) continue;
+            yield return current;
+
+            // Force template materialization so templated parts (children inside
+            // ControlTemplates) become reachable. This is a no-op if the template
+            // has already been applied.
+            if (current is TemplatedControl tc)
+            {
+                try { tc.ApplyTemplate(); } catch { /* template not yet ready */ }
+            }
+
+            // Visual tree children — covers everything actually rendered
+            foreach (var v in current.GetVisualChildren())
+            {
+                if (v is Control c && !visited.Contains(c))
+                    stack.Push(c);
+            }
+
+            // Logical tree children — catches controls registered in XAML before
+            // they enter the visual tree (e.g. items in a not-yet-arranged panel)
+            foreach (var l in current.GetLogicalChildren())
+            {
+                if (l is Control c && !visited.Contains(c))
+                    stack.Push(c);
+            }
+
+            // ItemsControl: enter realized item containers explicitly. The visual
+            // tree walk picks these up too, but we add them defensively in case
+            // a virtualizing presenter prevents the visual descent.
+            if (current is ItemsControl ic)
+            {
+                foreach (var i in ic.GetRealizedContainers())
+                {
+                    if (i is Control c && !visited.Contains(c))
+                        stack.Push(c);
+                }
+            }
+
+            // Popups: their Child is reachable via the logical tree only when
+            // open. Pull it in directly so closed popups still resolve.
+            if (current is Popup popup && popup.Child is Control popupChild && !visited.Contains(popupChild))
+            {
+                stack.Push(popupChild);
+            }
+        }
     }
 }
 

@@ -501,9 +501,20 @@ public sealed class UITestMcpServer
     {
         await _ctx.RunOnUIThreadAsync(() =>
         {
-            ScrollViewer? sv = target != null
-                ? _ctx.MainWindow?.FindControl<ScrollViewer>(target)
-                : _ctx.MainWindow?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+            // Use the locator engine so namescope-isolated ScrollViewers (inside
+            // UserControls, popups, templated parts) are found regardless of
+            // XAML name scope. The locator returns Control; we then descend to a
+            // ScrollViewer if the resolved control is not one itself.
+            ScrollViewer? sv;
+            if (!string.IsNullOrEmpty(target))
+            {
+                var resolved = _ctx.FindControl(target);
+                sv = resolved as ScrollViewer ?? resolved?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+            }
+            else
+            {
+                sv = _ctx.MainWindow?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+            }
 
             if (sv != null)
             {
