@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using Mostlylucid.Avalonia.UITesting.Locators;
 
 namespace Mostlylucid.Avalonia.UITesting;
 
@@ -60,12 +61,30 @@ public sealed class UITestContext
     public object? GetService(Type type) => Services?.GetService(type);
     public T? GetService<T>() where T : class => Services?.GetService<T>();
 
-    public Control? FindControl(string? name, Window? window = null)
+    /// <summary>
+    /// Resolve a selector string to the first matching control. Accepts the full
+    /// Playwright-style locator grammar from <see cref="SelectorParser"/>:
+    /// <c>name=SaveBtn</c>, <c>type=Button text=Save</c>, <c>role=button</c>,
+    /// <c>testid=save-btn</c>, etc. A bare word with no operators is treated as
+    /// <c>name=...</c> for backwards compatibility.
+    ///
+    /// This is a synchronous one-shot lookup with no retry. Use
+    /// <see cref="LocatorEngine.ResolveFirstAsync(Locator, Avalonia.Controls.Control, int?)"/>
+    /// for auto-waiting resolution in interactions.
+    /// </summary>
+    public Control? FindControl(string? selector, Window? window = null)
     {
         var target = window ?? MainWindow;
-        if (string.IsNullOrEmpty(name) || target == null) return null;
-        if (target.Name == name) return target;
-        return target.FindControl<Control>(name);
+        if (string.IsNullOrEmpty(selector) || target == null) return null;
+        try
+        {
+            var locator = SelectorParser.Parse(selector);
+            return locator.Resolve(target).FirstOrDefault();
+        }
+        catch (SelectorParseException)
+        {
+            return null;
+        }
     }
 
     public IEnumerable<Control> GetAllControls(Window? window = null)

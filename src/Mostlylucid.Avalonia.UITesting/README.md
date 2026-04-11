@@ -516,6 +516,49 @@ LLM: ui_screenshot(name: "jobs-verified")
 
 All pointer/touch/gesture/wheel actions are dispatched through Avalonia's real input pipeline (`IInputManager.ProcessInput`), so they trigger hit-testing, `IsPointerOver`, capture, click counting, drag detection, and gesture recognition exactly the same as real OS input. Cross-platform on Windows, macOS, and Linux.
 
+### Locators (Playwright-style)
+
+The `target:` field on every action accepts a Playwright-flavoured selector string. A bare word with no operators is treated as `name=...` for backwards compatibility.
+
+| Selector | Meaning |
+|---|---|
+| `name=SaveBtn` | by `Control.Name` |
+| `type=Button` | by short type name (matches the type or any base) |
+| `text=Save` | by displayed text content (substring) |
+| `text='Save Resume'` | by displayed text content (exact, quoted) |
+| `role=button` | by automation peer role |
+| `role=button name=Save` | role + accessible name |
+| `testid=save-btn` | by `AutomationProperties.AutomationId` |
+| `label=Email` | the input associated with a label via `AutomationProperties.LabeledBy` |
+| `first(type=Button)` | first match |
+| `last(type=Button)` | last match |
+| `nth(2, type=ListBoxItem)` | zero-based index match |
+| `inside(name=Header) type=TextBlock` | restricted to a container's visual subtree |
+| `near(name=JobList) type=Button` | reordered by spatial proximity to an anchor |
+| `type=Button:has-text(Save Resume)` | filter by descendant text (Playwright `:has-text` pseudo) |
+
+Composition: multiple atoms separated by spaces compose with implicit AND — `type=Button text=Save` matches buttons whose displayed text contains "Save".
+
+Locators auto-retry. When a script tries to click `name=SaveBtn` while the control is still being created by an async DataContext bind, the locator engine polls the visual tree until the control appears or a timeout (default 5s) elapses. No more `Wait` actions before clicking.
+
+Programmatic equivalent for in-process tests:
+
+```csharp
+var save = page.LocateAsync("type=Button text=Save");
+var first = page.LocateAsync(By.Type<Button>().First());
+var nearJobs = page.LocateAsync(By.Type("Button").Near(By.Name("JobList")));
+```
+
+#### Host CLI flags
+
+When you call `.UseUITesting()` on your `AppBuilder`, the new locator-aware engine
+binds to two sets of CLI flags:
+
+- `--ux-test` / `--ux-repl` / `--ux-mcp` — the original triggers; use these if your app
+  doesn't have an existing UI testing entry point with the same names
+- `--mlui-test` / `--mlui-repl` / `--mlui-mcp` — explicit triggers when your app
+  already wires `--ux-test` to a different player and you want both side by side
+
 ### Snipping (regions, controls, manuals)
 
 The `Screenshot` action and the `UITestSession.Snip*` / MCP `ui_snip_*` / REPL `snip*` commands can capture a region of a window instead of the whole thing — useful when you're producing manuals or docs and want a single button or panel rather than the whole window. Snipping renders the window once via `RenderTargetBitmap`, then crops the rendered bitmap with SkiaSharp.

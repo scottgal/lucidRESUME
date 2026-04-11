@@ -28,7 +28,11 @@ public static class UITestingExtensions
 
             var args = desktop.Args ?? Array.Empty<string>();
 
-            if (!args.HasArg("--ux-test") && !args.HasArg("--ux-repl") && !args.HasArg("--ux-mcp"))
+            // Triggered by either the original ux-* flags or the explicit mlui-* flags.
+            // Apps that already use lucidRESUME-style --ux-test on a different player can
+            // still wire the new engine via --mlui-test to avoid the collision.
+            if (!args.HasArg("--ux-test") && !args.HasArg("--ux-repl") && !args.HasArg("--ux-mcp")
+                && !args.HasArg("--mlui-test") && !args.HasArg("--mlui-repl") && !args.HasArg("--mlui-mcp"))
                 return;
 
             // AfterSetup runs BEFORE OnFrameworkInitializationCompleted, so desktop.MainWindow
@@ -107,7 +111,7 @@ internal class UITestingStartup
         if (_options.EnableCrossWindowTracking)
             ctx.EnableCrossWindowTracking();
 
-        if (_args.HasArg("--ux-mcp"))
+        if (_args.HasArg("--ux-mcp") || _args.HasArg("--mlui-mcp"))
         {
             var outputDir = _args.GetArgValue("--output") ?? _options.DefaultScreenshotDir;
 
@@ -123,7 +127,7 @@ internal class UITestingStartup
                 desktop.Shutdown(0);
             };
         }
-        else if (_args.HasArg("--ux-repl"))
+        else if (_args.HasArg("--ux-repl") || _args.HasArg("--mlui-repl"))
         {
             var outputDir = _args.GetArgValue("--output") ?? _options.DefaultScreenshotDir;
 
@@ -144,7 +148,7 @@ internal class UITestingStartup
                 desktop.Shutdown(0);
             };
         }
-        else if (_args.HasArg("--ux-test"))
+        else if (_args.HasArg("--ux-test") || _args.HasArg("--mlui-test"))
         {
             var scriptPath = _args.GetArgValue("--script");
             var outputDir = _args.GetArgValue("--output") ?? "ux-test-results";

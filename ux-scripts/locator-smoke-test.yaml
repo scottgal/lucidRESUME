@@ -1,0 +1,87 @@
+name: locator-smoke-test
+description: |
+  Exercises every Playwright-style selector form added in
+  Mostlylucid.Avalonia.UITesting Slice 1 against the live lucidRESUME app.
+  Each step uses a different locator grammar so a regression in any one
+  resolver will fail this script. Designed to run via:
+
+    dotnet run --project src/lucidRESUME -- \
+      --ux-test --script ux-scripts/locator-smoke-test.yaml --output ux-screenshots
+
+default_delay: 250
+
+actions:
+  # 1. Bare-word backwards-compat: parsed as name=...
+  - type: Wait
+    value: "1500"
+    description: Let the app finish bootstrapping
+
+  # 2. text= matches a TextBlock by its Text property; clicking it falls through
+  #    to the parent Button via Avalonia's hit-testing — but ScriptPlayer's Click
+  #    handler will call RaiseEvent on the actual control, so we need the Button.
+  #    Use :has-text for that.
+  - type: Click
+    target: "type=Button:has-text(My CV)"
+    description: Navigate to the CV page using has-text pseudo
+
+  - type: Wait
+    value: "400"
+
+  - type: Screenshot
+    value: 01-cv-page-via-has-text
+
+  # 3. text= directly to find the page TextBlock
+  - type: Click
+    target: "type=Button:has-text(My Data)"
+    description: Navigate to the My Data page
+
+  - type: Wait
+    value: "600"
+
+  # 4. name= against an actual x:Name=GanttChart inside MyDataPage
+  - type: Screenshot
+    value: 02-mydata-via-name
+    target: "name=GanttChart"
+    padding: 8
+    description: Snip the gantt chart by name
+
+  # 5. type= aggregate match
+  - type: Click
+    target: "type=Button:has-text(Jobs)"
+    description: Navigate to the jobs page
+
+  - type: Wait
+    value: "500"
+
+  # 6. first(type=...) to grab the first button on the page
+  - type: Hover
+    target: "first(type=Button)"
+    description: Hover over the first button on the jobs page
+
+  # 7. Navigate via Add Job to the SearchPage
+  - type: Click
+    target: "type=Button:has-text(Add Job)"
+
+  - type: Wait
+    value: "400"
+
+  - type: Screenshot
+    value: 03-add-job-page
+
+  # 8. Back to the CV page; the OpenInButton is a SplitButton with x:Name set
+  - type: Click
+    target: "type=Button:has-text(My CV)"
+
+  - type: Wait
+    value: "600"
+
+  - type: Screenshot
+    value: 04-cv-snip-openin
+    target: "name=OpenInButton"
+    padding: 6
+    description: Snip the OpenInButton SplitButton by name with padding
+
+  # 9. Bare-word backwards compat — must still resolve as name=OpenInButton
+  - type: Hover
+    target: "OpenInButton"
+    description: Bare-word backwards compatibility test

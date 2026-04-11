@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Mostlylucid.Avalonia.UITesting.Locators;
 using Mostlylucid.Avalonia.UITesting.Players;
 using Mostlylucid.Avalonia.UITesting.Video;
 
@@ -21,9 +22,11 @@ public sealed class UITestSession : IAsyncDisposable
     private readonly Action<string>? _log;
     private readonly UITestContext _context;
     private readonly Lazy<PointerSimulator> _pointer = new(() => new PointerSimulator());
+    private readonly LocatorEngine _locators = new();
     private GifRecorder? _activeVideoRecorder;
 
     public PointerSimulator Pointer => _pointer.Value;
+    public LocatorEngine Locators => _locators;
 
     public Window Window => _window;
     public object? ViewModel => _viewModel;
@@ -77,14 +80,23 @@ public sealed class UITestSession : IAsyncDisposable
         _log?.Invoke($"Navigated to: {page}");
     }
 
-    public async Task ClickAsync(string controlName, string? windowId = null)
+    /// <summary>
+    /// Click a control identified by a selector string. Supports the full Playwright-style
+    /// grammar from <see cref="SelectorParser"/>: <c>name=SaveBtn</c>, <c>type=Button text=Save</c>,
+    /// <c>role=button name=Save</c>, etc. A bare word (no <c>=</c>, no parens) is treated as
+    /// <c>name=...</c> for backwards compatibility.
+    /// </summary>
+    public Task ClickAsync(string selector, string? windowId = null)
+        => ClickAsync(SelectorParser.Parse(selector), windowId);
+
+    /// <summary>Click a control identified by a programmatic <see cref="Locator"/>.</summary>
+    public async Task ClickAsync(Locator locator, string? windowId = null)
     {
+        var window = _context.FindWindow(windowId) ?? _window;
+        var control = await _locators.ResolveFirstAsync(locator, window);
+
         await RunOnUIThreadAsync(() =>
         {
-            var window = _context.FindWindow(windowId) ?? _window;
-            var control = _context.FindControl(controlName, window);
-            if (control == null) throw new InvalidOperationException($"Control not found: {controlName}");
-
             if (control is Button button && button.Command?.CanExecute(button.CommandParameter) == true)
             {
                 button.Command.Execute(button.CommandParameter);
@@ -99,35 +111,56 @@ public sealed class UITestSession : IAsyncDisposable
             }
         });
         await Task.Delay(50);
-        _log?.Invoke($"Clicked: {controlName}");
+        _log?.Invoke($"Clicked: {locator.Describe()}");
     }
 
-    public async Task DoubleClickAsync(string controlName, string? windowId = null)
+    public Task DoubleClickAsync(string selector, string? windowId = null)
+        => DoubleClickAsync(SelectorParser.Parse(selector), windowId);
+
+    public async Task DoubleClickAsync(Locator locator, string? windowId = null)
     {
+        var window = _context.FindWindow(windowId) ?? _window;
+        var control = await _locators.ResolveFirstAsync(locator, window);
         await RunOnUIThreadAsync(() =>
-        {
-            var window = _context.FindWindow(windowId) ?? _window;
-            var control = _context.FindControl(controlName, window);
-            if (control == null) throw new InvalidOperationException($"Control not found: {controlName}");
-            control.RaiseEvent(new RoutedEventArgs(InputElement.DoubleTappedEvent));
-        });
+            control.RaiseEvent(new RoutedEventArgs(InputElement.DoubleTappedEvent)));
         await Task.Delay(50);
-        _log?.Invoke($"Double-clicked: {controlName}");
+        _log?.Invoke($"Double-clicked: {locator.Describe()}");
     }
 
-    public async Task TypeAsync(string controlName, string text, string? windowId = null)
+    public Task TypeAsync(string selector, string text, string? windowId = null)
+        => TypeAsync(SelectorParser.Parse(selector), text, windowId);
+
+    public async Task TypeAsync(Locator locator, string text, string? windowId = null)
     {
+        var window = _context.FindWindow(windowId) ?? _window;
+        var control = await _locators.ResolveFirstAsync(locator, window);
         await RunOnUIThreadAsync(() =>
         {
-            var window = _context.FindWindow(windowId) ?? _window;
-            var control = _context.FindControl(controlName, window);
             if (control is TextBox textBox)
-            {
                 textBox.Text = text;
-            }
+            else
+                throw new InvalidOperationException(
+                    $"TypeAsync target {locator.Describe()} resolved to {control.GetType().Name}, expected TextBox");
         });
         await Task.Delay(50);
-        _log?.Invoke($"Typed into {controlName}: {text}");
+        _log?.Invoke($"Typed into {locator.Describe()}: {text}");
+    }
+
+    /// <summary>
+    /// Resolve a selector to a single control with auto-retry. Use this when you
+    /// need the control instance directly, e.g. to inspect properties.
+    /// </summary>
+    public Task<Control> LocateAsync(string selector, string? windowId = null, int? timeoutMs = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        return _locators.ResolveFirstAsync(SelectorParser.Parse(selector), window, timeoutMs);
+    }
+
+    /// <summary>Resolve a programmatic locator to a single control with auto-retry.</summary>
+    public Task<Control> LocateAsync(Locator locator, string? windowId = null, int? timeoutMs = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        return _locators.ResolveFirstAsync(locator, window, timeoutMs);
     }
 
     public async Task PressAsync(string key, string? controlName = null, string? windowId = null)

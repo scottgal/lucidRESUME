@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using System;
+using Mostlylucid.Avalonia.UITesting;
 
 namespace lucidRESUME;
 
@@ -17,5 +18,14 @@ class Program
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace();
+            .LogToTrace()
+            // Wire the new Mostlylucid.Avalonia.UITesting engine. Triggered by
+            // --mlui-test / --mlui-repl / --mlui-mcp so it does not collide with
+            // the legacy lucidRESUME.UXTesting --ux-test path in App.axaml.cs.
+            .UseUITesting(opts =>
+            {
+                opts.DefaultScreenshotDir = "ux-screenshots";
+                opts.EnableCrossWindowTracking = true;
+                opts.Log = Console.WriteLine;
+            });
 }

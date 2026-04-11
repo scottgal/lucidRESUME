@@ -56,6 +56,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lucidRESUME.iOS", "src\luci
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lucidRESUME.GitHub.Tests", "tests\lucidRESUME.GitHub.Tests\lucidRESUME.GitHub.Tests.csproj", "{33E69819-2D5B-40F3-8B24-8299535C987E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mostlylucid.Avalonia.UITesting.Tests", "tests\Mostlylucid.Avalonia.UITesting.Tests\Mostlylucid.Avalonia.UITesting.Tests.csproj", "{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -378,6 +380,18 @@ Global
 		{33E69819-2D5B-40F3-8B24-8299535C987E}.Release|x64.Build.0 = Release|Any CPU
 		{33E69819-2D5B-40F3-8B24-8299535C987E}.Release|x86.ActiveCfg = Release|Any CPU
 		{33E69819-2D5B-40F3-8B24-8299535C987E}.Release|x86.Build.0 = Release|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Debug|x64.Build.0 = Debug|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Debug|x86.Build.0 = Debug|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Release|x64.ActiveCfg = Release|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Release|x64.Build.0 = Release|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Release|x86.ActiveCfg = Release|Any CPU
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -408,5 +422,6 @@ Global
 		{82BFBBEE-00C1-45FF-961E-15F5B0F05B75} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{24FCCC57-16FD-4656-B3A6-E49DAA095F19} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{33E69819-2D5B-40F3-8B24-8299535C987E} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{BDB33034-80E4-4F05-9FF8-6FBD2C2045AA} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

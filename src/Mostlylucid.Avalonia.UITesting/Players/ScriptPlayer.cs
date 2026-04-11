@@ -8,6 +8,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Mostlylucid.Avalonia.UITesting.Locators;
 using Mostlylucid.Avalonia.UITesting.Scripts;
 using Mostlylucid.Avalonia.UITesting.Video;
 
@@ -22,6 +23,7 @@ public sealed class ScriptPlayer
     private Action<string>? _navigateAction;
     private readonly UITestContext _context;
     private readonly PointerSimulator _pointer = new();
+    private readonly LocatorEngine _locators = new();
     private GifRecorder? _videoRecorder;
 
     public event EventHandler<string>? Log;
@@ -269,10 +271,9 @@ public sealed class ScriptPlayer
 
     private async Task ExecuteClickAsync(UIAction action)
     {
-        var window = GetTargetWindow(action.WindowId);
-        var control = FindControl(action.Target, window);
-        if (control == null)
-            throw new InvalidOperationException($"Control not found: {action.Target}");
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Click");
+        var control = await LocateAsync(action.Target, window);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -310,10 +311,9 @@ public sealed class ScriptPlayer
 
     private async Task ExecuteDoubleClickAsync(UIAction action)
     {
-        var window = GetTargetWindow(action.WindowId);
-        var control = FindControl(action.Target, window);
-        if (control == null)
-            throw new InvalidOperationException($"Control not found: {action.Target}");
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for DoubleClick");
+        var control = await LocateAsync(action.Target, window);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -335,8 +335,7 @@ public sealed class ScriptPlayer
             return;
         }
 
-        var control = FindControl(action.Target, window)
-            ?? throw new InvalidOperationException($"Control not found: {action.Target}");
+        var control = await LocateAsync(action.Target, window);
 
         var (cx, cy) = await GetControlCenterAsync(control, window);
         await _pointer.ClickAsync(window, cx, cy, MouseButton.Right);
@@ -347,14 +346,20 @@ public sealed class ScriptPlayer
     {
         if (string.IsNullOrEmpty(action.Value)) return;
 
-        var window = GetTargetWindow(action.WindowId);
-        var control = FindControl(action.Target, window);
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for TypeText");
+        var control = await LocateAsync(action.Target, window);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
             if (control is TextBox textBox)
             {
                 textBox.Text = action.Value;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"TypeText target '{action.Target}' resolved to {control.GetType().Name}, expected TextBox");
             }
         });
         await Task.Delay(50);
@@ -391,8 +396,7 @@ public sealed class ScriptPlayer
         }
         else
         {
-            var control = FindControl(action.Target, window)
-                ?? throw new InvalidOperationException($"Control not found: {action.Target}");
+            var control = await LocateAsync(action.Target, window);
             (x, y) = await GetControlCenterAsync(control, window);
         }
 
@@ -473,11 +477,10 @@ public sealed class ScriptPlayer
         var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
         var padding = action.Padding ?? 0;
 
-        // Snip a control by name → its bounds (+ optional padding)
+        // Snip a control by selector → its bounds (+ optional padding)
         if (!string.IsNullOrEmpty(action.Target))
         {
-            var control = FindControl(action.Target, window)
-                ?? throw new InvalidOperationException($"Snip target control not found: {action.Target}");
+            var control = await LocateAsync(action.Target, window);
             result.ScreenshotPath = await ScreenshotCapture.CaptureControlAsync(window, control, filePath, padding);
             Log?.Invoke(this, $"    Snip control {action.Target} → {Path.GetFileName(filePath)}");
             return;
@@ -500,10 +503,9 @@ public sealed class ScriptPlayer
 
     private async Task ExecuteAssertAsync(UIAction action)
     {
-        var window = GetTargetWindow(action.WindowId);
-        var control = FindControl(action.Target, window);
-        if (control == null)
-            throw new InvalidOperationException($"Assert failed: Control not found: {action.Target}");
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Assert");
+        var control = await LocateAsync(action.Target, window);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -776,12 +778,11 @@ public sealed class ScriptPlayer
 
         if (!string.IsNullOrEmpty(action.Target))
         {
-            var control = FindControl(action.Target, window)
-                ?? throw new InvalidOperationException($"Control not found: {action.Target}");
+            var control = await LocateAsync(action.Target, window);
             return await GetControlCenterAsync(control, window);
         }
 
-        throw new InvalidOperationException($"{action.Type} requires either X/Y or a Target control name");
+        throw new InvalidOperationException($"{action.Type} requires either X/Y or a Target control selector");
     }
 
     private static async Task<(double X, double Y)> GetControlCenterAsync(Control control, Window window)
@@ -860,12 +861,37 @@ public sealed class ScriptPlayer
         return _context.FindWindow(windowId) ?? _window;
     }
 
+    /// <summary>
+    /// Resolve a target string to a control via the locator engine, with auto-retry
+    /// up to <paramref name="timeoutMs"/>. The string is parsed as a selector — bare
+    /// words are treated as <c>name=&lt;word&gt;</c> for backwards compatibility.
+    /// </summary>
+    private async Task<Control> LocateAsync(string? target, Window window, int timeoutMs = 5000)
+    {
+        if (string.IsNullOrEmpty(target))
+            throw new InvalidOperationException("Locator target is null or empty");
+        var locator = SelectorParser.Parse(target);
+        return await _locators.ResolveFirstAsync(locator, window, timeoutMs);
+    }
+
+    /// <summary>
+    /// Synchronous, non-retrying control lookup retained for the few call sites that
+    /// only need a one-shot best-effort find (e.g. press-key falling back to the
+    /// window itself when the target is missing).
+    /// </summary>
     private Control? FindControl(string? name, Window? window = null)
     {
         var target = window ?? _window;
         if (string.IsNullOrEmpty(name) || target == null) return null;
-        if (target.Name == name) return target;
-        return target.FindControl<Control>(name);
+        try
+        {
+            var locator = SelectorParser.Parse(name);
+            return locator.Resolve(target).FirstOrDefault();
+        }
+        catch (SelectorParseException)
+        {
+            return null;
+        }
     }
 
     private static ScrollViewer? FindFirstScrollViewer(Control? root)
