@@ -8,6 +8,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Mostlylucid.Avalonia.UITesting.Expect;
 using Mostlylucid.Avalonia.UITesting.Locators;
 using Mostlylucid.Avalonia.UITesting.Scripts;
 using Mostlylucid.Avalonia.UITesting.Video;
@@ -150,6 +151,9 @@ public sealed class ScriptPlayer
                     break;
                 case ActionType.Assert:
                     await ExecuteAssertAsync(action);
+                    break;
+                case ActionType.Expect:
+                    await ExecuteExpectAsync(action);
                     break;
                 case ActionType.MouseMove:
                     await ExecuteMouseMoveAsync(action);
@@ -528,6 +532,72 @@ public sealed class ScriptPlayer
                     throw new UITestAssertException($"Assert failed: {action.Target}.Text != {expected}");
             }
         });
+    }
+
+    private async Task ExecuteExpectAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for Expect");
+        if (string.IsNullOrEmpty(action.Target))
+            throw new InvalidOperationException("Expect requires a target locator");
+        if (string.IsNullOrEmpty(action.Matcher))
+            throw new InvalidOperationException("Expect requires a matcher (HasText, IsVisible, IsEnabled, ...)");
+
+        var locator = SelectorParser.Parse(action.Target);
+        var matcher = BuildMatcher(action.Matcher, action.Value);
+
+        var expectation = new Expectation(locator, matcher);
+        if (action.Timeout is int t) expectation = new Expectation(locator, matcher) { TimeoutMs = t };
+
+        await expectation.AssertAsync(window, _locators);
+        Log?.Invoke(this, $"    Expect {action.Target} to {matcher.Describe()}: ok");
+    }
+
+    private static Matcher BuildMatcher(string name, string? value)
+    {
+        var key = name.Trim();
+        // Allow "Not.HasText" / "not.HasText" / "!HasText" prefixes for negation.
+        var negate = false;
+        if (key.StartsWith("!"))
+        {
+            negate = true;
+            key = key[1..];
+        }
+        else if (key.StartsWith("Not.", StringComparison.OrdinalIgnoreCase) || key.StartsWith("not."))
+        {
+            negate = true;
+            key = key[4..];
+        }
+
+        Matcher matcher = key.ToLowerInvariant() switch
+        {
+            "isvisible" or "visible" => new IsVisibleMatcher(),
+            "ishidden" or "hidden" => new IsHiddenMatcher(),
+            "isenabled" or "enabled" => new IsEnabledMatcher(),
+            "isdisabled" or "disabled" => new IsDisabledMatcher(),
+            "ischecked" or "checked" => new IsCheckedMatcher(),
+            "isunchecked" or "unchecked" => new IsUncheckedMatcher(),
+            "isfocused" or "focused" => new IsFocusedMatcher(),
+            "hastext" => new HasTextMatcher(value ?? throw new InvalidOperationException("HasText requires value"), exact: true),
+            "containstext" or "contains" => new ContainsTextMatcher(value ?? throw new InvalidOperationException("ContainsText requires value")),
+            "matchesregex" or "regex" => new MatchesRegexMatcher(value ?? throw new InvalidOperationException("MatchesRegex requires value")),
+            "hascount" or "count" => new HasCountMatcher(int.Parse(value ?? throw new InvalidOperationException("HasCount requires value"))),
+            "hasvalue" or "value" => new HasValueMatcher(value ?? throw new InvalidOperationException("HasValue requires value")),
+            "hasproperty" or "property" => BuildHasProperty(value),
+            _ => throw new InvalidOperationException($"Unknown matcher '{name}'")
+        };
+
+        return negate ? matcher.Not() : matcher;
+    }
+
+    private static HasPropertyMatcher BuildHasProperty(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            throw new InvalidOperationException("HasProperty requires value in 'PropertyName=expected' form");
+        var eq = value.IndexOf('=');
+        if (eq <= 0)
+            throw new InvalidOperationException("HasProperty value must be 'PropertyName=expected'");
+        return new HasPropertyMatcher(value[..eq], value[(eq + 1)..]);
     }
 
     private async Task ExecuteMouseMoveAsync(UIAction action)

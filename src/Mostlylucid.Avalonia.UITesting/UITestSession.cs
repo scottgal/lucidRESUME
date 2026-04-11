@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Mostlylucid.Avalonia.UITesting.Expect;
 using Mostlylucid.Avalonia.UITesting.Locators;
 using Mostlylucid.Avalonia.UITesting.Players;
 using Mostlylucid.Avalonia.UITesting.Video;
@@ -161,6 +162,25 @@ public sealed class UITestSession : IAsyncDisposable
     {
         var window = _context.FindWindow(windowId) ?? _window;
         return _locators.ResolveFirstAsync(locator, window, timeoutMs);
+    }
+
+    /// <summary>
+    /// Build an auto-waiting expectation against a selector. Use the fluent
+    /// terminal methods to define the matcher:
+    /// <code>
+    ///     await session.Expect("name=Status").ToHaveText("Saved");
+    ///     await session.Expect("name=SaveBtn").ToBeEnabled();
+    ///     await session.Expect("type=ListBoxItem").Not.ToHaveCount(0);
+    /// </code>
+    /// </summary>
+    public ExpectBuilder Expect(string selector, string? windowId = null)
+        => Expect(SelectorParser.Parse(selector), windowId);
+
+    /// <summary>Build an auto-waiting expectation against a programmatic locator.</summary>
+    public ExpectBuilder Expect(Locator locator, string? windowId = null)
+    {
+        var window = _context.FindWindow(windowId) ?? _window;
+        return new ExpectBuilder(locator, e => e.AssertAsync(window, _locators));
     }
 
     public async Task PressAsync(string key, string? controlName = null, string? windowId = null)

@@ -13,6 +13,7 @@ public enum ActionType
     Navigate,
     Screenshot,
     Assert,
+    Expect,
     MouseMove,
     MouseDown,
     MouseUp,
@@ -59,6 +60,10 @@ public class UIAction
     public int? Steps { get; set; }
     /// <summary>Extra DIPs to inflate around a snipped region or control bounds.</summary>
     public double? Padding { get; set; }
+    /// <summary>Matcher name for Expect actions: HasText, IsVisible, IsEnabled, etc.</summary>
+    public string? Matcher { get; set; }
+    /// <summary>Override timeout (ms) for expectations / locator resolution.</summary>
+    public int? Timeout { get; set; }
     public string? WindowId { get; set; }
 }
 

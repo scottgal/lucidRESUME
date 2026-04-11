@@ -1,0 +1,89 @@
+name: expect-smoke-test
+description: |
+  Exercises Slice 2 — Playwright-style auto-waiting expectations against the
+  live lucidRESUME app. Each Expect step polls the matcher until it passes
+  or times out, so no manual Wait actions are needed.
+
+    dotnet run --project src/lucidRESUME -- \
+      --mlui-test --script ux-scripts/expect-smoke-test.yaml --output ux-screenshots/expect-smoke
+
+default_delay: 100
+
+actions:
+  # Bootstrap
+  - type: Wait
+    value: "1500"
+    description: Let the app finish loading
+
+  # Window has a Title set in XAML — Expect that
+  - type: Expect
+    target: "type=Window"
+    matcher: HasProperty
+    value: "Title=lucidRESUME"
+    timeout: 3000
+    description: Window.Title equals lucidRESUME
+
+  # Navigate via the My CV button (uses Slice 1's :has-text pseudo)
+  - type: Click
+    target: "type=Button:has-text(My CV)"
+
+  # Slice 2: auto-wait for the OpenInButton SplitButton to become visible
+  - type: Expect
+    target: "name=OpenInButton"
+    matcher: IsVisible
+    timeout: 5000
+    description: OpenInButton appears on the CV page
+
+  # Auto-wait for the same control to be enabled
+  - type: Expect
+    target: "name=OpenInButton"
+    matcher: IsEnabled
+    timeout: 3000
+
+  # Navigate to My Data and expect the Gantt chart to materialize
+  - type: Click
+    target: "type=Button:has-text(My Data)"
+
+  - type: Expect
+    target: "name=GanttChart"
+    matcher: IsVisible
+    timeout: 8000
+    description: GanttChart materializes after navigation
+
+  # The CommunityChart sibling chart should also be present
+  - type: Expect
+    target: "name=CommunityChart"
+    matcher: IsVisible
+    timeout: 8000
+
+  # Snapshot the page so we have evidence the expectations matched real state
+  - type: Screenshot
+    value: 01-mydata-after-expects
+
+  # Negation: there should NOT be a control named NonexistentControl
+  - type: Expect
+    target: "type=Window"
+    matcher: "Not.HasProperty"
+    value: "Title=NotTheRightTitle"
+    timeout: 1000
+    description: Window.Title is not "NotTheRightTitle" (negated matcher)
+
+  # ContainsText against the Window title
+  - type: Expect
+    target: "type=Window"
+    matcher: HasProperty
+    value: "Title=lucidRESUME"
+    timeout: 1000
+
+  # Navigate to Add Job and confirm we landed there
+  - type: Click
+    target: "type=Button:has-text(Add Job)"
+
+  - type: Expect
+    target: "type=TextBox"
+    matcher: IsVisible
+    timeout: 3000
+    description: At least one TextBox visible on the search page
+
+  - type: Screenshot
+    value: 02-search-after-expects

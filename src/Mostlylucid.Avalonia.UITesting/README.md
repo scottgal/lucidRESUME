@@ -559,6 +559,66 @@ binds to two sets of CLI flags:
 - `--mlui-test` / `--mlui-repl` / `--mlui-mcp` — explicit triggers when your app
   already wires `--ux-test` to a different player and you want both side by side
 
+### Auto-waiting expectations (Playwright `expect`)
+
+The `Expect` action and the `session.Expect(...)` fluent API run a matcher
+against a locator and **auto-retry** until the matcher passes or a timeout
+elapses. No more `Wait` actions before checking state.
+
+```yaml
+- type: Click
+  target: "type=Button:has-text(Save)"
+
+- type: Expect
+  target: "name=Status"
+  matcher: HasText
+  value: "Saved"
+  timeout: 5000
+
+- type: Expect
+  target: "name=SaveBtn"
+  matcher: IsEnabled
+
+- type: Expect
+  target: "name=JobList"
+  matcher: HasCount
+  value: "12"
+```
+
+Programmatic equivalent:
+
+```csharp
+await session.Click("type=Button:has-text(Save)");
+await session.Expect("name=Status").ToHaveText("Saved");
+await session.Expect("name=SaveBtn").ToBeEnabled();
+await session.Expect("name=JobList").ToHaveCount(12);
+await session.Expect("name=ErrorBanner").Not.ToBeVisible();
+```
+
+Built-in matchers:
+
+| Matcher | YAML name | Programmatic | Notes |
+|---|---|---|---|
+| Visibility | `IsVisible` / `IsHidden` | `ToBeVisible()` / `ToBeHidden()` | |
+| Enabled state | `IsEnabled` / `IsDisabled` | `ToBeEnabled()` / `ToBeDisabled()` | |
+| Toggle state | `IsChecked` / `IsUnchecked` | `ToBeChecked()` / `ToBeUnchecked()` | CheckBox, RadioButton, ToggleButton, ToggleSwitch |
+| Focus | `IsFocused` | `ToBeFocused()` | |
+| Exact text | `HasText` | `ToHaveText("...")` | TextBlock.Text, TextBox.Text, Button.Content (string), HeaderedControl.Header (string) |
+| Substring text | `ContainsText` | `ToContainText("...")` | |
+| Regex | `MatchesRegex` | `ToMatchRegex(@"#\d+")` | |
+| Item count | `HasCount` | `ToHaveCount(12)` | ItemsControl item count or Panel children count |
+| Value | `HasValue` | `ToHaveValue("42")` | TextBox/NumericUpDown/Slider/ComboBox |
+| Generic property | `HasProperty` | `ToHaveProperty("Title", "lucidRESUME")` | Reflection-based fallback for any control property |
+
+Negation: prefix the matcher name with `Not.` or `!` in YAML, or chain
+`.Not` in the programmatic API. The `timeout:` field overrides the
+default 5000ms per expectation.
+
+Failure messages include the locator description, the matcher description,
+the timeout budget, and the last seen detail — so test runs report
+behavioural drift in human-readable form rather than `Assert.IsTrue` stack
+traces.
+
 ### Snipping (regions, controls, manuals)
 
 The `Screenshot` action and the `UITestSession.Snip*` / MCP `ui_snip_*` / REPL `snip*` commands can capture a region of a window instead of the whole thing — useful when you're producing manuals or docs and want a single button or panel rather than the whole window. Snipping renders the window once via `RenderTargetBitmap`, then crops the rendered bitmap with SkiaSharp.
