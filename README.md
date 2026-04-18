@@ -1,8 +1,7 @@
 # ***lucid*RESUME**
 
 
-> # NOTE: THIS IS CURRENTLY A RESEARCH PREVIEW. IT SHOULD NOT BE 1.x YET. SORRY! 
-> # THE AVALONIA TESTING FRAMEWORK *IS* MATURE HENCE THE WRONG 1.x
+> ## NOTE: THIS IS CURRENTLY A RESEARCH PREVIEW. IT SHOULD NOT BE 1.x YET. SORRY!  THE AVALONIA TESTING FRAMEWORK *IS* MATURE HENCE THE WRONG 1.x
 
 
 [![Mostlylucid.Avalonia.UITesting on NuGet](https://img.shields.io/nuget/v/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=Mostlylucid.Avalonia.UITesting)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
