@@ -492,6 +492,22 @@ public sealed class ScriptPlayer
         var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
         var padding = action.Padding ?? 0;
 
+        // Composite mode: stack every tracked Avalonia window into one PNG —
+        // back = the target window (defaults to main), then any other open
+        // windows layered at their relative screen positions.
+        if (action.Composite == true)
+        {
+            var stack = new List<Window> { window };
+            foreach (var w in _context.TrackedWindows)
+            {
+                if (!ReferenceEquals(w, window) && w.IsVisible)
+                    stack.Add(w);
+            }
+            result.ScreenshotPath = await ScreenshotCapture.CaptureCompositeAsync(stack, filePath);
+            Log?.Invoke(this, $"    Composite {stack.Count} window(s) → {Path.GetFileName(filePath)}");
+            return;
+        }
+
         // Snip a control by selector → its bounds (+ optional padding)
         if (!string.IsNullOrEmpty(action.Target))
         {

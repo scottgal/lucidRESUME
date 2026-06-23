@@ -65,6 +65,13 @@ public class UIAction
     /// <summary>Override timeout (ms) for expectations / locator resolution.</summary>
     public int? Timeout { get; set; }
     public string? WindowId { get; set; }
+    /// <summary>
+    /// Screenshot only: capture every currently-tracked Avalonia Window
+    /// composited into one PNG (back window first, additional windows
+    /// layered at their relative screen offsets). Useful for "modal stack"
+    /// shots — main window with a dialog floating over it.
+    /// </summary>
+    public bool? Composite { get; set; }
 }
 
 public class UIScript

@@ -67,6 +67,87 @@ public static class ScreenshotCapture
         return padding > 0 ? rect.Inflate(padding) : rect;
     }
 
+    /// <summary>
+    /// Composite multiple Avalonia windows into one image. The first window is
+    /// the "back" surface and sets the output dimensions; subsequent windows are
+    /// drawn on top at their offset from the back window's screen position.
+    /// Useful for capturing a modal stack — e.g. main window with an InputDialog
+    /// or SettingsDialog floating over it.
+    /// </summary>
+    public static async Task<string> CaptureCompositeAsync(IReadOnlyList<Window> windows, string filePath)
+    {
+        if (windows.Count == 0)
+            throw new InvalidOperationException("CaptureComposite requires at least one window.");
+        if (windows.Count == 1)
+            return await CaptureAsync(windows[0], filePath, region: null);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? ".");
+        var tcs = new TaskCompletionSource<string>();
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                var back = windows[0];
+                back.UpdateLayout();
+
+                var bw = Math.Max(1, (int)Math.Ceiling(back.Bounds.Width));
+                var bh = Math.Max(1, (int)Math.Ceiling(back.Bounds.Height));
+
+                using var backRtb = new RenderTargetBitmap(new PixelSize(bw, bh), new Vector(96, 96));
+                backRtb.Render(back);
+
+                // Round-trip through PNG so we can composite via SkiaSharp.
+                using var backMs = new MemoryStream();
+                backRtb.Save(backMs);
+                backMs.Position = 0;
+                using var canvas = SKBitmap.Decode(backMs)
+                    ?? throw new InvalidOperationException("Failed to decode back window bitmap.");
+
+                using var sk = new SKCanvas(canvas);
+
+                foreach (var win in windows.Skip(1))
+                {
+                    win.UpdateLayout();
+                    var ww = Math.Max(1, (int)Math.Ceiling(win.Bounds.Width));
+                    var wh = Math.Max(1, (int)Math.Ceiling(win.Bounds.Height));
+
+                    using var winRtb = new RenderTargetBitmap(new PixelSize(ww, wh), new Vector(96, 96));
+                    winRtb.Render(win);
+
+                    using var winMs = new MemoryStream();
+                    winRtb.Save(winMs);
+                    winMs.Position = 0;
+                    using var winSk = SKBitmap.Decode(winMs);
+                    if (winSk is null) continue;
+
+                    // Position in screen pixels relative to the back window's
+                    // top-left. Window.Position is in physical pixels; Bounds
+                    // is in DIPs. Scale the offset to match the bitmap (1:1
+                    // when scaling = 1.0, which is true for the RTB we render at).
+                    var scale = back.RenderScaling > 0 ? back.RenderScaling : 1.0;
+                    var dx = (int)Math.Round((win.Position.X - back.Position.X) / scale);
+                    var dy = (int)Math.Round((win.Position.Y - back.Position.Y) / scale);
+
+                    sk.DrawBitmap(winSk, new SKPoint(dx, dy));
+                }
+
+                using var image = SKImage.FromBitmap(canvas);
+                using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                using var fs = File.Create(filePath);
+                data.SaveTo(fs);
+
+                tcs.SetResult(filePath);
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        }, DispatcherPriority.Render);
+
+        return await tcs.Task;
+    }
+
     private static async Task<string> CaptureAsync(Window window, string filePath, Rect? region)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? ".");
