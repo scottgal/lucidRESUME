@@ -785,16 +785,16 @@ public sealed class UITestRepl
         return $"Timeout: {path} expected {expected}, got {final}";
     }
 
-    private async Task<string> RecordAsync(string[] args)
+    private Task<string> RecordAsync(string[] args)
     {
-        if (_recorder?.IsRecording == true) return "Already recording. Use 'stop' first.";
+        if (_recorder?.IsRecording == true) return Task.FromResult("Already recording. Use 'stop' first.");
         var withVideo = args.Contains("--video");
         _recorder = new UIRecorder(new UIRecorderOptions { CaptureMousePositions = true, CrossWindowTracking = true });
         _recorder.Log += (_, msg) => Console.WriteLine($"  [REC] {msg}");
 
-        if (_ctx.MainWindow == null) return "No window attached";
+        if (_ctx.MainWindow == null) return Task.FromResult("No window attached");
         _recorder.StartRecording(_ctx.MainWindow, withVideo);
-        return "Recording started" + (withVideo ? " (with video)" : "");
+        return Task.FromResult("Recording started" + (withVideo ? " (with video)" : ""));
     }
 
     private async Task<string> StopRecordAsync(string[] args)

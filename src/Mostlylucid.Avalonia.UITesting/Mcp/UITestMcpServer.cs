@@ -958,9 +958,9 @@ public sealed class UITestMcpServer
 
     // === Recording ===
 
-    private async Task<string> RecordStartAsync(bool withVideo, bool withPositions)
+    private Task<string> RecordStartAsync(bool withVideo, bool withPositions)
     {
-        if (_recorder?.IsRecording == true) return "Already recording. Stop first.";
+        if (_recorder?.IsRecording == true) return Task.FromResult("Already recording. Stop first.");
 
         _recorder = new UIRecorder(new UIRecorderOptions
         {
@@ -968,9 +968,9 @@ public sealed class UITestMcpServer
             CrossWindowTracking = true
         });
 
-        if (_ctx.MainWindow == null) return "No window attached";
+        if (_ctx.MainWindow == null) return Task.FromResult("No window attached");
         _recorder.StartRecording(_ctx.MainWindow, withVideo);
-        return "Recording started" + (withVideo ? " (with video)" : "") + (withPositions ? " (with mouse positions)" : "");
+        return Task.FromResult("Recording started" + (withVideo ? " (with video)" : "") + (withPositions ? " (with mouse positions)" : ""));
     }
 
     private async Task<string> RecordStopAsync()
@@ -994,16 +994,16 @@ public sealed class UITestMcpServer
 
     // === Video ===
 
-    private async Task<string> VideoStartAsync(int fps, string? windowId)
+    private Task<string> VideoStartAsync(int fps, string? windowId)
     {
-        if (_videoRecorder != null) return "Video already recording. Stop first.";
+        if (_videoRecorder != null) return Task.FromResult("Video already recording. Stop first.");
 
         var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow;
-        if (window == null) return "No window";
+        if (window == null) return Task.FromResult("No window");
 
         _videoRecorder = new GifRecorder(fps, msg => Console.Error.WriteLine($"[video] {msg}"));
         _videoRecorder.StartRecording(window);
-        return $"Video recording started at {fps} fps";
+        return Task.FromResult($"Video recording started at {fps} fps");
     }
 
     private async Task<string> VideoStopAsync(string? name)

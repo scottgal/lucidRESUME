@@ -428,14 +428,14 @@ public sealed class UITestSession : IAsyncDisposable
         return filePath;
     }
 
-    public async Task<GifRecorder> StartVideoAsync(int fps = 5, string? windowId = null)
+    public Task<GifRecorder> StartVideoAsync(int fps = 5, string? windowId = null)
     {
         var window = _context.FindWindow(windowId) ?? _window;
         var recorder = new GifRecorder(fps, _log);
         recorder.StartRecording(window);
         _activeVideoRecorder = recorder;
         _log?.Invoke($"Video recording started at {fps} fps");
-        return recorder;
+        return Task.FromResult(recorder);
     }
 
     public async Task<string> StopVideoAsync(string? name = null)

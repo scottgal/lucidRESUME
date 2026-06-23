@@ -292,15 +292,36 @@ public static class SelectorParser
                 return value;
             }
 
-            // Bare value: until whitespace, ')', ',' or ':'
+            // Bare value: until whitespace, ')' or ','. `:` is allowed inside
+            // the value (file paths like C:\foo, IDs like Item:Header) UNLESS
+            // it introduces a known pseudo class (e.g. `:has-text`). Peek
+            // ahead to disambiguate so `name=C:\foo` parses but
+            // `name=Btn:has-text(Save)` still chains.
             var s = Position;
             while (Position < _src.Length)
             {
                 var c = _src[Position];
-                if (char.IsWhiteSpace(c) || c == ')' || c == ',' || c == ':') break;
+                if (char.IsWhiteSpace(c) || c == ')' || c == ',') break;
+                if (c == ':' && LooksLikePseudo(Position + 1)) break;
                 Position++;
             }
             return _src.Substring(s, Position - s);
+        }
+
+        // Returns true if the source at `from` starts with a known pseudo
+        // name. Kept narrow on purpose — adding pseudos here is a deliberate
+        // act, so a random `:foo` in a value parses as part of the value.
+        private bool LooksLikePseudo(int from)
+        {
+            return MatchesAt(from, "has-text");
+        }
+
+        private bool MatchesAt(int from, string token)
+        {
+            if (from + token.Length > _src.Length) return false;
+            for (int i = 0; i < token.Length; i++)
+                if (_src[from + i] != token[i]) return false;
+            return true;
         }
 
         private string ReadUntil(char terminator)
