@@ -96,9 +96,14 @@ internal class UITestingStartup
         {
             navigateAction = page =>
             {
+                // The property lookup is reflection-based (ViewModel shape
+                // is consumer-defined) but the Execute call goes through
+                // System.Windows.Input.ICommand directly — no GetMethod /
+                // Invoke. The interface is root-preserved by Avalonia so
+                // this survives PublishTrimmed without [DynamicDependency].
                 var navProp = viewModel.GetType().GetProperty("NavigateCommand");
-                var cmd = navProp?.GetValue(viewModel);
-                cmd?.GetType().GetMethod("Execute")?.Invoke(cmd, new object[] { page });
+                if (navProp?.GetValue(viewModel) is System.Windows.Input.ICommand cmd && cmd.CanExecute(page))
+                    cmd.Execute(page);
             };
         }
 
@@ -115,7 +120,7 @@ internal class UITestingStartup
         {
             var outputDir = _args.GetArgValue("--output") ?? _options.DefaultScreenshotDir;
 
-            window.Opened += async (_, _) =>
+            window.Opened += (_, _) => _ = RunSafelyAsync("ui_mcp", async () =>
             {
                 await Task.Delay(500);
 
@@ -125,13 +130,13 @@ internal class UITestingStartup
                 await mcp.RunStdioAsync();
 
                 desktop.Shutdown(0);
-            };
+            });
         }
         else if (_args.HasArg("--ux-repl") || _args.HasArg("--mlui-repl"))
         {
             var outputDir = _args.GetArgValue("--output") ?? _options.DefaultScreenshotDir;
 
-            window.Opened += async (_, _) =>
+            window.Opened += (_, _) => _ = RunSafelyAsync("ui_repl", async () =>
             {
                 await Task.Delay(500);
 
@@ -146,17 +151,31 @@ internal class UITestingStartup
                 await repl.RunAsync();
 
                 desktop.Shutdown(0);
-            };
+            });
         }
         else if (_args.HasArg("--ux-test") || _args.HasArg("--mlui-test"))
         {
             var scriptPath = _args.GetArgValue("--script");
             var outputDir = _args.GetArgValue("--output") ?? "ux-test-results";
 
-            window.Opened += async (_, _) =>
-            {
-                await RunScriptAsync(window, viewModel, navigateAction, scriptPath, outputDir, desktop);
-            };
+            window.Opened += (_, _) => _ = RunSafelyAsync("ui_test",
+                () => RunScriptAsync(window, viewModel, navigateAction, scriptPath, outputDir, desktop));
+        }
+    }
+
+    // Run an async lambda from a Window.Opened handler without making the
+    // handler itself async-void (which would crash the process on throw).
+    // Surfaces the exception to Console.Error and the options log instead.
+    private async Task RunSafelyAsync(string label, Func<Task> body)
+    {
+        try
+        {
+            await body();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[{label}] {ex.GetType().Name}: {ex.Message}");
+            _options.Log?.Invoke($"[{label}] {ex}");
         }
     }
 

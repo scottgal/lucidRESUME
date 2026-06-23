@@ -287,7 +287,7 @@ public sealed class ScriptPlayer
     {
         var window = GetTargetWindow(action.WindowId)
             ?? throw new InvalidOperationException("No target window for Click");
-        var control = await LocateAsync(action.Target, window);
+        var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -327,7 +327,7 @@ public sealed class ScriptPlayer
     {
         var window = GetTargetWindow(action.WindowId)
             ?? throw new InvalidOperationException("No target window for DoubleClick");
-        var control = await LocateAsync(action.Target, window);
+        var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -349,7 +349,7 @@ public sealed class ScriptPlayer
             return;
         }
 
-        var control = await LocateAsync(action.Target, window);
+        var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
 
         var (cx, cy) = await GetControlCenterAsync(control, window);
         await _pointer.ClickAsync(window, cx, cy, MouseButton.Right);
@@ -362,7 +362,7 @@ public sealed class ScriptPlayer
 
         var window = GetTargetWindow(action.WindowId)
             ?? throw new InvalidOperationException("No target window for TypeText");
-        var control = await LocateAsync(action.Target, window);
+        var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -385,7 +385,9 @@ public sealed class ScriptPlayer
 
         var window = GetTargetWindow(action.WindowId);
         var control = FindControl(action.Target, window) ?? window;
-        var key = Enum.Parse<Key>(action.Value, true);
+        if (!Enum.TryParse<Key>(action.Value, ignoreCase: true, out var key))
+            throw new InvalidOperationException(
+                $"PressKey: unknown key '{action.Value}'. Expected an Avalonia.Input.Key name (Enter, Escape, F1, Tab, ...).");
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -410,7 +412,7 @@ public sealed class ScriptPlayer
         }
         else
         {
-            var control = await LocateAsync(action.Target, window);
+            var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
             (x, y) = await GetControlCenterAsync(control, window);
         }
 
@@ -429,7 +431,7 @@ public sealed class ScriptPlayer
         ScrollViewer? sv = null;
         if (!string.IsNullOrEmpty(action.Target))
         {
-            var control = await LocateAsync(action.Target, window);
+            var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
             sv = control as ScrollViewer ?? control.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
         }
         else
@@ -449,8 +451,8 @@ public sealed class ScriptPlayer
                     {
                         case "top": sv.Offset = sv.Offset.WithY(0); break;
                         case "bottom": sv.Offset = sv.Offset.WithY(sv.Extent.Height); break;
-                        case "up": sv.PageUp(); break;
-                        case "down": sv.PageDown(); break;
+                        case "up": sv.LineUp(); break;
+                        case "down": sv.LineDown(); break;
                         case "pageup": sv.PageUp(); break;
                         case "pagedown": sv.PageDown(); break;
                         case "lineup": sv.LineUp(); break;
@@ -525,7 +527,7 @@ public sealed class ScriptPlayer
         // Snip a control by selector → its bounds (+ optional padding)
         if (!string.IsNullOrEmpty(action.Target))
         {
-            var control = await LocateAsync(action.Target, window);
+            var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
             result.ScreenshotPath = await ScreenshotCapture.CaptureControlAsync(window, control, filePath, padding);
             Log?.Invoke(this, $"    Snip control {action.Target} → {Path.GetFileName(filePath)}");
             return;
@@ -550,7 +552,7 @@ public sealed class ScriptPlayer
     {
         var window = GetTargetWindow(action.WindowId)
             ?? throw new InvalidOperationException("No target window for Assert");
-        var control = await LocateAsync(action.Target, window);
+        var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -571,6 +573,15 @@ public sealed class ScriptPlayer
                 var expected = action.Value["text:".Length..].Trim();
                 if (textBox.Text != expected)
                     throw new UITestAssertException($"Assert failed: {action.Target}.Text != {expected}");
+            }
+            else
+            {
+                // Don't silently PASS on an unrecognized predicate ("visiable:true",
+                // "text:Foo" on a non-TextBox, or a missing Value). The previous
+                // chain fell through and the script reported success.
+                throw new UITestAssertException(
+                    $"Assert has no recognised predicate for {action.Target}: '{action.Value}'. " +
+                    "Expected visible:<bool>, enabled:<bool>, or text:<expected> on a TextBox.");
             }
         });
     }
@@ -889,7 +900,7 @@ public sealed class ScriptPlayer
 
         if (!string.IsNullOrEmpty(action.Target))
         {
-            var control = await LocateAsync(action.Target, window);
+            var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
             return await GetControlCenterAsync(control, window);
         }
 
@@ -919,13 +930,15 @@ public sealed class ScriptPlayer
         };
     }
 
-    private async Task ExecuteStartVideoAsync(UIAction action)
+    private Task ExecuteStartVideoAsync(UIAction action)
     {
         var fps = int.TryParse(action.Value, out var f) ? f : 5;
-        var window = GetTargetWindow(action.WindowId);
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("StartVideo: no target window");
 
         _videoRecorder = new GifRecorder(fps, msg => Log?.Invoke(this, $"    {msg}"));
-        _videoRecorder.StartRecording(window!);
+        _videoRecorder.StartRecording(window);
+        return Task.CompletedTask;
     }
 
     private async Task ExecuteStopVideoAsync(UIAction action, UIActionResult result)
@@ -1019,45 +1032,6 @@ public sealed class ScriptPlayer
         var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
         var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
 
-        var width = Math.Max(100, (int)window.Bounds.Width);
-        var height = Math.Max(100, (int)window.Bounds.Height);
-
-        Log?.Invoke(this, $"    Capturing {width}x{height}");
-
-        return CaptureWindowScreenshotAsync(window, filePath, width, height);
-    }
-
-    private async Task<string> CaptureWindowScreenshotAsync(Window window, string filePath, int width, int height)
-    {
-        var tcs = new TaskCompletionSource<string>();
-
-        Dispatcher.UIThread.Post(() =>
-        {
-            try
-            {
-                window.UpdateLayout();
-
-                var size = new PixelSize(width, height);
-                var dpi = new Vector(96, 96);
-
-                using var bitmap = new RenderTargetBitmap(size, dpi);
-                bitmap.Render(window);
-
-                using var stream = File.Create(filePath);
-                bitmap.Save(stream);
-
-                var fileInfo = new FileInfo(filePath);
-                Log?.Invoke(this, $"    Saved {fileInfo.Length / 1024}KB");
-
-                tcs.SetResult(filePath);
-            }
-            catch (Exception ex)
-            {
-                Log?.Invoke(this, $"    Screenshot failed: {ex.Message}");
-                tcs.SetException(ex);
-            }
-        }, DispatcherPriority.Render);
-
-        return await tcs.Task;
+        return ScreenshotCapture.CaptureWindowAsync(window, filePath);
     }
 }

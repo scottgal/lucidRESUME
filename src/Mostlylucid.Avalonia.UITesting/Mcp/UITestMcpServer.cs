@@ -1040,7 +1040,7 @@ public sealed class UITestMcpServer
         var player = new Players.ScriptPlayer(_screenshotDir, context: _ctx);
         if (_ctx.Navigate != null) player.SetNavigateAction(_ctx.Navigate);
 
-        var result = await player.RunScriptAsync(_ctx.MainWindow!, script);
+        var result = await player.RunScriptAsync((_ctx.MainWindow ?? throw new InvalidOperationException("No main window attached to UITestContext")), script);
 
         var json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
         return $"Script: {script.Name}\nResult: {(result.Success ? "PASS" : "FAIL")}\nActions: {result.ActionResults.Count}\nDuration: {result.Duration.TotalSeconds:F2}s\n\n{json}";
@@ -1060,7 +1060,7 @@ public sealed class UITestMcpServer
     {
         var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
         var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
-        var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow!;
+        var window = _ctx.FindWindow(windowId) ?? (_ctx.MainWindow ?? throw new InvalidOperationException("No main window attached to UITestContext"));
         return await ScreenshotCapture.CaptureWindowAsync(window, filePath);
     }
 
@@ -1116,7 +1116,7 @@ public sealed class UITestMcpServer
 
         var svgContent = await _ctx.RunOnUIThreadAsync(() =>
         {
-            var window = _ctx.FindWindow(windowId) ?? _ctx.MainWindow!;
+            var window = _ctx.FindWindow(windowId) ?? (_ctx.MainWindow ?? throw new InvalidOperationException("No main window attached to UITestContext"));
             window.UpdateLayout();
             var exporter = new Svg.SvgExporter();
             return exporter.Export(window);

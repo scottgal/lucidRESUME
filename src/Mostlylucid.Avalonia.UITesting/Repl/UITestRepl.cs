@@ -840,24 +840,14 @@ public sealed class UITestRepl
         });
     }
 
-    private async Task<string> CaptureScreenshotAsync(string filePath)
+    private Task<string> CaptureScreenshotAsync(string filePath)
     {
-        if (_ctx.MainWindow == null) return "No window";
-        var width = (int)_ctx.MainWindow.Bounds.Width;
-        var height = (int)_ctx.MainWindow.Bounds.Height;
-
-        await _ctx.RunOnUIThreadAsync(() =>
-        {
-            _ctx.MainWindow!.UpdateLayout();
-            var size = new PixelSize(width, height);
-            var dpi = new Vector(96, 96);
-            using var bitmap = new RenderTargetBitmap(size, dpi);
-            bitmap.Render(_ctx.MainWindow);
-            using var stream = File.Create(filePath);
-            bitmap.Save(stream);
-        });
-
-        return filePath;
+        if (_ctx.MainWindow == null) return Task.FromResult("No window");
+        // Delegate to the shared ScreenshotCapture so the REPL gets the same
+        // dimension clamping (Math.Max(1, ...)) and exception flow as
+        // ScriptPlayer / SnipRegion. The previous bespoke path could feed
+        // PixelSize a zero width/height on an un-laid-out window.
+        return Players.ScreenshotCapture.CaptureWindowAsync(_ctx.MainWindow, filePath);
     }
 
     private static string[] SplitCommand(string line)

@@ -48,8 +48,23 @@ public sealed class Expectation
                 if (result.Pass) return;
                 lastDetail = result.Detail;
             }
+            catch (LocatorAmbiguousException)
+            {
+                // Locator is statically wrong — multiple matches won't resolve
+                // itself by waiting. Rethrow so the caller sees the error.
+                throw;
+            }
             catch (LocatorTimeoutException ex)
             {
+                lastDetail = ex.Message;
+                lastError = ex;
+            }
+            catch (Exception ex)
+            {
+                // Matcher or visual-tree access may throw transiently while
+                // the tree is still materialising (NRE inside child walks,
+                // RegexMatchTimeoutException, etc.). Treat as a poll miss
+                // and keep waiting; the deadline check below still fires.
                 lastDetail = ex.Message;
                 lastError = ex;
             }

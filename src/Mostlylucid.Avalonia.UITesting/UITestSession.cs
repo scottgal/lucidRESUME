@@ -73,8 +73,8 @@ public sealed class UITestSession : IAsyncDisposable
             else
             {
                 var navProp = _viewModel?.GetType().GetProperty("NavigateCommand");
-                var cmd = navProp?.GetValue(_viewModel);
-                cmd?.GetType().GetMethod("Execute")?.Invoke(cmd, new object[] { page });
+                if (navProp?.GetValue(_viewModel) is System.Windows.Input.ICommand cmd && cmd.CanExecute(page))
+                    cmd.Execute(page);
             }
         });
         await Task.Delay(100);

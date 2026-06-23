@@ -219,9 +219,31 @@ public sealed class UITestContext
         if (finalProp == null || !finalProp.CanWrite) return false;
 
         var targetType = Nullable.GetUnderlyingType(finalProp.PropertyType) ?? finalProp.PropertyType;
-        var convertedValue = value == null ? null : Convert.ChangeType(value, targetType);
+        var convertedValue = ConvertForProperty(value, targetType);
         finalProp.SetValue(current, convertedValue);
         return true;
+    }
+
+    private static object? ConvertForProperty(object? value, Type targetType)
+    {
+        if (value == null) return null;
+        if (targetType.IsInstanceOfType(value)) return value;
+
+        // Convert.ChangeType refuses enums and only handles IConvertible
+        // targets; scripts (YAML/JSON) pass enum values as strings, so we
+        // handle them here before falling through.
+        if (targetType.IsEnum)
+        {
+            return value is string s
+                ? Enum.Parse(targetType, s, ignoreCase: true)
+                : Enum.ToObject(targetType, value);
+        }
+        if (typeof(IConvertible).IsAssignableFrom(targetType))
+            return Convert.ChangeType(value, targetType);
+
+        throw new InvalidOperationException(
+            $"Cannot convert value of type {value.GetType().Name} to property type {targetType.Name}. " +
+            "Add a custom converter or pass the value pre-converted.");
     }
 
     public async Task<T> RunOnUIThreadAsync<T>(Func<T> action)
