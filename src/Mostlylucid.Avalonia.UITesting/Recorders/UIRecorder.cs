@@ -188,20 +188,37 @@ public sealed class UIRecorder : IAsyncDisposable
         _attachedWindows.Remove(window);
     }
 
+    // Same class-handler leak fix as UITestContext: install one process-wide
+    // pair of handlers ever, fan out to live recorder instances via a weak
+    // reference list. Avoids stacking handlers on repeated StartRecording.
+    private static readonly object _recorderStaticLock = new();
+    private static bool _recorderClassHandlersInstalled;
+    private static readonly List<WeakReference<UIRecorder>> _activeRecorders = new();
+
     private void EnableCrossWindowTracking()
     {
-        Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) =>
+        lock (_recorderStaticLock)
         {
-            if (_isRecording && !_attachedWindows.Contains(window))
-            {
-                AttachWindow(window);
-            }
-        });
+            _activeRecorders.RemoveAll(wr => !wr.TryGetTarget(out _));
+            if (!_activeRecorders.Any(wr => wr.TryGetTarget(out var r) && ReferenceEquals(r, this)))
+                _activeRecorders.Add(new WeakReference<UIRecorder>(this));
 
-        Window.WindowClosedEvent.AddClassHandler<Window>((window, _) =>
-        {
-            DetachWindow(window);
-        });
+            if (_recorderClassHandlersInstalled) return;
+            _recorderClassHandlersInstalled = true;
+
+            Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) =>
+                FanOutRecorder(r => { if (r._isRecording && !r._attachedWindows.Contains(window)) r.AttachWindow(window); }));
+            Window.WindowClosedEvent.AddClassHandler<Window>((window, _) =>
+                FanOutRecorder(r => r.DetachWindow(window)));
+        }
+    }
+
+    private static void FanOutRecorder(Action<UIRecorder> action)
+    {
+        List<WeakReference<UIRecorder>> snapshot;
+        lock (_recorderStaticLock) snapshot = _activeRecorders.ToList();
+        foreach (var wr in snapshot)
+            if (wr.TryGetTarget(out var r)) action(r);
     }
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -386,13 +403,15 @@ public sealed class UIRecorder : IAsyncDisposable
 
         lock (_lock)
         {
-            // Coalesce: update existing text action for the same control
-            var lastTextAction = _actions.LastOrDefault(a =>
-                a.Type == ActionType.TypeText && a.Target == controlId);
-
-            if (lastTextAction != null)
+            // Coalesce ONLY when the immediately preceding action is a
+            // TypeText on the same control. The previous LastOrDefault
+            // predicate searched the whole history, which merged the
+            // second typing into the first when the user typed → clicked
+            // → typed-into-same-field-again, dropping the click sequence.
+            var tail = _actions.Count > 0 ? _actions[^1] : null;
+            if (tail is { Type: ActionType.TypeText } && tail.Target == controlId)
             {
-                lastTextAction.Value = source.Text;
+                tail.Value = source.Text;
             }
             else
             {

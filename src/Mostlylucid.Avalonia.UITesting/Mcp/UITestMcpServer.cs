@@ -1018,10 +1018,11 @@ public sealed class UITestMcpServer
 
         var mp4Result = await _videoRecorder.TryExportMp4Async(Path.Combine(_screenshotDir, $"{safeName}.mp4"));
 
+        var frameCount = _videoRecorder.FrameCount;
         await _videoRecorder.DisposeAsync();
         _videoRecorder = null;
 
-        var result = $"GIF saved: {gifPath} ({_videoRecorder?.FrameCount ?? 0} frames)";
+        var result = $"GIF saved: {gifPath} ({frameCount} frames)";
         if (mp4Result != null) result += $"\nMP4 saved: {mp4Result}";
         return result;
     }

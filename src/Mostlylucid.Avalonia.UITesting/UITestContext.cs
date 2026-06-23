@@ -21,33 +21,75 @@ public sealed class UITestContext
         get { lock (_windowLock) return _trackedWindows.ToList().AsReadOnly(); }
     }
 
+    // Class handlers on Window.WindowOpenedEvent / WindowClosedEvent are
+    // process-wide and cannot be removed via the AddClassHandler API; if
+    // each EnableCrossWindowTracking() call added its own handler, every
+    // script run / new session would leak another listener (and the
+    // captured `this`). Instead we install ONE class handler ever (gated
+    // by _classHandlersInstalled) that fans out to every live context
+    // registered in _activeContexts. Per-instance state is unchanged.
+    private static readonly object _staticLock = new();
+    private static bool _classHandlersInstalled;
+    private static readonly List<WeakReference<UITestContext>> _activeContexts = new();
+
     public void EnableCrossWindowTracking()
     {
-        if (global::Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            desktop.ShutdownRequested += (_, _) => ClearTrackedWindows();
-        }
-
-        if (MainWindow != null && !_trackedWindows.Contains(MainWindow))
-        {
-            lock (_windowLock) _trackedWindows.Add(MainWindow);
-        }
-
-        Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) =>
+        if (MainWindow != null)
         {
             lock (_windowLock)
-            {
-                if (!_trackedWindows.Contains(window))
-                    _trackedWindows.Add(window);
-            }
-            WindowOpened?.Invoke(this, window);
-        });
+                if (!_trackedWindows.Contains(MainWindow))
+                    _trackedWindows.Add(MainWindow);
+        }
 
-        Window.WindowClosedEvent.AddClassHandler<Window>((window, _) =>
+        lock (_staticLock)
         {
-            lock (_windowLock) _trackedWindows.Remove(window);
-            WindowClosed?.Invoke(this, window);
-        });
+            // Compact dead references and register this context.
+            _activeContexts.RemoveAll(wr => !wr.TryGetTarget(out _));
+            if (!_activeContexts.Any(wr => wr.TryGetTarget(out var ctx) && ReferenceEquals(ctx, this)))
+                _activeContexts.Add(new WeakReference<UITestContext>(this));
+
+            if (_classHandlersInstalled) return;
+            _classHandlersInstalled = true;
+
+            if (global::Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                desktop.ShutdownRequested += (_, _) =>
+                {
+                    lock (_staticLock)
+                        foreach (var wr in _activeContexts)
+                            if (wr.TryGetTarget(out var ctx)) ctx.ClearTrackedWindows();
+                };
+            }
+
+            Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) =>
+                FanOut(ctx => ctx.OnWindowOpened(window)));
+            Window.WindowClosedEvent.AddClassHandler<Window>((window, _) =>
+                FanOut(ctx => ctx.OnWindowClosed(window)));
+        }
+    }
+
+    private static void FanOut(Action<UITestContext> action)
+    {
+        List<WeakReference<UITestContext>> snapshot;
+        lock (_staticLock) snapshot = _activeContexts.ToList();
+        foreach (var wr in snapshot)
+            if (wr.TryGetTarget(out var ctx)) action(ctx);
+    }
+
+    private void OnWindowOpened(Window window)
+    {
+        lock (_windowLock)
+        {
+            if (!_trackedWindows.Contains(window))
+                _trackedWindows.Add(window);
+        }
+        WindowOpened?.Invoke(this, window);
+    }
+
+    private void OnWindowClosed(Window window)
+    {
+        lock (_windowLock) _trackedWindows.Remove(window);
+        WindowClosed?.Invoke(this, window);
     }
 
     private void ClearTrackedWindows()

@@ -9,7 +9,12 @@ namespace Mostlylucid.Avalonia.UITesting.Video;
 
 public sealed class GifRecorder : IAsyncDisposable
 {
+    // Add'd from the background capture task, read from the UI thread
+    // (FrameCount/SaveAsync/EncodeGif/TryExportMp4Async). Every access
+    // goes through _framesLock; SnapshotFrames takes a copy under the
+    // lock so the encoder iterates a stable list.
     private readonly List<(byte[] PngData, int DelayMs)> _frames = new();
+    private readonly object _framesLock = new();
     private readonly int _fps;
     private readonly int _frameDelayMs;
     private Window? _window;
@@ -19,7 +24,7 @@ public sealed class GifRecorder : IAsyncDisposable
     private readonly Action<string>? _log;
 
     public bool IsRecording => _recording;
-    public int FrameCount => _frames.Count;
+    public int FrameCount { get { lock (_framesLock) return _frames.Count; } }
 
     public GifRecorder(int fps = 5, Action<string>? log = null)
     {
@@ -32,8 +37,15 @@ public sealed class GifRecorder : IAsyncDisposable
     {
         if (_recording) return;
 
+        // Guard against a back-to-back Start that races the prior
+        // capture task (StopRecordingAsync awaits _captureTask, but
+        // callers that omit StopRecordingAsync would otherwise Clear()
+        // while a background loop is mid-Add).
+        if (_captureTask is { IsCompleted: false })
+            throw new InvalidOperationException("A previous capture task is still running. Call StopRecordingAsync first.");
+
         _window = window;
-        _frames.Clear();
+        lock (_framesLock) _frames.Clear();
         _recording = true;
         _cts = new CancellationTokenSource();
 
@@ -54,17 +66,25 @@ public sealed class GifRecorder : IAsyncDisposable
             catch (OperationCanceledException) { }
         }
 
-        _log?.Invoke($"GIF recording stopped. {_frames.Count} frames captured");
+        int count;
+        lock (_framesLock) count = _frames.Count;
+        _log?.Invoke($"GIF recording stopped. {count} frames captured");
     }
 
     public async Task<string> SaveAsync(string filePath)
     {
-        if (_frames.Count == 0)
+        var snapshot = SnapshotFrames();
+        if (snapshot.Count == 0)
             throw new InvalidOperationException("No frames captured");
 
-        await Task.Run(() => EncodeGif(filePath));
+        await Task.Run(() => EncodeGif(filePath, snapshot));
         _log?.Invoke($"GIF saved: {filePath} ({new FileInfo(filePath).Length / 1024}KB)");
         return filePath;
+    }
+
+    private List<(byte[] PngData, int DelayMs)> SnapshotFrames()
+    {
+        lock (_framesLock) return new List<(byte[], int)>(_frames);
     }
 
     private async Task CaptureLoopAsync(CancellationToken ct)
@@ -76,7 +96,7 @@ public sealed class GifRecorder : IAsyncDisposable
                 var frameData = await CaptureFrameAsync();
                 if (frameData != null)
                 {
-                    _frames.Add((frameData, _frameDelayMs));
+                    lock (_framesLock) _frames.Add((frameData, _frameDelayMs));
                 }
             }
             catch (OperationCanceledException)
@@ -122,12 +142,12 @@ public sealed class GifRecorder : IAsyncDisposable
         });
     }
 
-    private void EncodeGif(string filePath)
+    private void EncodeGif(string filePath, IReadOnlyList<(byte[] PngData, int DelayMs)> frames)
     {
-        if (_frames.Count == 0) return;
+        if (frames.Count == 0) return;
 
         // Decode the first frame to get dimensions
-        using var firstImage = SKBitmap.Decode(_frames[0].PngData);
+        using var firstImage = SKBitmap.Decode(frames[0].PngData);
         var width = firstImage.Width;
         var height = firstImage.Height;
 
@@ -154,7 +174,7 @@ public sealed class GifRecorder : IAsyncDisposable
         writer.Write((ushort)0);  // loop count (0 = infinite)
         writer.Write((byte)0);    // block terminator
 
-        foreach (var (pngData, delayMs) in _frames)
+        foreach (var (pngData, delayMs) in frames)
         {
             using var bitmap = SKBitmap.Decode(pngData);
             if (bitmap == null) continue;
@@ -378,7 +398,8 @@ public sealed class GifRecorder : IAsyncDisposable
 
     public async Task<string?> TryExportMp4Async(string filePath, string? ffmpegPath = null)
     {
-        if (_frames.Count == 0) return null;
+        var snapshot = SnapshotFrames();
+        if (snapshot.Count == 0) return null;
 
         var ffmpeg = ffmpegPath ?? "ffmpeg";
 
@@ -388,10 +409,10 @@ public sealed class GifRecorder : IAsyncDisposable
 
         try
         {
-            for (int i = 0; i < _frames.Count; i++)
+            for (int i = 0; i < snapshot.Count; i++)
             {
                 var framePath = Path.Combine(tempDir, $"frame_{i:D5}.png");
-                await File.WriteAllBytesAsync(framePath, _frames[i].PngData);
+                await File.WriteAllBytesAsync(framePath, snapshot[i].PngData);
             }
 
             var psi = new System.Diagnostics.ProcessStartInfo

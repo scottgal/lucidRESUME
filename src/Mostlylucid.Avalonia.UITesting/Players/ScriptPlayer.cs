@@ -266,8 +266,18 @@ public sealed class ScriptPlayer
         var tcs = new TaskCompletionSource();
         Dispatcher.UIThread.Post(() =>
         {
-            _navigateAction(action.Value);
-            tcs.SetResult();
+            // Wrap the body so a throwing _navigateAction surfaces back to
+            // the awaiter instead of stranding tcs uncompleted (which would
+            // hang the script player on the next await).
+            try
+            {
+                _navigateAction(action.Value);
+                tcs.SetResult();
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
         }, DispatcherPriority.Normal);
         await tcs.Task;
         await Task.Delay(300);
@@ -430,40 +440,44 @@ public sealed class ScriptPlayer
         var tcs = new TaskCompletionSource();
         Dispatcher.UIThread.Post(() =>
         {
-
-            if (sv != null)
+            try
             {
-                var value = action.Value?.ToLowerInvariant()?.Trim() ?? "down";
-                switch (value)
+                if (sv != null)
                 {
-                    case "top": sv.Offset = sv.Offset.WithY(0); break;
-                    case "bottom": sv.Offset = sv.Offset.WithY(sv.Extent.Height); break;
-                    case "up": sv.PageUp(); break;
-                    case "down": sv.PageDown(); break;
-                    case "pageup": sv.PageUp(); break;
-                    case "pagedown": sv.PageDown(); break;
-                    case "lineup": sv.LineUp(); break;
-                    case "linedown": sv.LineDown(); break;
-                    default:
-                        // Percentage: "50%" scrolls to 50% of content
-                        if (value.EndsWith('%') && double.TryParse(value.TrimEnd('%'), out var pct))
-                        {
-                            sv.Offset = sv.Offset.WithY(sv.Extent.Height * pct / 100.0);
-                        }
-                        // Pixel offset: "300" scrolls to 300px, "+200" scrolls down 200px
-                        else if (double.TryParse(action.Value, out var px))
-                        {
-                            if (action.Value!.StartsWith('+') || action.Value.StartsWith('-'))
-                                sv.Offset = sv.Offset.WithY(sv.Offset.Y + px);
+                    var value = action.Value?.ToLowerInvariant()?.Trim() ?? "down";
+                    switch (value)
+                    {
+                        case "top": sv.Offset = sv.Offset.WithY(0); break;
+                        case "bottom": sv.Offset = sv.Offset.WithY(sv.Extent.Height); break;
+                        case "up": sv.PageUp(); break;
+                        case "down": sv.PageDown(); break;
+                        case "pageup": sv.PageUp(); break;
+                        case "pagedown": sv.PageDown(); break;
+                        case "lineup": sv.LineUp(); break;
+                        case "linedown": sv.LineDown(); break;
+                        default:
+                            if (value.EndsWith('%') && double.TryParse(value.TrimEnd('%'), out var pct))
+                            {
+                                sv.Offset = sv.Offset.WithY(sv.Extent.Height * pct / 100.0);
+                            }
+                            else if (double.TryParse(action.Value, out var px))
+                            {
+                                if (action.Value!.StartsWith('+') || action.Value.StartsWith('-'))
+                                    sv.Offset = sv.Offset.WithY(sv.Offset.Y + px);
+                                else
+                                    sv.Offset = sv.Offset.WithY(px);
+                            }
                             else
-                                sv.Offset = sv.Offset.WithY(px);
-                        }
-                        else
-                            sv.PageDown();
-                        break;
+                                sv.PageDown();
+                            break;
+                    }
                 }
+                tcs.SetResult();
             }
-            tcs.SetResult();
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
         }, DispatcherPriority.Normal);
         await tcs.Task;
         await Task.Delay(100);
