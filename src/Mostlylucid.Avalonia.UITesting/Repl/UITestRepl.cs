@@ -624,6 +624,8 @@ public sealed class UITestRepl
         });
     }
 
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(
+        "Walks every loaded assembly to resolve a type by name. Under PublishTrimmed/PublishAot some assemblies' GetTypes() will silently miss results.")]
     private string Service(string[] args)
     {
         if (args.Length == 0) return "Usage: service <TypeName>";

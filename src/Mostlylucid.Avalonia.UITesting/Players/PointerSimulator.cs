@@ -17,6 +17,8 @@ namespace Mostlylucid.Avalonia.UITesting.Players;
 /// IInputManager.ProcessInput are public at runtime but hidden from Avalonia's
 /// reference assemblies, so we bind them via reflection at construction time.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(
+    "PointerSimulator binds Avalonia internal types (RawPointerEventArgs, MouseDevice, Pointer, IInputManager.ProcessInput) via reflection. Trimming may strip them; the bindings then throw at first use.")]
 public sealed class PointerSimulator
 {
     // Raw pointer event types from Avalonia.Input.Raw.RawPointerEventType

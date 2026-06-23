@@ -172,6 +172,8 @@ public sealed class UITestContext
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(
+        "Walks dotted property paths on consumer-defined ViewModels via reflection. Under PublishTrimmed/PublishAot the trimmer may remove properties whose only access path is here.")]
     public object? GetProperty(object target, string propertyPath)
     {
         var parts = propertyPath.Split('.');
@@ -199,6 +201,8 @@ public sealed class UITestContext
         return current;
     }
 
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(
+        "Walks dotted property paths on consumer-defined ViewModels via reflection. Under PublishTrimmed/PublishAot the trimmer may remove properties whose only access path is here.")]
     public bool SetProperty(object target, string propertyPath, object? value)
     {
         var parts = propertyPath.Split('.');

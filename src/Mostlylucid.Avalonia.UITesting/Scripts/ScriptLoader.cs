@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -14,12 +15,12 @@ public static class ScriptLoader
         .WithNamingConvention(UnderscoredNamingConvention.Instance)
         .Build();
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
-    };
+    private const string YamlTrimWarning =
+        "YamlDotNet reflects over UIScript / UIAction public properties at runtime. " +
+        "Under PublishTrimmed those properties may be removed silently. Use the JSON " +
+        "round-trip via UITestJsonContext for trimmed/AOT consumers.";
 
+    [RequiresUnreferencedCode(YamlTrimWarning)]
     public static UIScript LoadFromYaml(string path)
     {
         var yaml = File.ReadAllText(path);
@@ -29,6 +30,7 @@ public static class ScriptLoader
         return script;
     }
 
+    [RequiresUnreferencedCode(YamlTrimWarning)]
     public static UIScript ParseYaml(string yaml)
     {
         return YamlDeserializer.Deserialize<UIScript>(yaml);
@@ -37,16 +39,17 @@ public static class ScriptLoader
     public static UIScript LoadFromJson(string path)
     {
         var json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<UIScript>(json, JsonOptions)
+        return JsonSerializer.Deserialize(json, UITestJsonContext.Default.UIScript)
             ?? throw new InvalidDataException($"Failed to parse {path}");
     }
 
     public static UIScript ParseJson(string json)
     {
-        return JsonSerializer.Deserialize<UIScript>(json, JsonOptions)
+        return JsonSerializer.Deserialize(json, UITestJsonContext.Default.UIScript)
             ?? throw new InvalidDataException("Failed to parse JSON");
     }
 
+    [RequiresUnreferencedCode(YamlTrimWarning)]
     public static void SaveAsYaml(UIScript script, string path)
     {
         var yaml = YamlSerializer.Serialize(script);
@@ -55,10 +58,11 @@ public static class ScriptLoader
 
     public static void SaveAsJson(UIScript script, string path)
     {
-        var json = JsonSerializer.Serialize(script, JsonOptions);
+        var json = JsonSerializer.Serialize(script, UITestJsonContext.Default.UIScript);
         File.WriteAllText(path, json);
     }
 
+    [RequiresUnreferencedCode(YamlTrimWarning)]
     public static string ToYaml(UIScript script)
     {
         return YamlSerializer.Serialize(script);
@@ -66,9 +70,10 @@ public static class ScriptLoader
 
     public static string ToJson(UIScript script)
     {
-        return JsonSerializer.Serialize(script, JsonOptions);
+        return JsonSerializer.Serialize(script, UITestJsonContext.Default.UIScript);
     }
 
+    [RequiresUnreferencedCode(YamlTrimWarning)]
     public static IEnumerable<UIScript> LoadFromDirectory(string directory, string pattern = "*.yaml")
     {
         foreach (var file in Directory.GetFiles(directory, pattern))

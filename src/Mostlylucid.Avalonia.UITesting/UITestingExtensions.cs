@@ -213,7 +213,11 @@ internal class UITestingStartup
 
             var result = await player.RunScriptAsync(window, script);
 
-            var json = System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            // Use the source-gen UITestJsonContext so PublishTrimmed /
+            // PublishAot consumers don't silently lose fields when the
+            // reflection-based serializer can't see UITestResult members.
+            var json = System.Text.Json.JsonSerializer.Serialize(
+                result, Scripts.UITestJsonContext.Default.UITestResult);
             var resultPath = Path.Combine(outputDir, "result.json");
             await File.WriteAllTextAsync(resultPath, json);
 
