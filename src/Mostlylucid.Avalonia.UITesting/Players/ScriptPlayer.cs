@@ -316,7 +316,17 @@ public sealed class ScriptPlayer
             }
             else
             {
-                control.RaiseEvent(new RoutedEventArgs(InputElement.TappedEvent));
+                // Raising TappedEvent with a bare RoutedEventArgs blows up the
+                // moment any handler downcasts to TappedEventArgs (the strongly-
+                // typed payload Avalonia 11.x defines for this event). For the
+                // YAML-script "Click target=AddressBar" / "Click target=SearchBox"
+                // use case the user actually means "give this control focus" —
+                // raising the routed event is a side effect they don't observe.
+                // Focus + RaisePointer-ish equivalents would need a real Pointer
+                // instance we don't have; focus alone covers the documented use
+                // cases without a downcast hazard.
+                if (control is InputElement focusable)
+                    focusable.Focus();
             }
         });
 
@@ -331,7 +341,11 @@ public sealed class ScriptPlayer
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            control.RaiseEvent(new RoutedEventArgs(InputElement.DoubleTappedEvent));
+            // Same downcast hazard as the single-tap path above — handlers
+            // expect TappedEventArgs, not a bare RoutedEventArgs. Focus is the
+            // observable effect callers actually want.
+            if (control is InputElement focusable)
+                focusable.Focus();
         });
         await Task.Delay(50);
     }
@@ -385,19 +399,67 @@ public sealed class ScriptPlayer
 
         var window = GetTargetWindow(action.WindowId);
         var control = FindControl(action.Target, window) ?? window;
-        if (!Enum.TryParse<Key>(action.Value, ignoreCase: true, out var key))
-            throw new InvalidOperationException(
-                $"PressKey: unknown key '{action.Value}'. Expected an Avalonia.Input.Key name (Enter, Escape, F1, Tab, ...).");
+        var (key, modifiers) = ParseKeyChord(action.Value);
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
+            // Both KeyDown and KeyUp so apps that bind to either edge (KeyBinding
+            // handlers, OnKeyUp overrides) see the full event pair. Source is
+            // explicit so handlers that inspect e.Source (per-control routing)
+            // get a sensible originator instead of null.
             control?.RaiseEvent(new KeyEventArgs
             {
                 Key = key,
+                KeyModifiers = modifiers,
+                Source = control,
                 RoutedEvent = InputElement.KeyDownEvent
+            });
+            control?.RaiseEvent(new KeyEventArgs
+            {
+                Key = key,
+                KeyModifiers = modifiers,
+                Source = control,
+                RoutedEvent = InputElement.KeyUpEvent
             });
         });
         await Task.Delay(50);
+    }
+
+    /// <summary>
+    /// Parse a key spec like "Enter", "F1", "Ctrl+L", "Ctrl+Shift+P", or
+    /// "Alt+Meta+Tab" into a (Key, KeyModifiers) pair. Modifiers can appear
+    /// in any order and use any common alias: Ctrl/Control, Cmd/Meta/Win,
+    /// Alt/Option, Shift. The final token is the Avalonia.Input.Key value.
+    /// </summary>
+    public static (Key Key, KeyModifiers Modifiers) ParseKeyChord(string spec)
+    {
+        if (string.IsNullOrWhiteSpace(spec))
+            throw new InvalidOperationException("PressKey: empty key spec.");
+
+        var parts = spec.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 0)
+            throw new InvalidOperationException($"PressKey: empty key spec '{spec}'.");
+
+        var modifiers = KeyModifiers.None;
+        for (var i = 0; i < parts.Length - 1; i++)
+        {
+            modifiers |= parts[i].ToLowerInvariant() switch
+            {
+                "ctrl" or "control" => KeyModifiers.Control,
+                "shift" => KeyModifiers.Shift,
+                "alt" or "option" => KeyModifiers.Alt,
+                "meta" or "cmd" or "command" or "win" => KeyModifiers.Meta,
+                _ => throw new InvalidOperationException(
+                    $"PressKey: unknown modifier '{parts[i]}' in '{spec}'. Expected Ctrl/Shift/Alt/Meta.")
+            };
+        }
+
+        var keyToken = parts[parts.Length - 1];
+        if (!Enum.TryParse<Key>(keyToken, ignoreCase: true, out var key))
+            throw new InvalidOperationException(
+                $"PressKey: unknown key '{keyToken}' in '{spec}'. Expected an Avalonia.Input.Key name (Enter, Escape, F1, Tab, ...).");
+
+        return (key, modifiers);
     }
 
     private async Task ExecuteHoverAsync(UIAction action)
