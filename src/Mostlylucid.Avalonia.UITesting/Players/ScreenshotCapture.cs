@@ -15,23 +15,35 @@ namespace Mostlylucid.Avalonia.UITesting.Players;
 /// </summary>
 public static class ScreenshotCapture
 {
-    /// <summary>Capture the entire window to <paramref name="filePath"/>.</summary>
-    public static Task<string> CaptureWindowAsync(Window window, string filePath)
-        => CaptureAsync(window, filePath, region: null);
+    /// <summary>
+    /// Capture the entire window to <paramref name="filePath"/>. When <paramref name="settle"/> is
+    /// true, the window is first driven through the render loop (see <see cref="HeadlessRender"/>) so
+    /// deferred / virtualized / animated content is realized before the shot.
+    /// </summary>
+    public static async Task<string> CaptureWindowAsync(Window window, string filePath, bool settle = false)
+    {
+        if (settle) await HeadlessRender.SettleAsync(window);
+        return await CaptureAsync(window, filePath, region: null);
+    }
 
     /// <summary>
     /// Capture a rectangular region of the window in DIPs. The rect is clamped to
-    /// the window's bounds.
+    /// the window's bounds. Set <paramref name="settle"/> to realize deferred content first.
     /// </summary>
-    public static Task<string> CaptureRegionAsync(Window window, string filePath, Rect region)
-        => CaptureAsync(window, filePath, region);
+    public static async Task<string> CaptureRegionAsync(Window window, string filePath, Rect region, bool settle = false)
+    {
+        if (settle) await HeadlessRender.SettleAsync(window);
+        return await CaptureAsync(window, filePath, region);
+    }
 
     /// <summary>
     /// Capture the bounds of <paramref name="control"/> within <paramref name="window"/>,
-    /// optionally inflated by <paramref name="padding"/> DIPs on every side.
+    /// optionally inflated by <paramref name="padding"/> DIPs on every side. Set
+    /// <paramref name="settle"/> to realize deferred content first.
     /// </summary>
-    public static async Task<string> CaptureControlAsync(Window window, Control control, string filePath, double padding = 0)
+    public static async Task<string> CaptureControlAsync(Window window, Control control, string filePath, double padding = 0, bool settle = false)
     {
+        if (settle) await HeadlessRender.SettleAsync(window);
         var rect = await Dispatcher.UIThread.InvokeAsync(() => GetControlBoundsInWindow(control, window, padding));
         return await CaptureAsync(window, filePath, rect);
     }
