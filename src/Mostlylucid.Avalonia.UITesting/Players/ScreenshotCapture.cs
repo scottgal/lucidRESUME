@@ -1,5 +1,8 @@
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -90,8 +93,6 @@ public static class ScreenshotCapture
     {
         if (windows.Count == 0)
             throw new InvalidOperationException("CaptureComposite requires at least one window.");
-        if (windows.Count == 1)
-            return await CaptureAsync(windows[0], filePath, region: null);
 
         Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? ".");
         var tcs = new TaskCompletionSource<string>();
@@ -102,6 +103,7 @@ public static class ScreenshotCapture
             {
                 var back = windows[0];
                 back.UpdateLayout();
+                var scale = back.RenderScaling > 0 ? back.RenderScaling : 1.0;
 
                 var bw = Math.Max(1, (int)Math.Ceiling(back.Bounds.Width));
                 var bh = Math.Max(1, (int)Math.Ceiling(back.Bounds.Height));
@@ -118,6 +120,7 @@ public static class ScreenshotCapture
 
                 using var sk = new SKCanvas(canvas);
 
+                // Layer the other tracked windows at their screen offset from the back window.
                 foreach (var win in windows.Skip(1))
                 {
                     win.UpdateLayout();
@@ -133,16 +136,16 @@ public static class ScreenshotCapture
                     using var winSk = SKBitmap.Decode(winMs);
                     if (winSk is null) continue;
 
-                    // Position in screen pixels relative to the back window's
-                    // top-left. Window.Position is in physical pixels; Bounds
-                    // is in DIPs. Scale the offset to match the bitmap (1:1
-                    // when scaling = 1.0, which is true for the RTB we render at).
-                    var scale = back.RenderScaling > 0 ? back.RenderScaling : 1.0;
                     var dx = (int)Math.Round((win.Position.X - back.Position.X) / scale);
                     var dy = (int)Math.Round((win.Position.Y - back.Position.Y) / scale);
-
                     sk.DrawBitmap(winSk, new SKPoint(dx, dy));
                 }
+
+                // Layer any OPEN pop-ups (drop-downs, flyouts, combo/autocomplete lists, context menus).
+                // These render into separate PopupRoots — not Windows — so window compositing misses
+                // them; draw each open popup's content at its on-screen position.
+                foreach (var win in windows)
+                    DrawOpenPopups(win, sk, back.Position, scale);
 
                 using var image = SKImage.FromBitmap(canvas);
                 using var data = image.Encode(SKEncodedImageFormat.Png, 100);
@@ -158,6 +161,44 @@ public static class ScreenshotCapture
         }, DispatcherPriority.Render);
 
         return await tcs.Task;
+    }
+
+    /// <summary>
+    /// Renders every open <see cref="Popup"/> found under <paramref name="window"/> onto
+    /// <paramref name="sk"/> at its on-screen offset from <paramref name="backScreen"/>. Popups host
+    /// their content in a separate PopupRoot, so they are invisible to window-level capture.
+    /// </summary>
+    private static void DrawOpenPopups(Window window, SKCanvas sk, PixelPoint backScreen, double scale)
+    {
+        var popups = window.GetVisualDescendants().OfType<Popup>()
+            .Concat(window.GetLogicalDescendants().OfType<Popup>())
+            .Distinct();
+
+        foreach (var popup in popups)
+        {
+            if (!popup.IsOpen || popup.Child is not Control child) continue;
+            if (child.Bounds.Width < 1 || child.Bounds.Height < 1) continue;
+
+            var pw = Math.Max(1, (int)Math.Ceiling(child.Bounds.Width));
+            var ph = Math.Max(1, (int)Math.Ceiling(child.Bounds.Height));
+
+            using var prtb = new RenderTargetBitmap(new PixelSize(pw, ph), new Vector(96, 96));
+            prtb.Render(child);
+
+            using var pms = new MemoryStream();
+            prtb.Save(pms);
+            pms.Position = 0;
+            using var pSk = SKBitmap.Decode(pms);
+            if (pSk is null) continue;
+
+            PixelPoint screen;
+            try { screen = child.PointToScreen(new Point(0, 0)); }
+            catch { continue; }   // not realized on a screen — skip
+
+            var dx = (int)Math.Round((screen.X - backScreen.X) / scale);
+            var dy = (int)Math.Round((screen.Y - backScreen.Y) / scale);
+            sk.DrawBitmap(pSk, new SKPoint(dx, dy));
+        }
     }
 
     private static async Task<string> CaptureAsync(Window window, string filePath, Rect? region)

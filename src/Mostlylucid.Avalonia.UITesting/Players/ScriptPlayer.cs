@@ -134,6 +134,12 @@ public sealed class ScriptPlayer
                 case ActionType.TypeText:
                     await ExecuteTypeTextAsync(action);
                     break;
+                case ActionType.OpenDropDown:
+                    await ExecuteOpenDropDownAsync(action);
+                    break;
+                case ActionType.SelectDropDownItem:
+                    await ExecuteSelectDropDownItemAsync(action);
+                    break;
                 case ActionType.PressKey:
                     await ExecutePressKeyAsync(action);
                     break;
@@ -380,17 +386,127 @@ public sealed class ScriptPlayer
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            if (control is TextBox textBox)
+            switch (control)
             {
-                textBox.Text = action.Value;
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    $"TypeText target '{action.Target}' resolved to {control.GetType().Name}, expected TextBox");
+                case TextBox textBox:
+                    textBox.Text = action.Value;
+                    break;
+
+                // AutoCompleteBox: set its Text (drives the populate/filter) and open the suggestion
+                // drop-down, so a TypeText can be followed by a Composite screenshot of the suggestions
+                // or a Click on a result.
+                case AutoCompleteBox acb:
+                    acb.Text = action.Value;
+                    if (!string.IsNullOrEmpty(action.Value))
+                        acb.IsDropDownOpen = true;
+                    break;
+
+                // Any other control that wraps a TextBox in its template (search boxes, numeric
+                // up-downs, etc.) — type into the inner TextBox.
+                default:
+                    var inner = control.GetVisualDescendants().OfType<TextBox>().FirstOrDefault();
+                    if (inner is not null)
+                        inner.Text = action.Value;
+                    else
+                        throw new InvalidOperationException(
+                            $"TypeText target '{action.Target}' resolved to {control.GetType().Name}, " +
+                            "which is not a TextBox and contains no TextBox");
+                    break;
             }
         });
         await Task.Delay(50);
+    }
+
+    /// <summary>
+    /// Deterministically opens a drop-down / suggestion list on the target control — a
+    /// <see cref="ComboBox"/>, <see cref="AutoCompleteBox"/> or <see cref="Popup"/> (or a control
+    /// containing one). Synthetic clicks don't reliably open these; this sets the open state directly
+    /// so a following Composite screenshot can capture the popup or a Click can pick a result.
+    /// </summary>
+    private async Task ExecuteOpenDropDownAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for OpenDropDown");
+        var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            var target = control switch
+            {
+                ComboBox or AutoCompleteBox or Popup => control,
+                _ => control.GetVisualDescendants()
+                            .FirstOrDefault(c => c is ComboBox or AutoCompleteBox or Popup) as Control,
+            };
+
+            switch (target)
+            {
+                case ComboBox cb: cb.IsDropDownOpen = true; break;
+                case AutoCompleteBox acb: acb.IsDropDownOpen = true; break;
+                case Popup p: p.IsOpen = true; break;
+                default:
+                    throw new InvalidOperationException(
+                        $"OpenDropDown target '{action.Target}' resolved to {control.GetType().Name}, " +
+                        "which is not (and contains no) ComboBox / AutoCompleteBox / Popup");
+            }
+        });
+        await Task.Delay(150);   // let the popup open + lay out before the next action
+    }
+
+    /// <summary>
+    /// Selects an item in a <see cref="ComboBox"/> or <see cref="AutoCompleteBox"/> drop-down. The
+    /// action Value is either a 0-based index (e.g. <c>"0"</c>) or item text to match (by a Title/Name/
+    /// Text/DisplayName string property, else ToString). Sets SelectedItem directly — so it fires the
+    /// same SelectionChanged the app binds to — because synthetic clicks don't reach popup-hosted items.
+    /// </summary>
+    private async Task ExecuteSelectDropDownItemAsync(UIAction action)
+    {
+        var window = GetTargetWindow(action.WindowId)
+            ?? throw new InvalidOperationException("No target window for SelectDropDownItem");
+        var control = await LocateAsync(action.Target, window, action.Timeout ?? 5000);
+        var value = action.Value ?? "";
+        var byIndex = int.TryParse(value, out var index);
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            var target = control switch
+            {
+                ComboBox or AutoCompleteBox => control,
+                _ => control.GetVisualDescendants().FirstOrDefault(c => c is ComboBox or AutoCompleteBox) as Control,
+            };
+
+            switch (target)
+            {
+                case ComboBox cb:
+                    var cbItems = cb.Items.Cast<object?>().ToList();
+                    cb.SelectedItem = byIndex ? cbItems.ElementAtOrDefault(index) : MatchItem(cbItems, value);
+                    cb.IsDropDownOpen = false;
+                    break;
+                case AutoCompleteBox acb:
+                    var acbItems = (acb.ItemsSource?.Cast<object?>() ?? Enumerable.Empty<object?>()).ToList();
+                    var pick = byIndex ? acbItems.ElementAtOrDefault(index) : MatchItem(acbItems, value);
+                    if (pick is not null) acb.SelectedItem = pick;
+                    acb.IsDropDownOpen = false;
+                    break;
+                default:
+                    throw new InvalidOperationException(
+                        $"SelectDropDownItem target '{action.Target}' resolved to {control.GetType().Name}, " +
+                        "which is not (and contains no) ComboBox / AutoCompleteBox");
+            }
+        });
+        await Task.Delay(100);
+    }
+
+    private static object? MatchItem(IEnumerable<object?> items, string text)
+        => items.FirstOrDefault(i => ItemText(i).Contains(text, StringComparison.OrdinalIgnoreCase));
+
+    private static string ItemText(object? item)
+    {
+        if (item is null) return "";
+        var t = item.GetType();
+        foreach (var name in new[] { "Title", "Name", "Text", "DisplayName" })
+            if (t.GetProperty(name)?.GetValue(item) is string s && !string.IsNullOrEmpty(s))
+                return s;
+        return item.ToString() ?? "";
     }
 
     private async Task ExecutePressKeyAsync(UIAction action)

@@ -6,6 +6,8 @@ public enum ActionType
     DoubleClick,
     RightClick,
     TypeText,
+    OpenDropDown,
+    SelectDropDownItem,
     PressKey,
     Hover,
     Scroll,

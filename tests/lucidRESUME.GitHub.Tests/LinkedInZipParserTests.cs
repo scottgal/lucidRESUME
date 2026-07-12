@@ -57,6 +57,33 @@ public class LinkedInZipParserTests
     }
 
     [Fact]
+    public async Task ParseAsync_UsesFullNameColumn_WhenNoSeparateFields()
+    {
+        var path = CreateTestLinkedInZip(nameStyle: NameStyle.FullNameOnly);
+        var parser = new LinkedInZipParser(new Microsoft.Extensions.Logging.Abstractions.NullLogger<LinkedInZipParser>());
+        try
+        {
+            var resume = await parser.ParseAsync(path);
+            Assert.Equal("John Doe", resume.Personal.FullName);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ParseAsync_PrefersFirstLastName_WhenAllThreeColumnsPresent()
+    {
+        var path = CreateTestLinkedInZip(nameStyle: NameStyle.AllThreeColumns);
+        var parser = new LinkedInZipParser(new Microsoft.Extensions.Logging.Abstractions.NullLogger<LinkedInZipParser>());
+        try
+        {
+            var resume = await parser.ParseAsync(path);
+            // Should use First Name + Last Name, not the Full Name column value
+            Assert.Equal("John Doe", resume.Personal.FullName);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
     public async Task ParseAsync_ParsesSkillEndorsements()
     {
         var path = CreateTestLinkedInZip(includeEndorsements: true);
@@ -71,14 +98,26 @@ public class LinkedInZipParserTests
         finally { File.Delete(path); }
     }
 
-    private static string CreateTestLinkedInZip(bool includeEndorsements = false)
+    private enum NameStyle { SeparateFields, FullNameOnly, AllThreeColumns }
+
+    private static string CreateTestLinkedInZip(bool includeEndorsements = false, NameStyle nameStyle = NameStyle.SeparateFields)
     {
         var path = Path.GetTempFileName() + ".zip";
         using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
 
-        AddCsv(zip, "Profile.csv",
-            "First Name,Last Name,Maiden Name,Address,Birth Date,Headline,Summary,Industry,Zip Code,Geo Location\n" +
-            "John,Doe,,,,,Tech lead,Software,,\"London, UK\"");
+        var profileCsv = nameStyle switch
+        {
+            NameStyle.FullNameOnly =>
+                "Full Name,Maiden Name,Address,Birth Date,Headline,Summary,Industry,Zip Code,Geo Location\n" +
+                "John Doe,,,,,Tech lead,Software,,\"London, UK\"",
+            NameStyle.AllThreeColumns =>
+                "Full Name,First Name,Last Name,Maiden Name,Address,Birth Date,Headline,Summary,Industry,Zip Code,Geo Location\n" +
+                "Wrong Name,John,Doe,,,,,Tech lead,Software,,\"London, UK\"",
+            _ =>
+                "First Name,Last Name,Maiden Name,Address,Birth Date,Headline,Summary,Industry,Zip Code,Geo Location\n" +
+                "John,Doe,,,,,Tech lead,Software,,\"London, UK\""
+        };
+        AddCsv(zip, "Profile.csv", profileCsv);
 
         AddCsv(zip, "Positions.csv",
             "Company Name,Title,Description,Location,Started On,Finished On\n" +

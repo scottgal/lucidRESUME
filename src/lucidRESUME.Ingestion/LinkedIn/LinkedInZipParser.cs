@@ -78,7 +78,11 @@ public sealed class LinkedInZipParser
         if (rows.Count == 0) return;
         var row = rows[0];
 
-        resume.Personal.FullName = Concat(Get(row, "First Name"), Get(row, "Last Name"));
+        var firstName = Get(row, "First Name");
+        var lastName = Get(row, "Last Name");
+        resume.Personal.FullName = firstName != null || lastName != null
+            ? Concat(firstName, lastName)
+            : Get(row, "Full Name");
         resume.Personal.Location = Get(row, "Geo Location");
         resume.Personal.Summary = Get(row, "Summary");
         resume.Personal.WebsiteUrl = Get(row, "Websites")?.Replace("[COMPANY:", "").TrimEnd(']');

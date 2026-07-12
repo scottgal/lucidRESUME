@@ -149,6 +149,40 @@ actions:
     value: "enabled:true"
 ```
 
+### Driving drop-downs and capturing pop-ups
+
+Drop-downs (ComboBox, AutoCompleteBox) and other pop-ups render into separate `PopupRoot`s, so a
+synthetic click won't reliably open them and a plain window screenshot won't see them. Use the
+dedicated actions plus a `composite` screenshot:
+
+```yaml
+actions:
+  # Autocomplete/search: type to populate, then open + capture the suggestion list.
+  - type: TypeText            # TypeText also targets AutoCompleteBox and TextBox-wrapping controls
+    target: "type=AutoCompleteBox"
+    value: "proto"
+  - type: OpenDropDown        # deterministically opens the list (ComboBox / AutoCompleteBox / Popup)
+    target: "type=AutoCompleteBox"
+  - type: Screenshot
+    value: suggestions
+    composite: true           # composites open pop-ups (drop-downs, flyouts, menus) into the shot
+
+  # Pick a result by index ("0") or matched text — sets SelectedItem, firing the app's binding.
+  - type: SelectDropDownItem
+    target: "type=AutoCompleteBox"
+    value: "0"
+
+  # ComboBox works the same way:
+  - type: OpenDropDown
+    target: "type=ComboBox:has-text(Theme)"
+  - type: Screenshot
+    value: theme-options
+    composite: true
+  - type: SelectDropDownItem
+    target: "type=ComboBox:has-text(Theme)"
+    value: "Dracula"
+```
+
 ### Empty state verification
 
 Verify that empty states display properly (a common UX blind spot):
