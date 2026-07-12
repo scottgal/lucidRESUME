@@ -9,10 +9,11 @@
 
     <!-- NuGet metadata -->
     <PackageId>Mostlylucid.Avalonia.UITesting</PackageId>
-    <Version>1.5.0</Version>
+    <Version>1.6.0</Version>
     <Authors>Scott Galloway</Authors>
-    <Description>UI testing, screenshot snapshots, script playback, recording, video capture, REPL, and MCP server for Avalonia desktop apps. Adds HeadlessRender.SettleAsync to realize deferred/virtualized/animated content before capture.</Description>
-    <PackageTags>avalonia;ui-testing;screenshots;snapshots;automation;desktop;mcp</PackageTags>
+    <Description>UI testing for Avalonia desktop apps: Playwright-style locators with auto-retry, auto-waiting expectations, real pointer/touch/gesture input (click, drag, wheel, pinch, rotate), YAML script playback, screenshot/region/control snapshots (+ composite windows), GIF/MP4 recording, an interactive REPL and an MCP server. HeadlessRender.SettleAsync realizes deferred/virtualized/animated content before capture — including drag-driven Dock docking/splitting.</Description>
+    <PackageReleaseNotes>1.6.0: drag input verified against Dock.Avalonia tab drag/dock/split; chord-key PressKey (Ctrl+Shift+P); docs refreshed for locators, expectations, gestures, composite screenshots, REPL and MCP.</PackageReleaseNotes>
+    <PackageTags>avalonia;ui-testing;screenshots;snapshots;automation;desktop;mcp;drag;gestures</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/scottgal/lucidRESUME</PackageProjectUrl>
     <RepositoryUrl>https://github.com/scottgal/lucidRESUME</RepositoryUrl>

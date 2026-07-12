@@ -3,7 +3,9 @@
 [![NuGet](https://img.shields.io/nuget/v/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
 
-A complete UI testing toolkit for [Avalonia](https://avaloniaui.net/) desktop apps. Screenshot snapshots, YAML script playback, interaction recording, animated GIF video capture, interactive REPL, and an MCP server that lets LLMs see and drive your UI.
+A complete UI testing toolkit for [Avalonia](https://avaloniaui.net/) desktop apps. Playwright-style locators with auto-retry, auto-waiting expectations, real pointer/touch/gesture input (click, drag, wheel, pinch, rotate — enough to drive [Dock.Avalonia](https://github.com/wieslawsoltes/Dock) tab drag/dock/split), screenshot snapshots, YAML script playback, interaction recording, animated GIF/MP4 capture, an interactive REPL, and an MCP server that lets LLMs see and drive your UI.
+
+`HeadlessRender.SettleAsync` realizes deferred / virtualized / animated content (e.g. Dock's deferred document hosts) before a capture, so screenshots reflect what actually renders.
 
 Built for [lucidRESUME](https://github.com/scottgal/lucidRESUME) and extracted as a standalone package so any Avalonia app can use it.
 
@@ -341,6 +343,34 @@ await gif.SaveAsync("demo.gif");                    // always works
 await gif.TryExportMp4Async("demo.mp4");            // works if ffmpeg is installed
 ```
 
+### HeadlessRender.SettleAsync
+
+The headless platform renders on demand (`RenderTargetBitmap`) rather than running a continuous
+compositor frame loop, so content that reveals itself lazily — items-panel containers, reveal
+animations, and **deferred content hosts (e.g. Dock.Avalonia's `DeferredContentControl`)** — may not
+have materialized when a one-shot capture runs. `SettleAsync` forces layout, generates items
+containers, ticks the headless render timer, applies deferred-content controls (by convention,
+reflectively — no hard dependency on the control library), and pumps the dispatcher, repeating until
+the visual tree stops changing:
+
+```csharp
+window.Show();
+await HeadlessRender.SettleAsync(window);           // realize deferred/virtualized/animated content
+await ScreenshotCapture.CaptureWindowAsync(window, "shot.png");
+// (ScreenshotCapture.CaptureWindowAsync(window, path, settle: true) does this for you)
+```
+
+Content whose realization is scheduled asynchronously (e.g. a live terminal, a Markdown renderer)
+may need a few settle passes — loop until the control you expect appears:
+
+```csharp
+for (int i = 0; i < 40 && Count<MyView>(window) < 1; i++)
+{
+    await HeadlessRender.SettleAsync(window);
+    await Task.Delay(25);
+}
+```
+
 ---
 
 ## REPL Commands
@@ -487,7 +517,7 @@ LLM: ui_screenshot(name: "jobs-verified")
 | `DoubleClick` | control name | | Double-click |
 | `RightClick` | control name | | Right-click |
 | `TypeText` | control name | text | Type into TextBox |
-| `PressKey` | control name (opt) | key name | Press keyboard key |
+| `PressKey` | control name (opt) | key or chord | Press a key or chord — `Enter`, `F1`, `Ctrl+L`, `Ctrl+Shift+P`, `Alt+Meta+Tab` (modifiers in any order; aliases Ctrl/Control, Cmd/Meta/Win, Alt/Option, Shift) |
 | `Hover` | control name | | Hover over control |
 | `Scroll` | ScrollViewer (opt) | up/down/top/bottom | Scroll |
 | `Wait` | | milliseconds | Wait |
