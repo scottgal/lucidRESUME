@@ -9,10 +9,10 @@
 
     <!-- NuGet metadata -->
     <PackageId>Mostlylucid.Avalonia.UITesting</PackageId>
-    <Version>1.7.0</Version>
+    <Version>1.7.1</Version>
     <Authors>Scott Galloway</Authors>
     <Description>UI testing for Avalonia desktop apps: Playwright-style locators with auto-retry, auto-waiting expectations, real pointer/touch/gesture input (click, drag, wheel, pinch, rotate), YAML script playback, screenshot/region/control snapshots (+ composite windows AND open pop-ups), drop-down driving (open + select), GIF/MP4 recording, an interactive REPL and an MCP server. HeadlessRender.SettleAsync realizes deferred/virtualized/animated content before capture — including drag-driven Dock docking/splitting.</Description>
-    <PackageReleaseNotes>1.7.0: drop-down support — OpenDropDown + SelectDropDownItem actions drive ComboBox/AutoCompleteBox lists deterministically (synthetic clicks don't reach popup items); Composite screenshots now capture open pop-ups (drop-downs, flyouts, autocomplete/combo lists, context menus), which live in separate PopupRoots; TypeText now targets AutoCompleteBox and any control wrapping a TextBox. 1.6.0: drag verified against Dock tab drag/dock/split; chord-key PressKey.</PackageReleaseNotes>
+    <PackageReleaseNotes>1.7.1: no functional changes from 1.7.0 — versioned for lucidVIEW v4.2.0 editor integration. 1.7.0: drop-down support — OpenDropDown + SelectDropDownItem actions drive ComboBox/AutoCompleteBox lists deterministically; Composite screenshots now capture open pop-ups; TypeText now targets AutoCompleteBox and any control wrapping a TextBox.</PackageReleaseNotes>
     <PackageTags>avalonia;ui-testing;screenshots;snapshots;automation;desktop;mcp;drag;gestures;dropdown;popup</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/scottgal/lucidRESUME</PackageProjectUrl>
