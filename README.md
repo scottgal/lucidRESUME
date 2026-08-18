@@ -1,6 +1,8 @@
 # ***lucid*RESUME**
 
 
+> NOTE: This project uses libraries which now require an OSMF https://opensourcemaintenancefee.org/ as such no further development will be done with the current dependencies
+> 
 > ## NOTE: THIS IS CURRENTLY A RESEARCH PREVIEW. IT SHOULD NOT BE 1.x YET. SORRY!  THE AVALONIA TESTING FRAMEWORK *IS* MATURE HENCE THE WRONG 1.x
 
 
