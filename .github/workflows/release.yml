@@ -74,7 +74,6 @@ jobs:
           -o artifacts/publish/${{ matrix.rid }}
           -p:Version=${{ steps.version.outputs.VERSION }}
           -p:PublishSingleFile=true
-          -p:EnableCompressionInSingleFile=true
           -p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Publish self-contained app (macOS)
@@ -88,7 +87,6 @@ jobs:
           -o artifacts/publish/${{ matrix.rid }}
           -p:Version=${{ steps.version.outputs.VERSION }}
           -p:PublishSingleFile=true
-          -p:EnableCompressionInSingleFile=true
 
       - name: Create archive
         shell: pwsh
