@@ -27,7 +27,7 @@ public sealed class JobMlProcessorTests
         Assert.Single(reparsed.Data.Entities);
         Assert.Single(reparsed.Data.Claims);
         Assert.Contains("```jobml", serialized);
-        Assert.Contains("jobml:\n  version: 0.1", serialized);
+        Assert.Contains("jobml:\n  version: 0.1", serialized.ReplaceLineEndings("\n"));
         Assert.Contains("semantics:", serialized);
         Assert.Contains("Do not infer unsupported claims", serialized);
         Assert.DoesNotContain("```jobml", reparsed.Markdown);

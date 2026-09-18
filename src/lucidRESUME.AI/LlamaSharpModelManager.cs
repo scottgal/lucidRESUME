@@ -45,27 +45,29 @@ public sealed class LlamaSharpModelManager
             response.EnsureSuccessStatusCode();
 
             var total = response.Content.Headers.ContentLength;
-            await using var source = await response.Content.ReadAsStreamAsync(ct);
-            await using var target = new FileStream(
-                partial,
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.None,
-                1024 * 1024,
-                FileOptions.Asynchronous | FileOptions.SequentialScan);
-
-            var buffer = new byte[1024 * 1024];
-            long written = 0;
-            int read;
-            while ((read = await source.ReadAsync(buffer, ct)) > 0)
+            await using (var source = await response.Content.ReadAsStreamAsync(ct))
+            await using (var target = new FileStream(
+                             partial,
+                             FileMode.Create,
+                             FileAccess.Write,
+                             FileShare.None,
+                             1024 * 1024,
+                             FileOptions.Asynchronous | FileOptions.SequentialScan))
             {
-                await target.WriteAsync(buffer.AsMemory(0, read), ct);
-                written += read;
-                if (total is > 0)
-                    progress?.Report((double)written / total.Value);
+                var buffer = new byte[1024 * 1024];
+                long written = 0;
+                int read;
+                while ((read = await source.ReadAsync(buffer, ct)) > 0)
+                {
+                    await target.WriteAsync(buffer.AsMemory(0, read), ct);
+                    written += read;
+                    if (total is > 0)
+                        progress?.Report((double)written / total.Value);
+                }
+
+                await target.FlushAsync(ct);
             }
 
-            await target.FlushAsync(ct);
             File.Move(partial, destination, overwrite: true);
             progress?.Report(1);
             _logger.LogInformation("Downloaded {ModelId} to {Path}", ModelId, destination);
