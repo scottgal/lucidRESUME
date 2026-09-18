@@ -80,6 +80,54 @@ public class SqliteAppStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveAsync_RoundTripsOverridesAndEmployerProfile()
+    {
+        var state = new AppState
+        {
+            Overrides = new UserOverrides
+            {
+                DismissedSkills = ["COBOL"],
+                PersonalInfoOverrides = new Dictionary<string, string> { ["FullName"] = "Correct Name" },
+                ManualSkills = [new ManualSkillEntry { SkillName = "Rust", Category = "Languages" }]
+            },
+            EmployerProfile = new EmployerProfile
+            {
+                CompanyName = "Example Ltd",
+                Industry = "Software",
+                CompanySize = CompanySizeRange.Medium
+            }
+        };
+
+        await _store.SaveAsync(state);
+        var loaded = await _store.LoadAsync();
+
+        Assert.Contains("COBOL", loaded.Overrides.DismissedSkills);
+        Assert.Equal("Correct Name", loaded.Overrides.PersonalInfoOverrides["FullName"]);
+        Assert.Equal("Rust", Assert.Single(loaded.Overrides.ManualSkills).SkillName);
+        Assert.Equal("Example Ltd", loaded.EmployerProfile?.CompanyName);
+        Assert.Equal(CompanySizeRange.Medium, loaded.EmployerProfile?.CompanySize);
+    }
+
+    [Fact]
+    public async Task ImportJsonAsync_RoundTripsOverridesAndEmployerProfile()
+    {
+        var original = new AppState
+        {
+            Overrides = new UserOverrides { DismissedSkills = ["Perl"] },
+            EmployerProfile = new EmployerProfile { CompanyName = "Import Ltd" }
+        };
+        using var input = new MemoryStream();
+        await JsonSerializer.SerializeAsync(input, original);
+        input.Position = 0;
+
+        await _store.ImportJsonAsync(input);
+        var loaded = await _store.LoadAsync();
+
+        Assert.Contains("Perl", loaded.Overrides.DismissedSkills);
+        Assert.Equal("Import Ltd", loaded.EmployerProfile?.CompanyName);
+    }
+
+    [Fact]
     public async Task MutateAsync_AtomicReadModifyWrite()
     {
         await _store.SaveAsync(new AppState { Profile = new UserProfile { DisplayName = "Before" } });

@@ -377,7 +377,21 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             };
 
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            await File.WriteAllTextAsync(_aiSettingsPath.Path, json);
+            var directory = Path.GetDirectoryName(_aiSettingsPath.Path)
+                            ?? throw new InvalidOperationException("AI settings path has no parent directory.");
+            Directory.CreateDirectory(directory);
+            var temporaryPath = Path.Combine(directory, $".ai-settings-{Guid.NewGuid():N}.tmp");
+            try
+            {
+                await File.WriteAllTextAsync(temporaryPath, json);
+                if (!OperatingSystem.IsWindows())
+                    File.SetUnixFileMode(temporaryPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+                File.Move(temporaryPath, _aiSettingsPath.Path, true);
+            }
+            finally
+            {
+                if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
+            }
             AiSettingsStatus = $"Saved. Restart app to apply {AiProvider}/{SelectedModel}.";
         }
         catch (Exception ex)

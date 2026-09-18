@@ -13,16 +13,17 @@
 
 ***lucid*RESUME** is a free, open-source desktop app that builds a structured, evidence-based model of your skills from your actual work - then uses it to:
 
-- **Tailor resumes** to specific job descriptions
+- **Project role-specific resumes** from a persistent evidence ledger
 - **Match you to relevant roles** with per-skill similarity scoring
 - **Show what you're missing** (and what you're not)
 - **Plan your next move** based on your actual skill graph
 
 Everything runs locally on your machine. No accounts. No data leaving your device unless you choose to.
 
-The Apply workflow can also use the OpenAI Responses API when explicitly configured.
-It builds the prompt from the reviewed merged resume, LinkedIn and GitHub evidence,
-then exports one evidence-linked artifact as Markdown + JobML, Word, or PDF. The
+OpenAI, grug 9B through LLamaSharp, Ollama, or Anthropic can be used during
+ingestion and explicit authoring workflows. Apply does not call them. It selects
+reviewed merged resume, LinkedIn, and GitHub ledger records, then exports one
+evidence-linked artifact as Markdown + JobML, Word, or PDF. The
 human resume is followed by a labelled **MACHINE AREA** containing JobML and a link
 to [the design article](https://mostlylucid.net/blog/the-problem-with-resumes).
 See [resume output and template design](docs/resume-output-design.md) for the full flow,
@@ -43,15 +44,16 @@ template rationale, and configuration.
 - **How often** it shows up across roles
 - **How strong** the evidence is (recency, frequency, confidence)
 
-No invented skills. No guessing. Just structured inference over your actual work.
+No invented skills. No output-time guessing. Extraction is recorded once with its
+method, confidence, source, and review state.
 
-This is the foundation everything else builds on - matching, tailoring, gap analysis, career direction.
+This is the foundation everything else builds on - matching, projection, gap analysis, and career direction.
 
 The experimental **JobML 0.1 editor** places authoritative human Markdown on the
 left, editable JobML on the right, and live evidence links between them. Selecting
 a link highlights both the supporting prose and machine reference. As prose
 changes, claims are marked `valid`, `changed`, `missing`, or `ambiguous`;
-generated claims never become evidence without explicit acceptance. Markdown may
+inferred claims never become evidence without explicit acceptance. Markdown may
 be shorter for a particular role while JobML retains higher-resolution external
 evidence. See the [JobML specification](docs/jobml-0.1-specification.md),
 [implementation profile](docs/jobml-0.1.md), and
@@ -71,7 +73,7 @@ Every major job site wants your email, your browsing history, and permission to 
 
 - **Local-first AI** - the default is [grug 9B Q4_K_M](https://huggingface.co/ProCreations/grug-9b-gguf) running in-process through LLamaSharp. Ollama, Anthropic, and OpenAI remain optional providers.
 - **No account required** - data stored in a local SQLite database. You own it.
-- **Honest tailoring** - the AI never invents skills or experience you don't have.
+- **Evidence-led projection** - Apply only renders claims already present in the ledger.
 - **Career direction (based on your actual skill graph)** - not just "match this job" but "what to do next to reach your target cluster".
 - **Free forever** - Unlicense. Public domain.
 
@@ -119,9 +121,10 @@ Every major job site wants your email, your browsing history, and permission to 
 - **Effort/impact ranking**: Low (rewording), Medium (side project), High (new learning)
 - **Search query generator**: suggests job searches from your strongest skill communities
 
-### AI Tailoring
-- Rewrites resume for specific JDs using skill ledger evidence (not hallucination)
+### Evidence Projection
+- Projects role-specific resumes directly from stable skill-ledger claims
 - Semantic compression: 13 roles -> 6 relevant -> filtered to evidence-backed bullets
+- Renders Markdown and JobML together without output-time evidence inference
 - AI detection scorer (5 signals) + de-AI rewrite button
 - Translation with sliding context and glossary
 
@@ -192,18 +195,20 @@ lucidresume jobml cold-parser-probe --file resume.jobml.md
 
 That's it. ONNX models (~600MB) are downloaded automatically on first launch. No accounts, no setup wizards.
 
-> **macOS users:** if Gatekeeper blocks the app, right-click → Open, or run `xattr -cr lucidRESUME.app` from Terminal.
+> **macOS users:** the bundle is ad-hoc signed but not notarized. If Gatekeeper blocks it, Control-click the extracted app and choose Open. If needed, run `xattr -dr com.apple.quarantine ./lucidRESUME.app` on that app only.
 
-### AI Tailoring (Optional)
+### AI-assisted ingestion (Optional)
 
-AI tailoring is optional — everything else works without it.
+AI assistance is optional. It can recover structured candidates from difficult
+source documents. Every inferred record is stored with provenance and requires
+review. Resume projection and export work without a language model.
 
 **Option 1: Local AI with LLamaSharp (recommended)**
 1. Open **Profile → AI Provider**
 2. Keep `llamasharp` selected and click **Download local model**
 3. Restart the app after the 5.63 GB Q4_K_M download completes
 
-The model is loaded lazily, uses its embedded chat template, and is shared between extraction and tailoring. Apple Silicon uses the Metal support included in the LLamaSharp CPU backend; other platforms have a portable CPU fallback. Set `LlamaSharp:ModelPath`, `ContextSize`, or `GpuLayerCount` in `lucidresume.json` to override the defaults.
+The model is loaded lazily and uses its embedded chat template. Apple Silicon uses the Metal support included in the LLamaSharp CPU backend; other platforms have a portable CPU fallback. Set `LlamaSharp:ModelPath`, `ContextSize`, or `GpuLayerCount` in `lucidresume.json` to override the defaults. Relative model paths resolve under the user data directory, outside the signed application bundle.
 
 **Option 2: Local AI with [Ollama](https://ollama.ai)**
 1. Install Ollama and run `ollama pull qwen3.5:4b`

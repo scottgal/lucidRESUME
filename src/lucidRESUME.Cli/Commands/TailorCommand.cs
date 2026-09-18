@@ -12,7 +12,7 @@ namespace lucidRESUME.Cli.Commands;
 
 /// <summary>
 /// lucidresume tailor --resume cv.docx --job "JD text or URL" [--output tailored.md]
-/// Parses resume, matches against JD, compresses, tailors via LLM, evaluates quality.
+/// Parses resume, matches against a JD, and renders a role-specific ledger projection.
 /// </summary>
 public static class TailorCommand
 {
@@ -29,13 +29,13 @@ public static class TailorCommand
         outputOpt.Aliases.Add("-o");
 
         var configOpt = new Option<FileInfo?>("--config") { Description = "Path to lucidresume.json config" };
-        var evalOnlyOpt = new Option<bool>("--eval-only") { Description = "Only evaluate quality, don't tailor" };
+        var evalOnlyOpt = new Option<bool>("--eval-only") { Description = "Only evaluate quality; do not project an output" };
         var formatOpt = new Option<string?>("--format") { Description = "Output format: markdown (default), docx, pdf, all" };
         var templateOpt = new Option<string?>("--template") { Description = "Output template: ats-classic, modern-professional, compact-technical" };
 
         var jobFileOpt = new Option<FileInfo?>("--job-file") { Description = "Job description file (alternative to --job)" };
 
-        var cmd = new Command("tailor", "Tailor a resume for a specific job description")
+        var cmd = new Command("tailor", "Project a resume from the ledger for a specific job description")
         {
             resumeOpt, resumeDirOpt, jobOpt, jobFileOpt, outputOpt, configOpt, evalOnlyOpt, formatOpt, templateOpt
         };
@@ -92,37 +92,18 @@ public static class TailorCommand
 
             if (evalOnly)
             {
-                Console.Error.WriteLine("Eval-only mode — skipping tailoring.");
+                Console.Error.WriteLine("Eval-only mode: skipping projection.");
                 return;
             }
 
-            // Tailor
-            var tailoringService = services.GetService<IAiTailoringService>();
-            if (tailoringService is null)
-            {
-                Console.Error.WriteLine("No AI provider registered.");
-                return;
-            }
-
-            await tailoringService.CheckAvailabilityAsync(ct);
-
-            if (!tailoringService.IsAvailable)
-            {
-                Console.Error.WriteLine("AI provider unavailable. For LLamaSharp, download the configured GGUF model; otherwise check the selected provider's configuration.");
-                Console.Error.WriteLine("Use --eval-only to skip tailoring.");
-                return;
-            }
-
-            Console.Error.WriteLine($"Tailoring via AI...");
-            var profile = new UserProfile(); // empty profile for CLI
-            var tailored = await tailoringService.TailorAsync(resume, jd, profile, ct);
+            Console.Error.WriteLine("Rendering deterministic evidence projection...");
             var artifact = services.GetRequiredService<ResumeArtifactBuilder>()
-                .Build(resume, tailored, jd, template.Id);
+                .Build(resume, compressed.Projection, jd, template.Id);
 
             // Quality after
-            Console.Error.WriteLine("Evaluating tailored quality...");
-            var afterQuality = await qualityAnalyser.AnalyseAsync(tailored, jd, ct);
-            Console.Error.WriteLine($"  Tailored quality: {afterQuality.OverallScore}/100 (was {beforeQuality.OverallScore}/100)");
+            Console.Error.WriteLine("Evaluating projected quality...");
+            var afterQuality = await qualityAnalyser.AnalyseAsync(artifact, jd, ct);
+            Console.Error.WriteLine($"  Projected quality: {afterQuality.OverallScore}/100 (was {beforeQuality.OverallScore}/100)");
             PrintFindings(afterQuality);
 
             var delta = afterQuality.OverallScore - beforeQuality.OverallScore;

@@ -1,8 +1,10 @@
 using lucidRESUME.AI;
+using lucidRESUME.Core.Configuration;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Ingestion.Docling;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 
 namespace lucidRESUME.Services;
 
@@ -22,6 +24,8 @@ public sealed class StartupHealthCheck
     private readonly IDoclingClient? _docling;
     private readonly HttpClient _http;
     private readonly ILogger<StartupHealthCheck> _logger;
+    private readonly IConfiguration _config;
+    private bool AutoDownloadModels => _config.GetValue("Startup:AutoDownloadModels", true);
 
     public StartupHealthCheck(
         IEmbeddingService embedder,
@@ -33,6 +37,7 @@ public sealed class StartupHealthCheck
         IOptions<DoclingOptions> doclingOpts,
         HttpClient http,
         ILogger<StartupHealthCheck> logger,
+        IConfiguration config,
         IDoclingClient? docling = null)
     {
         _embedder = embedder;
@@ -45,6 +50,7 @@ public sealed class StartupHealthCheck
         _docling = docling;
         _http = http;
         _logger = logger;
+        _config = config;
     }
 
     /// <summary>Fired when a status message changes during startup. (service name, message)</summary>
@@ -144,7 +150,7 @@ public sealed class StartupHealthCheck
         var vocabPath = ResolvePath(_embeddingOpts.VocabPath);
 
         OnnxModelReady = File.Exists(modelPath);
-        if (!OnnxModelReady)
+        if (!OnnxModelReady && AutoDownloadModels)
         {
             _logger.LogWarning("ONNX embedding model not found at {Path}. Downloading...", modelPath);
             try
@@ -161,7 +167,7 @@ public sealed class StartupHealthCheck
             }
         }
 
-        if (!File.Exists(vocabPath))
+        if (!File.Exists(vocabPath) && AutoDownloadModels)
         {
             try
             {
@@ -177,11 +183,11 @@ public sealed class StartupHealthCheck
     private async Task EnsureNerModelsAsync(CancellationToken ct)
     {
         // General NER (dslim/bert-base-NER) - pre-exported ONNX available on HuggingFace
-        var generalModelPath = ResolvePath("models/ner/model.onnx");
-        var generalVocabPath = ResolvePath("models/ner/vocab.txt");
+        var generalModelPath = ResolvePath(_config["GeneralNer:ModelPath"] ?? "models/ner/model.onnx");
+        var generalVocabPath = ResolvePath(_config["GeneralNer:VocabPath"] ?? "models/ner/vocab.txt");
 
         GeneralNerReady = File.Exists(generalModelPath) && File.Exists(generalVocabPath);
-        if (!GeneralNerReady)
+        if (!GeneralNerReady && AutoDownloadModels)
         {
             _logger.LogWarning("General NER model not found. Downloading dslim/bert-base-NER...");
             try
@@ -204,11 +210,11 @@ public sealed class StartupHealthCheck
         }
 
         // Resume NER (pre-exported ONNX from scottgal/resume-ner-bert-v2-onnx)
-        var resumeModelPath = ResolvePath("models/resume-ner/model.onnx");
-        var resumeVocabPath = ResolvePath("models/resume-ner/vocab.txt");
+        var resumeModelPath = ResolvePath(_config["OnnxNer:ModelPath"] ?? "models/resume-ner/model.onnx");
+        var resumeVocabPath = ResolvePath(_config["OnnxNer:VocabPath"] ?? "models/resume-ner/vocab.txt");
 
         ResumeNerReady = File.Exists(resumeModelPath) && File.Exists(resumeVocabPath);
-        if (!ResumeNerReady)
+        if (!ResumeNerReady && AutoDownloadModels)
         {
             _logger.LogInformation("Resume NER model not found. Downloading from HuggingFace...");
             try
@@ -281,7 +287,7 @@ public sealed class StartupHealthCheck
     }
 
     private static string ResolvePath(string path) =>
-        Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path);
+        AppDataPaths.Resolve(path);
 
     private void ReportStatus(string service, string message) =>
         OnStatusChanged?.Invoke(service, message);

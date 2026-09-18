@@ -22,7 +22,8 @@ The implementation supports:
 - stable heading/paragraph references;
 - live `valid`, `changed`, `missing`, and `ambiguous` evidence states;
 - direct requirement-to-claim coverage;
-- explicit review of generated claims and evidence reconciliation.
+- explicit review of inferred claims and evidence reconciliation;
+- deterministic role projections which preserve ingestion-time claim IDs.
 
 It deliberately excludes a universal ontology, embeddings, attestations, ATS protocols, and automatic prose rewriting.
 
@@ -89,7 +90,7 @@ origin: derived
 review: required
 ```
 
-Generated claims remain warnings and do not count as directly evidenced coverage until a human explicitly changes review to `accepted`. Acceptance does not rewrite the human prose.
+Inferred claims remain warnings and do not count as directly evidenced coverage until a human explicitly changes review to `accepted`. Acceptance does not rewrite the human prose. Rendering never promotes or re-infers them.
 
 ## Namespaced extensions
 

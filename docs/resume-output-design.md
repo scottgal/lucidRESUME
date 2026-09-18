@@ -8,14 +8,18 @@ The supported application path is:
 2. Import GitHub repositories and their public evidence.
 3. Review the merge so uncertain facts do not enter the profile silently.
 4. Paste a job advert into Apply.
-5. Select an output template and generate with the configured local or hosted model.
-6. Review the human prose and its generated JobML claims.
+5. Select an output template and project the relevant accepted ledger records.
+6. Review the human prose and its JobML evidence links.
 7. Export the same artifact as Markdown, DOCX, or PDF.
 
-The model receives an evidence catalogue, not permission to invent a career. OpenAI
-uses the Responses API with a strict JSON result containing the Markdown, evidence
-references used, and warnings. JobML generation and file rendering happen locally
-after the API response.
+Ingestion may use deterministic parsers, NER, or an optional LLM to propose ledger
+records. Inferred records remain review-required. Rendering does not call a model,
+reparse its own output, or infer provenance. Markdown and JobML are emitted together
+from one revisioned projection whose blocks already carry ledger claim IDs.
+
+If the source ledger changes after projection, export fails until the role-specific
+projection is rebuilt. This prevents a visually plausible document from carrying
+stale evidence links.
 
 The portable artifact ends with:
 
@@ -72,7 +76,9 @@ export LUCIDRESUME_OpenAi__ApiKey=sk-...
 export LUCIDRESUME_OpenAi__Model=gpt-5.6-luna
 ```
 
-The implementation follows the OpenAI Responses API structured-output guidance:
+OpenAI is optional for ingestion-time extraction and authoring suggestions. It is
+not part of the export path. The implementation follows the OpenAI Responses API
+structured-output guidance:
 https://developers.openai.com/api/docs/guides/structured-outputs
 
 API keys are never written into a generated resume or JobML artifact.

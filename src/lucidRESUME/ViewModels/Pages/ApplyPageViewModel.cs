@@ -15,7 +15,6 @@ namespace lucidRESUME.ViewModels.Pages;
 
 public sealed partial class ApplyPageViewModel : ViewModelBase
 {
-    private readonly IAiTailoringService _tailoringService;
     private readonly SemanticCompressor _compressor;
     private readonly ICoverageAnalyser _coverageAnalyser;
     private readonly IAppStore _store;
@@ -37,7 +36,6 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private string? _errorMessage;
 
-    [ObservableProperty] private bool _isAiUnavailable;
     public IReadOnlyList<ResumeTemplate> Templates { get; } = ResumeTemplateCatalog.All;
     [ObservableProperty] private ResumeTemplate _selectedTemplate = ResumeTemplateCatalog.All[0];
 
@@ -50,20 +48,16 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     [ObservableProperty] private int _gapCount;
     [ObservableProperty] private string _companyTypeLabel = "";
 
-    public ApplyPageViewModel(IAiTailoringService tailoringService,
-        SemanticCompressor compressor,
+    public ApplyPageViewModel(SemanticCompressor compressor,
         ICoverageAnalyser coverageAnalyser, IAppStore store,
         ResumeArtifactBuilder artifactBuilder,
         IEnumerable<IResumeExporter> exporters)
     {
-        _tailoringService = tailoringService;
         _compressor = compressor;
         _coverageAnalyser = coverageAnalyser;
         _store = store;
         _artifactBuilder = artifactBuilder;
         _exporters = exporters.ToList();
-        // Don't check at construction - service may not have pinged Ollama yet.
-        // Rechecked in SetContext() and before each tailor operation.
     }
 
     /// <summary>Called by JobsPage or ResumePageViewModel to pre-populate the form.</summary>
@@ -78,8 +72,6 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             Company = job.Company ?? "";
             JobDescriptionText = job.RawText;
         }
-
-        _ = RefreshProviderAvailabilityAsync();
 
         if (resume is not null && job is not null)
             _ = RunCoverageAsync(resume, job);
@@ -103,65 +95,13 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         }
     }
 
-    private async Task RefreshProviderAvailabilityAsync()
-    {
-        IsAiUnavailable = !await _tailoringService.CheckAvailabilityAsync();
-    }
-
-    [RelayCommand(CanExecute = nameof(CanTailor))]
-    private async Task TailorAsync()
-    {
-        ErrorMessage = null;
-        IsTailoring = true;
-        HasResult = false;
-        IsAiUnavailable = !await _tailoringService.CheckAvailabilityAsync();
-        StatusMessage = "Tailoring resume…";
-
-        try
-        {
-            var state = await _store.LoadAsync();
-            var resume = _contextResume ?? state.SelectedResume;
-            if (resume is null)
-            {
-                ErrorMessage = "No resume loaded. Please import a resume first.";
-                return;
-            }
-
-            var profile = state.Profile;
-
-            var job = _contextJob ?? new JobDescription
-            {
-                JobId = Guid.NewGuid(),
-                CreatedAt = DateTimeOffset.UtcNow,
-                Title = JobTitle,
-                Company = Company,
-                RawText = JobDescriptionText
-            };
-
-            var tailored = await _tailoringService.TailorAsync(resume, job, profile);
-            _generatedResume = _artifactBuilder.Build(resume, tailored, job, SelectedTemplate.Id);
-            TailoredMarkdown = _generatedResume.JobMlSource ?? _generatedResume.RawMarkdown ?? "(No output)";
-            HasResult = true;
-            StatusMessage = "Done.";
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Tailoring failed: {ex.Message}";
-            StatusMessage = null;
-        }
-        finally
-        {
-            IsTailoring = false;
-        }
-    }
-
     [RelayCommand(CanExecute = nameof(CanTailor))]
     private async Task SmartCompressAsync()
     {
         ErrorMessage = null;
         IsTailoring = true;
         HasResult = false;
-        StatusMessage = "Compressing resume to match JD…";
+        StatusMessage = "Selecting ledger evidence for this role…";
         CompressionStats = null;
 
         try
@@ -172,8 +112,11 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
 
             var job = _contextJob ?? new JobDescription
             {
-                JobId = Guid.NewGuid(), CreatedAt = DateTimeOffset.UtcNow,
-                Title = JobTitle, Company = Company, RawText = JobDescriptionText
+                JobId = Guid.NewGuid(),
+                CreatedAt = DateTimeOffset.UtcNow,
+                Title = JobTitle,
+                Company = Company,
+                RawText = JobDescriptionText
             };
 
             // Step 1: Semantic compression - filter to relevant evidence only
@@ -185,22 +128,16 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                 $"fit: {compressed.OverallFit:P0}" +
                 (compressed.Gaps.Count > 0 ? $", gaps: {string.Join(", ", compressed.Gaps.Take(3))}" : "");
 
-            // Step 2: Send compressed resume to LLM for polishing
-            StatusMessage = "Polishing with AI…";
-            var profile = state.Profile;
-            var compressedResume = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
-            compressedResume.SetDoclingOutput(compressed.Markdown, null, null);
-            foreach (var entity in resume.Entities) compressedResume.AddEntity(entity);
-
-            var tailored = await _tailoringService.TailorAsync(compressedResume, job, profile);
-            _generatedResume = _artifactBuilder.Build(resume, tailored, job, SelectedTemplate.Id);
+            // Step 2: Render the selected ledger records without re-inference.
+            StatusMessage = "Rendering evidence projection…";
+            _generatedResume = _artifactBuilder.Build(resume, compressed.Projection, job, SelectedTemplate.Id);
             TailoredMarkdown = _generatedResume.JobMlSource ?? _generatedResume.RawMarkdown ?? compressed.Markdown;
             HasResult = true;
-            StatusMessage = $"Done. Compressed {compressed.OriginalRoleCount} → {compressed.IncludedRoleCount} roles.";
+            StatusMessage = $"Projected {compressed.IncludedRoleCount} of {compressed.OriginalRoleCount} roles.";
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Compression failed: {ex.Message}";
+            ErrorMessage = $"Projection failed: {ex.Message}";
             StatusMessage = null;
         }
         finally { IsTailoring = false; }
@@ -210,12 +147,10 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
 
     partial void OnJobDescriptionTextChanged(string value)
     {
-        TailorCommand.NotifyCanExecuteChanged();
         SmartCompressCommand.NotifyCanExecuteChanged();
     }
     partial void OnIsTailoringChanged(bool value)
     {
-        TailorCommand.NotifyCanExecuteChanged();
         SmartCompressCommand.NotifyCanExecuteChanged();
     }
 
@@ -245,8 +180,8 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
 
         var file = await TopLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Export Tailored Resume",
-            SuggestedFileName = $"tailored-resume.{extension}",
+            Title = "Export Projected Resume",
+            SuggestedFileName = $"projected-resume.{extension}",
             FileTypeChoices = [fileType]
         });
 

@@ -25,8 +25,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     <PackageReference Include="ScottPlot.Avalonia" Version="5.1.59" />
-    <PackageReference Include="YamlDotNet" Version="18.1.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,7 +50,6 @@
     <ProjectReference Include="..\lucidRESUME.AI\lucidRESUME.AI.csproj" />
     <ProjectReference Include="..\lucidRESUME.Export\lucidRESUME.Export.csproj" />
     <ProjectReference Include="..\lucidRESUME.Collabora\lucidRESUME.Collabora.csproj" />
-    <ProjectReference Include="..\lucidRESUME.UXTesting\lucidRESUME.UXTesting.csproj" />
     <ProjectReference Include="..\Mostlylucid.Avalonia.UITesting\Mostlylucid.Avalonia.UITesting.csproj" />
     <ProjectReference Include="..\lucidRESUME.EmailTracker\lucidRESUME.EmailTracker.csproj" />
     <ProjectReference Include="..\lucidRESUME.GitHub\lucidRESUME.GitHub.csproj" />

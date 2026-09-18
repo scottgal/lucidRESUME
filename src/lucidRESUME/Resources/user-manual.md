@@ -1,6 +1,6 @@
 # ***lucid*RESUME** User Manual
 
-Welcome to ***lucid*RESUME** - a local-first career tool that builds an evidence-based model of your skills and uses it to tailor resumes, match jobs, and plan your next move.
+Welcome to ***lucid*RESUME** - a local-first career tool that builds an evidence-based model of your skills and uses it to project resumes, match jobs, and plan your next move.
 
 Core processing and storage run on your machine. No account is required. Data only
 leaves the device when you explicitly select a cloud AI provider or import from an
@@ -19,7 +19,7 @@ see progress in the sidebar status panel:
 
 - **Embeddings** - the semantic matching engine (all-MiniLM-L6-v2)
 - **NER** - named entity recognition for extracting skills, names, and organisations (2 models)
-- **Ollama** - optional local AI for tailoring and translation
+- **AI** - optional grug 9B, Ollama, Anthropic, or OpenAI assistance during ingestion
 
 All three status indicators should turn green. If NER or Embeddings show red, the app will still work but with reduced extraction accuracy.
 
@@ -28,7 +28,7 @@ All three status indicators should turn green. If NER or Embeddings show red, th
 1. **Import** your resume (PDF or DOCX) on the **My CV** page
 2. **Add a job** you're interested in via the **Add Job** page
 3. **View the match** on the **Jobs** page - see per-skill scoring
-4. **Tailor** your resume on the **Apply** page
+4. **Project** your resume on the **Apply** page
 5. **Track** your application in the **Pipeline**
 
 ### Installing From A Release Archive
@@ -37,10 +37,10 @@ GitHub releases provide self-contained archives for Windows, macOS, and Linux on
 
 Each app archive has a matching `.sha256` checksum file. The GitHub release page includes quick usage and configuration guidance. Releases also include a documentation archive with `lucidRESUME-docs-single-page.md` for offline reference.
 
-On macOS, the app archive is currently unsigned. If macOS blocks first launch, do not disable Gatekeeper globally. After extracting the archive, either Control-click the `lucidRESUME` executable and choose **Open**, or run:
+On macOS, the app bundle is ad-hoc signed but not Apple-notarized. If macOS blocks first launch, do not disable Gatekeeper globally. After extracting the archive, Control-click `lucidRESUME.app` and choose **Open**. If that still fails, run this only against the extracted app:
 
 ```bash
-xattr -dr com.apple.quarantine ~/Applications/lucidRESUME
+xattr -dr com.apple.quarantine ./lucidRESUME.app
 ```
 
 ---
@@ -174,9 +174,9 @@ The editor has three linked areas:
 Select a link card to highlight both the supporting prose and its JobML reference.
 Moving the caret through linked prose or a JobML reference selects the other side.
 
-### Generating and reviewing links
+### Extracting and reviewing links
 
-Use **Generate links** to create draft claims from the current prose. Generated
+Use **Generate links** to deterministically extract draft claim links from the current prose. Draft
 claims are marked `derived` and `review: required`. They do not count as accepted
 evidence until you review them and choose **Accept claims**.
 
@@ -392,37 +392,24 @@ The career planner generates job search queries from your skill communities:
 ---
 
 <!-- help:tailoring-your-resume -->
-## Tailoring Your Resume
+## Projecting Your Resume
 
-### How Tailoring Works
+### How Projection Works
 
 1. Select a job on the **Jobs** page
 2. Navigate to **Apply**
 3. The system queries your skill ledger for evidence matching the JD
 4. **Semantic compression** selects only relevant roles and bullets
-5. The AI rewrites to emphasise matched skills while preserving truth
+5. Markdown and JobML are rendered together from those selected ledger claim IDs
 
-> **Important:** Tailoring never invents skills or experience. It reframes and highlights what you actually have. The "honest-only" constraint is enforced in every prompt.
+> **Important:** Apply is a projection, not a generation step. Evidence extraction
+> happens when sources are ingested or explicitly reviewed. Rendering never asks a
+> model to infer claims or decide what supports them.
 
 <!-- help:apply-deai -->
-### De-AI Button
-
-After tailoring, click **De-AI** to:
-
-1. Run the 5-signal AI detection scorer on the output
-2. Identify AI-sounding phrases (buzzwords, uniform sentence structure, etc.)
-3. Rewrite flagged sections to sound more natural and specific
-
-The AI detection score appears as a banner - lower is better (more human-sounding).
-
-<!-- help:apply-translate -->
-### Translation
-
-Click **Translate** to convert your tailored resume into another language:
-
-- Uses sliding context with a glossary for term consistency
-- Technical terms (Kubernetes, ASP.NET, Docker) stay in English
-- Supported: German, French, Spanish, Portuguese, Chinese, Dutch, Japanese, Korean
+If you want to rewrite or translate prose, do that in an explicit authoring step,
+then ingest and review the changed evidence. Apply never rewrites prose while it
+renders a role-specific document.
 
 ---
 
@@ -507,7 +494,12 @@ Auto-detected events are flagged so you can verify them.
 <!-- help:ai-provider-setup -->
 ## AI Provider Setup
 
-### Ollama (Default - Local)
+### LLamaSharp with grug 9B (Default - Local)
+
+Download the optional GGUF model from Profile. It runs in-process and is used for
+ingestion assistance, not projection or export.
+
+### Ollama (Alternative Local Provider)
 
 Ollama runs AI models on your own hardware. No API key, no cost, no data leaving your machine.
 
@@ -538,7 +530,7 @@ The app connects to `http://localhost:11434` by default. Change this on the Prof
 | Anthropic Sonnet | ~$0.01/resume | Medium | Excellent | Data sent to Anthropic |
 | OpenAI GPT-4o-mini | ~$0.002/resume | Fast | Very good | Data sent to OpenAI |
 
-> **Recommendation:** Start with Ollama. Switch to a cloud provider only if you need higher quality tailoring or your hardware is slow.
+> **Recommendation:** Use deterministic extraction and NER first. Enable a language model only when source documents need additional ingestion help.
 
 ---
 

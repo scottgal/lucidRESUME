@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using lucidRESUME.Core.Models.Extraction;
+using lucidRESUME.Core.Models.Evidence;
 
 namespace lucidRESUME.Core.Models.Resume;
 
@@ -46,16 +47,22 @@ public sealed class ResumeDocument
     // Extraction metadata
     public List<ExtractedEntity> Entities { get; set; } = [];
 
+    /// <summary>Persisted ingestion-time claims and evidence. All output is projected from this ledger.</summary>
+    public EvidenceLedger EvidenceLedger { get; set; } = new();
+
+    /// <summary>Selection and identity map used to render this role-specific projection.</summary>
+    public ResumeProjectionInfo? Projection { get; set; }
+
     // Tailoring metadata
     public Guid? TailoredForJobId { get; set; }
 
     /// <summary>
-    /// Provenance supplied by the generator. Each output claim is mapped back to one or
+    /// Legacy provenance supplied by older output paths. Each output claim is mapped back to one or
     /// more stable entries in the imported evidence catalogue.
     /// </summary>
     public List<GenerationEvidenceLink> GenerationEvidenceLinks { get; set; } = [];
 
-    /// <summary>Non-fatal evidence conflicts or omissions reported during generation.</summary>
+    /// <summary>Legacy non-fatal evidence conflicts or omissions reported during projection.</summary>
     public List<string> GenerationWarnings { get; set; } = [];
 
     [JsonIgnore]
@@ -98,4 +105,17 @@ public sealed class GenerationEvidenceLink
 {
     public string OutputClaim { get; set; } = "";
     public List<string> EvidenceRefs { get; set; } = [];
+}
+
+public sealed class ResumeProjectionInfo
+{
+    public Guid SourceResumeId { get; set; }
+    public string SourceRevision { get; set; } = "";
+    public List<ResumeProjectionBlock> Blocks { get; set; } = [];
+}
+
+public sealed class ResumeProjectionBlock
+{
+    public string ClaimId { get; set; } = "";
+    public string ProseRef { get; set; } = "";
 }

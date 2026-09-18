@@ -143,7 +143,7 @@ public sealed class OnnxAiTextDetector : IDisposable
     }
 
     private static string ResolvePath(string path) =>
-        Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path);
+        lucidRESUME.Core.Configuration.AppDataPaths.Resolve(path);
 
     public void Dispose() => _session?.Dispose();
 }

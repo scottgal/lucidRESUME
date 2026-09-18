@@ -20,8 +20,29 @@ env:
   PROJECT: src/lucidRESUME/lucidRESUME.csproj
 
 jobs:
+  release-validation:
+    name: Validate release source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore lucidRESUME.sln
+      - name: Build
+        run: dotnet build lucidRESUME.sln -c Release --no-restore
+      - name: Test
+        run: dotnet test lucidRESUME.sln -c Release --no-build --filter "FullyQualifiedName!~MigrateFromJson"
+      - name: Audit dependencies
+        run: dotnet list lucidRESUME.sln package --vulnerable --include-transitive
+
   publish-app:
     name: Publish ${{ matrix.rid }}
+    needs: release-validation
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -87,6 +108,57 @@ jobs:
           -o artifacts/publish/${{ matrix.rid }}
           -p:Version=${{ steps.version.outputs.VERSION }}
           -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:IncludeAllContentForSelfExtract=true
+          -p:DebugSymbols=false
+          -p:DebugType=None
+
+      - name: Build and ad-hoc sign macOS app bundle
+        if: ${{ startsWith(matrix.rid, 'osx-') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle="artifacts/bundle/lucidRESUME.app"
+          contents="$bundle/Contents"
+          mkdir -p "$contents/MacOS" "$contents/Resources"
+          cp "artifacts/publish/${{ matrix.rid }}/lucidRESUME" "$contents/MacOS/lucidRESUME"
+          cat > "$contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>CFBundleDevelopmentRegion</key><string>en</string>
+            <key>CFBundleDisplayName</key><string>lucidRESUME</string>
+            <key>CFBundleExecutable</key><string>lucidRESUME</string>
+            <key>CFBundleIdentifier</key><string>net.mostlylucid.lucidresume</string>
+            <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+            <key>CFBundleName</key><string>lucidRESUME</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>${{ steps.version.outputs.VERSION }}</string>
+            <key>CFBundleVersion</key><string>${{ steps.version.outputs.VERSION }}</string>
+            <key>LSMinimumSystemVersion</key><string>12.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict></plist>
+          PLIST
+          codesign --force --sign - --timestamp=none "$bundle"
+          codesign --verify --deep --strict --verbose=2 "$bundle"
+
+      - name: Smoke-test packaged macOS app
+        if: ${{ startsWith(matrix.rid, 'osx-') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          host_arch="$(uname -m)"
+          if { [ "${{ matrix.rid }}" = "osx-arm64" ] && [ "$host_arch" != "arm64" ]; } || \
+             { [ "${{ matrix.rid }}" = "osx-x64" ] && [ "$host_arch" = "arm64" ]; }; then
+            echo "Skipping launch test for ${{ matrix.rid }} on $host_arch; bundle signature was still verified."
+            exit 0
+          fi
+          data_dir="$(mktemp -d)"
+          output_dir="$(mktemp -d)"
+          LUCIDRESUME_DATA_DIR="$data_dir" \
+            LUCIDRESUME_Startup__AutoDownloadModels=false \
+            artifacts/bundle/lucidRESUME.app/Contents/MacOS/lucidRESUME \
+            --ux-test --script "$GITHUB_WORKSPACE/ux-scripts/all-pages.yaml" --output "$output_dir"
 
       - name: Create archive
         shell: pwsh
@@ -99,7 +171,21 @@ jobs:
           $stagingRoot = Resolve-Path "artifacts/release"
           $staging = Join-Path $stagingRoot $name
           New-Item -ItemType Directory -Force -Path $staging | Out-Null
-          Copy-Item -Path "$publishDir/*" -Destination $staging -Recurse -Force
+          if ($rid -like "osx-*") {
+            Copy-Item -Path "artifacts/bundle/lucidRESUME.app" -Destination $staging -Recurse -Force
+            @"
+          lucidRESUME for macOS
+
+          Control-click lucidRESUME.app, choose Open, then confirm the first launch.
+          If macOS still reports a quarantined library, run this only on the extracted app:
+
+            xattr -dr com.apple.quarantine ./lucidRESUME.app
+
+          The bundle is ad-hoc signed but not Apple-notarized.
+          "@ | Set-Content (Join-Path $staging "README-FIRST.txt")
+          } else {
+            Copy-Item -Path "$publishDir/*" -Destination $staging -Recurse -Force
+          }
           if ($rid -like "win-*") {
             # Windows: zip only
             Compress-Archive -Path $staging -DestinationPath "artifacts/release/$name.zip" -Force
@@ -122,6 +208,7 @@ jobs:
 
   docs-archive:
     name: Build single-page docs archive
+    needs: release-validation
     runs-on: ubuntu-latest
 
     steps:
@@ -213,7 +300,7 @@ jobs:
           cat > artifacts/release-notes.md <<EOF
           ## lucidRESUME ${version}
 
-          Local-first desktop tooling for importing resumes, building an evidence-backed skill ledger, matching against job descriptions, tailoring applications, and tracking your pipeline.
+          Local-first desktop tooling for importing resumes, building an evidence-backed ledger, projecting role-specific resumes, and tracking your pipeline.
 
           EOF
 
@@ -245,26 +332,24 @@ jobs:
           ### Basic Usage
 
           1. Extract the archive into a folder you control.
-          2. Run the \`lucidRESUME\` executable inside the extracted folder.
+          2. On macOS, Control-click \`lucidRESUME.app\` and choose Open. On Windows or Linux, run the \`lucidRESUME\` executable.
           3. Import a PDF, DOCX, or TXT resume on the My CV page.
           4. Add a job description from pasted text or a job URL.
-          5. Use Jobs for match scoring, Apply for evidence-backed tailoring, and Pipeline for application tracking.
+          5. Use Jobs for match scoring, Apply for evidence-backed projection, and Pipeline for application tracking.
 
           ### macOS Gatekeeper
 
-          These archives are currently unsigned, so macOS may quarantine the extracted app and block the first launch. Do not disable Gatekeeper globally. Use one of these per-app exceptions:
+          The macOS bundle is ad-hoc signed but not Apple-notarized. Control-click \`lucidRESUME.app\`, choose Open, and confirm once. If macOS still reports a quarantined library, use this per-app exception:
 
           \`\`\`bash
-          xattr -dr com.apple.quarantine ~/Applications/lucidRESUME
+          xattr -dr com.apple.quarantine ~/Applications/lucidRESUME.app
           \`\`\`
-
-          Or Control-click/right-click the \`lucidRESUME\` executable, choose Open, and confirm once.
 
           ### Configuration
 
           | Area | Default | How to configure |
           |------|---------|------------------|
-          | Local AI | Ollama at \`http://localhost:11434\` | Install Ollama and run \`ollama pull qwen3.5:4b\`. Change provider/model in the Profile page or \`appsettings.json\`. |
+          | Local AI | LLamaSharp with grug 9B | Download the optional GGUF model from Profile. It is used during ingestion and explicit analysis, never during output rendering. |
           | Cloud AI | Off | Add Anthropic or OpenAI API keys with user secrets, environment variables, or the Profile page. |
           | PDF layout | Local parser fallback | Enable Docling for ML-based layout extraction on complex PDFs. |
           | Embeddings and NER | Auto-download on first run | Allow the first-run model download, or pre-populate the app data model cache. |
@@ -277,7 +362,7 @@ jobs:
           # Verify a checksum on macOS or Linux
           shasum -a 256 lucidRESUME-${version}-osx-arm64.tar.gz
 
-          # Start Ollama and pull the default local model
+          # Optional alternative local provider
           ollama serve
           ollama pull qwen3.5:4b
 

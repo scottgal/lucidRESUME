@@ -109,11 +109,11 @@ public sealed class JobMlClaim
     [YamlMember(Alias = "supported_by")]
     public List<JobMlEvidence> Evidence { get; set; } = [];
 
-    /// <summary>lucidRESUME extension. Generated claims remain visibly derived until reviewed.</summary>
+    /// <summary>lucidRESUME extension. Inferred claims remain visibly derived until reviewed.</summary>
     [YamlMember(Alias = "origin")]
     public string? Origin { get; set; }
 
-    /// <summary>lucidRESUME extension. A generated draft is not silently promoted to fact.</summary>
+    /// <summary>lucidRESUME extension. A derived draft is not silently promoted to fact.</summary>
     [YamlMember(Alias = "review")]
     public string? Review { get; set; }
 }

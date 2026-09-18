@@ -1,4 +1,5 @@
 using lucidRESUME.AI;
+using lucidRESUME.Core.Configuration;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.Export;
@@ -28,6 +29,8 @@ public static class ServiceBootstrap
 
         var services = new ServiceCollection();
 
+        services.AddSingleton<IConfiguration>(config);
+
         services.AddLogging(l => l
             .AddConsole()
             .SetMinimumLevel(LogLevel.Information));
@@ -41,9 +44,7 @@ public static class ServiceBootstrap
         services.AddAiTailoring(config);
         services.AddGitHub(config);
 
-        var appDataDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "lucidRESUME");
+        var appDataDir = AppDataPaths.Root;
         var dbPath = Path.Combine(appDataDir, "data.db");
         var jsonPath = Path.Combine(appDataDir, "data.json");
         services.AddSingleton<IAppStore>(_ => new SqliteAppStore(dbPath,

@@ -674,10 +674,11 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             .Take(5) // only show top 5 raw findings
             .Select(f => new QualityFindingViewModel(
                 f.Severity.ToString(),
-                f.Severity switch {
-                    FindingSeverity.Error   => "#F38BA8",
+                f.Severity switch
+                {
+                    FindingSeverity.Error => "#F38BA8",
                     FindingSeverity.Warning => "#FAB387",
-                    _                      => "#A6E3A1"
+                    _ => "#A6E3A1"
                 },
                 f.Code,
                 f.Message,

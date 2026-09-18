@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.ML.OnnxRuntime;
@@ -248,7 +249,7 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
     }
 
     private static string ResolvePath(string path) =>
-        Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path);
+        AppDataPaths.Resolve(path);
 
     public void Dispose() => _session?.Dispose();
 }

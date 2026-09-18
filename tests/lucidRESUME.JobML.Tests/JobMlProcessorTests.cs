@@ -242,17 +242,50 @@ public sealed class JobMlProcessorTests
     }
 
     [Fact]
+    public void DuplicateExplicitReferences_DoNotCrashAndAreReportedAmbiguous()
+    {
+        const string markdown = """
+            # Jane Smith
+
+            ## Experience
+
+            ### First {#duplicate}
+
+            Built the first platform.
+
+            ### Second {#duplicate}
+
+            Built the second platform.
+            """;
+        var file = JobMlDraftGenerator.Generate(markdown);
+        var claim = file.Data.Claims[0];
+        claim.Evidence[0].Fingerprint = null;
+        claim.Evidence[0].Selector = null;
+
+        var resolution = Assert.Single(JobMlProcessor.Reconcile(file)[0].Evidence);
+        var diagnostics = JobMlProcessor.Validate(file);
+
+        Assert.Equal(EvidenceState.Ambiguous, resolution.State);
+        Assert.Contains(diagnostics, diagnostic => diagnostic.Code == "JML025");
+    }
+
+    [Fact]
     public void Coverage_OnlyCountsAcceptedClaimsWithValidEvidence()
     {
         var file = JobMlDraftGenerator.Generate(Prose);
         file.Data.Concepts.Add(new JobMlConcept
         {
-            Id = "aspnet-core", Type = "skill", Name = "ASP.NET Core", Aliases = ["ASP.NET"]
+            Id = "aspnet-core",
+            Type = "skill",
+            Name = "ASP.NET Core",
+            Aliases = ["ASP.NET"]
         });
         file.Data.Claims[0].Concepts.Skills.Add("aspnet-core");
         file.Data.Requirements.Add(new JobMlRequirement
         {
-            Id = "req-aspnet", Concept = "ASP.NET", Importance = "required"
+            Id = "req-aspnet",
+            Concept = "ASP.NET",
+            Importance = "required"
         });
 
         var beforeReview = Assert.Single(JobMlProcessor.AnalyseCoverage(file));

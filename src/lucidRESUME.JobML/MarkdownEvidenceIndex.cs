@@ -27,17 +27,38 @@ public sealed class MarkdownEvidenceIndex
         RegexOptions.Compiled);
 
     private readonly Dictionary<string, ProsePassage> _byReference;
+    private readonly HashSet<string> _ambiguousReferences;
 
     private MarkdownEvidenceIndex(IReadOnlyList<ProsePassage> passages)
     {
         Passages = passages;
-        _byReference = passages.ToDictionary(p => p.Reference, StringComparer.OrdinalIgnoreCase);
+        var referenceGroups = passages
+            .GroupBy(p => p.Reference, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        _byReference = referenceGroups
+            .Where(group => group.Count() == 1)
+            .ToDictionary(group => group.Key, group => group.Single(), StringComparer.OrdinalIgnoreCase);
+        _ambiguousReferences = referenceGroups
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     public IReadOnlyList<ProsePassage> Passages { get; }
 
-    public bool TryGet(string reference, out ProsePassage passage) =>
-        _byReference.TryGetValue(NormalizeReference(reference), out passage!);
+    public bool TryGet(string reference, out ProsePassage passage)
+    {
+        var normalized = NormalizeReference(reference);
+        if (_ambiguousReferences.Contains(normalized))
+        {
+            passage = null!;
+            return false;
+        }
+        return _byReference.TryGetValue(normalized, out passage!);
+    }
+
+    public bool IsAmbiguous(string reference) =>
+        _ambiguousReferences.Contains(NormalizeReference(reference));
 
     public IReadOnlyList<ProsePassage> FindByFingerprint(string fingerprint) => Passages
         .Where(p => MatchesFingerprint(p.Text, fingerprint))

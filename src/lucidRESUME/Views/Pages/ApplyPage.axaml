@@ -10,13 +10,12 @@
     <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
 
       <!-- Header -->
-      <TextBlock Grid.Row="0" Text="Tailor Resume" FontSize="18" FontWeight="Bold"
+      <TextBlock Grid.Row="0" Text="Project Resume" FontSize="18" FontWeight="Bold"
                  Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,16"/>
 
-      <!-- AI provider unavailable warning -->
-      <Border Grid.Row="1" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
-              IsVisible="{Binding IsAiUnavailable}">
-        <TextBlock Text="The selected AI provider is unavailable. Check Profile → AI Provider before tailoring."
+      <!-- Projection invariant -->
+      <Border Grid.Row="1" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10">
+        <TextBlock Text="Output is projected from your evidence ledger. Rendering never re-infers claims or evidence."
                    Foreground="{DynamicResource LrAccentPeachBrush}" FontSize="12" TextWrapping="Wrap"/>
       </Border>
 
@@ -72,10 +71,10 @@
                    Foreground="{DynamicResource LrSubtleTextBrush}" TextWrapping="Wrap"/>
       </StackPanel>
 
-      <!-- Tailor buttons -->
+      <!-- Projection action -->
       <Grid Grid.Row="7" ColumnDefinitions="*,8,*" Margin="0,4,0,8">
-        <Button Grid.Column="0"
-                Content="Smart Compress"
+        <Button Grid.Column="0" Grid.ColumnSpan="3"
+                Content="Project Resume"
                 Command="{Binding SmartCompressCommand}"
                 IsEnabled="{Binding !IsTailoring}"
                 FontSize="14" FontWeight="Bold"
@@ -83,17 +82,7 @@
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Center"
                 CornerRadius="6"
-                ToolTip.Tip="Compress resume to only relevant evidence, then polish with AI"/>
-        <Button Grid.Column="2"
-                Content="Full Tailor"
-                Command="{Binding TailorCommand}"
-                IsEnabled="{Binding !IsTailoring}"
-                FontSize="14" FontWeight="Bold"
-                Padding="16,12"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Center"
-                CornerRadius="6"
-                ToolTip.Tip="Send full resume to AI for tailoring"/>
+                ToolTip.Tip="Select relevant accepted evidence and render Markdown plus JobML from the same ledger IDs"/>
       </Grid>
 
       <!-- Progress bar -->
@@ -115,18 +104,18 @@
 
     </Grid>
 
-    <!-- RIGHT: tailored result -->
+    <!-- RIGHT: projected result -->
     <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="12,0,0,0">
 
-      <TextBlock Grid.Row="0" Text="Tailored Resume" FontSize="18" FontWeight="Bold"
+      <TextBlock Grid.Row="0" Text="Projected Resume" FontSize="18" FontWeight="Bold"
                  Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,16"/>
 
       <!-- Empty state -->
       <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                   IsVisible="{Binding !HasResult}">
-        <TextBlock Text="Tailored resume will appear here." Foreground="{DynamicResource LrSecondaryTextBrush}"
+        <TextBlock Text="Projected resume will appear here." Foreground="{DynamicResource LrSecondaryTextBrush}"
                    FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-        <TextBlock Text="Fill in the form and click Tailor Resume." Foreground="{DynamicResource LrSubtleTextBrush}"
+        <TextBlock Text="Fill in the form and click Project Resume." Foreground="{DynamicResource LrSubtleTextBrush}"
                    FontSize="13" HorizontalAlignment="Center"/>
       </StackPanel>
 

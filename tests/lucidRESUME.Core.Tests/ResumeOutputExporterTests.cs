@@ -1,5 +1,6 @@
 using DocumentFormat.OpenXml.Packaging;
 using lucidRESUME.Core.Models.Jobs;
+using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Export;
 using lucidRESUME.JobML;
@@ -58,28 +59,50 @@ public sealed class ResumeOutputExporterTests
         source.Personal.FullName = "Jane Smith";
         source.Personal.Email = "jane@example.com";
         source.Skills.Add(new Skill { Name = "Kubernetes" });
-        source.Experience.Add(new WorkExperience
+        var experience = new WorkExperience
         {
+            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
             Company = "Example Corp",
             Title = "Platform Engineer",
             StartDate = new DateOnly(2022, 1, 1),
-            IsCurrent = true
-        });
-        source.Projects.Add(new Project
+            IsCurrent = true,
+            Achievements = ["Operated Kubernetes workloads in production."]
+        };
+        source.Experience.Add(experience);
+        var project = new Project
         {
+            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
             Name = "Atlas",
             Description = "Production orchestration platform",
             Technologies = ["Kubernetes"],
             Url = "https://github.com/example/atlas"
-        });
+        };
+        source.Projects.Add(project);
+        var ledger = EvidenceLedgerBuilder.Rebuild(source);
 
-        var generated = ResumeDocument.Create("generated.md", "text/markdown", 1);
-        generated.RawMarkdown = "# Jane Smith\n\n## Experience\n\n### Platform Engineer | Example Corp | Jan 2022–Present\n\nOperated Kubernetes workloads in production.\n\n## Projects\n\n### Atlas\n\nOperated Kubernetes workloads in production.";
-        generated.GenerationEvidenceLinks.Add(new GenerationEvidenceLink
+        var generated = ResumeDocument.Create("projected.md", "text/markdown", 1);
+        generated.RawMarkdown = $"# Jane Smith\n\n## Experience {{#experience}}\n\n### Platform Engineer - Example Corp {{#experience-{experience.Id:N}}}\n\nOperated Kubernetes workloads in production.\n\n## Projects {{#projects}}\n\nAtlas: Production orchestration platform";
+        generated.Personal = source.Personal;
+        generated.Experience.Add(experience);
+        generated.Projects.Add(project);
+        generated.Projection = new ResumeProjectionInfo
         {
-            OutputClaim = "Operated Kubernetes workloads in production.",
-            EvidenceRefs = ["project:abc:description"]
-        });
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
+            Blocks =
+            [
+                new ResumeProjectionBlock
+                {
+                    ClaimId = ledger.Claims.Single(claim => claim.Id.EndsWith(":achievement:1")).Id,
+                    ProseRef = $"#experience-{experience.Id:N}:p1"
+                },
+                new ResumeProjectionBlock
+                {
+                    ClaimId = ledger.Claims.Single(claim => claim.Id.EndsWith($"project:{project.Id:N}:description")).Id,
+                    ProseRef = "#projects:p1"
+                }
+            ]
+        };
         var job = JobDescription.Create("Kubernetes platform role", new JobSource { Type = JobSourceType.PastedText });
         job.Title = "Platform Engineer";
         job.RequiredSkills.Add("Kubernetes");
@@ -92,16 +115,50 @@ public sealed class ResumeOutputExporterTests
         Assert.Contains("https://github.com/example/atlas", artifact.JobMlSource);
         Assert.Contains("fingerprint:", artifact.JobMlSource);
         Assert.Contains("type: source_ledger", artifact.JobMlSource);
-        Assert.Contains("ledger://project:abc:description", artifact.JobMlSource);
-        var experience = Assert.Single(artifact.Experience);
-        Assert.Equal("Example Corp", experience.Company);
-        Assert.Equal("Platform Engineer", experience.Title);
-        Assert.Null(experience.Location);
+        Assert.Contains("ledger://evidence:", artifact.JobMlSource);
+        var projectedExperience = Assert.Single(artifact.Experience);
+        Assert.Equal("Example Corp", projectedExperience.Company);
+        Assert.Equal("Platform Engineer", projectedExperience.Title);
+        Assert.Null(projectedExperience.Location);
         Assert.Equal("jane@example.com", artifact.Personal.Email);
         Assert.Contains("importance: required", artifact.JobMlSource);
         Assert.DoesNotContain("\n    all:", artifact.JobMlSource);
         Assert.DoesNotContain("MACHINE AREA", artifact.CanonicalMarkdown);
         Assert.Equal(job.JobId, artifact.TailoredForJobId);
+        Assert.True(new JobMlParser().TryParse(artifact.JobMlSource!, out var parsed, out var parseError), parseError);
+        Assert.DoesNotContain(JobMlProcessor.Validate(parsed!), diagnostic =>
+            diagnostic.Severity == JobMlDiagnosticSeverity.Error);
+    }
+
+    [Fact]
+    public void ArtifactBuilder_RejectsProjectionAfterLedgerDrift()
+    {
+        var source = ResumeDocument.Create("source.md", "text/markdown", 1);
+        source.Personal.Summary = "Original evidence.";
+        var ledger = EvidenceLedgerBuilder.Rebuild(source);
+        var projection = ResumeDocument.Create("projection.md", "text/markdown", 1);
+        projection.RawMarkdown = "# Jane\n\n## Summary {#summary}\n\nOriginal evidence.";
+        projection.Projection = new ResumeProjectionInfo
+        {
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
+            Blocks =
+            [
+                new ResumeProjectionBlock
+                {
+                    ClaimId = ledger.Claims.Single().Id,
+                    ProseRef = "#summary:p1"
+                }
+            ]
+        };
+        source.Personal.Summary = "Changed evidence.";
+
+        var error = Assert.Throws<InvalidOperationException>(() => new ResumeArtifactBuilder().Build(
+            source, projection,
+            JobDescription.Create("Role", new JobSource { Type = JobSourceType.PastedText }),
+            ResumeTemplateCatalog.AtsClassicId));
+
+        Assert.Contains("ledger changed", error.Message);
     }
 
     private static ResumeDocument CreateResume(string templateId)

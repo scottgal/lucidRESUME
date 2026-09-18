@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using lucidRESUME.Core.Configuration;
 
 namespace lucidRESUME.AI;
 
@@ -82,10 +83,6 @@ public sealed class LlamaSharpModelManager
 
     public static string ResolveModelPath(string configuredPath)
     {
-        if (Path.IsPathRooted(configuredPath))
-            return configuredPath;
-
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(appData, "lucidRESUME", configuredPath);
+        return AppDataPaths.Resolve(configuredPath);
     }
 }

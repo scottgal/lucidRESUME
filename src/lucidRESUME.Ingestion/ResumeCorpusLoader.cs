@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Globalization;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Ingestion.Parsing;
 
@@ -70,12 +70,13 @@ public sealed class ResumeCorpusLoader
 
         var corpusMarkdown = BuildCorpusMarkdown(parsed);
         FillContactFromCorpus(merged.Personal, corpusMarkdown);
-        FixEducationFromCorpus(merged, corpusMarkdown);
         merged.RawMarkdown = corpusMarkdown;
         merged.PlainText = corpusMarkdown;
         merged.FileName = $"{directory.Name}-merged.md";
         merged.ContentType = "text/markdown";
         merged.FileSizeBytes = Encoding.UTF8.GetByteCount(corpusMarkdown);
+        EvidenceLedgerBuilder.RebuildFromSources(merged,
+            parsed.Select(document => EvidenceLedgerBuilder.EnsureCurrent(document)));
 
         return new ResumeCorpus(merged, parsed, anomalies, structuredSources);
     }
@@ -286,38 +287,17 @@ public sealed class ResumeCorpusLoader
         personal.Email ??= Regex.Match(corpus, @"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b").Value;
         personal.LinkedInUrl ??= Regex.Match(corpus, @"https?://(?:www\.)?linkedin\.com/in/[^\s)]+", RegexOptions.IgnoreCase).Value;
         personal.GitHubUrl ??= Regex.Match(corpus, @"https?://(?:www\.)?github\.com/[^\s)]+", RegexOptions.IgnoreCase).Value;
-        personal.WebsiteUrl ??= Regex.Match(corpus, @"https?://(?:www\.)?mostlylucid\.net[^\s)]*", RegexOptions.IgnoreCase).Value;
+        personal.WebsiteUrl ??= Regex.Matches(corpus, @"https?://[^\s)]+", RegexOptions.IgnoreCase)
+            .Select(match => match.Value.TrimEnd('.', ',', ';'))
+            .FirstOrDefault(value => Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+                !uri.Host.Contains("linkedin.com", StringComparison.OrdinalIgnoreCase) &&
+                !uri.Host.Contains("github.com", StringComparison.OrdinalIgnoreCase));
         personal.Location ??= Regex.Match(corpus, @"(?im)^Location:\s*(?<location>[^\r\n]+)$").Groups["location"].Value.Trim();
         if (string.IsNullOrWhiteSpace(personal.Email)) personal.Email = null;
         if (string.IsNullOrWhiteSpace(personal.LinkedInUrl)) personal.LinkedInUrl = null;
         if (string.IsNullOrWhiteSpace(personal.GitHubUrl)) personal.GitHubUrl = null;
         if (string.IsNullOrWhiteSpace(personal.WebsiteUrl)) personal.WebsiteUrl = null;
 
-    }
-
-    private static void FixEducationFromCorpus(ResumeDocument resume, string corpus)
-    {
-        var stirlingEntries = resume.Education
-            .Where(item => item.Institution?.Contains("University of Stirling", StringComparison.OrdinalIgnoreCase) == true)
-            .ToList();
-        if (stirlingEntries.Count == 0) return;
-
-        var canonical = stirlingEntries.OrderByDescending(item =>
-                (item.Degree?.Length ?? 0) + (item.Highlights.Count * 10))
-            .First();
-        canonical.Institution = "University of Stirling";
-        canonical.Degree ??= "BSc (Hons) Psychology";
-        foreach (var duplicate in stirlingEntries.Where(item => !ReferenceEquals(item, canonical)))
-            resume.Education.Remove(duplicate);
-
-        var dates = Regex.Match(corpus,
-            @"(?i)Start Date:\s*(?<start>[A-Za-z]{3,9}\s+\d{4})\s*-\s*End Date:\s*(?<end>[A-Za-z]{3,9}\s+\d{4})");
-        if (DateOnly.TryParseExact(dates.Groups["start"].Value, "MMM yyyy", CultureInfo.InvariantCulture,
-                DateTimeStyles.AllowWhiteSpaces, out var start))
-            canonical.StartDate = start;
-        if (DateOnly.TryParseExact(dates.Groups["end"].Value, "MMM yyyy", CultureInfo.InvariantCulture,
-                DateTimeStyles.AllowWhiteSpaces, out var end))
-            canonical.EndDate = end;
     }
 
     private static string BuildCorpusMarkdown(IEnumerable<ResumeDocument> documents)

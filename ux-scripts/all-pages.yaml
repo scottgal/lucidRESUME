@@ -15,6 +15,14 @@ actions:
   - type: Screenshot
     value: page-resume
 
+  # JobML linked prose/evidence editor
+  - type: Navigate
+    value: jobml
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-jobml
+
   # Jobs page
   - type: Navigate
     value: jobs
@@ -23,6 +31,13 @@ actions:
   - type: Screenshot
     value: page-jobs
 
+  - type: Navigate
+    value: search
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-search
+
   # Apply page
   - type: Navigate
     value: apply
@@ -30,6 +45,27 @@ actions:
     value: "800"
   - type: Screenshot
     value: page-apply
+
+  - type: Navigate
+    value: pipeline
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-pipeline
+
+  - type: Navigate
+    value: mydata
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-mydata
+
+  - type: Navigate
+    value: career
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-career
 
   # Profile page
   - type: Navigate
@@ -44,3 +80,10 @@ actions:
     value: "400"
   - type: Screenshot
     value: page-profile-bottom
+
+  - type: Navigate
+    value: help
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-help

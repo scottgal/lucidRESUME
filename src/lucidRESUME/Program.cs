@@ -19,9 +19,7 @@ class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace()
-            // Wire the new Mostlylucid.Avalonia.UITesting engine. Triggered by
-            // --mlui-test / --mlui-repl / --mlui-mcp so it does not collide with
-            // the legacy lucidRESUME.UXTesting --ux-test path in App.axaml.cs.
+            // The shared UI testing engine owns the ux/mlui command-line modes.
             .UseUITesting(opts =>
             {
                 opts.DefaultScreenshotDir = "ux-screenshots";

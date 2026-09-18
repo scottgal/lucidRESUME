@@ -299,7 +299,7 @@ Skill Ledger query:
 Result: 6 relevant roles out of 13 total
 Each role includes only evidence-backed bullets
 
-13 roles → 6 roles → LLM polishes → 2-page targeted resume
+13 roles → 6 roles → deterministic ledger projection → targeted resume
 ```
 
 ### Adaptive Query Widening
@@ -419,11 +419,12 @@ All mutations via `MutateAsync(Action<AppState>)` under `SemaphoreSlim` lock.
    ├─→ Skill graph updated, communities re-detected
    │
    ▼
-5. Tailoring
+5. Role-specific projection
    │
    ├─→ Semantic compression: 13 roles → 6 relevant
    ├─→ Only evidence-backed bullets included
-   ├─→ LLM polishes pre-filtered content
+   ├─→ Markdown and JobML render from the same claim-ID selection
+   ├─→ Export rejects stale ledger revisions
    │
    ▼
 6. Career Planning

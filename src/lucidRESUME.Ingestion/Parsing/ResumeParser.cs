@@ -1,5 +1,6 @@
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Extraction;
+using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Extraction.Pipeline;
 using lucidRESUME.Extraction.Recognizers;
@@ -134,6 +135,10 @@ public sealed class ResumeParser : IResumeParser
 
         // ── 4. Section parsing ────────────────────────────────────────────
         MarkdownSectionParser.PopulateSections(resume, markdown, structuredSections);
+        foreach (var experience in resume.Experience) AddSource(experience.ImportSources, fileInfo.Name);
+        foreach (var skill in resume.Skills) AddSource(skill.ImportSources, fileInfo.Name);
+        foreach (var education in resume.Education) AddSource(education.ImportSources, fileInfo.Name);
+        foreach (var project in resume.Projects) AddSource(project.ImportSources, fileInfo.Name);
 
         // ── 4b. Layout detection from page images
         // Uses DocLayNet YOLO model to detect document regions and build a structural hash.
@@ -193,10 +198,18 @@ public sealed class ResumeParser : IResumeParser
         {
             _logger.LogDebug("Structural parse gaps (skills={Skills}, exp={Exp}) — escalating to LLM",
                 resume.Skills.Count, resume.Experience.Count);
-            resume.LlmEnhancementTask = LlmFillMissingAsync(resume, plainText ?? markdown, ct);
+            resume.LlmEnhancementTask = EnhanceAndRefreshLedgerAsync(resume, plainText ?? markdown, ct);
         }
 
+        EvidenceLedgerBuilder.Rebuild(resume);
+
         return resume;
+    }
+
+    private async Task EnhanceAndRefreshLedgerAsync(ResumeDocument resume, string text, CancellationToken ct)
+    {
+        await LlmFillMissingAsync(resume, text, ct);
+        EvidenceLedgerBuilder.Rebuild(resume);
     }
 
     private async Task LlmFillMissingAsync(ResumeDocument resume, string text, CancellationToken ct)
@@ -213,6 +226,8 @@ public sealed class ResumeParser : IResumeParser
             {
                 // Normalise ALL CAPS LLM responses to title case
                 resume.Personal.FullName = NormaliseName(llmName) ?? llmName;
+                resume.AddEntity(ExtractedEntity.Create(resume.Personal.FullName, "PersonName",
+                    DetectionSource.Llm, 0.5, 1));
                 _logger.LogInformation("LLM recovered name: {Name}", resume.Personal.FullName);
             }
         }
@@ -233,7 +248,8 @@ public sealed class ResumeParser : IResumeParser
                         && !name.Contains("experience", StringComparison.OrdinalIgnoreCase)
                         && name.Count(c => c == ' ') <= 5
                         && seen.Add(name))
-                        resume.Skills.Add(new lucidRESUME.Core.Models.Resume.Skill { Name = name });
+                        resume.Skills.Add(new lucidRESUME.Core.Models.Resume.Skill
+                        { Name = name, ImportSources = ["LLM extraction"] });
                 }
                 if (resume.Skills.Count > 0)
                     _logger.LogInformation("LLM recovered {Count} skills", resume.Skills.Count);
@@ -277,7 +293,8 @@ public sealed class ResumeParser : IResumeParser
                         var entry = new lucidRESUME.Core.Models.Resume.WorkExperience
                         {
                             Company = company,
-                            Title = title
+                            Title = title,
+                            ImportSources = ["LLM extraction"]
                         };
 
                         if (datePart != null)
@@ -302,7 +319,8 @@ public sealed class ResumeParser : IResumeParser
                             resume.Experience.Add(new lucidRESUME.Core.Models.Resume.WorkExperience
                             {
                                 Title = trimmed[..idx].Trim(),
-                                Company = trimmed[(idx + sep.Length)..].Trim()
+                                Company = trimmed[(idx + sep.Length)..].Trim(),
+                                ImportSources = ["LLM extraction"]
                             });
                         }
                     }
@@ -311,6 +329,11 @@ public sealed class ResumeParser : IResumeParser
                     _logger.LogInformation("LLM recovered {Count} experience entries", resume.Experience.Count);
             }
         }
+    }
+
+    private static void AddSource(List<string> sources, string source)
+    {
+        if (!sources.Contains(source, StringComparer.OrdinalIgnoreCase)) sources.Add(source);
     }
 
     private async Task CacheRemainingPagesAsync(string cacheKey, IReadOnlyList<byte[]> images, CancellationToken ct)

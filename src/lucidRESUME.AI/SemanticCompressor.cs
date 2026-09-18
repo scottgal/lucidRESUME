@@ -3,6 +3,7 @@ using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Models.Skills;
+using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Matching;
 using Microsoft.Extensions.Logging;
 
@@ -15,11 +16,16 @@ namespace lucidRESUME.AI;
 ///
 /// A 30-year career with 13 roles becomes 2 pages of laser-targeted evidence.
 ///
-/// The LLM then polishes the pre-filtered content rather than trying to
-/// understand and compress the entire career from scratch.
+/// The result retains stable ledger claim IDs and is rendered without re-inference.
 /// </summary>
 public sealed class SemanticCompressor
 {
+    private static readonly HashSet<string> GenericSkillLabels = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "engineering", "systems", "system", "technical", "tech", "technology", "technologies",
+        "performance", "lead", "leading", "management", "it", "software", "development"
+    };
+
     private readonly SkillLedgerBuilder _ledgerBuilder;
     private readonly JdSkillLedgerBuilder _jdLedgerBuilder;
     private readonly SkillLedgerMatcher _matcher;
@@ -42,7 +48,7 @@ public sealed class SemanticCompressor
 
     /// <summary>
     /// Compress a resume to only the evidence that matches a JD's requirements.
-    /// Returns a pre-filtered markdown document ready for LLM polishing.
+    /// Returns a pre-filtered projection whose prose blocks remain bound to ledger claims.
     /// </summary>
     public async Task<CompressedResume> CompressAsync(
         ResumeDocument resume, JobDescription jd, CancellationToken ct = default)
@@ -86,7 +92,26 @@ public sealed class SemanticCompressor
         foreach (var id in recentRoles)
             relevantRoleIds.Add(id);
 
-        // Build the compressed markdown
+        var sourceLedger = EvidenceLedgerBuilder.EnsureCurrent(resume);
+        var projection = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
+        projection.Personal = new PersonalInfo
+        {
+            FullName = resume.Personal.FullName,
+            Email = resume.Personal.Email,
+            Phone = resume.Personal.Phone,
+            Location = resume.Personal.Location,
+            LinkedInUrl = resume.Personal.LinkedInUrl,
+            GitHubUrl = resume.Personal.GitHubUrl,
+            WebsiteUrl = resume.Personal.WebsiteUrl,
+            Summary = resume.Personal.Summary
+        };
+        projection.Projection = new ResumeProjectionInfo
+        {
+            SourceResumeId = resume.ResumeId,
+            SourceRevision = sourceLedger.SourceRevision
+        };
+
+        // Build Markdown and its ledger bindings together. This is a projection, not inference.
         var md = new StringBuilder();
 
         // Header
@@ -96,21 +121,24 @@ public sealed class SemanticCompressor
         if (!string.IsNullOrEmpty(resume.Personal.Phone)) contactParts.Add(resume.Personal.Phone);
         if (!string.IsNullOrEmpty(resume.Personal.GitHubUrl)) contactParts.Add(resume.Personal.GitHubUrl);
         if (contactParts.Count > 0)
+        {
             md.AppendLine(string.Join(" | ", contactParts));
+            foreach (var field in new[] { "email", "phone", "github" })
+                Bind(projection, sourceLedger, $"personal:{field}", "#document:p1");
+        }
         md.AppendLine();
 
         // Compressed summary - targeted to the JD
-        md.AppendLine("## Summary");
-        var matchedSkillNames = matchResult.Matches
-            .Where(m => m.IsMatched)
-            .Select(m => m.MatchedResumeSkill!)
-            .Take(8);
-        md.AppendLine($"Experienced professional with demonstrated expertise in {string.Join(", ", matchedSkillNames)}. " +
-            (resume.Personal.Summary?.Length > 50 ? resume.Personal.Summary[..Math.Min(200, resume.Personal.Summary.Length)] + "..." : resume.Personal.Summary ?? ""));
-        md.AppendLine();
+        if (!string.IsNullOrWhiteSpace(resume.Personal.Summary))
+        {
+            md.AppendLine("## Summary {#summary}");
+            md.AppendLine(resume.Personal.Summary);
+            md.AppendLine();
+            Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
+        }
 
         // Relevant experience only
-        md.AppendLine("## Experience");
+        md.AppendLine("## Experience {#experience}");
         md.AppendLine();
         var includedRoles = 0;
         foreach (var exp in resume.Experience.OrderByDescending(e => e.StartDate))
@@ -118,10 +146,13 @@ public sealed class SemanticCompressor
             if (!relevantRoleIds.Contains(exp.Id) && includedRoles >= 3)
                 continue; // skip non-relevant roles after we have 3
 
-            md.AppendLine($"### {exp.Title ?? ""} - {exp.Company ?? ""}");
+            md.AppendLine($"### {exp.Title ?? ""} - {exp.Company ?? ""} {{#experience-{exp.Id:N}}}");
             var dateRange = FormatDateRange(exp.StartDate, exp.EndDate, exp.IsCurrent);
             if (!string.IsNullOrEmpty(dateRange))
+            {
                 md.AppendLine($"*{dateRange}*");
+                md.AppendLine();
+            }
 
             // Include only achievements that evidence matched skills
             var relevantAchievements = new List<string>();
@@ -132,38 +163,100 @@ public sealed class SemanticCompressor
                     .SelectMany(e => e)
                     .Any(e => e.SourceText == achievement);
 
-                if (isEvidence || relevantAchievements.Count < 2) // always include at least 2
+                if ((isEvidence || relevantAchievements.Count < 2) &&
+                    relevantAchievements.All(existing => !NearDuplicate(existing, achievement)))
                     relevantAchievements.Add(achievement);
             }
 
+            var projectedExperience = new WorkExperience
+            {
+                Id = exp.Id,
+                Company = exp.Company,
+                Title = exp.Title,
+                Location = exp.Location,
+                StartDate = exp.StartDate,
+                EndDate = exp.EndDate,
+                IsCurrent = exp.IsCurrent,
+                Technologies = [.. exp.Technologies],
+                ImportSources = [.. exp.ImportSources]
+            };
+            var paragraph = string.IsNullOrEmpty(dateRange) ? 1 : 2;
             foreach (var a in relevantAchievements.Take(5)) // cap at 5 per role
+            {
                 md.AppendLine($"- {a}");
-            md.AppendLine();
+                md.AppendLine();
+                projectedExperience.Achievements.Add(a);
+                var sourceIndex = exp.Achievements.IndexOf(a);
+                if (sourceIndex >= 0)
+                    Bind(projection, sourceLedger, $"experience:{exp.Id:N}:achievement:{sourceIndex + 1}",
+                        $"#experience-{exp.Id:N}:p{paragraph++}");
+            }
+            projection.Experience.Add(projectedExperience);
             includedRoles++;
         }
 
-        // Skills section - only matched skills, organized by category
-        md.AppendLine("## Skills");
-        var skillsByCategory = matchResult.Matches
+        // Project only ledger-backed, specific skills. Concepts demonstrated by the
+        // selected prose are included even when the JD matcher chose a broader alias.
+        md.AppendLine("## Skills {#skills}");
+        var matchedSkillNames = matchResult.Matches
             .Where(m => m.IsMatched)
             .Select(m => resumeLedger.Find(m.MatchedResumeSkill!))
             .Where(e => e is not null)
-            .GroupBy(e => e!.Category ?? "General")
+            .Select(entry => entry!.SkillName);
+        var demonstratedConcepts = projection.Projection.Blocks
+            .Select(block => sourceLedger.Claims.FirstOrDefault(claim => claim.Id == block.ClaimId))
+            .Where(claim => claim is not null)
+            .SelectMany(claim => claim!.Concepts);
+        var skillsByCategory = matchedSkillNames.Concat(demonstratedConcepts)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(name => !GenericSkillLabels.Contains(name))
+            .Select(name => resume.Skills.FirstOrDefault(skill =>
+                string.Equals(skill.Name, name, StringComparison.OrdinalIgnoreCase)))
+            .Where(skill => skill is not null)
+            .DistinctBy(skill => skill!.Name, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(skill => skill!.Category ?? "General")
             .ToList();
 
+        var skillParagraph = 1;
         foreach (var group in skillsByCategory)
-            md.AppendLine($"**{group.Key}:** {string.Join(", ", group.Select(s => s!.SkillName))}");
-        md.AppendLine();
+        {
+            var entries = group.ToList();
+            md.AppendLine($"**{group.Key}:** {string.Join(", ", entries.Select(skill => skill!.Name))}");
+            md.AppendLine();
+            foreach (var entry in entries)
+            {
+                projection.Skills.Add(new Skill
+                {
+                    Name = entry!.Name,
+                    Category = entry.Category,
+                    YearsExperience = entry.YearsExperience,
+                    ImportSources = [.. entry.ImportSources]
+                });
+                Bind(projection, sourceLedger, EvidenceLedgerBuilder.SkillLocator(entry.Name), $"#skills:p{skillParagraph}");
+            }
+            skillParagraph++;
+        }
 
         // Education
         if (resume.Education.Count > 0)
         {
-            md.AppendLine("## Education");
+            md.AppendLine("## Education {#education}");
+            var educationParagraph = 1;
             foreach (var edu in resume.Education)
-                md.AppendLine($"**{edu.Degree ?? ""}** - {edu.Institution ?? ""}");
+            {
+                var qualification = string.IsNullOrWhiteSpace(edu.FieldOfStudy)
+                    ? edu.Degree ?? ""
+                    : $"{edu.Degree} | {edu.FieldOfStudy}";
+                md.AppendLine($"**{qualification}** | {edu.Institution ?? ""}");
+                md.AppendLine();
+                projection.Education.Add(edu);
+                Bind(projection, sourceLedger, $"education:{edu.Id:N}", $"#education:p{educationParagraph++}");
+            }
         }
 
         var compressedMd = md.ToString();
+        projection.SetDoclingOutput(compressedMd, null, compressedMd);
+        projection.EvidenceLedger = sourceLedger;
 
         return new CompressedResume
         {
@@ -174,8 +267,35 @@ public sealed class SemanticCompressor
             MatchedSkillCount = matchResult.Matches.Count(m => m.IsMatched),
             OverallFit = matchResult.OverallFit,
             Gaps = matchResult.Gaps,
+            Projection = projection
         };
     }
+
+    private static void Bind(ResumeDocument projection, EvidenceLedger ledger, string locator, string proseRef)
+    {
+        var evidence = ledger.Evidence.FirstOrDefault(item =>
+            string.Equals(item.Locator, locator, StringComparison.OrdinalIgnoreCase));
+        if (evidence is null) return;
+        var claim = ledger.Claims.FirstOrDefault(item => item.EvidenceIds.Contains(evidence.Id, StringComparer.OrdinalIgnoreCase));
+        if (claim is null) return;
+        projection.Projection!.Blocks.Add(new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = proseRef });
+    }
+
+    private static bool NearDuplicate(string left, string right)
+    {
+        var leftTokens = Tokens(left);
+        var rightTokens = Tokens(right);
+        if (leftTokens.Count == 0 || rightTokens.Count == 0) return false;
+        var intersection = leftTokens.Intersect(rightTokens).Count();
+        var union = leftTokens.Union(rightTokens).Count();
+        return union > 0 && intersection / (double)union >= 0.25;
+    }
+
+    private static HashSet<string> Tokens(string text) => text.ToLowerInvariant()
+        .Split([' ', '\t', '\r', '\n', ',', '.', ';', ':', '(', ')', '/', '-'], StringSplitOptions.RemoveEmptyEntries)
+        .Where(token => token.Length > 2)
+        .Select(token => token.Length > 7 ? token[..6] : token.TrimEnd('s'))
+        .ToHashSet(StringComparer.Ordinal);
 
     private static string FormatDateRange(DateOnly? start, DateOnly? end, bool isCurrent)
     {
@@ -195,4 +315,5 @@ public sealed class CompressedResume
     public int MatchedSkillCount { get; init; }
     public double OverallFit { get; init; }
     public List<string> Gaps { get; init; } = [];
+    public ResumeDocument Projection { get; init; } = new();
 }

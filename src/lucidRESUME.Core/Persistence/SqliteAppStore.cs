@@ -198,6 +198,9 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
                 state.SelectedResumeId = resumeId;
         }
 
+        state.Overrides = LoadMetaJson<Models.Profile.UserOverrides>("user_overrides") ?? new();
+        state.EmployerProfile = LoadMetaJson<Models.Jobs.EmployerProfile>("employer_profile");
+
         state.NormalizeResumes();
         return state;
     }
@@ -283,7 +286,22 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             UpsertMeta("selected_resume_id", selectedResumeId.ToString());
         else
             Execute("DELETE FROM app_meta WHERE key = 'selected_resume_id'");
+        UpsertMeta("user_overrides", JsonSerializer.Serialize(state.Overrides, JsonOpts));
+        if (state.EmployerProfile is not null)
+            UpsertMeta("employer_profile", JsonSerializer.Serialize(state.EmployerProfile, JsonOpts));
+        else
+            Execute("DELETE FROM app_meta WHERE key = 'employer_profile'");
         tx.Commit();
+    }
+
+    private T? LoadMetaJson<T>(string key)
+    {
+        using var cmd = _conn.CreateCommand();
+        cmd.CommandText = "SELECT value FROM app_meta WHERE key = $key";
+        cmd.Parameters.AddWithValue("$key", key);
+        return cmd.ExecuteScalar() is string json
+            ? JsonSerializer.Deserialize<T>(json, JsonOpts)
+            : default;
     }
 
     private void Upsert(string table, string keyCol, string keyVal, string data)

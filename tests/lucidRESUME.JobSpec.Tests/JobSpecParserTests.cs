@@ -8,6 +8,25 @@ public class JobSpecParserTests
     // Use the internal text-only constructor - no scraper needed for these tests
     private readonly JobSpecParser _parser = new(NullLogger<JobSpecParser>.Instance);
 
+    [Theory]
+    [InlineData("file:///private/etc/passwd")]
+    [InlineData("ftp://example.com/job.txt")]
+    public async Task ParseFromUrl_RejectsNonHttpSchemes(string url)
+    {
+        var error = await Assert.ThrowsAsync<ArgumentException>(() => _parser.ParseFromUrlAsync(url));
+        Assert.Contains("http or https", error.Message);
+    }
+
+    [Theory]
+    [InlineData("http://localhost:8080/admin")]
+    [InlineData("http://127.0.0.1/job")]
+    [InlineData("http://192.168.1.10/job")]
+    public async Task ParseFromUrl_RejectsLocalNetworkTargets(string url)
+    {
+        var error = await Assert.ThrowsAsync<ArgumentException>(() => _parser.ParseFromUrlAsync(url));
+        Assert.Contains("local or private", error.Message);
+    }
+
     [Fact]
     public async Task ParseFromText_ExtractsTitleAndCompany()
     {

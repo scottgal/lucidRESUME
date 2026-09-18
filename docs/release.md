@@ -8,12 +8,12 @@ The workflow publishes self-contained application archives for:
 
 | Runtime | Host runner | Archives |
 |---------|-------------|----------|
-| `win-x64` | Windows | `.zip`, `.tar.gz` |
-| `win-arm64` | Windows | `.zip`, `.tar.gz` |
-| `osx-x64` | macOS | `.zip`, `.tar.gz` |
-| `osx-arm64` | macOS | `.zip`, `.tar.gz` |
-| `linux-x64` | Linux | `.zip`, `.tar.gz` |
-| `linux-arm64` | Linux | `.zip`, `.tar.gz` |
+| `win-x64` | Windows | `.zip` |
+| `win-arm64` | Windows | `.zip` |
+| `osx-x64` | macOS | `.tar.gz` containing `lucidRESUME.app` |
+| `osx-arm64` | macOS | `.tar.gz` containing `lucidRESUME.app` |
+| `linux-x64` | Linux | `.tar.gz` |
+| `linux-arm64` | Linux | `.tar.gz` |
 
 Each archive is accompanied by a `.sha256` checksum file.
 
@@ -31,13 +31,18 @@ The GitHub release page itself is populated with Markdown release notes that cov
 
 ## macOS Gatekeeper
 
-Current app archives are unsigned. macOS may quarantine the extracted app and block the first launch. Do not disable Gatekeeper globally. Use a per-folder exception after extracting the archive:
+The macOS app bundle and its native libraries are ad-hoc signed, but the bundle is
+not Apple-notarized. Control-click `lucidRESUME.app`, choose **Open**, and confirm
+the first launch. If macOS still blocks a quarantined library, use a per-app
+exception after extracting the archive:
 
 ```bash
-xattr -dr com.apple.quarantine ~/Applications/lucidRESUME
+xattr -dr com.apple.quarantine ~/Applications/lucidRESUME.app
 ```
 
-Alternatively, Control-click or right-click the `lucidRESUME` executable, choose Open, and confirm once.
+Do not disable Gatekeeper globally. The release workflow verifies the nested code
+signatures and runs the packaged app through the Avalonia UI smoke script on a
+matching macOS runner before upload.
 
 ## Creating A Release
 

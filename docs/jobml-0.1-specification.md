@@ -28,6 +28,11 @@ The normative invariant is:
 > supports it, and machine-derived information MUST NOT silently become
 > evidential fact.
 
+A renderer MUST NOT discover claims or evidence relationships from its own output.
+Role-specific Markdown and JobML SHOULD be projections of an ingestion-time ledger,
+and both views MUST retain the same claim identities. NER, LLM extraction, and other
+inference belong to ingestion or explicit review workflows, not rendering.
+
 JobML does not make an external source true merely by linking to it. It records
 what was observed, how it was interpreted, and whether a human accepted the
 result as a claim.

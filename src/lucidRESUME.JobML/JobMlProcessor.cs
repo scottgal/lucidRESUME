@@ -133,6 +133,18 @@ public sealed class JobMlProcessor
         if (string.IsNullOrWhiteSpace(evidence.Ref))
             return new EvidenceResolution(evidence, EvidenceState.Missing);
 
+        if (index.IsAmbiguous(evidence.Ref))
+        {
+            var ambiguousCandidates = !string.IsNullOrWhiteSpace(evidence.Fingerprint?.Text)
+                ? index.FindByFingerprint(evidence.Fingerprint.Text)
+                : evidence.Selector is not null
+                    ? index.FindByQuote(evidence.Selector)
+                    : [];
+            return ambiguousCandidates.Count == 1
+                ? new EvidenceResolution(evidence, EvidenceState.Changed, ambiguousCandidates[0].Text)
+                : new EvidenceResolution(evidence, EvidenceState.Ambiguous);
+        }
+
         if (index.TryGet(evidence.Ref, out var passage))
         {
             var fingerprint = evidence.Fingerprint?.Text;

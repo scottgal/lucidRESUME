@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Net;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.JobSpec.Extraction;
@@ -108,6 +109,10 @@ public sealed class JobSpecParser : IJobSpecParser
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
             throw new ArgumentException($"Invalid URL: {url}", nameof(url));
+        if (uri.Scheme is not ("http" or "https"))
+            throw new ArgumentException("Job URLs must use http or https.", nameof(url));
+        if (IsLocalAddress(uri))
+            throw new ArgumentException("Job URLs must not target local or private network addresses.", nameof(url));
 
         var scrapers = _strategySelector.SelectScrapers(uri);
 
@@ -159,6 +164,20 @@ public sealed class JobSpecParser : IJobSpecParser
         ExtractFields(job, result.Markdown);
         ApplyStructuredData(job, result.StructuredData);
         return job;
+    }
+
+    private static bool IsLocalAddress(Uri uri)
+    {
+        if (uri.IsLoopback || uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)) return true;
+        if (!IPAddress.TryParse(uri.Host, out var address)) return false;
+        if (IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any)) return true;
+        var bytes = address.GetAddressBytes();
+        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            return bytes[0] == 10 || bytes[0] == 127 ||
+                   bytes[0] == 169 && bytes[1] == 254 ||
+                   bytes[0] == 172 && bytes[1] is >= 16 and <= 31 ||
+                   bytes[0] == 192 && bytes[1] == 168;
+        return address.IsIPv6LinkLocal || address.IsIPv6SiteLocal || address.IsIPv6Multicast;
     }
 
     private void ApplyFusedFields(JobDescription job, FusedJdFields fused)

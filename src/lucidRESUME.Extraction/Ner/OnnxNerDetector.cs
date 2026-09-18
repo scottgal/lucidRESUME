@@ -1,4 +1,5 @@
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Configuration;
 using lucidRESUME.Core.Models.Extraction;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -26,27 +27,27 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
     // Default mapping for resume NER models (yashpwr/resume-ner-bert-v2)
     private static readonly Dictionary<string, string> DefaultResumeEntityTypeMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["Name"]               = "PersonName",
-        ["Email Address"]      = "Email",
-        ["Phone"]              = "PhoneNumber",
-        ["Skills"]             = "NerSkill",
-        ["Designation"]        = "JobTitle",
-        ["Worked as"]          = "JobTitle",
+        ["Name"] = "PersonName",
+        ["Email Address"] = "Email",
+        ["Phone"] = "PhoneNumber",
+        ["Skills"] = "NerSkill",
+        ["Designation"] = "JobTitle",
+        ["Worked as"] = "JobTitle",
         ["Companies worked at"] = "Organization",
-        ["College Name"]       = "Organization",
-        ["Degree"]             = "Degree",
-        ["Graduation Year"]    = "Date",
+        ["College Name"] = "Organization",
+        ["Degree"] = "Degree",
+        ["Graduation Year"] = "Date",
         ["Years of Experience"] = "YearsExperience",
-        ["Location"]           = "Address",
-        ["Links"]              = "Url",
+        ["Location"] = "Address",
+        ["Links"] = "Url",
     };
 
     // Default mapping for general NER models (dslim/bert-base-NER)
     private static readonly Dictionary<string, string> DefaultGeneralEntityTypeMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["PER"]  = "PersonName",
-        ["ORG"]  = "Organization",
-        ["LOC"]  = "Address",
+        ["PER"] = "PersonName",
+        ["ORG"] = "Organization",
+        ["LOC"] = "Address",
         ["MISC"] = "Miscellaneous",
     };
 
@@ -57,6 +58,7 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
     private InferenceSession? _session;
     private readonly object _sessionLock = new();
     private WordpieceTokenizer? _tokenizer;
+    private string? _lastUnavailableSignature;
 
     public bool IsAvailable => _session is not null && _tokenizer is not null;
 
@@ -83,51 +85,72 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
     private void TryLoadModel()
     {
         var modelPath = ResolvePath(_options.ModelPath);
+        var vocabPath = ResolvePath(_options.ResolvedVocabPath);
+        var signature = $"{FileSignature(modelPath)}|{FileSignature(vocabPath)}";
+        if (signature == _lastUnavailableSignature)
+            return;
+
         if (string.IsNullOrWhiteSpace(modelPath) || !File.Exists(modelPath))
         {
             _logger.LogInformation("OnnxNerDetector: no model configured - NER disabled");
+            _lastUnavailableSignature = signature;
             return;
         }
 
-        var vocabPath = ResolvePath(_options.ResolvedVocabPath);
         if (string.IsNullOrEmpty(vocabPath) || !File.Exists(vocabPath))
         {
             _logger.LogWarning("OnnxNerDetector: vocab.txt not found at {Path} - NER disabled", vocabPath);
+            _lastUnavailableSignature = signature;
             return;
         }
 
-        try
+        lock (_sessionLock)
         {
-            var sessionOptions = new SessionOptions
+            if (_session is not null && _tokenizer is not null)
+                return;
+
+            try
             {
-                GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
-                InterOpNumThreads = 1,
-                IntraOpNumThreads = Environment.ProcessorCount,
-            };
-            _session = new InferenceSession(modelPath, sessionOptions);
-            _tokenizer = new WordpieceTokenizer(vocabPath, _options.LowerCase);
-            _logger.LogInformation(
-                "OnnxNerDetector: loaded model from {Path} ({Labels} labels)",
-                modelPath, _labels.Length);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "OnnxNerDetector: failed to load model from {Path}", modelPath);
+                var sessionOptions = new SessionOptions
+                {
+                    GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
+                    InterOpNumThreads = 1,
+                    IntraOpNumThreads = Environment.ProcessorCount,
+                };
+                _session = new InferenceSession(modelPath, sessionOptions);
+                _tokenizer = new WordpieceTokenizer(vocabPath, _options.LowerCase);
+                _lastUnavailableSignature = null;
+                _logger.LogInformation(
+                    "OnnxNerDetector: loaded model from {Path} ({Labels} labels)",
+                    modelPath, _labels.Length);
+            }
+            catch (Exception ex)
+            {
+                _lastUnavailableSignature = signature;
+                _logger.LogWarning(ex, "OnnxNerDetector: failed to load model from {Path}", modelPath);
+            }
         }
     }
 
     private static string? ResolvePath(string? path)
     {
         if (string.IsNullOrWhiteSpace(path)) return path;
-        if (Path.IsPathRooted(path)) return path;
-        // Try relative to AppContext.BaseDirectory first (where the built DLLs are)
-        var resolved = Path.Combine(AppContext.BaseDirectory, path);
-        return File.Exists(resolved) ? resolved : path;
+        return AppDataPaths.Resolve(path);
+    }
+
+    private static string FileSignature(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return "missing";
+        var info = new FileInfo(path);
+        return $"{info.Length}:{info.LastWriteTimeUtc.Ticks}";
     }
 
     public Task<IReadOnlyList<ExtractedEntity>> DetectAsync(
         DetectionContext context, CancellationToken ct = default)
     {
+        if (_session is null || _tokenizer is null)
+            TryLoadModel();
+
         if (_session is null || _tokenizer is null || string.IsNullOrWhiteSpace(context.Text))
             return Task.FromResult<IReadOnlyList<ExtractedEntity>>([]);
 
@@ -153,9 +176,9 @@ public sealed class OnnxNerDetector : IEntityDetector, IDisposable
         int seqLen = encoding.InputIds.Length;
 
         // Build ONNX input tensors
-        var inputIdsTensor  = new DenseTensor<long>(encoding.InputIds,  [1, seqLen]);
-        var attnMaskTensor  = new DenseTensor<long>(encoding.AttentionMask, [1, seqLen]);
-        var typeIdsTensor   = new DenseTensor<long>(encoding.TokenTypeIds,  [1, seqLen]);
+        var inputIdsTensor = new DenseTensor<long>(encoding.InputIds, [1, seqLen]);
+        var attnMaskTensor = new DenseTensor<long>(encoding.AttentionMask, [1, seqLen]);
+        var typeIdsTensor = new DenseTensor<long>(encoding.TokenTypeIds, [1, seqLen]);
 
         var inputs = new List<NamedOnnxValue>
         {
