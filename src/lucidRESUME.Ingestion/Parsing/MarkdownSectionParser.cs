@@ -577,6 +577,16 @@ public static class MarkdownSectionParser
                 continue;
             }
 
+            // Exported DOCX files use an unheaded "Title — Company" paragraph.
+            // Recognise either orientation before the date line so a document can
+            // be exported and imported without losing the role boundary.
+            if (!line.StartsWith('#') && TryParseRoleCompanyLine(line, out var roleCompany))
+            {
+                if (current != null) resume.Experience.Add(current);
+                current = roleCompany;
+                continue;
+            }
+
             // Pattern 3: Date-range-only heading
             if (line.StartsWith('#'))
             {
@@ -1028,14 +1038,27 @@ public static class MarkdownSectionParser
         }
         else
         {
-            // Try em-dash (-) or en-dash (–) separator
-            var dashIdx = content.IndexOf(" - ", StringComparison.Ordinal);
-            if (dashIdx < 0) dashIdx = content.IndexOf(" – ", StringComparison.Ordinal);
+            // Try spaced hyphen, en dash, or em dash separators.
+            var separator = new[] { " — ", " – ", " - " }
+                .FirstOrDefault(candidate => content.Contains(candidate, StringComparison.Ordinal));
+            var dashIdx = separator is null
+                ? -1
+                : content.IndexOf(separator, StringComparison.Ordinal);
 
             if (dashIdx > 0)
             {
-                job.Company = content[..dashIdx].Trim();
-                job.Title = content[(dashIdx + 3)..].Trim();
+                var first = content[..dashIdx].Trim();
+                var second = content[(dashIdx + separator!.Length)..].Trim();
+                if (LooksLikeJobTitle(first) && !LooksLikeJobTitle(second))
+                {
+                    job.Title = first;
+                    job.Company = second;
+                }
+                else
+                {
+                    job.Company = first;
+                    job.Title = second;
+                }
             }
             else
             {
@@ -1046,6 +1069,23 @@ public static class MarkdownSectionParser
         var dateRange = ResumeDateParser.ExtractFirstDateRange(content);
         if (dateRange != null) ApplyDateRange(job, dateRange);
         return job;
+    }
+
+    private static bool TryParseRoleCompanyLine(string line, out WorkExperience job)
+    {
+        job = new WorkExperience();
+        if (line.Length > 160 || line.Contains(':')) return false;
+
+        var separator = new[] { " — ", " – ", " - " }
+            .FirstOrDefault(candidate => line.Contains(candidate, StringComparison.Ordinal));
+        if (separator is null) return false;
+
+        var parts = line.Split(separator, 2, StringSplitOptions.TrimEntries);
+        if (parts.Length != 2 || parts.Any(string.IsNullOrWhiteSpace)) return false;
+        if (!LooksLikeJobTitle(parts[0]) && !LooksLikeJobTitle(parts[1])) return false;
+
+        job = ParseJobHeading(line);
+        return true;
     }
 
     private static bool LooksLikeJobTitle(string value)

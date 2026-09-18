@@ -1,5 +1,6 @@
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
+using lucidRESUME.Export;
 using lucidRESUME.Ingestion.Parsing;
 using lucidRESUME.Parsing;
 
@@ -69,23 +70,56 @@ public sealed class ResumeImportValidationTests
     }
 
     [Fact]
-    public async Task DirectDocxParser_ParsesRealResumeCorpusAndFindsExperience()
+    public async Task DirectDocxParser_ParsesGeneratedResumeAndFindsExperience()
     {
-        var path = FindRepositoryFile("test-data/resumes/Scott_Galloway_CTO.docx");
-        var parsed = await new DocxDirectParser().ParseAsync(path);
+        var source = ResumeDocument.Create("avery.docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 0);
+        source.Personal.FullName = "Avery Example";
+        source.Personal.Email = "avery@example.test";
+        source.Personal.Summary = "Platform engineer specialising in reliable production systems, evidence-led delivery, and clear technical leadership across complex migration programmes.";
+        source.Skills.AddRange([
+            new Skill { Name = "C#", Category = "Languages" },
+            new Skill { Name = "ASP.NET Core", Category = "Frameworks" },
+            new Skill { Name = "Kubernetes", Category = "Infrastructure" }
+        ]);
+        source.Experience.Add(new WorkExperience
+        {
+            Company = "Northstar Systems",
+            Title = "Principal Platform Engineer",
+            StartDate = new DateOnly(2022, 1, 1),
+            IsCurrent = true,
+            Technologies = ["C#", "ASP.NET Core", "Kubernetes"],
+            Achievements =
+            [
+                "Led a production platform migration while maintaining customer availability.",
+                "Designed observable services and deployment controls for regulated workloads.",
+                "Mentored engineers in incident response, performance analysis, and evidence-led delivery."
+            ]
+        });
 
-        Assert.NotNull(parsed);
-        Assert.True(parsed.Confidence >= 0.5);
-        Assert.True(parsed.PlainText.Length > 500);
+        var path = Path.Combine(Path.GetTempPath(), $"lucidresume-parser-{Guid.NewGuid():N}.docx");
+        try
+        {
+            await File.WriteAllBytesAsync(path, await new DocxExporter().ExportAsync(source));
+            var parsed = await new DocxDirectParser().ParseAsync(path);
 
-        var resume = ResumeDocument.Create(Path.GetFileName(path),
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            new FileInfo(path).Length);
-        MarkdownSectionParser.PopulateSections(resume, parsed.Markdown, parsed.Sections);
+            Assert.NotNull(parsed);
+            Assert.True(parsed.Confidence >= 0.5);
+            Assert.True(parsed.PlainText.Length > 300);
 
-        Assert.NotEmpty(resume.Experience);
-        Assert.All(resume.Experience, item =>
-            Assert.True(!string.IsNullOrWhiteSpace(item.Company) || !string.IsNullOrWhiteSpace(item.Title)));
+            var resume = ResumeDocument.Create(Path.GetFileName(path),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                new FileInfo(path).Length);
+            MarkdownSectionParser.PopulateSections(resume, parsed.Markdown, parsed.Sections);
+
+            var experience = Assert.Single(resume.Experience);
+            Assert.Equal("Northstar Systems", experience.Company);
+            Assert.Equal("Principal Platform Engineer", experience.Title);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Fact]
@@ -127,16 +161,4 @@ public sealed class ResumeImportValidationTests
         Assert.Equal(2, aggregate.Skills.Count);
     }
 
-    private static string FindRepositoryFile(string relativePath)
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var candidate = Path.Combine(directory.FullName, relativePath);
-            if (File.Exists(candidate)) return candidate;
-            directory = directory.Parent;
-        }
-
-        throw new FileNotFoundException($"Could not locate repository fixture: {relativePath}");
-    }
 }
