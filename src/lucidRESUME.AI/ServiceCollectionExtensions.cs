@@ -73,13 +73,9 @@ public static class ServiceCollectionExtensions
         // Model discovery for settings UI
         services.AddHttpClient<ModelDiscoveryService>();
 
-        // Embedding indexer + semantic compressor + AI detection + de-AI rewriter + translator
+        // Embedding indexer + deterministic semantic compression
         services.AddSingleton<EmbeddingIndexer>();
         services.AddSingleton<SemanticCompressor>();
-        services.AddSingleton<OnnxAiTextDetector>();
-        services.AddSingleton<AiDetectionScorer>();
-        services.AddSingleton<DeAiRewriter>();
-        services.AddSingleton<ResumeTranslator>();
 
         // Embedding: ONNX by default (fully local), Ollama if explicitly configured
         var embeddingProvider = config.GetSection("Embedding").GetValue<string>("Provider") ?? "onnx";

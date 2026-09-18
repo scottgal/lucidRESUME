@@ -177,7 +177,7 @@
           <Button Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Apply">
             <StackPanel Orientation="Horizontal" Spacing="8">
               <fi:SymbolIcon Symbol="{x:Static fic:Symbol.Send}" FontSize="16"/>
-              <TextBlock Text="Apply" VerticalAlignment="Center"/>
+              <TextBlock Text="Project" VerticalAlignment="Center"/>
             </StackPanel>
           </Button>
         </Panel>

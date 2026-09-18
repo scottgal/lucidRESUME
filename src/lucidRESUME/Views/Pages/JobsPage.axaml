@@ -378,7 +378,7 @@
 
           <!-- Actions -->
           <StackPanel Grid.Row="6" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-            <Button Content="Apply / Tailor Resume"
+            <Button Content="Project Evidence Resume"
                     Command="{Binding TailorSelectedJobCommand}"
                     Padding="16,8"/>
             <Button Content="Track Application"

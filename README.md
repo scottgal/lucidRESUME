@@ -4,9 +4,15 @@
 [![Mostlylucid.Avalonia.UITesting on NuGet](https://img.shields.io/nuget/v/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=Mostlylucid.Avalonia.UITesting)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
 
-**Your job search. Your data. Your machine.**
+**Human prose for people. Evidence-linked JobML for machines.**
 
-***lucid*RESUME** is a free, open-source desktop app that builds a structured, evidence-based model of your skills from your actual work, then uses it to:
+***lucid*RESUME** is a free, open-source desktop editor for evidence-backed
+resumes. You write and own the human prose. The app keeps a separate,
+higher-resolution JobML representation for ATS and AI systems, with every
+machine-facing claim linked to the evidence that supports it.
+
+It builds a structured ledger from your resumes, LinkedIn data, repositories,
+and other sources, then uses that ledger to:
 
 - **Project role-specific resumes** from a persistent evidence ledger
 - **Match you to relevant roles** with per-skill similarity scoring
@@ -17,11 +23,15 @@ The ledger and deterministic extraction pipeline run locally on your machine. No
 account is required. Data leaves your machine only when you explicitly configure
 a cloud AI provider, import a remote source, or use an online job-search service.
 
-OpenAI, grug 9B through LLamaSharp, Ollama, or Anthropic can be used during
-ingestion and explicit authoring workflows. Apply does not call them. It selects
-reviewed merged resume, LinkedIn, and GitHub ledger records, then exports one
-evidence-linked artifact as Markdown + JobML, Word, or PDF. The
-human resume is followed by a labelled **MACHINE AREA** containing JobML and a link
+OpenAI, grug 9B through LLamaSharp, Ollama, or Anthropic can assist ingestion and
+can offer an explicitly labelled prose draft or sample. A draft is not accepted
+prose, evidence, or a published claim. The person remains the author and decides
+what to edit, accept, and publish.
+
+Projection does not call a language model. It selects reviewed resume, LinkedIn,
+and GitHub ledger records, preserves the accepted human prose, and exports one
+evidence-linked artifact as Markdown + JobML, Word, or PDF. The human resume is
+followed by a labelled **MACHINE AREA** containing JobML and a link
 to [the design article](https://mostlylucid.net/blog/the-problem-with-resumes).
 See [resume output and template design](docs/resume-output-design.md) for the full flow,
 template rationale, and configuration.
@@ -45,6 +55,18 @@ No invented skills. No output-time guessing. Extraction is recorded once with it
 method, confidence, source, and review state.
 
 This is the foundation everything else builds on - matching, projection, gap analysis, and career direction.
+
+The two representations have different jobs:
+
+- Human prose is written for human readers. It should sound like its author.
+- JobML is written for machines. It can be more explicit and more detailed, but
+  it must remain traceable to reviewed prose or external evidence.
+- AI may suggest draft prose. It cannot silently publish that prose, create
+  accepted evidence, or turn an inference into fact.
+
+lucidRESUME is not an automated job application service and it is not intended
+to disguise machine-written text as human writing. Its purpose is to let human
+writing remain human while giving ATS and AI systems a precise, verifiable view.
 
 The experimental **JobML 0.1 editor** places authoritative human Markdown on the
 left, editable JobML on the right, and live evidence links between them. Selecting
@@ -70,7 +92,7 @@ Every major job site wants your email, your browsing history, and permission to 
 
 - **Local-first AI** - the default is [grug 9B Q4_K_M](https://huggingface.co/ProCreations/grug-9b-gguf) running in-process through LLamaSharp. Ollama, Anthropic, and OpenAI remain optional providers.
 - **No account required** - data stored in a local SQLite database. You own it.
-- **Evidence-led projection** - Apply only renders claims already present in the ledger.
+- **Evidence-led projection** - Project only renders claims already present in the ledger.
 - **Career direction (based on your actual skill graph)** - not just "match this job" but "what to do next to reach your target cluster".
 - **Free forever** - Unlicense. Public domain.
 
@@ -122,8 +144,7 @@ Every major job site wants your email, your browsing history, and permission to 
 - Projects role-specific resumes directly from stable skill-ledger claims
 - Semantic compression: 13 roles -> 6 relevant -> filtered to evidence-backed bullets
 - Renders Markdown and JobML together without output-time evidence inference
-- AI detection scorer (5 signals) + de-AI rewrite button
-- Translation with sliding context and glossary
+- Preserves human-owned prose while JobML carries explicit machine detail
 
 ### Personal ATS (Pipeline)
 
@@ -155,12 +176,12 @@ lucidresume evidence       --resume cv.docx [--output ledger.json]
 lucidresume match          --resume cv.docx --job "JD text"
 lucidresume compound-match --resume cv.docx --jobs-dir jds/
 lucidresume explain        --resume cv.docx --job "JD text"
-lucidresume tailor         --resume cv.docx --job "JD text" [--output tailored.md]
+lucidresume tailor         --resume cv.docx --job "JD text" [--output projected.md]
 lucidresume drift          --resume1 old.docx --resume2 new.docx
 lucidresume export         --file cv.docx --format pdf|docx|markdown|json
 lucidresume validate       --resume cv.docx
 lucidresume fix            --resume cv.docx [--output fixed.md]
-lucidresume generate       --resume cv.docx --prompt "2 page cloud resume"
+lucidresume generate       --resume cv.docx --prompt "draft a 2 page cloud resume"
 lucidresume anonymize      --resume cv.docx [--output anon.json]
 lucidresume rank           --dir resumes/ --job "JD text"
 lucidresume search         --prompt "senior .NET developer remote"
@@ -197,11 +218,13 @@ No account or setup wizard is required.
 
 > **macOS users:** the bundle is ad-hoc signed but not notarized. If Gatekeeper blocks it, Control-click the extracted app and choose Open. If needed, run `xattr -dr com.apple.quarantine ./lucidRESUME.app` on that app only.
 
-### AI-assisted ingestion (Optional)
+### AI-assisted ingestion and drafts (Optional)
 
 AI assistance is optional. It can recover structured candidates from difficult
-source documents. Every inferred record is stored with provenance and requires
-review. Resume projection and export work without a language model.
+source documents or offer a clearly labelled authoring draft. Every inferred
+record is stored with provenance and requires review. Draft prose remains
+unaccepted until a person edits and approves it. Resume projection and export
+work without a language model.
 
 **Option 1: Local AI with LLamaSharp (recommended)**
 1. Open **Profile → AI Provider**
@@ -250,14 +273,14 @@ ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) power semantic matching throughout
 ### Architecture
 
 ```
-lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, Apply, Pipeline, Profile, Help)
+lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, Project, Pipeline, Profile, Help)
     ├── Ingestion        Resume parsing, DocLayNet layout detection, Morph preview, LinkedIn import
     ├── Extraction       ONNX NER (2 models) + Microsoft.Recognizers pipeline
     ├── Parsing          DOCX/PDF/TXT extraction, ATS pattern detection, template learning
     ├── JobSpec          JD parsing (5-layer RRF: Structural + NER + Taxonomy + LLM + Entity), URL scraping
     ├── JobSearch        7 job board adapters + orchestrator + deduplicator
     ├── Matching         Skill ledger, skill graph, career planner, taxonomy centroids, entity lookup
-    ├── AI               LLamaSharp/Ollama/Anthropic/OpenAI providers, AI detection, de-AI, translation
+    ├── AI               LLamaSharp/Ollama/Anthropic/OpenAI ingestion and draft-authoring providers
     ├── EmailTracker     IMAP scanning, email classification, application matching
     ├── Export           JSON Resume + Markdown + DOCX + PDF exporters
     ├── Collabora        LibreOffice/editor integration, document openers
@@ -284,18 +307,20 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, A
 ## Tests
 
 ```bash
-dotnet test    # 183+ tests across 7 projects
+dotnet test    # 333 tests across 9 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 47 | Persistence, models, multi-resume, round-trip |
+| Core.Tests | 64 | Persistence, models, multi-resume, round-trip |
 | Extraction.Tests | 23 | NER, recognizers, RRF fusion pipeline |
-| AI.Tests | 16 | Embeddings, matching |
-| Matching.Tests | 50 | Skill scoring, filters, voting, quality word lists |
-| JobSpec.Tests | 3 | JD parsing, salary extraction |
+| AI.Tests | 23 | Providers, embeddings, deterministic projection |
+| Matching.Tests | 52 | Skill scoring, filters, voting, quality word lists |
+| JobSpec.Tests | 8 | JD parsing, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
-| GitHub.Tests | 19 | Language map, LinkedIn parser, document merger |
+| GitHub.Tests | 24 | Language map, LinkedIn parser, document merger |
+| JobML.Tests | 18 | Parsing, validation, drift, reversible links |
+| Avalonia.UITesting.Tests | 96 | Input, scripts, locators, screenshots, REPL |
 
 ---
 
@@ -322,14 +347,14 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 
 ## Roadmap
 
-- [x] Resume improvement UX - synthesized suggestions
+- [x] Optional resume authoring drafts and suggestions, always subject to human review
 - [x] Automated job polling from skill community search queries
 - [x] Resume extraction RRF fusion (multi-source confidence boost, same pattern as JD)
 - [x] Career planner UI page with gap analysis visualization
 - [x] Leiden community detection (refinement phase over Louvain greedy moves)
 - [x] Temporal skill drift across resume variants (compare ledgers, detect added/dropped/changed skills)
-- [x] DOCX export of tailored resumes (pure C# via OpenXml, cross-platform)
-- [x] PDF export of tailored resumes (QuestPDF, professional formatting)
+- [x] DOCX export of projected resumes (pure C# via OpenXml, cross-platform)
+- [x] PDF export of projected resumes (QuestPDF, professional formatting)
 - [x] LinkedIn data export import (ZIP archive with full profile)
 - [x] GitHub repo skills import (languages, topics, README analysis via lucidRAG)
 - [x] DocLayNet ONNX model for document layout detection (YOLOv10m, 58MB, structural hashing)

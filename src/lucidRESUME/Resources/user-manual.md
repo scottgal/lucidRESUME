@@ -1,6 +1,9 @@
 # ***lucid*RESUME** User Manual
 
-Welcome to ***lucid*RESUME** - a local-first career tool that builds an evidence-based model of your skills and uses it to project resumes, match jobs, and plan your next move.
+Welcome to ***lucid*RESUME** - a local-first editor that keeps human resume prose
+and an evidence-linked machine representation together. You own the prose. JobML
+gives ATS and AI systems a more explicit view without forcing the human document
+to read like machine input.
 
 Core processing and storage run on your machine. No account is required. Data only
 leaves the device when you explicitly select a cloud AI provider or import from an
@@ -28,7 +31,7 @@ All three status indicators should turn green. If NER or Embeddings show red, th
 1. **Import** your resume (PDF or DOCX) on the **My CV** page
 2. **Add a job** you're interested in via the **Add Job** page
 3. **View the match** on the **Jobs** page - see per-skill scoring
-4. **Project** your resume on the **Apply** page
+4. **Project** your resume on the **Project** page
 5. **Track** your application in the **Pipeline**
 
 ### Installing From A Release Archive
@@ -195,14 +198,19 @@ published.
 
 ### Human prose and machine detail
 
-Markdown is authoritative but does not have to contain every detail. A resume for
-one role may summarise or omit less relevant material. JobML can retain a
-higher-resolution evidence ledger and can link to repositories, articles,
-qualifications, and other external sources.
+Markdown is human-owned and authoritative, but it does not have to contain every
+detail. Write it for a human reader. A resume for one role may summarise or omit
+less relevant material. JobML can retain a higher-resolution evidence ledger and
+can link to repositories, articles, qualifications, and other external sources.
 
 JobML does not give the AI permission to strengthen the prose. A repository link,
 skill alias, or machine inference remains a suggestion until its claim and
 attribution are reviewed.
+
+An AI provider may offer a clearly labelled draft or sample during an explicit
+authoring step. That output is not accepted prose and does not enter the ledger
+as fact. You must review, edit, and accept it. Projection and export never ask a
+model to make the text look human or to invent missing coverage.
 
 The saved document contains normal Markdown followed by a labelled **MACHINE
 AREA** and one fenced `jobml` block. It remains readable without JobML-aware
@@ -397,19 +405,20 @@ The career planner generates job search queries from your skill communities:
 ### How Projection Works
 
 1. Select a job on the **Jobs** page
-2. Navigate to **Apply**
+2. Navigate to **Project**
 3. The system queries your skill ledger for evidence matching the JD
 4. **Semantic compression** selects only relevant roles and bullets
 5. Markdown and JobML are rendered together from those selected ledger claim IDs
 
-> **Important:** Apply is a projection, not a generation step. Evidence extraction
+> **Important:** Project is a projection, not a generation step. Evidence extraction
 > happens when sources are ingested or explicitly reviewed. Rendering never asks a
 > model to infer claims or decide what supports them.
 
-<!-- help:apply-deai -->
-If you want to rewrite or translate prose, do that in an explicit authoring step,
-then ingest and review the changed evidence. Apply never rewrites prose while it
-renders a role-specific document.
+<!-- help:authoring-drafts -->
+If you ask an AI provider for a draft or sample, the result remains an authoring
+suggestion. Review and edit it as human prose, then reconcile its evidence before
+accepting it. Project never rewrites prose while it renders a role-specific
+document.
 
 ---
 
@@ -497,7 +506,7 @@ Auto-detected events are flagged so you can verify them.
 ### LLamaSharp with grug 9B (Default - Local)
 
 Download the optional GGUF model from Profile. It runs in-process and is used for
-ingestion assistance, not projection or export.
+ingestion assistance and optional authoring drafts, not projection or export.
 
 ### Ollama (Alternative Local Provider)
 
@@ -539,10 +548,10 @@ The app connects to `http://localhost:11434` by default. Change this on the Prof
 
 ### Identity
 
-- **Your Name** - used in tailored resumes
-- **Current Title** - helps the AI frame your experience
+- **Your Name** - used in projected resumes
+- **Current Title** - provides context for extraction and optional authoring drafts
 - **Years of Experience** - calibrates resume length recommendations
-- **Career Goals** - guides tailoring emphasis
+- **Career Goals** - guides role-specific projection emphasis
 
 ### Theme
 
@@ -594,7 +603,7 @@ human-accepted claims separate.
 The Profile page includes an aspect voting system for fine-tuning:
 
 - Vote skills up/down to influence match scoring
-- Upvoted skills get priority in tailoring
+- Upvoted skills get priority in role-specific projection
 - Downvoted skills are de-emphasised
 
 ---
@@ -604,7 +613,7 @@ The Profile page includes an aspect voting system for fine-tuning:
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+1` through `Ctrl+7` | Navigate to page (My CV, Jobs, Add Job, Apply, Pipeline, Profile, Help) |
+| `Ctrl+1` through `Ctrl+7` | Navigate to page (My CV, Jobs, Add Job, Project, Pipeline, Profile, Help) |
 | `Ctrl+I` | Import resume |
 | `Ctrl+S` | Save current state |
 | `Ctrl+E` | Export (context-dependent) |

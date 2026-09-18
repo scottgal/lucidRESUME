@@ -15,7 +15,7 @@
 
       <!-- Projection invariant -->
       <Border Grid.Row="1" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10">
-        <TextBlock Text="Output is projected from your evidence ledger. Rendering never re-infers claims or evidence."
+        <TextBlock Text="Human prose stays human-owned. JobML adds evidence-linked machine detail. Projection never re-infers or rewrites either one."
                    Foreground="{DynamicResource LrAccentPeachBrush}" FontSize="12" TextWrapping="Wrap"/>
       </Border>
 

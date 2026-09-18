@@ -7,7 +7,6 @@
              x:Class="lucidRESUME.Views.Pages.ResumePage">
   <UserControl.Resources>
     <local:ScoreToColorConverter x:Key="ScoreToColorConverter"/>
-    <local:InverseScoreToColorConverter x:Key="InverseScoreToColorConverter"/>
   </UserControl.Resources>
   <Grid RowDefinitions="Auto,Auto,*">
 
@@ -50,13 +49,6 @@
                 Width="70" VerticalAlignment="Center" FontSize="11" Padding="6,3"
                 ToolTip.Tip="Fast: structural only (sub-second). AI: adds LLM for missing fields."/>
 
-      <!-- Language selector for translation -->
-      <ComboBox ItemsSource="{Binding TranslateLanguages}" SelectedItem="{Binding TranslateLanguage}"
-                Width="100" VerticalAlignment="Center" FontSize="11" Padding="6,3"/>
-      <Button Content="Translate" Command="{Binding TranslateResumeCommand}"
-              IsEnabled="{Binding !IsTranslating}" IsVisible="{Binding HasResume}"
-              Padding="8,4" FontSize="12"/>
-
       <!-- Detected language badge -->
       <Border Background="{DynamicResource LrAccentBlueBgBrush}" CornerRadius="4" Padding="6,2"
               VerticalAlignment="Center"
@@ -66,7 +58,6 @@
       </Border>
 
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
-      <ProgressBar IsVisible="{Binding IsTranslating}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
       <TextBlock x:Name="ImportStatus" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </StackPanel>
@@ -174,47 +165,6 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-            </StackPanel>
-          </Border>
-
-          <!-- AI Detection Banner -->
-          <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
-                  IsVisible="{Binding HasAiReport}">
-            <StackPanel Spacing="8">
-              <Grid ColumnDefinitions="*,Auto,8,Auto">
-                <TextBlock Text="AI Detection" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{DynamicResource LrAccentPurpleBrush}" VerticalAlignment="Center"/>
-                <Button Grid.Column="2" Content="De-AI Rewrite"
-                        Command="{Binding DeAiRewriteCommand}"
-                        IsEnabled="{Binding !IsDeAiRunning}"
-                        Padding="8,3" FontSize="11" VerticalAlignment="Center"/>
-                <Border Grid.Column="1" CornerRadius="12" Padding="10,3"
-                        Background="{Binding AiScore, Converter={StaticResource InverseScoreToColorConverter}}">
-                  <TextBlock FontSize="13" FontWeight="Bold" Foreground="{DynamicResource LrScoreFgBrush}">
-                    <Run Text="{Binding AiScore}"/>
-                    <Run Text="/100"/>
-                  </TextBlock>
-                </Border>
-              </Grid>
-              <ItemsControl ItemsSource="{Binding AiFindings}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:QualityFindingViewModel">
-                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                      <Border Width="8" Height="8" CornerRadius="4"
-                              Background="{Binding SeverityColor}"
-                              VerticalAlignment="Center"/>
-                      <TextBlock Text="{Binding Message}" FontSize="11"
-                                 Foreground="{DynamicResource LrTertiaryTextBrush}" TextWrapping="Wrap"/>
-                    </StackPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <ProgressBar IsVisible="{Binding IsDeAiRunning}" IsIndeterminate="True" Width="60"/>
-                <TextBlock Text="{Binding DeAiStatus}" FontSize="10" Foreground="{DynamicResource LrAccentBlueBrush}"
-                           VerticalAlignment="Center"
-                           IsVisible="{Binding DeAiStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-              </StackPanel>
             </StackPanel>
           </Border>
 

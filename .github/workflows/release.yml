@@ -300,7 +300,7 @@ jobs:
           cat > artifacts/release-notes.md <<EOF
           ## lucidRESUME ${version}
 
-          Local-first desktop tooling for importing resumes, building an evidence-backed ledger, projecting role-specific resumes, and tracking your pipeline.
+          Local-first resume editing with human-owned prose and evidence-linked JobML for ATS and AI systems.
 
           EOF
 
@@ -335,7 +335,7 @@ jobs:
           2. On macOS, Control-click \`lucidRESUME.app\` and choose Open. On Windows or Linux, run the \`lucidRESUME\` executable.
           3. Import a PDF, DOCX, or TXT resume on the My CV page.
           4. Add a job description from pasted text or a job URL.
-          5. Use Jobs for match scoring, Apply for evidence-backed projection, and Pipeline for application tracking.
+          5. Use Jobs for match scoring, Project for evidence-backed projection, and Pipeline for application tracking.
 
           ### macOS Gatekeeper
 
@@ -349,7 +349,7 @@ jobs:
 
           | Area | Default | How to configure |
           |------|---------|------------------|
-          | Local AI | LLamaSharp with grug 9B | Download the optional GGUF model from Profile. It is used during ingestion and explicit analysis, never during output rendering. |
+          | Local AI | LLamaSharp with grug 9B | Download the optional GGUF model from Profile. It assists ingestion and can offer explicit authoring drafts, never output rendering. |
           | Cloud AI | Off | Add Anthropic or OpenAI API keys with user secrets, environment variables, or the Profile page. |
           | PDF layout | Local parser fallback | Enable Docling for ML-based layout extraction on complex PDFs. |
           | Embeddings and NER | Auto-download on first run | Allow the first-run model download, or pre-populate the app data model cache. |

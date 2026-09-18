@@ -29,9 +29,6 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly LinkedInZipParser _linkedInParser;
     private readonly DocumentOpenerService _openers;
     private readonly IResumeQualityAnalyser _qualityAnalyser;
-    private readonly AiDetectionScorer _aiDetectionScorer;
-    private readonly DeAiRewriter _deAiRewriter;
-    private readonly ResumeTranslator _translator;
     private readonly EmbeddingIndexer _embeddingIndexer;
     private readonly QualitySynthesizer _synthesizer;
     private readonly SkillLedgerBuilder _ledgerBuilder;
@@ -113,7 +110,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     [ObservableProperty] private bool _hasQualityReport;
     [ObservableProperty] private IReadOnlyList<QualitySuggestionViewModel> _qualitySuggestions = [];
     [ObservableProperty] private IReadOnlyList<string> _resumeStrengths = [];
-    // Keep raw findings for backward compat (used in AI detection too)
+    // Keep raw findings for compatibility with the quality view.
     [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _qualityFindings = [];
 
     // Import mode: "Fast" (structural only) vs "AI" (structural + LLM + Docling)
@@ -122,17 +119,6 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
     // Detected language
     [ObservableProperty] private string _detectedLanguage = "";
-
-    // AI detection
-    [ObservableProperty] private int _aiScore;
-    [ObservableProperty] private bool _hasAiReport;
-    [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _aiFindings = [];
-    [ObservableProperty] private bool _isDeAiRunning;
-    [ObservableProperty] private string? _deAiStatus;
-    [ObservableProperty] private bool _isTranslating;
-    [ObservableProperty] private string _translateLanguage = "German";
-    public IReadOnlyList<string> TranslateLanguages { get; } =
-        ["German", "French", "Spanish", "Portuguese", "Chinese", "Dutch", "Japanese", "Korean", "Italian", "Polish", "Swedish", "Arabic", "Hindi", "Turkish", "Russian"];
 
     // Page image display
     [ObservableProperty] private Bitmap? _currentPageImage;
@@ -146,9 +132,6 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     public ResumePageViewModel(IResumeParser parser, IDocumentImageCache imageCache, IAppStore store,
         LibreOfficeService libreOffice, MorphDocxPreviewService morphPreview, LinkedInZipParser linkedInParser,
         DocumentOpenerService openers, IResumeQualityAnalyser qualityAnalyser,
-        AiDetectionScorer aiDetectionScorer,
-        DeAiRewriter deAiRewriter,
-        ResumeTranslator translator,
         EmbeddingIndexer embeddingIndexer,
         QualitySynthesizer synthesizer,
         SkillLedgerBuilder ledgerBuilder,
@@ -162,9 +145,6 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         _linkedInParser = linkedInParser;
         _openers = openers;
         _qualityAnalyser = qualityAnalyser;
-        _aiDetectionScorer = aiDetectionScorer;
-        _deAiRewriter = deAiRewriter;
-        _translator = translator;
         _embeddingIndexer = embeddingIndexer;
         _synthesizer = synthesizer;
         _ledgerBuilder = ledgerBuilder;
@@ -628,7 +608,6 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         HasPageImages = Resume.ImageCacheKey is not null && PageCount > 0;
         HasResume = true;
         _ = RunQualityAnalysisAsync();
-        _ = RunAiDetectionAsync();
     }
 
     private static string FormatDateRange(DateOnly? start, DateOnly? end, bool isCurrent)
@@ -686,70 +665,6 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             .ToList();
     }
 
-    [RelayCommand]
-    private async Task DeAiRewriteAsync()
-    {
-        if (Resume is null) return;
-        IsDeAiRunning = true;
-        DeAiStatus = "Rewriting AI-sounding text...";
-        try
-        {
-            var result = await _deAiRewriter.RewriteAsync(Resume);
-            DeAiStatus = $"Rewrote {result.Rewritten}/{result.TotalBullets} bullets";
-
-            // Save the updated resume
-            await _store.MutateAsync(state => state.AddOrReplaceResume(Resume, select: true));
-
-            // Re-run AI detection to update the score
-            await RunAiDetectionAsync();
-
-            // Refresh display
-            PopulateFromResume();
-        }
-        catch (Exception ex)
-        {
-            DeAiStatus = $"Rewrite failed: {ex.Message}";
-        }
-        finally
-        {
-            IsDeAiRunning = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task TranslateResumeAsync()
-    {
-        if (Resume is null) return;
-        IsTranslating = true;
-        StatusMessage = $"Translating to {TranslateLanguage}...";
-        try
-        {
-            var result = await _translator.TranslateAsync(Resume, TranslateLanguage);
-            if (result.Error is not null)
-            {
-                ErrorMessage = result.Error;
-            }
-            else if (result.TranslatedDocument is not null)
-            {
-                Resume = result.TranslatedDocument;
-                await _store.MutateAsync(state => state.AddOrReplaceResume(Resume, select: true));
-                var state = await _store.LoadAsync();
-                RefreshResumeItems(state);
-                PopulateFromResume();
-                StatusMessage = $"Translated to {TranslateLanguage}" +
-                    (result.Glossary?.Count > 0 ? $" ({result.Glossary.Count} terms in glossary)" : "");
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Translation failed: {ex.Message}";
-        }
-        finally
-        {
-            IsTranslating = false;
-        }
-    }
-
     private void PopulateFromResume()
     {
         if (Resume is null) return;
@@ -762,26 +677,6 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             .ToList();
     }
 
-    private async Task RunAiDetectionAsync()
-    {
-        if (Resume is null) return;
-        try
-        {
-            var report = await _aiDetectionScorer.ScoreAsync(Resume);
-            AiScore = report.Score;
-            HasAiReport = report.Score > 0 || report.Findings.Count > 0;
-            AiFindings = report.Findings
-                .OrderByDescending(f => f.SignalScore)
-                .Select(f => new QualityFindingViewModel(
-                    f.Signal,
-                    f.SignalScore > 60 ? "#F38BA8" : f.SignalScore > 30 ? "#FAB387" : "#A6E3A1",
-                    "",
-                    f.Message,
-                    f.Signal))
-                .ToList();
-        }
-        catch { /* non-blocking */ }
-    }
 }
 
 public record SkillGroup(string Category, string Skills);

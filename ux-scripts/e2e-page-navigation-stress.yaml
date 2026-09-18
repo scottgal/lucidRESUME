@@ -104,7 +104,7 @@ actions:
   - type: Click
     target: "Matching & Gap Analysis"
   - type: Click
-    target: "Tailoring Your Resume"
+    target: "Projecting Your Resume"
   - type: Click
     target: "Application Pipeline"
   - type: Click

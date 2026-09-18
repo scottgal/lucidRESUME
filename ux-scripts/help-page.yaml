@@ -37,11 +37,11 @@ actions:
     value: 04-help-matching
 
   - type: Click
-    target: "Tailoring Your Resume"
+    target: "Projecting Your Resume"
   - type: Wait
     value: "600"
   - type: Screenshot
-    value: 05-help-tailoring
+    value: 05-help-projection
 
   - type: Click
     target: "Application Pipeline"

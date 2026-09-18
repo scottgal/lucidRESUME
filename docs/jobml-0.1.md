@@ -27,6 +27,10 @@ The implementation supports:
 
 It deliberately excludes a universal ontology, embeddings, attestations, ATS protocols, and automatic prose rewriting.
 
+An AI provider may offer a draft or sample in an explicit authoring workflow.
+That output remains unaccepted until a person reviews and edits it. It cannot
+publish prose, create accepted evidence, or run during projection and export.
+
 ## Semantic obviousness
 
 JobML is both deterministic YAML and a self-describing semantic contract. Field names and structures SHOULD be sufficiently descriptive that a general-purpose language model unfamiliar with JobML can infer their purpose from the document itself. The format MUST NOT depend on this inference for deterministic validation, but it SHOULD make correct inference cheap.

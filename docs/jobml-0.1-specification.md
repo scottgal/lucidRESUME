@@ -37,6 +37,16 @@ JobML does not make an external source true merely by linking to it. It records
 what was observed, how it was interpreted, and whether a human accepted the
 result as a claim.
 
+The human and machine representations have different purposes. Human prose
+SHOULD be written for people and MUST NOT be treated as a serialization target
+for the machine representation. JobML MAY be more explicit and retain more detail
+than role-specific prose, but it MUST remain traceable to reviewed evidence.
+
+A processor MAY offer AI-generated draft prose in an explicit authoring workflow.
+It MUST identify that output as a draft and MUST NOT publish it, accept it as
+evidence, or promote claims from it without human review. JobML is not a mechanism
+for hidden keyword stuffing or for disguising machine-written prose as human work.
+
 ## 2. Conformance
 
 A JobML 0.1 document MUST:

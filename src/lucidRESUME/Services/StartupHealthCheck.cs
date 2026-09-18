@@ -115,14 +115,14 @@ public sealed class StartupHealthCheck
                 ? $"AI: grug 9B ready ({_llamaSharpModels.ModelPath})"
                 : "AI: grug 9B not downloaded";
             if (!AiAvailable)
-                Warnings.Add("The local grug 9B model is not installed. Download it under Profile → AI Provider to enable tailoring and LLM extraction.");
+                Warnings.Add("The local grug 9B model is not installed. Download it under Profile → AI Provider to enable ingestion assistance and optional authoring drafts.");
         }
         else if (AiProvider.Equals("ollama", StringComparison.OrdinalIgnoreCase))
         {
             AiAvailable = await _aiTailoring.CheckAvailabilityAsync(ct);
             AiStatus = AiAvailable ? $"AI: Ollama connected ({_ollamaOpts.BaseUrl})" : "AI: Ollama offline";
             if (!AiAvailable)
-                Warnings.Add($"Ollama not available at {_ollamaOpts.BaseUrl}. AI tailoring and LLM extraction disabled.");
+                Warnings.Add($"Ollama not available at {_ollamaOpts.BaseUrl}. AI ingestion assistance and optional authoring drafts are disabled.");
         }
         else
         {

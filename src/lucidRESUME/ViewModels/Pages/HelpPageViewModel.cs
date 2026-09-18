@@ -21,7 +21,7 @@ public sealed partial class HelpPageViewModel : ViewModelBase
         new("Browsing & Managing Jobs", "browsing--managing-jobs"),
         new("Adding Job Descriptions", "adding-job-descriptions"),
         new("Matching & Gap Analysis", "matching--gap-analysis"),
-        new("Tailoring Your Resume", "tailoring-your-resume"),
+        new("Projecting Your Resume", "tailoring-your-resume"),
         new("Application Pipeline", "application-pipeline"),
         new("Email Integration", "email-integration"),
         new("AI Provider Setup", "ai-provider-setup"),

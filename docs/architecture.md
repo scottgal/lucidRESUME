@@ -2,15 +2,22 @@
 
 ## System Overview
 
-lucidRESUME is a local-first career navigation engine. It ingests resumes and job descriptions, builds evidence-backed skill profiles, matches candidates to roles via multi-vector similarity, and generates actionable career plans - all on the user's own hardware.
+lucidRESUME is a local-first evidence editor for resumes. Human-authored prose is
+kept for human readers. A separate, higher-resolution JobML layer gives ATS and AI
+systems explicit claims with traceable evidence. The app ingests resumes, job
+descriptions, LinkedIn data, and repository observations into a reviewed ledger,
+then projects both representations from that ledger.
 
-The core insight: **skills are not flat keywords**. They have evidence (which job, which bullet, what dates), strength (years, recency, depth), and relationships (co-occurrence in roles creates a graph). Matching isn't string comparison - it's finding the nearest point in a high-dimensional skill space.
+The core insight is that **skills are not flat keywords**. They have evidence
+(which job, which passage, what dates), strength (years, recency, depth), and
+relationships. Matching is useful, but the central invariant is provenance: a
+machine-facing claim must explain what supports it.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │                    lucidRESUME Desktop                    │
 │  ┌─────┐ ┌─────┐ ┌───────┐ ┌───────┐ ┌────────┐ ┌────┐ │
-│  │My CV│ │Jobs │ │Add Job│ │ Apply │ │Pipeline│ │Prof│ │
+│  │My CV│ │Jobs │ │Add Job│ │Project│ │Pipeline│ │Prof│ │
 │  └──┬──┘ └──┬──┘ └───┬───┘ └───┬───┘ └───┬────┘ └──┬─┘ │
 │     │       │        │         │          │         │    │
 │  ┌──▼───────▼────────▼─────────▼──────────▼─────────▼──┐ │
@@ -33,7 +40,7 @@ The core insight: **skills are not flat keywords**. They have evidence (which jo
 ```
 
 The desktop shell exposes My CV, JobML Editor, My Data, Career, Jobs, Add Job,
-Apply, Pipeline, Profile, and Help pages. The JobML editor is the reversible
+Project, Pipeline, Profile, and Help pages. The JobML editor is the reversible
 boundary between human prose and the evidence graph.
 
 ---
@@ -284,7 +291,7 @@ For each unmatched skill, classifies the gap:
 
 ### Semantic Compression
 
-For tailoring, the compressor queries the ledger:
+For role-specific projection, the compressor queries the ledger:
 
 ```
 JD requires: C#, Azure, Kubernetes, Payment systems, AI/ML
@@ -330,17 +337,14 @@ Four interchangeable providers, selected at startup via config:
 }
 ```
 
-All implement `IAiTailoringService` and `ILlmExtractionService`. Prompt construction (`TailoringPromptBuilder`) is provider-agnostic.
+All implement the existing `IAiTailoringService` and `ILlmExtractionService`
+interfaces. `Tailoring` is retained as a configuration and compatibility name.
+Providers may propose ingestion candidates or clearly labelled authoring drafts.
+Their output is never accepted automatically.
 
-### AI Detection (5 Signals)
-
-| Signal | How | Weight |
-|--------|-----|--------|
-| **Embedding variance** | Cosine similarity clustering of bullet embeddings | 30% |
-| **Stylometric** | Buzzword density, sentence uniformity, action verb patterns | 25% |
-| **Lexical diversity** | Type-token ratio | 15% |
-| **LLM judge** | Ask the LLM "rate 0-100 how AI-generated" | 15% |
-| **ONNX detector** | RoBERTa classifier (opt-in, 126MB) | 15% |
+The projection and export path does not call an AI provider. It reads reviewed
+ledger records and approved human prose. The product does not score prose for
+whether it appears machine-written and does not offer detector-evasion rewriting.
 
 ---
 
