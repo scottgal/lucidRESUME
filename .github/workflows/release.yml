@@ -22,13 +22,13 @@ env:
 jobs:
   release-validation:
     name: Validate release source
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - name: Restore
@@ -36,7 +36,7 @@ jobs:
       - name: Build
         run: dotnet build lucidRESUME.sln -c Release --no-restore
       - name: Test
-        run: dotnet test lucidRESUME.sln -c Release --no-build --filter "FullyQualifiedName!~MigrateFromJson"
+        run: dotnet test lucidRESUME.sln -c Release --no-build
       - name: Audit dependencies
         run: dotnet list lucidRESUME.sln package --vulnerable --include-transitive
 
@@ -56,18 +56,18 @@ jobs:
             rid: osx-x64
           - os: macos-latest
             rid: osx-arm64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             rid: linux-x64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             rid: linux-arm64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -197,7 +197,7 @@ jobs:
           }
 
       - name: Upload app archives
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lucidRESUME-${{ matrix.rid }}-archives
           path: |
@@ -209,10 +209,10 @@ jobs:
   docs-archive:
     name: Build single-page docs archive
     needs: release-validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Determine version
         id: version
@@ -268,7 +268,7 @@ jobs:
           sha256sum "artifacts/release/${name}.tar.gz" > "artifacts/release/${name}.tar.gz.sha256"
 
       - name: Upload docs archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lucidRESUME-docs-archive
           path: |
@@ -280,14 +280,14 @@ jobs:
   github-release:
     name: Publish GitHub release
     needs: [publish-app, docs-archive]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts/downloaded
           merge-multiple: true
@@ -372,7 +372,7 @@ jobs:
           EOF
 
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: artifacts/downloaded/*
           body_path: artifacts/release-notes.md

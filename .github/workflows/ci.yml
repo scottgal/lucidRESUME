@@ -16,15 +16,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -35,7 +35,7 @@ jobs:
         run: dotnet build lucidRESUME.sln -c Release --no-restore
 
       - name: Test
-        run: dotnet test lucidRESUME.sln -c Release --no-build --filter "FullyQualifiedName!~MigrateFromJson" --verbosity normal
+        run: dotnet test lucidRESUME.sln -c Release --no-build --verbosity normal
 
       - name: Audit dependencies
         run: dotnet list lucidRESUME.sln package --vulnerable --include-transitive

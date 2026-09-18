@@ -1,24 +1,21 @@
 # ***lucid*RESUME**
 
-
-> NOTE: This project uses libraries which now require an OSMF https://opensourcemaintenancefee.org/ as such no further development will be done with the current dependencies
-> 
-> ## NOTE: THIS IS CURRENTLY A RESEARCH PREVIEW. IT SHOULD NOT BE 1.x YET. SORRY!  THE AVALONIA TESTING FRAMEWORK *IS* MATURE HENCE THE WRONG 1.x
-
-
+[![lucidRESUME release](https://img.shields.io/github/v/release/scottgal/lucidRESUME?logo=github&label=lucidRESUME)](https://github.com/scottgal/lucidRESUME/releases/latest)
 [![Mostlylucid.Avalonia.UITesting on NuGet](https://img.shields.io/nuget/v/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=Mostlylucid.Avalonia.UITesting)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
 
 **Your job search. Your data. Your machine.**
 
-***lucid*RESUME** is a free, open-source desktop app that builds a structured, evidence-based model of your skills from your actual work - then uses it to:
+***lucid*RESUME** is a free, open-source desktop app that builds a structured, evidence-based model of your skills from your actual work, then uses it to:
 
 - **Project role-specific resumes** from a persistent evidence ledger
 - **Match you to relevant roles** with per-skill similarity scoring
 - **Show what you're missing** (and what you're not)
 - **Plan your next move** based on your actual skill graph
 
-Everything runs locally on your machine. No accounts. No data leaving your device unless you choose to.
+The ledger and deterministic extraction pipeline run locally on your machine. No
+account is required. Data leaves your machine only when you explicitly configure
+a cloud AI provider, import a remote source, or use an online job-search service.
 
 OpenAI, grug 9B through LLamaSharp, Ollama, or Anthropic can be used during
 ingestion and explicit authoring workflows. Apply does not call them. It selects
@@ -191,9 +188,12 @@ lucidresume jobml cold-parser-probe --file resume.jobml.md
 | **macOS** | `lucidRESUME-...-osx-arm64.tar.gz` (Apple Silicon) or `osx-x64.tar.gz` (Intel) |
 | **Linux** | `lucidRESUME-...-linux-x64.tar.gz` or `linux-arm64.tar.gz` |
 
-3. Extract and run `lucidRESUME` (or `lucidRESUME.exe` on Windows)
+3. Extract the archive. On macOS, open `lucidRESUME.app`. On Windows or Linux,
+   run `lucidRESUME.exe` or `lucidRESUME` respectively.
 
-That's it. ONNX models (~600MB) are downloaded automatically on first launch. No accounts, no setup wizards.
+The desktop app downloads its local ONNX models (about 600 MB) on first launch.
+They are cached in the user data directory, outside the signed application bundle.
+No account or setup wizard is required.
 
 > **macOS users:** the bundle is ad-hoc signed but not notarized. If Gatekeeper blocks it, Control-click the extracted app and choose Open. If needed, run `xattr -dr com.apple.quarantine ./lucidRESUME.app` on that app only.
 
@@ -236,7 +236,12 @@ Requires [.NET 10 SDK](https://dotnet.microsoft.com/download). The default solut
 
 ### Extraction
 
-**5-layer RRF fusion** for both resume and JD extraction: structural patterns + ONNX NER (2 models) + **skill taxonomy centroids** (19,983 skills from 1.3M LinkedIn jobs) + LLM backstop + **entity lookup** (11K companies, 7K locations). All signals run in parallel, fused by reciprocal rank fusion with multi-source confidence boosting.
+**5-layer RRF fusion** for both resume and JD extraction: structural patterns + ONNX NER (2 models) + **skill taxonomy centroids** (19,983 skills from 1.3M LinkedIn jobs) + optional LLM candidate extraction + **entity lookup** (11K companies, 7K locations). All signals run during ingestion and are fused by reciprocal rank fusion with multi-source confidence boosting. The resulting evidence records are persisted with provenance and review state.
+
+Export is deliberately less clever. It is a projection of accepted ledger records.
+It does not rerun NER or an LLM, and it refuses stale evidence. This keeps the
+human prose and the JobML evidence graph reversible: each rendered claim points
+back to the exact ingested evidence and source revision that justified it.
 
 **Skill taxonomy**: preloaded from Kaggle datasets via DuckDB — 16 role archetypes, cross-industry coverage (not just tech), priority classification. Used by both resume AND JD parsers to find skills embedded in prose. Plain-text JDs went from 0 to 60+ extracted skills.
 

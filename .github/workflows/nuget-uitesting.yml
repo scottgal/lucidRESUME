@@ -22,13 +22,13 @@ env:
 
 jobs:
   build-and-publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             9.0.x
@@ -38,10 +38,10 @@ jobs:
         id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
           else
             # Extract version from tag: uitesting-v1.0.1 → 1.0.1
-            echo "VERSION=${GITHUB_REF_NAME#uitesting-v}" >> $GITHUB_OUTPUT
+            echo "VERSION=${GITHUB_REF_NAME#uitesting-v}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Restore
@@ -63,7 +63,7 @@ jobs:
         run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ steps.nuget_login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nupkg
           path: ./nupkgs/*.nupkg
