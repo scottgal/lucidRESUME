@@ -17,7 +17,6 @@ public sealed class UXSession : IAsyncDisposable
     private readonly object? _viewModel;
     private readonly string _screenshotDir;
     private readonly Action<string>? _log;
-    private Process? _mcpProcess;
     
     public Window Window => _window;
     public object? ViewModel => _viewModel;
@@ -51,7 +50,8 @@ public sealed class UXSession : IAsyncDisposable
             throw new InvalidOperationException($"Failed to launch: {assemblyPath}");
         
         await Task.Delay(2000);
-        
+        process.Kill(entireProcessTree: true);
+        await process.WaitForExitAsync();
         throw new NotImplementedException("Headless session not yet implemented - use AttachAsync instead");
     }
     
@@ -161,7 +161,7 @@ public sealed class UXSession : IAsyncDisposable
             bitmap.Render(_window);
             
             using var stream = File.Create(filePath);
-            bitmap.Save(stream);
+            bitmap.Save(stream, PngBitmapEncoderOptions.Default);
         });
         
         _log?.Invoke($"Screenshot: {filePath}");
@@ -368,7 +368,6 @@ public sealed class UXSession : IAsyncDisposable
     
     public async ValueTask DisposeAsync()
     {
-        _mcpProcess?.Kill();
         await Task.CompletedTask;
     }
 }

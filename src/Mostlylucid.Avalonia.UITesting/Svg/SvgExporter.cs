@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Xml;
 using Avalonia;
 using Avalonia.Controls;
@@ -12,7 +11,6 @@ namespace Mostlylucid.Avalonia.UITesting.Svg;
 
 public sealed class SvgExporter
 {
-    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
     private int _defsCounter;
     private readonly List<Action<XmlWriter>> _deferredDefs = new();
 
@@ -375,7 +373,7 @@ public sealed class SvgExporter
         return sb.ToString();
     }
 
-    private void WriteImage(XmlWriter xml, Image image, Point pos)
+    private static void WriteImage(XmlWriter xml, Image image, Point pos)
     {
         var b = image.Bounds;
         if (b.Width <= 0 || b.Height <= 0) return;

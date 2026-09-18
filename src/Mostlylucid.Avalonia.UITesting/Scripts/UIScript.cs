@@ -13,6 +13,7 @@ public enum ActionType
     Scroll,
     Wait,
     Navigate,
+    ImportFile,
     Screenshot,
     Assert,
     Expect,

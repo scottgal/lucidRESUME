@@ -2,6 +2,7 @@ using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Models.Skills;
+using lucidRESUME.JobML;
 
 namespace lucidRESUME.Matching;
 
@@ -25,6 +26,9 @@ public sealed class SkillLedgerBuilder
 
     public async Task<SkillLedger> BuildAsync(ResumeDocument resume, CancellationToken ct = default)
     {
+        if (!string.IsNullOrWhiteSpace(resume.JobMlSource))
+            return BuildFromReviewedJobMl(resume);
+
         var ledger = new SkillLedger();
         var entries = new Dictionary<string, SkillLedgerEntry>(StringComparer.OrdinalIgnoreCase);
 
@@ -160,6 +164,81 @@ public sealed class SkillLedgerBuilder
         ledger.Issues = issues;
 
         return ledger;
+    }
+
+    private static SkillLedger BuildFromReviewedJobMl(ResumeDocument resume)
+    {
+        var parser = new JobMlParser();
+        if (!parser.TryParse(resume.JobMlSource!, out var file, out var parseError))
+            throw new InvalidDataException($"The published JobML snapshot is invalid: {parseError}");
+
+        var parsed = file!;
+        var errors = JobMlProcessor.Validate(parsed)
+            .Where(diagnostic => diagnostic.Severity == JobMlDiagnosticSeverity.Error)
+            .ToList();
+        if (errors.Count > 0)
+            throw new InvalidDataException($"The published JobML snapshot has integrity errors: {string.Join("; ", errors.Select(e => e.Message))}");
+
+        var reconciledClaims = JobMlProcessor.Reconcile(parsed);
+        var invalidAcceptedClaims = reconciledClaims.Where(item =>
+            string.Equals(item.Claim.Review, "accepted", StringComparison.OrdinalIgnoreCase) &&
+            item.Evidence.Any(evidence => evidence.State is not (EvidenceState.Valid or EvidenceState.External))).ToList();
+        if (invalidAcceptedClaims.Count > 0)
+            throw new InvalidDataException("The published JobML snapshot has integrity errors in accepted claim evidence.");
+
+        var concepts = parsed.Data.Concepts.ToDictionary(c => c.Id, StringComparer.OrdinalIgnoreCase);
+        var entities = parsed.Data.Entities.ToDictionary(e => e.Id, StringComparer.OrdinalIgnoreCase);
+        var entries = new Dictionary<string, SkillLedgerEntry>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var resolvedClaim in reconciledClaims)
+        {
+            var claim = resolvedClaim.Claim;
+            if (!string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase)) continue;
+            if (resolvedClaim.Evidence.Count == 0 ||
+                resolvedClaim.Evidence.Any(e => e.State is not (EvidenceState.Valid or EvidenceState.External)))
+                continue;
+
+            entities.TryGetValue(claim.Subject, out var entity);
+            var experience = entity is null
+                ? null
+                : resume.Experience.FirstOrDefault(e =>
+                    string.Equals(e.Company, entity.Name, StringComparison.OrdinalIgnoreCase));
+
+            foreach (var conceptId in claim.Concepts.Skills)
+            {
+                var conceptName = concepts.TryGetValue(conceptId, out var concept) ? concept.Name : conceptId;
+                var entry = GetOrCreate(entries, conceptName);
+                entry.Category ??= concept?.Type;
+
+                foreach (var evidence in resolvedClaim.Evidence)
+                {
+                    var sourceText = evidence.CurrentText ?? claim.Statement;
+                    if (entry.Evidence.Any(existing =>
+                            existing.Source == EvidenceSource.JobMlClaim &&
+                            string.Equals(existing.SourceText, sourceText, StringComparison.Ordinal)))
+                        continue;
+
+                    entry.Evidence.Add(new SkillEvidence
+                    {
+                        ExperienceId = experience?.Id,
+                        Company = experience?.Company ?? entity?.Name,
+                        JobTitle = experience?.Title,
+                        SourceText = sourceText,
+                        StartDate = experience?.StartDate,
+                        EndDate = experience?.IsCurrent == true ? null : experience?.EndDate,
+                        Source = EvidenceSource.JobMlClaim,
+                        Confidence = 1.0
+                    });
+                }
+            }
+        }
+
+        foreach (var entry in entries.Values) CalculateYears(entry);
+        return new SkillLedger
+        {
+            Entries = entries.Values.OrderByDescending(entry => entry.Strength).ToList(),
+            Issues = []
+        };
     }
 
     /// <summary>

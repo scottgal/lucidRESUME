@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using System.Text.Json.Serialization;
+using System.Text.Json;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Jobs;
@@ -51,27 +51,89 @@ public sealed class OpenAiTailoringService : IAiTailoringService
         var request = new
         {
             model = _options.Model,
-            max_tokens = _options.MaxTokens,
-            messages = new[]
+            max_output_tokens = _options.MaxTokens,
+            instructions = "You are editing a resume from an evidence ledger. Never invent facts. Return JSON matching the supplied schema.",
+            input = prompt,
+            text = new
             {
-                new { role = "system", content = "You are a professional CV editor. Output tailored resume as clean Markdown only." },
-                new { role = "user", content = prompt }
+                format = new
+                {
+                    type = "json_schema",
+                    name = "evidence_grounded_resume",
+                    strict = true,
+                    schema = new
+                    {
+                        type = "object",
+                        properties = new
+                        {
+                            markdown = new { type = "string" },
+                            evidence_links = new
+                            {
+                                type = "array",
+                                items = new
+                                {
+                                    type = "object",
+                                    properties = new
+                                    {
+                                        output_claim = new { type = "string" },
+                                        evidence_refs = new { type = "array", items = new { type = "string" } }
+                                    },
+                                    required = new[] { "output_claim", "evidence_refs" },
+                                    additionalProperties = false
+                                }
+                            },
+                            warnings = new { type = "array", items = new { type = "string" } }
+                        },
+                        required = new[] { "markdown", "evidence_links", "warnings" },
+                        additionalProperties = false
+                    }
+                }
             }
         };
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(_options.TimeoutSeconds));
 
-        var response = await _http.PostAsJsonAsync("chat/completions", request, cts.Token);
+        var response = await _http.PostAsJsonAsync("responses", request, cts.Token);
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<OpenAiChatResponse>(cancellationToken: cts.Token);
-        var tailoredMarkdown = result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim()
-                               ?? resume.RawMarkdown ?? "";
+        var responseJson = await response.Content.ReadAsStringAsync(cts.Token);
+        var outputText = ExtractOutputText(responseJson)
+                         ?? throw new InvalidDataException("OpenAI returned no output text.");
+        var result = JsonSerializer.Deserialize<OpenAiResumeResult>(outputText,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                     ?? throw new InvalidDataException("OpenAI returned an invalid structured resume response.");
+        var tailoredMarkdown = result.Markdown.Trim();
+        if (string.IsNullOrWhiteSpace(tailoredMarkdown))
+            throw new InvalidDataException("OpenAI returned an empty resume.");
+
+        if (result.Warnings.Count > 0)
+            _logger.LogWarning("OpenAI resume generation warnings: {Warnings}", string.Join("; ", result.Warnings));
+        var validReferences = TailoringPromptBuilder.EvidenceReferences(resume);
+        var links = result.EvidenceLinks
+            .Where(link => !string.IsNullOrWhiteSpace(link.OutputClaim))
+            .Select(link => new GenerationEvidenceLink
+            {
+                OutputClaim = link.OutputClaim.Trim(),
+                EvidenceRefs = link.EvidenceRefs
+                    .Where(validReferences.Contains)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList()
+            })
+            .Where(link => link.EvidenceRefs.Count > 0)
+            .ToList();
+        var rejectedReferenceCount = result.EvidenceLinks.Sum(link => link.EvidenceRefs.Count)
+                                     - links.Sum(link => link.EvidenceRefs.Count);
+        if (rejectedReferenceCount > 0)
+            _logger.LogWarning("Rejected {Count} unknown evidence references returned by OpenAI", rejectedReferenceCount);
+        _logger.LogInformation("OpenAI returned {LinkCount} grounded output claims using {EvidenceCount} supplied evidence references",
+            links.Count, links.Sum(link => link.EvidenceRefs.Count));
 
         var tailored = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
         tailored.SetDoclingOutput(tailoredMarkdown, null, null);
         tailored.MarkTailoredFor(job.JobId);
+        tailored.GenerationEvidenceLinks.AddRange(links);
+        tailored.GenerationWarnings.AddRange(result.Warnings);
 
         foreach (var entity in resume.Entities)
             tailored.AddEntity(entity);
@@ -117,10 +179,35 @@ public sealed class OpenAiTailoringService : IAiTailoringService
         return (termMappings, coverage);
     }
 
-    private record OpenAiChatResponse(
-        [property: JsonPropertyName("choices")] List<Choice>? Choices);
-    private record Choice(
-        [property: JsonPropertyName("message")] MessageContent? Message);
-    private record MessageContent(
-        [property: JsonPropertyName("content")] string? Content);
+    internal static string? ExtractOutputText(string responseJson)
+    {
+        using var document = JsonDocument.Parse(responseJson);
+        if (document.RootElement.TryGetProperty("output_text", out var direct) && direct.ValueKind == JsonValueKind.String)
+            return direct.GetString();
+
+        if (!document.RootElement.TryGetProperty("output", out var output) || output.ValueKind != JsonValueKind.Array)
+            return null;
+
+        foreach (var item in output.EnumerateArray())
+        {
+            if (!item.TryGetProperty("content", out var content) || content.ValueKind != JsonValueKind.Array) continue;
+            foreach (var part in content.EnumerateArray())
+            {
+                if (part.TryGetProperty("type", out var type) && type.GetString() == "output_text" &&
+                    part.TryGetProperty("text", out var text))
+                    return text.GetString();
+            }
+        }
+
+        return null;
+    }
+
+    private sealed record OpenAiResumeResult(
+        string Markdown,
+        [property: System.Text.Json.Serialization.JsonPropertyName("evidence_links")] List<OpenAiEvidenceLink> EvidenceLinks,
+        List<string> Warnings);
+
+    private sealed record OpenAiEvidenceLink(
+        [property: System.Text.Json.Serialization.JsonPropertyName("output_claim")] string OutputClaim,
+        [property: System.Text.Json.Serialization.JsonPropertyName("evidence_refs")] List<string> EvidenceRefs);
 }

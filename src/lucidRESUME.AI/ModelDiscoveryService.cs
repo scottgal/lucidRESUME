@@ -15,6 +15,7 @@ public sealed class ModelDiscoveryService
     private readonly OllamaOptions _ollamaOpts;
     private readonly AnthropicOptions _anthropicOpts;
     private readonly OpenAiOptions _openAiOpts;
+    private readonly LlamaSharpOptions _llamaSharpOpts;
     private readonly ILogger<ModelDiscoveryService> _logger;
 
     // Approximate cost per 1M input tokens (USD) - for display only
@@ -42,14 +43,25 @@ public sealed class ModelDiscoveryService
         IOptions<OllamaOptions> ollamaOpts,
         IOptions<AnthropicOptions> anthropicOpts,
         IOptions<OpenAiOptions> openAiOpts,
+        IOptions<LlamaSharpOptions> llamaSharpOpts,
         ILogger<ModelDiscoveryService> logger)
     {
         _http = http;
         _ollamaOpts = ollamaOpts.Value;
         _anthropicOpts = anthropicOpts.Value;
         _openAiOpts = openAiOpts.Value;
+        _llamaSharpOpts = llamaSharpOpts.Value;
         _logger = logger;
     }
+
+    public IReadOnlyList<ModelInfo> ListLlamaSharpModels() =>
+    [
+        new ModelInfo(
+            _llamaSharpOpts.ModelId,
+            "grug 9B Q4_K_M (local GGUF)",
+            "llamasharp",
+            "Free (local, 5.63 GB download)")
+    ];
 
     public async Task<IReadOnlyList<ModelInfo>> ListOllamaModelsAsync(CancellationToken ct = default)
     {

@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
-using WordRender;
+using Morph;
 
 namespace lucidRESUME.Ingestion.Preview;
 
 /// <summary>
 /// Generates page images from DOCX files using Morph (pure C#, cross-platform, no LibreOffice).
-/// Falls back gracefully if rendering fails — Morph is v0.1.0 and may not handle all documents.
+/// Falls back gracefully when Morph cannot handle a document.
 /// </summary>
 public sealed class MorphDocxPreviewService
 {
@@ -30,8 +30,8 @@ public sealed class MorphDocxPreviewService
 
         try
         {
-            var converter = new global::WordRender.Skia.DocumentConverter();
-            var options = new global::WordRender.ConversionOptions
+            var converter = new SkiaDocumentConverter();
+            var options = new ConversionOptions
             {
                 Dpi = 150,
                 FontWidthScale = 1.07, // better match to Word rendering

@@ -41,5 +41,6 @@ public enum EvidenceSource
     NerExtracted,       // detected by NER model
     LlmExtracted,       // recovered by LLM
     GitHubRepository,   // extracted from GitHub repo languages/topics
+    JobMlClaim,         // explicitly reviewed JobML claim with valid evidence
     Manual,             // added by the user directly
 }

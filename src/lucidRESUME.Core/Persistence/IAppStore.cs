@@ -98,6 +98,9 @@ public sealed class AppState
             .DefaultIfEmpty(aggregate.CreatedAt)
             .Max();
         aggregate.Personal = selected.Personal;
+        aggregate.CanonicalMarkdown = selected.CanonicalMarkdown;
+        aggregate.JobMlSource = selected.JobMlSource;
+        aggregate.JobMlRevision = selected.JobMlRevision;
 
         aggregate.Experience = DeduplicateExperience(Resumes.SelectMany(r => r.Experience).ToList());
         aggregate.Education = DeduplicateEducation(Resumes.SelectMany(r => r.Education).ToList());

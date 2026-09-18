@@ -23,7 +23,7 @@
                          FontSize="11" Foreground="{DynamicResource LrSubtleTextBrush}" TextWrapping="Wrap"/>
               <Grid ColumnDefinitions="*,8,Auto">
                 <TextBox Grid.Column="0" Text="{Binding JobUrl}"
-                         Watermark="https://example.com/jobs/123"
+                         PlaceholderText="https://example.com/jobs/123"
                          CornerRadius="6" Padding="10,8"/>
                 <Button Grid.Column="2" Content="Fetch"
                         Command="{Binding FetchUrlCommand}"
@@ -59,7 +59,7 @@
               <TextBlock Text="Copy the full job posting text and paste it here."
                          FontSize="11" Foreground="{DynamicResource LrSubtleTextBrush}" TextWrapping="Wrap"/>
               <TextBox Text="{Binding PastedText}"
-                       Watermark="Paste job description here…"
+                       PlaceholderText="Paste job description here…"
                        AcceptsReturn="True" TextWrapping="Wrap" Height="120"
                        CornerRadius="6" Padding="10,8"
                        ScrollViewer.VerticalScrollBarVisibility="Auto"/>
@@ -132,14 +132,14 @@
 
         <!-- Create watch -->
         <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,4">
-          <TextBox Grid.Column="0" Text="{Binding NewWatchQuery}" Watermark="Watch query (e.g. .NET Azure remote)..."
+          <TextBox Grid.Column="0" Text="{Binding NewWatchQuery}" PlaceholderText="Watch query (e.g. .NET Azure remote)..."
                    CornerRadius="4" Padding="8,4" FontSize="12"/>
           <CheckBox Grid.Column="1" Content="Salary" IsChecked="{Binding NewWatchRequireSalary}"
                     Margin="8,0" VerticalAlignment="Center" FontSize="11"/>
           <CheckBox Grid.Column="2" Content="Remote" IsChecked="{Binding NewWatchRequireRemote}"
                     Margin="0,0,8,0" VerticalAlignment="Center" FontSize="11"/>
           <TextBox Grid.Column="3" Text="{Binding NewWatchPollMinutes}" Width="50"
-                   Watermark="min" CornerRadius="4" Padding="4,4" FontSize="11" VerticalAlignment="Center"/>
+                   PlaceholderText="min" CornerRadius="4" Padding="4,4" FontSize="11" VerticalAlignment="Center"/>
           <Button Grid.Column="4" Content="Watch" Command="{Binding CreateWatchCommand}"
                   Padding="10,4" FontSize="11" Margin="8,0,0,0"/>
         </Grid>

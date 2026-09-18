@@ -113,7 +113,7 @@ public static class ScreenshotCapture
 
                 // Round-trip through PNG so we can composite via SkiaSharp.
                 using var backMs = new MemoryStream();
-                backRtb.Save(backMs);
+                backRtb.Save(backMs, PngBitmapEncoderOptions.Default);
                 backMs.Position = 0;
                 using var canvas = SKBitmap.Decode(backMs)
                     ?? throw new InvalidOperationException("Failed to decode back window bitmap.");
@@ -131,7 +131,7 @@ public static class ScreenshotCapture
                     winRtb.Render(win);
 
                     using var winMs = new MemoryStream();
-                    winRtb.Save(winMs);
+                    winRtb.Save(winMs, PngBitmapEncoderOptions.Default);
                     winMs.Position = 0;
                     using var winSk = SKBitmap.Decode(winMs);
                     if (winSk is null) continue;
@@ -186,7 +186,7 @@ public static class ScreenshotCapture
             prtb.Render(child);
 
             using var pms = new MemoryStream();
-            prtb.Save(pms);
+            prtb.Save(pms, PngBitmapEncoderOptions.Default);
             pms.Position = 0;
             using var pSk = SKBitmap.Decode(pms);
             if (pSk is null) continue;
@@ -222,7 +222,7 @@ public static class ScreenshotCapture
                 if (region is null)
                 {
                     using var stream = File.Create(filePath);
-                    fullBitmap.Save(stream);
+                    fullBitmap.Save(stream, PngBitmapEncoderOptions.Default);
                     tcs.SetResult(filePath);
                     return;
                 }
@@ -242,7 +242,7 @@ public static class ScreenshotCapture
 
                 // Round-trip the Avalonia bitmap through PNG so we can hand it to SkiaSharp.
                 using var ms = new MemoryStream();
-                fullBitmap.Save(ms);
+                fullBitmap.Save(ms, PngBitmapEncoderOptions.Default);
                 ms.Position = 0;
 
                 using var fullSk = SKBitmap.Decode(ms)

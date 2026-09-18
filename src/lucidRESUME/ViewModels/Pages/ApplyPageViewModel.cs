@@ -8,6 +8,8 @@ using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
+using lucidRESUME.Export;
+using lucidRESUME.Services;
 
 namespace lucidRESUME.ViewModels.Pages;
 
@@ -17,11 +19,14 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     private readonly SemanticCompressor _compressor;
     private readonly ICoverageAnalyser _coverageAnalyser;
     private readonly IAppStore _store;
+    private readonly ResumeArtifactBuilder _artifactBuilder;
+    private readonly IReadOnlyList<IResumeExporter> _exporters;
 
     internal TopLevel? TopLevel { get; set; }
 
     private ResumeDocument? _contextResume;
     private JobDescription? _contextJob;
+    private ResumeDocument? _generatedResume;
 
     [ObservableProperty] private string _jobTitle = "";
     [ObservableProperty] private string _company = "";
@@ -32,8 +37,9 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private string? _errorMessage;
 
-    // Ollama availability
-    [ObservableProperty] private bool _isOllamaUnavailable;
+    [ObservableProperty] private bool _isAiUnavailable;
+    public IReadOnlyList<ResumeTemplate> Templates { get; } = ResumeTemplateCatalog.All;
+    [ObservableProperty] private ResumeTemplate _selectedTemplate = ResumeTemplateCatalog.All[0];
 
     // Compression stats
     [ObservableProperty] private string? _compressionStats;
@@ -46,12 +52,16 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
 
     public ApplyPageViewModel(IAiTailoringService tailoringService,
         SemanticCompressor compressor,
-        ICoverageAnalyser coverageAnalyser, IAppStore store)
+        ICoverageAnalyser coverageAnalyser, IAppStore store,
+        ResumeArtifactBuilder artifactBuilder,
+        IEnumerable<IResumeExporter> exporters)
     {
         _tailoringService = tailoringService;
         _compressor = compressor;
         _coverageAnalyser = coverageAnalyser;
         _store = store;
+        _artifactBuilder = artifactBuilder;
+        _exporters = exporters.ToList();
         // Don't check at construction - service may not have pinged Ollama yet.
         // Rechecked in SetContext() and before each tailor operation.
     }
@@ -69,7 +79,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             JobDescriptionText = job.RawText;
         }
 
-        IsOllamaUnavailable = !_tailoringService.IsAvailable;
+        _ = RefreshProviderAvailabilityAsync();
 
         if (resume is not null && job is not null)
             _ = RunCoverageAsync(resume, job);
@@ -93,13 +103,18 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         }
     }
 
+    private async Task RefreshProviderAvailabilityAsync()
+    {
+        IsAiUnavailable = !await _tailoringService.CheckAvailabilityAsync();
+    }
+
     [RelayCommand(CanExecute = nameof(CanTailor))]
     private async Task TailorAsync()
     {
         ErrorMessage = null;
         IsTailoring = true;
         HasResult = false;
-        IsOllamaUnavailable = !_tailoringService.IsAvailable;
+        IsAiUnavailable = !await _tailoringService.CheckAvailabilityAsync();
         StatusMessage = "Tailoring resume…";
 
         try
@@ -124,7 +139,8 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             };
 
             var tailored = await _tailoringService.TailorAsync(resume, job, profile);
-            TailoredMarkdown = tailored.RawMarkdown ?? tailored.PlainText ?? "(No output)";
+            _generatedResume = _artifactBuilder.Build(resume, tailored, job, SelectedTemplate.Id);
+            TailoredMarkdown = _generatedResume.JobMlSource ?? _generatedResume.RawMarkdown ?? "(No output)";
             HasResult = true;
             StatusMessage = "Done.";
         }
@@ -177,7 +193,8 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             foreach (var entity in resume.Entities) compressedResume.AddEntity(entity);
 
             var tailored = await _tailoringService.TailorAsync(compressedResume, job, profile);
-            TailoredMarkdown = tailored.RawMarkdown ?? tailored.PlainText ?? compressed.Markdown;
+            _generatedResume = _artifactBuilder.Build(resume, tailored, job, SelectedTemplate.Id);
+            TailoredMarkdown = _generatedResume.JobMlSource ?? _generatedResume.RawMarkdown ?? compressed.Markdown;
             HasResult = true;
             StatusMessage = $"Done. Compressed {compressed.OriginalRoleCount} → {compressed.IncludedRoleCount} roles.";
         }
@@ -203,27 +220,47 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     }
 
     [RelayCommand(CanExecute = nameof(HasResult))]
-    private async Task ExportAsync()
+    private async Task ExportAsync(string? format)
     {
-        if (TopLevel is null || TailoredMarkdown is null) return;
+        if (TopLevel is null || TailoredMarkdown is null || _generatedResume is null) return;
+
+        var exportFormat = (format ?? "markdown").ToLowerInvariant() switch
+        {
+            "docx" or "word" => ExportFormat.Docx,
+            "pdf" => ExportFormat.Pdf,
+            _ => ExportFormat.Markdown
+        };
+        var extension = exportFormat switch
+        {
+            ExportFormat.Docx => "docx",
+            ExportFormat.Pdf => "pdf",
+            _ => "md"
+        };
+        var fileType = exportFormat switch
+        {
+            ExportFormat.Docx => new FilePickerFileType("Word document") { Patterns = ["*.docx"] },
+            ExportFormat.Pdf => new FilePickerFileType("PDF document") { Patterns = ["*.pdf"] },
+            _ => new FilePickerFileType("Markdown + JobML") { Patterns = ["*.md"] }
+        };
 
         var file = await TopLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Export Tailored Resume",
-            SuggestedFileName = "tailored-resume.md",
-            FileTypeChoices =
-            [
-                new FilePickerFileType("Markdown") { Patterns = ["*.md"] }
-            ]
+            SuggestedFileName = $"tailored-resume.{extension}",
+            FileTypeChoices = [fileType]
         });
 
         if (file is null) return;
 
         try
         {
+            _generatedResume.OutputTemplateId = SelectedTemplate.Id;
+            var exporter = _exporters.FirstOrDefault(candidate => candidate.Format == exportFormat)
+                           ?? throw new InvalidOperationException($"No {exportFormat} exporter is registered.");
+            var bytes = await exporter.ExportAsync(_generatedResume);
             await using var stream = await file.OpenWriteAsync();
-            await using var writer = new StreamWriter(stream);
-            await writer.WriteAsync(TailoredMarkdown);
+            stream.SetLength(0);
+            await stream.WriteAsync(bytes);
             StatusMessage = $"Exported to {file.Name}";
         }
         catch (Exception ex)
@@ -233,4 +270,9 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     }
 
     partial void OnHasResultChanged(bool value) => ExportCommand.NotifyCanExecuteChanged();
+
+    partial void OnSelectedTemplateChanged(ResumeTemplate value)
+    {
+        if (_generatedResume is not null) _generatedResume.OutputTemplateId = value.Id;
+    }
 }

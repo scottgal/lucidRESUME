@@ -6,6 +6,15 @@ namespace lucidRESUME.AI;
 /// </summary>
 public sealed class TailoringOptions
 {
+    /// <summary>LLM provider: llamasharp, ollama, anthropic, or openai.</summary>
+    public string Provider { get; set; } = "llamasharp";
+
+    /// <summary>
+    /// Optional provider used for literal parsing and validation. When omitted it follows
+    /// <see cref="Provider"/>. This allows local GGUF extraction with OpenAI final writing.
+    /// </summary>
+    public string? ExtractionProvider { get; set; }
+
     /// <summary>Minimum cosine similarity for term-normalisation matches.</summary>
     public float TermNormalizationMinSimilarity { get; set; } = 0.85f;
 

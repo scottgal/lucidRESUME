@@ -506,7 +506,7 @@ public sealed class UITestRepl
         var path = string.Join(" ", args);
         return await _ctx.RunOnUIThreadAsync(() =>
         {
-            if (path.StartsWith("#"))
+            if (path.StartsWith('#'))
             {
                 var dotIdx = path.IndexOf('.');
                 var controlName = dotIdx > 0 ? path[1..dotIdx] : path[1..];
@@ -666,7 +666,7 @@ public sealed class UITestRepl
         return $"SVG saved: {filePath}";
     }
 
-    private async Task<string> WaitAsync(string[] args)
+    private static async Task<string> WaitAsync(string[] args)
     {
         if (args.Length == 0) return "Usage: wait <ms>";
         var ms = int.Parse(args[0]);

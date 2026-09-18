@@ -16,6 +16,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     private readonly ModelDiscoveryService _modelDiscovery;
     private readonly AiSettingsPath _aiSettingsPath;
     private readonly GitHubSkillImporter _gitHubImporter;
+    private readonly LlamaSharpModelManager _llamaSharpModels;
     private CancellationTokenSource? _saveCts;
     private bool _isLoading;
 
@@ -64,8 +65,8 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     [ObservableProperty] private bool _isSaved;
 
     // ── AI Provider Settings ────────────────────────────────────────────────
-    public IReadOnlyList<string> AiProviders { get; } = ["ollama", "anthropic", "openai"];
-    [ObservableProperty] private string _aiProvider = "ollama";
+    public IReadOnlyList<string> AiProviders { get; } = ["llamasharp", "ollama", "anthropic", "openai"];
+    [ObservableProperty] private string _aiProvider = "llamasharp";
     [ObservableProperty] private string _anthropicApiKey = "";
     [ObservableProperty] private string _openAiApiKey = "";
     [ObservableProperty] private string _selectedModel = "";
@@ -73,18 +74,27 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     [ObservableProperty] private ObservableCollection<ModelInfo> _availableModels = [];
     [ObservableProperty] private bool _isLoadingModels;
     [ObservableProperty] private string? _aiSettingsStatus;
+    [ObservableProperty] private bool _isLlamaSharp = true;
+    [ObservableProperty] private bool _isDownloadingLlamaSharp;
+    [ObservableProperty] private double _llamaSharpDownloadProgress;
 
     // ── GitHub Import ──────────────────────────────────────────────────────
     [ObservableProperty] private string _gitHubUsername = "";
     [ObservableProperty] private bool _isImportingGitHub;
     [ObservableProperty] private string? _gitHubImportStatus;
 
-    public ProfilePageViewModel(IAppStore store, ModelDiscoveryService modelDiscovery, AiSettingsPath aiSettingsPath, GitHubSkillImporter gitHubImporter)
+    public ProfilePageViewModel(
+        IAppStore store,
+        ModelDiscoveryService modelDiscovery,
+        AiSettingsPath aiSettingsPath,
+        GitHubSkillImporter gitHubImporter,
+        LlamaSharpModelManager llamaSharpModels)
     {
         _store = store;
         _modelDiscovery = modelDiscovery;
         _aiSettingsPath = aiSettingsPath;
         _gitHubImporter = gitHubImporter;
+        _llamaSharpModels = llamaSharpModels;
 
         SubscribeCollections();
 
@@ -286,7 +296,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                 var doc = JsonDocument.Parse(json);
                 if (doc.RootElement.TryGetProperty("Tailoring", out var tailoring) &&
                     tailoring.TryGetProperty("Provider", out var provider))
-                    AiProvider = provider.GetString() ?? "ollama";
+                    AiProvider = provider.GetString() ?? "llamasharp";
                 if (doc.RootElement.TryGetProperty("Anthropic", out var anthropic) &&
                     anthropic.TryGetProperty("ApiKey", out var aKey))
                     AnthropicApiKey = aKey.GetString() ?? "";
@@ -319,6 +329,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         {
             var models = AiProvider.ToLowerInvariant() switch
             {
+                "llamasharp" => _modelDiscovery.ListLlamaSharpModels(),
                 "anthropic" => await _modelDiscovery.ListAnthropicModelsAsync(),
                 "openai" => await _modelDiscovery.ListOpenAiModelsAsync(),
                 _ => await _modelDiscovery.ListOllamaModelsAsync()
@@ -357,6 +368,11 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                 {
                     ["Model"] = AiProvider == "ollama" ? SelectedModel : "",
                     ["ExtractionModel"] = AiProvider == "ollama" ? SelectedModel : ""
+                },
+                ["LlamaSharp"] = new Dictionary<string, string>
+                {
+                    ["ModelId"] = _llamaSharpModels.ModelId,
+                    ["ModelPath"] = _llamaSharpModels.ModelPath
                 }
             };
 
@@ -372,7 +388,36 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
 
     partial void OnAiProviderChanged(string value)
     {
+        IsLlamaSharp = value.Equals("llamasharp", StringComparison.OrdinalIgnoreCase);
         if (!_isLoading) _ = RefreshModelsAsync();
+    }
+
+    [RelayCommand]
+    private async Task DownloadLlamaSharpModel()
+    {
+        if (_llamaSharpModels.IsModelPresent)
+        {
+            LlamaSharpDownloadProgress = 1;
+            AiSettingsStatus = $"Local model is ready at {_llamaSharpModels.ModelPath}.";
+            return;
+        }
+
+        IsDownloadingLlamaSharp = true;
+        AiSettingsStatus = "Downloading grug 9B Q4_K_M (5.63 GB)...";
+        try
+        {
+            var progress = new Progress<double>(value => LlamaSharpDownloadProgress = value);
+            await _llamaSharpModels.DownloadAsync(progress);
+            AiSettingsStatus = $"Local model ready at {_llamaSharpModels.ModelPath}. Restart to apply.";
+        }
+        catch (Exception ex)
+        {
+            AiSettingsStatus = $"Model download failed: {ex.Message}";
+        }
+        finally
+        {
+            IsDownloadingLlamaSharp = false;
+        }
     }
 
     // ── Mapping helpers ───────────────────────────────────────────────────────

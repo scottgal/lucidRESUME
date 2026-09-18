@@ -17,6 +17,7 @@ public sealed partial class HelpPageViewModel : ViewModelBase
         new("Getting Started", "getting-started"),
         new("Importing Your Resume", "importing-your-resume"),
         new("Understanding the Skill Ledger", "understanding-the-skill-ledger"),
+        new("JobML Evidence Editor", "jobml-editor"),
         new("Browsing & Managing Jobs", "browsing--managing-jobs"),
         new("Adding Job Descriptions", "adding-job-descriptions"),
         new("Matching & Gap Analysis", "matching--gap-analysis"),

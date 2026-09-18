@@ -38,6 +38,7 @@ public sealed class JobSpecParser : IJobSpecParser
     {
         _logger = logger;
         _strategySelector = null!;
+        _fusionOpts = new FusionOptions();
     }
 
     public async Task<JobDescription> ParseFromTextAsync(string text, CancellationToken ct = default)

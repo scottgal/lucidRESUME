@@ -59,7 +59,7 @@ public partial class TagChipEditor : UserControl
         set
         {
             SetAndRaise(PlaceholderProperty, ref _placeholder, value);
-            AddTagBox.Watermark = value;
+            AddTagBox.PlaceholderText = value;
         }
     }
 
@@ -111,7 +111,7 @@ public partial class TagChipEditor : UserControl
 
         _items.CollectionChanged += OnItemsCollectionChanged;
 
-        AddTagBox.Watermark = _placeholder;
+        AddTagBox.PlaceholderText = _placeholder;
         AddTagBox.KeyDown += OnAddTagBoxKeyDown;
         AddTagBox.TextChanged += OnAddTagBoxTextChanged;
     }
@@ -286,7 +286,7 @@ public partial class TagChipEditor : UserControl
             var reasonBox = new TextBox
             {
                 Text = tag.Reason,
-                Watermark = "Reason (optional)",
+                PlaceholderText = "Reason (optional)",
                 FontSize = 11,
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),

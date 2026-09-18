@@ -1,0 +1,25 @@
+name: jobml-manual
+description: Validate that the in-app manual exposes and renders the JobML evidence editor guidance.
+default_delay: 150
+
+actions:
+  - type: Wait
+    value: "1000"
+
+  - type: Navigate
+    value: Help
+
+  - type: Expect
+    target: "type=Button:has-text(JobML Evidence Editor)"
+    matcher: IsVisible
+    timeout: 5000
+
+  - type: Click
+    target: "type=Button:has-text(JobML Evidence Editor)"
+
+  - type: Scroll
+    target: "name=ManualViewer"
+    value: "+260"
+
+  - type: Screenshot
+    value: 01-jobml-manual

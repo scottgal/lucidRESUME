@@ -15,10 +15,10 @@ public sealed class HttpMarkdownScraper : IJobPageScraper
 
     private static readonly Converter _mdConverter = new(new Config
     {
-        UnknownTags = Config.UnknownTagsOption.PassThrough,
-        GithubFlavored = true,
-        RemoveComments = true,
-        SmartHrefHandling = true
+        Flavor = Config.MarkdownFlavor.GitHub,
+        Tags = { Unknown = Config.UnknownTagsOption.PassThrough },
+        Formatting = { RemoveComments = true },
+        Links = { SmartHref = true }
     });
 
     public HttpMarkdownScraper(

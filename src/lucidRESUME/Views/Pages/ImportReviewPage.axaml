@@ -9,7 +9,7 @@
     <StackPanel Margin="24,16" Spacing="16" MaxWidth="800">
 
       <!-- Header -->
-      <TextBlock Text="Review Import" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+      <TextBlock x:Name="ReviewImportTitle" Text="Review Import" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
 
       <!-- Summary card -->
       <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}"
@@ -184,9 +184,9 @@
 
       <!-- Action bar -->
       <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8">
-        <Button Content="Apply Selected" Command="{Binding ApplySelectedCommand}" Padding="16,8"
+        <Button x:Name="ApplySelectedImportButton" Content="Apply Selected" Command="{Binding ApplySelectedCommand}" Padding="16,8"
                 Background="{DynamicResource LrAccentGreenBrush}" Foreground="White"/>
-        <Button Content="Apply All" Command="{Binding ApplyAllCommand}" Padding="16,8"/>
+        <Button x:Name="ApplyAllImportButton" Content="Apply All" Command="{Binding ApplyAllCommand}" Padding="16,8"/>
         <Button Content="Cancel" Command="{Binding CancelCommand}" Padding="16,8"
                 Background="Transparent" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
       </StackPanel>

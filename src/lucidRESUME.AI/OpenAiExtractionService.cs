@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Text.Json.Serialization;
 using lucidRESUME.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -63,19 +62,20 @@ public sealed class OpenAiExtractionService : ILlmExtractionService
             var request = new
             {
                 model = _options.ExtractionModel,
-                max_tokens = 2000,
-                messages = new[] { new { role = "user", content = prompt } }
+                max_output_tokens = 2000,
+                instructions = "Extract only information explicitly present in the supplied resume text. Follow the requested output format and do not infer missing facts.",
+                input = prompt
             };
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(TimeSpan.FromSeconds(55));
 
-            var response = await _http.PostAsJsonAsync("chat/completions", request, cts.Token);
+            var response = await _http.PostAsJsonAsync("responses", request, cts.Token);
             if (!response.IsSuccessStatusCode) return null;
 
-            var result = await response.Content.ReadFromJsonAsync<OpenAiResponse>(cancellationToken: cts.Token);
+            var responseJson = await response.Content.ReadAsStringAsync(cts.Token);
             _isAvailable = true;
-            return result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();
+            return OpenAiTailoringService.ExtractOutputText(responseJson)?.Trim();
         }
         catch (Exception ex)
         {
@@ -84,11 +84,4 @@ public sealed class OpenAiExtractionService : ILlmExtractionService
             return null;
         }
     }
-
-    private record OpenAiResponse(
-        [property: JsonPropertyName("choices")] List<Choice>? Choices);
-    private record Choice(
-        [property: JsonPropertyName("message")] Msg? Message);
-    private record Msg(
-        [property: JsonPropertyName("content")] string? Content);
 }

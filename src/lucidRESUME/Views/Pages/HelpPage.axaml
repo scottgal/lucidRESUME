@@ -34,7 +34,7 @@
     </Border>
 
     <!-- Right: Markdown content -->
-    <controls:MarkdownViewer Grid.Column="1"
+    <controls:MarkdownViewer x:Name="ManualViewer" Grid.Column="1"
                               Markdown="{Binding ManualMarkdown}"
                               ScrollToAnchor="{Binding ScrollToAnchor}"
                               Margin="24,16,24,16"/>

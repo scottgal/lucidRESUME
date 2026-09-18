@@ -23,7 +23,7 @@
       </Border>
 
       <TextBox Text="{Binding SearchQuery}"
-               Watermark="Search jobs (e.g. C# developer London)…"
+               PlaceholderText="Search jobs (e.g. C# developer London)…"
                Width="380" VerticalAlignment="Center"
                IsVisible="{Binding !IsHiringMode}"/>
       <Button Content="Search" Command="{Binding SearchCommand}" VerticalAlignment="Center"
@@ -156,14 +156,14 @@
             <Grid ColumnDefinitions="*,12,*" RowDefinitions="Auto,Auto">
               <TextBlock Grid.Row="0" Grid.Column="0" Text="Title *" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
               <TextBlock Grid.Row="0" Grid.Column="2" Text="Company" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
-              <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringTitle}" Watermark="e.g. Senior .NET Developer" CornerRadius="4" Padding="8,4"/>
-              <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding HiringCompany}" Watermark="e.g. Acme Ltd" CornerRadius="4" Padding="8,4"/>
+              <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringTitle}" PlaceholderText="e.g. Senior .NET Developer" CornerRadius="4" Padding="8,4"/>
+              <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding HiringCompany}" PlaceholderText="e.g. Acme Ltd" CornerRadius="4" Padding="8,4"/>
             </Grid>
 
             <!-- Location + Remote -->
             <Grid ColumnDefinitions="*,12,Auto" RowDefinitions="Auto,Auto">
               <TextBlock Grid.Row="0" Grid.Column="0" Text="Location *" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
-              <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringLocation}" Watermark="e.g. London, UK" CornerRadius="4" Padding="8,4"/>
+              <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringLocation}" PlaceholderText="e.g. London, UK" CornerRadius="4" Padding="8,4"/>
               <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <CheckBox Content="Remote" IsChecked="{Binding HiringIsRemote}" FontSize="11"/>
                 <CheckBox Content="Hybrid" IsChecked="{Binding HiringIsHybrid}" FontSize="11"/>
@@ -179,9 +179,9 @@
                   <TextBlock Grid.Row="0" Grid.Column="0" Text="Min" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="10"/>
                   <TextBlock Grid.Row="0" Grid.Column="2" Text="Max" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="10"/>
                   <TextBlock Grid.Row="0" Grid.Column="4" Text="Currency" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="10"/>
-                  <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringSalaryMin}" Watermark="e.g. 65000" CornerRadius="4" Padding="8,4"/>
-                  <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding HiringSalaryMax}" Watermark="e.g. 85000" CornerRadius="4" Padding="8,4"/>
-                  <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding HiringSalaryCurrency}" Watermark="GBP" CornerRadius="4" Padding="8,4"/>
+                  <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding HiringSalaryMin}" PlaceholderText="e.g. 65000" CornerRadius="4" Padding="8,4"/>
+                  <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding HiringSalaryMax}" PlaceholderText="e.g. 85000" CornerRadius="4" Padding="8,4"/>
+                  <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding HiringSalaryCurrency}" PlaceholderText="GBP" CornerRadius="4" Padding="8,4"/>
                 </Grid>
               </StackPanel>
             </Border>
@@ -190,7 +190,7 @@
             <StackPanel Spacing="4">
               <TextBlock Text="Job Description" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
               <TextBox Text="{Binding HiringDescription}" AcceptsReturn="True" TextWrapping="Wrap" Height="150"
-                       Watermark="Paste or type the full job description..."
+                       PlaceholderText="Paste or type the full job description..."
                        CornerRadius="4" Padding="8,6"/>
             </StackPanel>
 

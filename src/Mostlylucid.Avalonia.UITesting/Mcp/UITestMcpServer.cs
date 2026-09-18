@@ -17,6 +17,7 @@ namespace Mostlylucid.Avalonia.UITesting.Mcp;
 
 public sealed class UITestMcpServer
 {
+    private static readonly JsonSerializerOptions IndentedJsonOptions = new() { WriteIndented = true };
     private readonly UITestContext _ctx;
     private readonly string _screenshotDir;
     private readonly string _consoleImagePath;
@@ -888,7 +889,7 @@ public sealed class UITestMcpServer
 
     // === Assertions & Waiting ===
 
-    private async Task<string> WaitAsync(int ms)
+    private static async Task<string> WaitAsync(int ms)
     {
         await Task.Delay(ms);
         return $"Waited {ms}ms";
@@ -1042,7 +1043,7 @@ public sealed class UITestMcpServer
 
         var result = await player.RunScriptAsync((_ctx.MainWindow ?? throw new InvalidOperationException("No main window attached to UITestContext")), script);
 
-        var json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(result, IndentedJsonOptions);
         return $"Script: {script.Name}\nResult: {(result.Success ? "PASS" : "FAIL")}\nActions: {result.ActionResults.Count}\nDuration: {result.Duration.TotalSeconds:F2}s\n\n{json}";
     }
 

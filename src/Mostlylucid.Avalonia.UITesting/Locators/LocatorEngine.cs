@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Threading;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mostlylucid.Avalonia.UITesting.Locators;
 
@@ -59,6 +60,8 @@ public sealed class LocatorEngine
     /// locator currently sees — does not retry. Use this when you expect zero or
     /// many matches.
     /// </summary>
+    [SuppressMessage("Performance", "CA1822:Mark members as static",
+        Justification = "Kept as an instance member to preserve the public locator-engine API.")]
     public async Task<IReadOnlyList<Control>> ResolveAllAsync(Locator locator, Control root)
     {
         var matches = await Dispatcher.UIThread.InvokeAsync(() => locator.Resolve(root).ToList());

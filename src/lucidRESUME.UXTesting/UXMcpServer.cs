@@ -257,7 +257,7 @@ public sealed class UXMcpServer
             bitmap.Render(_ctx.MainWindow);
             
             using var stream = File.Create(filePath);
-            bitmap.Save(stream);
+            bitmap.Save(stream, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
         });
         
         return filePath;

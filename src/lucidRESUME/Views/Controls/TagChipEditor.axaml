@@ -14,7 +14,7 @@
 
       <!-- Chips are added programmatically by code-behind -->
       <TextBox x:Name="AddTagBox"
-               Watermark="Add..."
+               PlaceholderText="Add..."
                MinWidth="80"
                MaxWidth="160"
                FontSize="12"

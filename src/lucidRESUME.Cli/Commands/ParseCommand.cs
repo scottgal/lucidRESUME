@@ -17,8 +17,9 @@ public static class ParseCommand
 
     public static Command Build()
     {
-        var fileOpt = new Option<FileInfo>("--file") { Required = true, Description = "Resume file to parse (PDF or DOCX)" };
+        var fileOpt = new Option<FileInfo?>("--file") { Description = "Resume file to parse (PDF or DOCX)" };
         fileOpt.Aliases.Add("-f");
+        var directoryOpt = new Option<DirectoryInfo?>("--resume-dir") { Description = "Directory of resume sources to merge into one evidence ledger" };
 
         var outputOpt = new Option<FileInfo?>("--output") { Description = "Output JSON file (default: stdout)" };
         outputOpt.Aliases.Add("-o");
@@ -27,35 +28,25 @@ public static class ParseCommand
 
         var cmd = new Command("parse", "Parse a resume file and extract structured data");
         cmd.Options.Add(fileOpt);
+        cmd.Options.Add(directoryOpt);
         cmd.Options.Add(outputOpt);
         cmd.Options.Add(configOpt);
 
         cmd.SetAction(async (result, ct) =>
         {
-            var file = result.GetValue(fileOpt)!;
+            var file = result.GetValue(fileOpt);
+            var directory = result.GetValue(directoryOpt);
             var output = result.GetValue(outputOpt);
             var config = result.GetValue(configOpt);
 
-            if (!file.Exists)
+            if (file is not null && file.Extension.ToLowerInvariant() is not ".pdf" and not ".docx" and not ".doc" and not ".txt")
             {
-                Console.Error.WriteLine($"File not found: {file.FullName}");
-                return;
-            }
-
-            var ext = file.Extension.ToLowerInvariant();
-            if (ext is not ".pdf" and not ".docx" and not ".doc" and not ".txt")
-            {
-                Console.Error.WriteLine($"Unsupported file type '{ext}'. Supported formats: .doc, .docx, .pdf, .txt");
+                Console.Error.WriteLine($"Unsupported file type '{file.Extension}'. Supported formats: .doc, .docx, .pdf, .txt");
                 return;
             }
 
             var services = ServiceBootstrap.Build(config?.FullName);
-            var parser = services.GetRequiredService<IResumeParser>();
-
-            Console.Error.WriteLine($"Parsing {file.Name}...");
-            var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(parser, file.FullName, ct);
-            if (resume.LlmEnhancementTask != null)
-                await resume.LlmEnhancementTask;
+            var resume = await ResumeInputHelper.LoadAsync(services, file, directory, ct);
 
             // Categorise skills using taxonomy detection
             SkillCategoriser.Categorise(resume);

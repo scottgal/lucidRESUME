@@ -2,7 +2,9 @@
 
 Welcome to ***lucid*RESUME** - a local-first career tool that builds an evidence-based model of your skills and uses it to tailor resumes, match jobs, and plan your next move.
 
-Everything runs on your machine. No accounts, no cloud, no data leaving your device.
+Core processing and storage run on your machine. No account is required. Data only
+leaves the device when you explicitly select a cloud AI provider or import from an
+external service such as GitHub.
 
 ---
 
@@ -11,7 +13,9 @@ Everything runs on your machine. No accounts, no cloud, no data leaving your dev
 
 ### First Launch
 
-When you first open ***lucid*RESUME**, the app downloads the AI models it needs (~600MB). You'll see progress in the sidebar status panel:
+When you first open ***lucid*RESUME**, the app prepares its extraction models. The
+optional grug 9B local language model is a separate download of about 5.6 GB. You'll
+see progress in the sidebar status panel:
 
 - **Embeddings** - the semantic matching engine (all-MiniLM-L6-v2)
 - **NER** - named entity recognition for extracting skills, names, and organisations (2 models)
@@ -150,6 +154,62 @@ The ledger flags issues:
 - **Stale** - last evidence is 5+ years old
 
 These aren't errors - they're signals that your resume could be stronger. A presentation gap (the evidence exists but isn't highlighted) is different from a true gap (you don't have the skill).
+
+---
+
+<!-- help:jobml-editor -->
+## JobML Evidence Editor
+
+The **JobML Editor** keeps the human resume and its machine-readable evidence map
+in one reversible Markdown file.
+
+The editor has three linked areas:
+
+1. **Human** on the left contains the authoritative Markdown prose. Use **Write**
+   to edit it or **Preview** to see the rendered resume.
+2. **Live Links** in the centre shows every connection from a prose passage or
+   external source to a JobML claim.
+3. **Machine** on the right contains editable JobML YAML.
+
+Select a link card to highlight both the supporting prose and its JobML reference.
+Moving the caret through linked prose or a JobML reference selects the other side.
+
+### Generating and reviewing links
+
+Use **Generate links** to create draft claims from the current prose. Generated
+claims are marked `derived` and `review: required`. They do not count as accepted
+evidence until you review them and choose **Accept claims**.
+
+The evidence graph updates while you type:
+
+| State | Meaning | What to do |
+|---|---|---|
+| `Valid` | The referenced text still matches | Nothing |
+| `Changed` | The passage moved or its meaning may have changed | Inspect it, then use **Accept drift** only if it still supports the claim |
+| `Missing` | Supporting prose can no longer be found | Restore evidence or remove/change the claim |
+| `Ambiguous` | More than one passage may match | Select the correct evidence manually |
+
+The fast `fnv1a64` fingerprint detects ordinary editing drift. It is not a
+cryptographic signature. Accepted prose claims without a fingerprint cannot be
+published.
+
+### Human prose and machine detail
+
+Markdown is authoritative but does not have to contain every detail. A resume for
+one role may summarise or omit less relevant material. JobML can retain a
+higher-resolution evidence ledger and can link to repositories, articles,
+qualifications, and other external sources.
+
+JobML does not give the AI permission to strengthen the prose. A repository link,
+skill alias, or machine inference remains a suggestion until its claim and
+attribution are reviewed.
+
+The saved document contains normal Markdown followed by a labelled **MACHINE
+AREA** and one fenced `jobml` block. It remains readable without JobML-aware
+software.
+
+For the full format, see the [JobML 0.1 specification](../../../docs/jobml-0.1-specification.md)
+and [GitHub repository extension](../../../docs/jobml-github-extension-0.1.md).
 
 ---
 
@@ -499,12 +559,31 @@ Choose **System**, **Light**, or **Dark** from the dropdown at the top of the Pr
 ### GitHub Import
 
 Enter your GitHub username and click **Import** to extract skills from your public repos:
-- Languages (weighted by bytes — C# dominant across 22 repos counts more than 1 repo)
+- Languages reported by GitHub Linguist, weighted by code bytes
 - Topics from repo metadata
 - README analysis via lucidRAG (BERT mode, no LLM needed)
 - Per-project profiles with technologies, skills, and time ranges
 
 Supports personal access tokens for private repos and higher rate limits.
+
+GitHub evidence is interpreted conservatively:
+
+- A language total says the repository contains that language. It does not prove
+  that you authored all of it or establish a proficiency level.
+- Topics and README text are project self-description. They nominate possible
+  skills but are weaker than attributed source changes or direct build manifests.
+- A direct dependency can support a technology observation. A transitive
+  dependency alone should not create a skill claim.
+- Stars and repository size are popularity and scale signals. They are not code
+  quality or competence scores.
+- Forks, archived repositories, generated code, and missing attribution reduce
+  the strength of an inference.
+
+The current importer analyses languages, topics, README content, dates, and basic
+repository metadata. Repository quality and authorship analysis are being added
+through the JobML GitHub extension. That extension keeps raw observations,
+OpenSSF Scorecard checks, workflow results, attribution, inferred skills, and
+human-accepted claims separate.
 
 ### Work Preferences
 

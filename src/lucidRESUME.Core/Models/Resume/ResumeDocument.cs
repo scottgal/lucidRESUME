@@ -17,6 +17,18 @@ public sealed class ResumeDocument
     public string? RawJson { get; set; }
     public string? PlainText { get; set; }
 
+    /// <summary>Human-authoritative Markdown explicitly published from the JobML editor.</summary>
+    public string? CanonicalMarkdown { get; set; }
+
+    /// <summary>The complete Markdown + embedded JobML snapshot used for reviewed matching.</summary>
+    public string? JobMlSource { get; set; }
+
+    /// <summary>Fast revision fingerprint for detecting stale downstream projections.</summary>
+    public string? JobMlRevision { get; set; }
+
+    /// <summary>Selected single-column output template for DOCX and PDF rendering.</summary>
+    public string OutputTemplateId { get; set; } = ResumeTemplateCatalog.AtsClassicId;
+
     /// <summary>Filesystem cache key for page images (null if not yet cached).</summary>
     public string? ImageCacheKey { get; set; }
 
@@ -36,6 +48,15 @@ public sealed class ResumeDocument
 
     // Tailoring metadata
     public Guid? TailoredForJobId { get; set; }
+
+    /// <summary>
+    /// Provenance supplied by the generator. Each output claim is mapped back to one or
+    /// more stable entries in the imported evidence catalogue.
+    /// </summary>
+    public List<GenerationEvidenceLink> GenerationEvidenceLinks { get; set; } = [];
+
+    /// <summary>Non-fatal evidence conflicts or omissions reported during generation.</summary>
+    public List<string> GenerationWarnings { get; set; } = [];
 
     [JsonIgnore]
     public bool IsTailored => TailoredForJobId.HasValue;
@@ -71,4 +92,10 @@ public sealed class ResumeDocument
     public void AddEntity(ExtractedEntity entity) => Entities.Add(entity);
 
     public void MarkTailoredFor(Guid jobId) => TailoredForJobId = jobId;
+}
+
+public sealed class GenerationEvidenceLink
+{
+    public string OutputClaim { get; set; } = "";
+    public List<string> EvidenceRefs { get; set; } = [];
 }

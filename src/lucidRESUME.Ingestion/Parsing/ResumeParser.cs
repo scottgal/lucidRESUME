@@ -153,8 +153,8 @@ public sealed class ResumeParser : IResumeParser
                     && Path.GetExtension(filePath).Equals(".docx", StringComparison.OrdinalIgnoreCase))
                 {
                     var tempDir = Path.Combine(Path.GetTempPath(), "lucidRESUME-layout", Path.GetFileNameWithoutExtension(filePath));
-                    var converter = new global::WordRender.Skia.DocumentConverter();
-                    var result = converter.ConvertToImages(filePath, tempDir, new global::WordRender.ConversionOptions
+                    var converter = new global::Morph.SkiaDocumentConverter();
+                    var result = converter.ConvertToImages(filePath, tempDir, new global::Morph.ConversionOptions
                     {
                         Dpi = 150,
                         FontWidthScale = 1.07,

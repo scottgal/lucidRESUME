@@ -38,6 +38,8 @@ nul
 
 ## ONNX model files (download separately - auto-downloaded on first run)
 models/**/*.onnx
+models/**/*.gguf
+models/**/*.gguf.download
 models/**/*.txt
 models/**/*.json
 models/**/merges.txt

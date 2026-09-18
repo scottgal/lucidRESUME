@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using lucidRESUME.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,6 +21,7 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
     private readonly string _modelPath;
     private readonly string _vocabPath;
     private readonly ConcurrentDictionary<string, float[]> _cache = new();
+    private string? _failedModelSignature;
     private static readonly object LoadLock = new();
     private const int MaxCacheEntries = 500;
     private const int MaxSequenceLength = 256;
@@ -31,21 +33,42 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
         _modelPath = ResolvePath(opts.OnnxModelPath);
         _vocabPath = ResolvePath(opts.VocabPath);
 
-        // Lazy load — don't crash on construction if models not yet downloaded.
-        // StartupHealthCheck downloads models, then first EmbedAsync call loads them.
-        if (File.Exists(_modelPath) && File.Exists(_vocabPath))
-            LoadModel();
+        // Always defer parsing the model until the first embedding request. A partial,
+        // corrupt, or in-progress download must not prevent the desktop app starting.
+        // StartupHealthCheck can repair the files while lexical matching remains usable.
     }
 
-    private void EnsureLoaded()
+    private bool TryEnsureLoaded()
     {
-        if (_session != null && _tokenizer != null) return;
+        if (_session != null && _tokenizer != null) return true;
+        var signature = ModelSignature();
+        if (signature == _failedModelSignature) return false;
+
         lock (LoadLock)
         {
-            if (_session != null && _tokenizer != null) return;
-            if (!File.Exists(_modelPath))
-                throw new FileNotFoundException($"ONNX embedding model not found at {_modelPath}. It should auto-download on startup.");
-            LoadModel();
+            if (_session != null && _tokenizer != null) return true;
+            signature = ModelSignature();
+            if (signature == _failedModelSignature) return false;
+
+            try
+            {
+                if (!File.Exists(_modelPath) || !File.Exists(_vocabPath))
+                    throw new FileNotFoundException("The ONNX model or vocabulary is not installed.");
+                LoadModel();
+                _failedModelSignature = null;
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or
+                                       OnnxRuntimeException or InvalidOperationException or ArgumentException)
+            {
+                _session?.Dispose();
+                _session = null;
+                _tokenizer = null;
+                _failedModelSignature = signature;
+                _logger.LogWarning(ex,
+                    "ONNX embeddings are unavailable; using deterministic lexical vectors until the model files change");
+                return false;
+            }
         }
     }
 
@@ -65,12 +88,10 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
 
     public Task<float[]> EmbedAsync(string text, CancellationToken ct = default)
     {
-        EnsureLoaded();
-
         if (_cache.TryGetValue(text, out var cached))
             return Task.FromResult(cached);
 
-        var result = Embed(text);
+        var result = TryEnsureLoaded() ? Embed(text) : EmbedLexically(text);
 
         // Evict ~10% when cache full
         if (_cache.Count >= MaxCacheEntries)
@@ -81,6 +102,46 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
         _cache[text] = result;
 
         return Task.FromResult(result);
+    }
+
+    private string ModelSignature()
+    {
+        static string FileSignature(string path)
+        {
+            if (!File.Exists(path)) return "missing";
+            var info = new FileInfo(path);
+            return $"{info.Length}:{info.LastWriteTimeUtc.Ticks}";
+        }
+
+        return $"{FileSignature(_modelPath)}|{FileSignature(_vocabPath)}";
+    }
+
+    private static float[] EmbedLexically(string text)
+    {
+        const int dimensions = 384;
+        var vector = new float[dimensions];
+        foreach (Match match in Regex.Matches(text.ToLowerInvariant(), @"[a-z0-9][a-z0-9+#.\-]*"))
+        {
+            var hash = Fnv1a(match.Value);
+            var bucket = (int)(hash % dimensions);
+            vector[bucket] += (hash & 0x80000000) == 0 ? 1f : -1f;
+        }
+
+        Normalise(vector);
+        return vector;
+    }
+
+    private static uint Fnv1a(string value)
+    {
+        const uint offset = 2166136261;
+        const uint prime = 16777619;
+        var hash = offset;
+        foreach (var character in value)
+        {
+            hash ^= character;
+            hash *= prime;
+        }
+        return hash;
     }
 
     private float[] Embed(string text)

@@ -32,6 +32,10 @@ The core insight: **skills are not flat keywords**. They have evidence (which jo
 └──────────────────────────────────────────────────────────┘
 ```
 
+The desktop shell exposes My CV, JobML Editor, My Data, Career, Jobs, Add Job,
+Apply, Pipeline, Profile, and Help pages. The JobML editor is the reversible
+boundary between human prose and the evidence graph.
+
 ---
 
 ## 1. Extraction Pipeline
@@ -179,6 +183,44 @@ The ledger automatically flags:
 - **Years mismatch**: claims "10+ years Python" but calculated evidence shows 3 years
 - **Stale skills**: last used 5+ years ago
 
+### GitHub repository evidence
+
+GitHub import uses a staged evidence model:
+
+```text
+GitHub API observations
+    -> repository quality assessments
+    -> candidate skill observations
+    -> human-reviewed JobML claims
+```
+
+The current importer reads repository metadata, Linguist language byte totals,
+topics, README content, and dates. README extraction uses lucidRAG BERT summaries
+plus the shared skill taxonomy. The output contributes candidate ledger evidence
+and project profiles.
+
+These signals are not interchangeable:
+
+| Signal | Meaning | Must not be presented as |
+|---|---|---|
+| Linguist byte fraction | Code language present after GitHub's normal exclusions | Authorship or proficiency |
+| Topic or README mention | Project self-description | Demonstrated implementation |
+| Direct dependency | Technology is declared by the project | Personal expertise |
+| Workflow and successful run | Automation exists and ran at a revision | Overall code quality |
+| OpenSSF Scorecard check | Versioned security-practice assessment | Developer skill score |
+| Stars and forks | Popularity and reuse | Quality |
+| Commit attribution | Identity linked to changes | Authorship of the whole repository |
+
+The current `EvidenceStrength` repository heuristic combines size, extracted
+skill count, stars, and recency for ranking. It is not a repository quality score
+and is not promoted into accepted JobML claims.
+
+The JobML GitHub extension adds immutable revision capture, observation time,
+contributor attribution, direct dependency and workflow evidence, GitHub
+community metrics, and versioned OpenSSF Scorecard checks. Unknown or inaccessible
+signals stay `unknown`; they do not become negative evidence. See
+[`jobml-github-extension-0.1.md`](jobml-github-extension-0.1.md).
+
 ---
 
 ## 3. Skill Graph & Communities
@@ -276,11 +318,12 @@ Level 4: "ML.NET OpenAI LLM"                            → 8 results (adjacent 
 
 ## 5. AI Providers
 
-Three interchangeable providers, selected at startup via config:
+Four interchangeable providers, selected at startup via config:
 
 ```json
 {
-  "Tailoring": { "Provider": "ollama" },  // or "anthropic" or "openai"
+  "Tailoring": { "Provider": "llamasharp" },
+  "LlamaSharp": { "ModelPath": "models/grug-9b-Q4_K_M.gguf", "GpuLayerCount": -1 },
   "Ollama": { "BaseUrl": "http://localhost:11434", "Model": "qwen3.5:4b" },
   "Anthropic": { "ApiKey": "...", "Model": "claude-haiku-4-5-20251001" },
   "OpenAi": { "ApiKey": "...", "Model": "gpt-4o-mini" }
@@ -429,6 +472,7 @@ All tuneable parameters are in `appsettings.json`:
 
 | Section | Controls |
 |---------|----------|
+| `LlamaSharp` | Local GGUF model identity/path, download URL, context, GPU layers, generation limits |
 | `Ollama` | LLM provider URL, model names, context window |
 | `Anthropic` | API key, model selection |
 | `OpenAi` | API key, base URL, model selection |
@@ -485,7 +529,7 @@ Release automation lives in `.github/workflows/release.yml`. A `v*` tag builds s
 | macOS | `osx-x64`, `osx-arm64` |
 | Linux | `linux-x64`, `linux-arm64` |
 
-Each runtime produces both `.zip` and `.tar.gz` archives with SHA-256 checksum files. The GitHub release page is populated with Markdown notes covering usage, configuration, and macOS Gatekeeper guidance. The workflow also builds a documentation archive containing `lucidRESUME-docs-single-page.md`, which concatenates the README, architecture guide, and in-app user manual into a single offline Markdown page.
+Each runtime produces both `.zip` and `.tar.gz` archives with SHA-256 checksum files. The GitHub release page is populated with Markdown notes covering usage, configuration, and macOS Gatekeeper guidance. The workflow also builds a documentation archive containing `lucidRESUME-docs-single-page.md`, which concatenates the README, architecture guide, in-app user manual, JobML specification, and GitHub extension into a single offline Markdown page. The deterministic JobML JSON Schema is included as a separate file.
 
 Native installers are intentionally out of scope for the current release baseline. MSI, DMG, AppImage, Flatpak, or Snap packaging should be added only after signing, icons, and installer metadata are in place.
 

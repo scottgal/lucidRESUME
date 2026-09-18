@@ -15,6 +15,9 @@ public sealed class StartupHealthCheck
     private readonly IEmbeddingService _embedder;
     private readonly EmbeddingOptions _embeddingOpts;
     private readonly OllamaOptions _ollamaOpts;
+    private readonly TailoringOptions _tailoringOpts;
+    private readonly LlamaSharpModelManager _llamaSharpModels;
+    private readonly IAiTailoringService _aiTailoring;
     private readonly DoclingOptions _doclingOpts;
     private readonly IDoclingClient? _docling;
     private readonly HttpClient _http;
@@ -24,6 +27,9 @@ public sealed class StartupHealthCheck
         IEmbeddingService embedder,
         IOptions<EmbeddingOptions> embeddingOpts,
         IOptions<OllamaOptions> ollamaOpts,
+        IOptions<TailoringOptions> tailoringOpts,
+        LlamaSharpModelManager llamaSharpModels,
+        IAiTailoringService aiTailoring,
         IOptions<DoclingOptions> doclingOpts,
         HttpClient http,
         ILogger<StartupHealthCheck> logger,
@@ -32,6 +38,9 @@ public sealed class StartupHealthCheck
         _embedder = embedder;
         _embeddingOpts = embeddingOpts.Value;
         _ollamaOpts = ollamaOpts.Value;
+        _tailoringOpts = tailoringOpts.Value;
+        _llamaSharpModels = llamaSharpModels;
+        _aiTailoring = aiTailoring;
         _doclingOpts = doclingOpts.Value;
         _docling = docling;
         _http = http;
@@ -45,6 +54,9 @@ public sealed class StartupHealthCheck
     public bool IsOnnxEmbedding => _embeddingOpts.Provider.Equals("onnx", StringComparison.OrdinalIgnoreCase);
     public bool DoclingEnabled => _doclingOpts.Enabled;
     public string OllamaUrl => _ollamaOpts.BaseUrl;
+    public string AiProvider => _tailoringOpts.Provider;
+    public string AiStatus { get; private set; } = "AI: checking...";
+    public bool AiAvailable { get; private set; }
 
     public bool OllamaAvailable { get; private set; }
     public bool DoclingAvailable { get; private set; }
@@ -71,24 +83,47 @@ public sealed class StartupHealthCheck
         // --- NER models ---
         await EnsureNerModelsAsync(ct);
 
-        // --- Check Ollama ---
-        ReportStatus("ollama", "Ollama: checking...");
-        try
+        // --- Check the selected AI provider ---
+        ReportStatus("ai", $"AI ({AiProvider}): checking...");
+        var needsOllama = AiProvider.Equals("ollama", StringComparison.OrdinalIgnoreCase) ||
+                          _embeddingOpts.Provider.Equals("ollama", StringComparison.OrdinalIgnoreCase);
+        if (needsOllama)
         {
-            var resp = await _http.GetAsync($"{_ollamaOpts.BaseUrl}/api/tags", ct);
-            OllamaAvailable = resp.IsSuccessStatusCode;
-            if (OllamaAvailable)
-                _logger.LogInformation("Ollama available at {Url}", _ollamaOpts.BaseUrl);
-        }
-        catch
-        {
-            OllamaAvailable = false;
+            try
+            {
+                var resp = await _http.GetAsync($"{_ollamaOpts.BaseUrl}/api/tags", ct);
+                OllamaAvailable = resp.IsSuccessStatusCode;
+                if (OllamaAvailable)
+                    _logger.LogInformation("Ollama available at {Url}", _ollamaOpts.BaseUrl);
+            }
+            catch
+            {
+                OllamaAvailable = false;
+            }
         }
 
-        if (!OllamaAvailable)
+        if (AiProvider.Equals("llamasharp", StringComparison.OrdinalIgnoreCase))
         {
-            Warnings.Add($"Ollama not available at {_ollamaOpts.BaseUrl}. AI tailoring and LLM extraction disabled. " +
-                $"To enable: install Ollama, then run 'ollama pull {_ollamaOpts.Model}' and 'ollama pull {_ollamaOpts.ExtractionModel}'");
+            AiAvailable = await _aiTailoring.CheckAvailabilityAsync(ct);
+            AiStatus = AiAvailable
+                ? $"AI: grug 9B ready ({_llamaSharpModels.ModelPath})"
+                : "AI: grug 9B not downloaded";
+            if (!AiAvailable)
+                Warnings.Add("The local grug 9B model is not installed. Download it under Profile → AI Provider to enable tailoring and LLM extraction.");
+        }
+        else if (AiProvider.Equals("ollama", StringComparison.OrdinalIgnoreCase))
+        {
+            AiAvailable = await _aiTailoring.CheckAvailabilityAsync(ct);
+            AiStatus = AiAvailable ? $"AI: Ollama connected ({_ollamaOpts.BaseUrl})" : "AI: Ollama offline";
+            if (!AiAvailable)
+                Warnings.Add($"Ollama not available at {_ollamaOpts.BaseUrl}. AI tailoring and LLM extraction disabled.");
+        }
+        else
+        {
+            AiAvailable = await _aiTailoring.CheckAvailabilityAsync(ct);
+            AiStatus = AiAvailable ? $"AI: {AiProvider} connected" : $"AI: {AiProvider} unavailable";
+            if (!AiAvailable)
+                Warnings.Add($"The configured {AiProvider} provider is unavailable. Check its API key and model settings.");
         }
 
         // --- Check Docling ---

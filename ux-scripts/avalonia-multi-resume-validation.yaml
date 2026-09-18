@@ -1,0 +1,52 @@
+name: avalonia-multi-resume-validation
+description: Validate two real DOCX imports, merge review, experience rendering, and post-merge reload.
+default_delay: 150
+
+actions:
+  - type: Wait
+    value: "1200"
+
+  - type: Navigate
+    value: Resume
+
+  - type: ImportFile
+    target: Fast
+    value: test-data/resumes/Scott_Galloway_CTO.docx
+    description: Import the first DOCX as the candidate base.
+
+  - type: Expect
+    target: name=ResumeContent
+    matcher: IsVisible
+    timeout: 15000
+
+  - type: Screenshot
+    value: 01-first-docx-with-experience
+
+  - type: ImportFile
+    target: Fast
+    value: test-data/resumes/Scott_Galloway_Lead_Developer.docx
+    description: Import a second source and require the review workflow.
+
+  - type: Expect
+    target: name=ReviewImportTitle
+    matcher: IsVisible
+    timeout: 15000
+
+  - type: Screenshot
+    value: 02-second-docx-review
+
+  - type: Click
+    target: name=ApplyAllImportButton
+
+  - type: Expect
+    target: name=ResumeContent
+    matcher: IsVisible
+    timeout: 15000
+
+  - type: Expect
+    target: name=ImportErrorBanner
+    matcher: IsHidden
+    timeout: 3000
+
+  - type: Screenshot
+    value: 03-merged-experience-reloaded

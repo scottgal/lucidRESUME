@@ -1,0 +1,18 @@
+name: avalonia-apply-output-validation
+description: Visually validate the end-to-end resume tailoring and output controls.
+default_delay: 150
+
+actions:
+  - type: Wait
+    value: "1200"
+
+  - type: Navigate
+    value: Apply
+
+  - type: Expect
+    target: name=OutputTemplateSelector
+    matcher: IsVisible
+    timeout: 5000
+
+  - type: Screenshot
+    value: 01-apply-template-and-job-input

@@ -1,6 +1,7 @@
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Extraction.Recognizers;
 using lucidRESUME.Parsing;
+using System.Text.RegularExpressions;
 
 namespace lucidRESUME.Ingestion.Parsing;
 
@@ -15,6 +16,7 @@ namespace lucidRESUME.Ingestion.Parsing;
 /// </summary>
 public static class MarkdownSectionParser
 {
+    private static readonly Regex StableAnchorPattern = new(@"\s*\{#[A-Za-z][A-Za-z0-9_.-]*\}\s*$", RegexOptions.Compiled);
     /// <summary>
     /// Populate resume sections from pre-parsed <see cref="DocumentSection"/> objects
     /// (produced by the direct DOCX/PDF parser).  When sections carry a
@@ -31,6 +33,7 @@ public static class MarkdownSectionParser
             PopulateSectionsFromStructured(resume, sections);
             // Still run name extraction from markdown as a guard
             ExtractNameFromMarkdown(resume, markdown.Split('\n'));
+            ExtractContactDetails(resume, markdown.Split('\n'));
             // Fallback: if skills still empty, scan pre-heading area for "Hard Skills:" etc.
             if (resume.Skills.Count == 0)
                 ExtractSkillsFromPreHeader(resume, markdown.Split('\n'));
@@ -47,6 +50,7 @@ public static class MarkdownSectionParser
 
         // ── 2. Extract full name from first heading (if not already set) ─────
         ExtractNameFromMarkdown(resume, lines);
+        ExtractContactDetails(resume, lines);
 
         // ── 3. Split into labelled sections ──────────────────────────────────
         var labelledSections = SplitIntoSections(lines);
@@ -406,6 +410,31 @@ public static class MarkdownSectionParser
         resume.Personal.FullName = namePart.Split('.')[0].Trim();
     }
 
+    private static void ExtractContactDetails(ResumeDocument resume, string[] lines)
+    {
+        var nameIndex = Array.FindIndex(lines, line => line.StartsWith("# ", StringComparison.Ordinal));
+        if (nameIndex < 0) return;
+
+        foreach (var raw in lines.Skip(nameIndex + 1).TakeWhile(line => !line.StartsWith('#')))
+        {
+            foreach (var rawPart in raw.Split('|', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var part = rawPart.Trim().Trim('<', '>');
+                if (part.Length == 0) continue;
+                if (part.Contains('@') && Regex.IsMatch(part, @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
+                    resume.Personal.Email ??= part;
+                else if (part.Contains("linkedin.com/", StringComparison.OrdinalIgnoreCase))
+                    resume.Personal.LinkedInUrl ??= part;
+                else if (part.Contains("github.com/", StringComparison.OrdinalIgnoreCase))
+                    resume.Personal.GitHubUrl ??= part;
+                else if (Regex.IsMatch(part, @"^(?:https?://)?(?:www\.)?[a-z0-9.-]+\.[a-z]{2,}(?:/\S*)?$", RegexOptions.IgnoreCase))
+                    resume.Personal.WebsiteUrl ??= part;
+                else if (part.Contains(',') && !part.Contains(':') && part.Length <= 80)
+                    resume.Personal.Location ??= part;
+            }
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
 
     private static string? ExtractSummary(string[] lines)
@@ -422,7 +451,15 @@ public static class MarkdownSectionParser
                 if (inSummary) break;
 
                 var section = SectionClassifier.ClassifyHeading(line);
-                if (section == "Summary") { inSummary = true; continue; }
+                if (section == "Summary")
+                {
+                    // Contact lines commonly sit between the name and the explicit
+                    // summary heading. The named section is authoritative, so discard
+                    // any pre-heading fallback text instead of concatenating PII into it.
+                    sb.Clear();
+                    inSummary = true;
+                    continue;
+                }
                 if (sb.Length > 0) break;
                 continue;
             }
@@ -492,7 +529,7 @@ public static class MarkdownSectionParser
             var colonIdx = line.IndexOf(':');
             if (colonIdx > 0 && colonIdx < 40)
             {
-                currentCategory = line[..colonIdx].Trim();
+                currentCategory = line[..colonIdx].Trim().Trim('-', '*', '_', ' ');
                 line = line[(colonIdx + 1)..].Trim();
             }
 
@@ -880,9 +917,30 @@ public static class MarkdownSectionParser
                 }
                 else if (content.Contains(" | "))
                 {
-                    var parts = content.Split(" | ", 2);
-                    current.Institution = parts[0].Trim();
-                    current.Degree = parts[1].Trim();
+                    var parts = content.Split(" | ", StringSplitOptions.RemoveEmptyEntries)
+                        .Select(part => part.Trim().Trim('*', '_', ' ')).ToList();
+                    var datePart = parts.FirstOrDefault(ResumeDateParser.ContainsDate);
+                    if (datePart is not null)
+                    {
+                        var embeddedDateRange = ResumeDateParser.ExtractFirstDateRange(datePart);
+                        if (embeddedDateRange is not null) ApplyDateRange(current, embeddedDateRange);
+                        parts.Remove(datePart);
+                        dateAlreadyApplied = true;
+                    }
+                    if (parts.Count >= 2 && LooksLikeDegree(parts[0]))
+                    {
+                        current.Degree = parts[0];
+                        current.Institution = parts[1];
+                    }
+                    else if (parts.Count >= 2)
+                    {
+                        current.Institution = parts[0];
+                        current.Degree = parts[1];
+                    }
+                    else if (parts.Count == 1)
+                    {
+                        current.Institution = parts[0];
+                    }
                 }
                 else current.Institution = content;
 
@@ -927,17 +985,46 @@ public static class MarkdownSectionParser
         if (current != null) resume.Education.Add(current);
     }
 
+    private static bool LooksLikeDegree(string value) => Regex.IsMatch(value,
+        @"\b(bsc|ba|beng|msc|ma|meng|mba|phd|doctorate|bachelor|master|degree|diploma)\b",
+        RegexOptions.IgnoreCase);
+
     private static WorkExperience ParseJobHeading(string content)
     {
+        content = StableAnchorPattern.Replace(content, "").Trim();
         var job = new WorkExperience();
         // Try pipe-separated first: "Company | Title | Location DateRange"
         // Then em-dash/en-dash: "Company - Title"
         var parts = content.Split('|');
         if (parts.Length >= 2)
         {
-            job.Company = parts[0].Trim();
-            job.Title = parts[1].Trim();
-            if (parts.Length >= 3) job.Location = parts[2].Trim();
+            var first = parts[0].Trim();
+            var second = parts[1].Trim();
+            if (LooksLikeJobTitle(first) && !LooksLikeJobTitle(second))
+            {
+                job.Title = first;
+                job.Company = second;
+            }
+            else
+            {
+                job.Company = first;
+                job.Title = second;
+            }
+            if (parts.Length >= 3)
+            {
+                var location = parts[2].Trim();
+                var rangeInLocation = ResumeDateParser.ExtractFirstDateRange(location);
+                if (rangeInLocation is not null)
+                {
+                    location = string.Concat(
+                            location.AsSpan(0, rangeInLocation.MatchStart),
+                            location.AsSpan(rangeInLocation.MatchEnd + 1))
+                        .Trim(' ', '|', ',', '-', '–', '—');
+                    if (Regex.IsMatch(location, @"^(present|current|now)$", RegexOptions.IgnoreCase))
+                        location = "";
+                }
+                if (!string.IsNullOrWhiteSpace(location)) job.Location = location;
+            }
         }
         else
         {
@@ -959,6 +1046,17 @@ public static class MarkdownSectionParser
         var dateRange = ResumeDateParser.ExtractFirstDateRange(content);
         if (dateRange != null) ApplyDateRange(job, dateRange);
         return job;
+    }
+
+    private static bool LooksLikeJobTitle(string value)
+    {
+        string[] roleTerms =
+        [
+            "engineer", "developer", "architect", "consultant", "manager", "director",
+            "officer", "head", "lead", "analyst", "designer", "specialist", "administrator",
+            "coordinator", "program manager", "programme manager", "project manager", "product manager"
+        ];
+        return roleTerms.Any(term => value.Contains(term, StringComparison.OrdinalIgnoreCase));
     }
 
     private static void ApplyDateRange(WorkExperience job, DateRangeResult range)

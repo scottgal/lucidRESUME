@@ -13,8 +13,8 @@
 
     <!-- Toolbar -->
     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="16,8">
-      <Button Content="Import Resume…" Command="{Binding ImportResumeCommand}"/>
-      <ComboBox ItemsSource="{Binding ResumeItems}" SelectedItem="{Binding SelectedResumeItem}"
+      <Button x:Name="ImportResumeButton" Content="Import Resume…" Command="{Binding ImportResumeCommand}"/>
+      <ComboBox x:Name="ResumeSelector" ItemsSource="{Binding ResumeItems}" SelectedItem="{Binding SelectedResumeItem}"
                 Width="220" VerticalAlignment="Center" FontSize="11" Padding="6,3"
                 IsVisible="{Binding HasResume}"
                 ToolTip.Tip="Select which imported resume to inspect/export. Skill evidence uses all imported resumes.">
@@ -41,6 +41,9 @@
               IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"/>
       <Button Content="Export Markdown" Command="{Binding ExportMarkdownCommand}"
               IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"/>
+      <Button Content="Edit JobML" Command="{Binding EditInJobMlCommand}"
+              IsVisible="{Binding HasResume}" Padding="8,4" FontSize="12"
+              ToolTip.Tip="Open the human Markdown in the reversible evidence editor"/>
 
       <!-- Import mode selector -->
       <ComboBox ItemsSource="{Binding ImportModes}" SelectedItem="{Binding ImportMode}"
@@ -64,14 +67,14 @@
 
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
       <ProgressBar IsVisible="{Binding IsTranslating}" IsIndeterminate="True" Width="100" VerticalAlignment="Center"/>
-      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}"
+      <TextBlock x:Name="ImportStatus" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </StackPanel>
 
     <!-- Error banner -->
-    <Border Grid.Row="1" Background="{DynamicResource LrAccentRedBgBrush}" Padding="12,6" Margin="16,0"
+    <Border x:Name="ImportErrorBanner" Grid.Row="1" Background="{DynamicResource LrAccentRedBgBrush}" Padding="12,6" Margin="16,0"
             IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-      <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource LrAccentRedBrush}"/>
+      <TextBlock x:Name="ImportError" Text="{Binding ErrorMessage}" Foreground="{DynamicResource LrAccentRedBrush}"/>
     </Border>
 
     <!-- Empty state -->
@@ -82,7 +85,7 @@
     </StackPanel>
 
     <!-- Main content: side-by-side page preview + structured data -->
-    <Grid Grid.Row="2" ColumnDefinitions="*,*" IsVisible="{Binding HasResume}">
+    <Grid x:Name="ResumeContent" Grid.Row="2" ColumnDefinitions="*,*" IsVisible="{Binding HasResume}">
 
       <!-- LEFT: Document page viewer -->
       <Grid Grid.Column="0" RowDefinitions="*,Auto" Margin="16,8,8,16">

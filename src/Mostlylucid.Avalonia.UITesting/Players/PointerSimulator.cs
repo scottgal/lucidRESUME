@@ -34,7 +34,6 @@ public sealed class PointerSimulator
     private const int XButton2Down = 9;
     private const int XButton2Up = 10;
     private const int LeaveWindow = 0;
-    private const int Wheel = 12;
     private const int TouchBegin = 14;
     private const int TouchUpdate = 15;
     private const int TouchEnd = 16;

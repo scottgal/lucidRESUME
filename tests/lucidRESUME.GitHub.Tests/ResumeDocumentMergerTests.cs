@@ -1,20 +1,22 @@
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Resume;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace lucidRESUME.GitHub.Tests;
 
 /// <summary>
-/// Simple embedding service that uses string hash as a proxy.
-/// Identical strings will have similarity 1.0, different strings ~0.
+/// Deterministic embedding test double. Do not use string.GetHashCode here: it is
+/// process-randomized and made semantic-match tests intermittently merge unrelated skills.
 /// </summary>
 sealed class TestEmbeddingService : IEmbeddingService
 {
     public Task<float[]> EmbedAsync(string text, CancellationToken ct = default)
     {
-        var hash = text.ToLowerInvariant().GetHashCode();
-        var emb = new float[8];
-        for (var i = 0; i < 8; i++)
-            emb[i] = ((hash >> (i * 4)) & 0xF) / 15f;
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(text.ToLowerInvariant()));
+        var emb = new float[hash.Length];
+        for (var i = 0; i < hash.Length; i++)
+            emb[i] = (hash[i] - 127.5f) / 127.5f;
         var norm = MathF.Sqrt(emb.Sum(x => x * x));
         if (norm > 0) for (var i = 0; i < 8; i++) emb[i] /= norm;
         return Task.FromResult(emb);
@@ -29,9 +31,51 @@ sealed class TestEmbeddingService : IEmbeddingService
     }
 }
 
+sealed class FailingEmbeddingService : IEmbeddingService
+{
+    public Task<float[]> EmbedAsync(string text, CancellationToken ct = default) =>
+        throw new InvalidDataException("simulated corrupt model");
+
+    public float CosineSimilarity(float[] a, float[] b) => throw new NotSupportedException();
+}
+
 public class ResumeDocumentMergerTests
 {
     private readonly ResumeDocumentMerger _merger = new(new TestEmbeddingService());
+
+    [Fact]
+    public async Task PreviewMerge_WhenEmbeddingModelFails_UsesDeterministicFallback()
+    {
+        var target = ResumeDocument.Create("base.docx", "application/docx", 100);
+        target.Experience.Add(new WorkExperience
+        {
+            Company = "Acme Ltd",
+            Title = "Engineer",
+            StartDate = new DateOnly(2020, 1, 1),
+            EndDate = new DateOnly(2022, 1, 1)
+        });
+        target.Skills.Add(new Skill { Name = "C#" });
+
+        var incoming = ResumeDocument.Create("variant.docx", "application/docx", 100);
+        incoming.Experience.Add(new WorkExperience
+        {
+            Company = "Acme Ltd",
+            Title = "Senior Engineer",
+            StartDate = new DateOnly(2020, 2, 1),
+            EndDate = new DateOnly(2022, 1, 1)
+        });
+        incoming.Experience.Add(new WorkExperience { Company = "Different Company", Title = "Consultant" });
+        incoming.Skills.Add(new Skill { Name = "C#" });
+        incoming.Skills.Add(new Skill { Name = "Kubernetes" });
+
+        var preview = await new ResumeDocumentMerger(new FailingEmbeddingService())
+            .PreviewMergeAsync(target, incoming, "variant.docx");
+
+        Assert.Single(preview.MergedExperience);
+        Assert.Single(preview.NewExperience);
+        Assert.Single(preview.UpdatedSkills);
+        Assert.Single(preview.NewSkills);
+    }
 
     [Fact]
     public async Task MergeInto_MergesExperienceByCompanyAndDateOverlap()
@@ -161,5 +205,58 @@ public class ResumeDocumentMergerTests
 
         Assert.Single(target.Experience);
         Assert.Equal(3, target.Experience[0].Achievements.Count);
+    }
+
+    [Fact]
+    public async Task MergeInto_MergesReorderedDevelopmentLeadTitlesWithoutWideningConflictingDate()
+    {
+        var target = ResumeDocument.Create("new.docx", "application/docx", 100);
+        target.Experience.Add(new WorkExperience
+        {
+            Company = "Dell",
+            Title = "Development Lead",
+            StartDate = new DateOnly(2011, 1, 1),
+            EndDate = new DateOnly(2011, 7, 1)
+        });
+        var incoming = ResumeDocument.Create("old.docx", "application/docx", 100);
+        incoming.Experience.Add(new WorkExperience
+        {
+            Company = "Dell Limited",
+            Title = "Lead Developer",
+            StartDate = new DateOnly(2010, 1, 1),
+            EndDate = new DateOnly(2010, 8, 1)
+        });
+
+        var anomalies = await _merger.MergeIntoAsync(target, incoming, "old.docx");
+
+        Assert.Single(target.Experience);
+        Assert.Equal(new DateOnly(2011, 1, 1), target.Experience[0].StartDate);
+        Assert.Equal(new DateOnly(2011, 7, 1), target.Experience[0].EndDate);
+        Assert.Contains(anomalies, anomaly => anomaly.Type == AnomalyType.DateMismatch);
+    }
+
+    [Fact]
+    public async Task MergeInto_PreservesConsecutiveDistinctRolesAtSameCompany()
+    {
+        var target = ResumeDocument.Create("base.docx", "application/docx", 100);
+        target.Experience.Add(new WorkExperience
+        {
+            Company = "Microsoft",
+            Title = "Application Development Consultant",
+            StartDate = new DateOnly(2005, 6, 1),
+            EndDate = new DateOnly(2007, 1, 1)
+        });
+        var incoming = ResumeDocument.Create("base.docx", "application/docx", 100);
+        incoming.Experience.Add(new WorkExperience
+        {
+            Company = "Microsoft",
+            Title = "Program Manager",
+            StartDate = new DateOnly(2007, 1, 1),
+            EndDate = new DateOnly(2009, 10, 1)
+        });
+
+        await _merger.MergeIntoAsync(target, incoming, "base.docx");
+
+        Assert.Equal(2, target.Experience.Count);
     }
 }

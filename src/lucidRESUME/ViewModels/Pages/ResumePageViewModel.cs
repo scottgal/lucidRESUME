@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using System.Collections.ObjectModel;
+using System.Text;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -41,6 +42,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
     /// <summary>Set by App.axaml.cs to navigate to the import review page.</summary>
     public Action<Core.Models.Resume.ResumeDocument, Core.Models.Resume.ImportPreview>? ShowImportReview { get; set; }
+
+    /// <summary>Set by the shell to transfer the selected résumé into the reversible JobML editor.</summary>
+    public Func<string, Guid, bool>? OpenInJobMl { get; set; }
 
     // LibreOffice-generated page image paths (fallback when Docling unavailable)
     private string[] _libreOfficePageImages = [];
@@ -186,6 +190,21 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         }
     }
 
+    public async Task ReloadAsync()
+    {
+        // Keep the real source path across an import-review round trip. Persisted
+        // documents intentionally store a display filename, which is insufficient
+        // for regenerating the Morph preview after the merge is applied.
+        var sourcePath = _loadedFilePath;
+        var state = await _store.LoadAsync();
+        RefreshResumeItems(state);
+        if (state.SelectedResume is null) return;
+
+        ErrorMessage = null;
+        await ShowResumeAsync(state.SelectedResume,
+            sourcePath is not null && File.Exists(sourcePath) ? sourcePath : null);
+    }
+
     [RelayCommand]
     private async Task ImportResumeAsync()
     {
@@ -264,7 +283,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             else
             {
                 StatusMessage = $"Parsing {Path.GetFileName(path)}…";
-                incoming = await ParseResumeAsync(path, ParseMode.AI);
+                var mode = ImportMode == "Fast" ? ParseMode.Fast : ParseMode.AI;
+                incoming = await ParseResumeAsync(path, mode);
                 sourceName = Path.GetFileName(path);
             }
 
@@ -280,6 +300,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
                 foreach (var proj in incoming.Projects) proj.ImportSources.Add(sourceName);
                 Resume = incoming;
                 await _store.MutateAsync(s => s.AddOrReplaceResume(Resume, select: true));
+                RefreshResumeItems(await _store.LoadAsync());
             }
             else
             {
@@ -300,12 +321,14 @@ public sealed partial class ResumePageViewModel : ViewModelBase
                 }
             }
 
-            await ShowResumeAsync(Resume, path);
-            StatusMessage ??= $"Imported {sourceName}: {Resume.Skills.Count} skills, {Resume.Experience.Count} positions";
+            var activeResume = target ?? incoming;
+            Resume = activeResume;
+            await ShowResumeAsync(activeResume, path);
+            StatusMessage ??= $"Imported {sourceName}: {activeResume.Skills.Count} skills, {activeResume.Experience.Count} positions";
 
             // Index embeddings in background (non-blocking)
             if (_store is Core.Persistence.SqliteAppStore sqlStore)
-                _ = _embeddingIndexer.IndexResumeAsync(Resume, sqlStore.Vectors);
+                _ = _embeddingIndexer.IndexResumeAsync(activeResume, sqlStore.Vectors);
         }
         catch (Exception ex)
         {
@@ -487,10 +510,33 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         catch (Exception ex) { ErrorMessage = $"Export failed: {ex.Message}"; }
     }
 
+    [RelayCommand(CanExecute = nameof(HasResume))]
+    private async Task EditInJobMlAsync()
+    {
+        if (Resume is null || _markdownExporter is null || OpenInJobMl is null) return;
+        try
+        {
+            var markdown = !string.IsNullOrWhiteSpace(Resume.CanonicalMarkdown)
+                ? Resume.CanonicalMarkdown
+                : !string.IsNullOrWhiteSpace(Resume.RawMarkdown)
+                    ? Resume.RawMarkdown
+                    : Encoding.UTF8.GetString(await _markdownExporter.ExportAsync(Resume));
+            var loaded = OpenInJobMl(markdown!, Resume.ResumeId);
+            StatusMessage = loaded
+                ? "Opened this résumé in the JobML editor."
+                : "JobML editor opened without replacing its unsaved workspace.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Could not open JobML editor: {ex.Message}";
+        }
+    }
+
     partial void OnHasResumeChanged(bool value)
     {
         ExportJsonCommand.NotifyCanExecuteChanged();
         ExportMarkdownCommand.NotifyCanExecuteChanged();
+        EditInJobMlCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanGoToPrevPage))]

@@ -10,6 +10,12 @@ public sealed class MarkdownExporter : IResumeExporter
 
     public Task<byte[]> ExportAsync(ResumeDocument resume, CancellationToken ct = default)
     {
+        if (!string.IsNullOrWhiteSpace(resume.JobMlSource))
+            return Task.FromResult(Encoding.UTF8.GetBytes(resume.JobMlSource));
+
+        if (!string.IsNullOrWhiteSpace(resume.CanonicalMarkdown))
+            return Task.FromResult(Encoding.UTF8.GetBytes(resume.CanonicalMarkdown));
+
         // If no structured sections were populated yet, surface the raw Docling markdown
         var hasStructured = resume.Experience.Count > 0 || resume.Education.Count > 0 || resume.Skills.Count > 0;
         if (!hasStructured && resume.RawMarkdown is not null)

@@ -8,11 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="8.0.1">
+    <PackageReference Include="coverlet.collector" Version="10.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="QuestPDF" Version="2026.9.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <PrivateAssets>all</PrivateAssets>
@@ -26,7 +27,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\lucidRESUME.Core\lucidRESUME.Core.csproj" />
+    <ProjectReference Include="..\..\src\lucidRESUME.Export\lucidRESUME.Export.csproj" />
     <ProjectReference Include="..\..\src\lucidRESUME.Ingestion\lucidRESUME.Ingestion.csproj" />
+    <ProjectReference Include="..\..\src\lucidRESUME.JobML\lucidRESUME.JobML.csproj" />
   </ItemGroup>
 
 </Project>

@@ -35,18 +35,18 @@
                          Text="Current Title" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Grid.Row="1" Grid.Column="0"
                        Text="{Binding FullName}"
-                       Watermark="e.g. Jane Smith"
+                       PlaceholderText="e.g. Jane Smith"
                        CornerRadius="6" Padding="10,8"/>
               <TextBox Grid.Row="1" Grid.Column="2"
                        Text="{Binding CurrentTitle}"
-                       Watermark="e.g. Senior Developer"
+                       PlaceholderText="e.g. Senior Developer"
                        CornerRadius="6" Padding="10,8"/>
               <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
                          Text="Years of Experience"
                          Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,8,0,4"/>
               <TextBox Grid.Row="3" Grid.Column="0"
                        Text="{Binding YearsOfExperience}"
-                       Watermark="e.g. 8"
+                       PlaceholderText="e.g. 8"
                        CornerRadius="6" Padding="10,8"/>
             </Grid>
           </StackPanel>
@@ -86,17 +86,17 @@
                          Text="Currency" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Grid.Row="1" Grid.Column="0"
                        Text="{Binding MinSalary}"
-                       Watermark="e.g. 80000"
+                       PlaceholderText="e.g. 80000"
                        CornerRadius="6" Padding="10,8"/>
               <TextBox Grid.Row="1" Grid.Column="2"
                        Text="{Binding PreferredCurrency}"
-                       Watermark="GBP"
+                       PlaceholderText="GBP"
                        CornerRadius="6" Padding="10,8"/>
             </Grid>
             <StackPanel Spacing="4">
               <TextBlock Text="Max Commute (minutes)" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Text="{Binding MaxCommuteMinutes}"
-                       Watermark="e.g. 45"
+                       PlaceholderText="e.g. 45"
                        CornerRadius="6" Padding="10,8"
                        HorizontalAlignment="Left" Width="160"/>
             </StackPanel>
@@ -156,7 +156,7 @@
             <StackPanel Spacing="4">
               <TextBlock Text="Career Goals" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Text="{Binding CareerGoals}"
-                       Watermark="Describe what you're looking for…"
+                       PlaceholderText="Describe what you're looking for…"
                        AcceptsReturn="True" TextWrapping="Wrap" Height="80"
                        CornerRadius="6" Padding="10,8"
                        ScrollViewer.VerticalScrollBarVisibility="Auto"/>
@@ -164,7 +164,7 @@
             <StackPanel Spacing="4">
               <TextBlock Text="Additional Context" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Text="{Binding AdditionalContext}"
-                       Watermark="Anything else for the AI to know…"
+                       PlaceholderText="Anything else for the AI to know…"
                        AcceptsReturn="True" TextWrapping="Wrap" Height="64"
                        CornerRadius="6" Padding="10,8"
                        ScrollViewer.VerticalScrollBarVisibility="Auto"/>
@@ -192,7 +192,7 @@
                          Text="GitHub Username" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12" Margin="0,0,0,4"/>
               <TextBox Grid.Row="1" Grid.Column="0"
                        Text="{Binding GitHubUsername}"
-                       Watermark="e.g. scottgal"
+                       PlaceholderText="e.g. scottgal"
                        CornerRadius="6" Padding="10,8"/>
               <Button Grid.Row="1" Grid.Column="2"
                       Content="Import" Command="{Binding ImportGitHubCommand}"
@@ -226,14 +226,14 @@
             <!-- Anthropic API Key -->
             <StackPanel Spacing="4">
               <TextBlock Text="Anthropic API Key" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-              <TextBox Text="{Binding AnthropicApiKey}" Watermark="sk-ant-..." PasswordChar="*"
+              <TextBox Text="{Binding AnthropicApiKey}" PlaceholderText="sk-ant-..." PasswordChar="*"
                        CornerRadius="6" Padding="10,8"/>
             </StackPanel>
 
             <!-- OpenAI API Key -->
             <StackPanel Spacing="4">
               <TextBlock Text="OpenAI API Key" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-              <TextBox Text="{Binding OpenAiApiKey}" Watermark="sk-..." PasswordChar="*"
+              <TextBox Text="{Binding OpenAiApiKey}" PlaceholderText="sk-..." PasswordChar="*"
                        CornerRadius="6" Padding="10,8"/>
             </StackPanel>
 
@@ -245,6 +245,18 @@
                 <ProgressBar IsVisible="{Binding IsLoadingModels}" IsIndeterminate="True" Width="60" VerticalAlignment="Center"/>
               </StackPanel>
               <ComboBox ItemsSource="{Binding AvailableModelIds}" SelectedItem="{Binding SelectedModel}" MinWidth="300"/>
+            </StackPanel>
+
+            <StackPanel Spacing="6" IsVisible="{Binding IsLlamaSharp}">
+              <TextBlock Text="Runs fully in-process through LLamaSharp. Q4_K_M needs a 5.63 GB download and roughly 8 GB of available memory."
+                         TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Download local model" Command="{Binding DownloadLlamaSharpModelCommand}"
+                        IsEnabled="{Binding !IsDownloadingLlamaSharp}" Padding="10,5"/>
+                <ProgressBar IsVisible="{Binding IsDownloadingLlamaSharp}"
+                             Value="{Binding LlamaSharpDownloadProgress}" Maximum="1"
+                             Width="180" Height="8" VerticalAlignment="Center"/>
+              </StackPanel>
             </StackPanel>
 
             <!-- Save + status -->

@@ -137,12 +137,12 @@ public sealed class GifRecorder : IAsyncDisposable
             bitmap.Render(_window);
 
             using var ms = new MemoryStream();
-            bitmap.Save(ms);
+            bitmap.Save(ms, PngBitmapEncoderOptions.Default);
             return ms.ToArray();
         });
     }
 
-    private void EncodeGif(string filePath, IReadOnlyList<(byte[] PngData, int DelayMs)> frames)
+    private static void EncodeGif(string filePath, IReadOnlyList<(byte[] PngData, int DelayMs)> frames)
     {
         if (frames.Count == 0) return;
 

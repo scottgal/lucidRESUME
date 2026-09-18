@@ -70,7 +70,7 @@ public sealed partial class ImportReviewPageViewModel : ViewModelBase
     private async Task ApplySelected()
     {
         if (_target == null || _preview == null) return;
-        _merger.ApplyPreview(_target, _preview);
+        ResumeDocumentMerger.ApplyPreview(_target, _preview);
         await _store.MutateAsync(s => s.AddOrReplaceResume(_target, select: true));
         OnApplied?.Invoke();
     }
@@ -88,7 +88,7 @@ public sealed partial class ImportReviewPageViewModel : ViewModelBase
         foreach (var e in _preview.NewEducation) e.IsAccepted = true;
         foreach (var p in _preview.NewProjects) p.IsAccepted = true;
 
-        _merger.ApplyPreview(_target, _preview);
+        ResumeDocumentMerger.ApplyPreview(_target, _preview);
         await _store.MutateAsync(s => s.AddOrReplaceResume(_target, select: true));
         OnApplied?.Invoke();
     }

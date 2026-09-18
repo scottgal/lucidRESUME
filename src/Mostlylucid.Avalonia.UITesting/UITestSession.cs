@@ -529,7 +529,7 @@ public sealed class UITestSession : IAsyncDisposable
         });
     }
 
-    private void FindControlsRecursive(Control control, List<ControlInfo> result)
+    private static void FindControlsRecursive(Control control, List<ControlInfo> result)
     {
         if (!string.IsNullOrEmpty(control.Name))
         {
@@ -574,12 +574,12 @@ public sealed class UITestSession : IAsyncDisposable
         return result;
     }
 
-    private async Task RunOnUIThreadAsync(Action action)
+    private static async Task RunOnUIThreadAsync(Action action)
     {
         await Dispatcher.UIThread.InvokeAsync(action);
     }
 
-    private async Task<T> RunOnUIThreadAsync<T>(Func<T> func)
+    private static async Task<T> RunOnUIThreadAsync<T>(Func<T> func)
     {
         return await Dispatcher.UIThread.InvokeAsync(func);
     }

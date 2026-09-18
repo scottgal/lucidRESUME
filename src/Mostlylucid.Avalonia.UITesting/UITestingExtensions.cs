@@ -223,15 +223,14 @@ internal class UITestingStartup
 
             _options.Log?.Invoke($"Result: {(result.Success ? "PASS" : "FAIL")}");
             _options.Log?.Invoke($"Screenshots: {outputDir}");
+            await Task.Delay(500);
+            desktop.Shutdown(result.Success ? 0 : 1);
         }
         catch (Exception ex)
         {
             _options.Log?.Invoke($"Error: {ex.Message}");
-        }
-        finally
-        {
             await Task.Delay(500);
-            desktop.Shutdown(0);
+            desktop.Shutdown(1);
         }
     }
 }

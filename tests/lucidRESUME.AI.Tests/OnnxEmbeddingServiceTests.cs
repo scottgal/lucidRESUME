@@ -75,6 +75,25 @@ public class OnnxEmbeddingServiceTests : IDisposable
         Assert.Same(a, b);
     }
 
+    [Fact]
+    public async Task MissingModel_FallsBackToNormalisedLexicalVectors()
+    {
+        var opts = Options.Create(new EmbeddingOptions
+        {
+            OnnxModelPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".onnx"),
+            VocabPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
+        });
+        using var service = new OnnxEmbeddingService(opts, NullLogger<OnnxEmbeddingService>.Instance);
+
+        var first = await service.EmbedAsync("Kubernetes production platform");
+        var related = await service.EmbedAsync("Kubernetes platform engineering");
+        var different = await service.EmbedAsync("editorial photography portfolio");
+
+        Assert.Equal(384, first.Length);
+        Assert.InRange(MathF.Sqrt(first.Sum(value => value * value)), 0.99f, 1.01f);
+        Assert.True(service.CosineSimilarity(first, related) > service.CosineSimilarity(first, different));
+    }
+
     private static bool HasLocalEmbeddingModel() =>
         File.Exists(Path.Combine(AppContext.BaseDirectory, "models", "all-MiniLM-L6-v2.onnx")) &&
         File.Exists(Path.Combine(AppContext.BaseDirectory, "models", "vocab.txt"));

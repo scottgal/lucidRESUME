@@ -1,0 +1,75 @@
+name: jobml-linked-editor
+description: Validate the split human prose and JobML editor, live evidence links, and drift reporting.
+default_delay: 150
+
+actions:
+  - type: Wait
+    value: "1200"
+
+  - type: Navigate
+    value: JobML
+
+  - type: Expect
+    target: "name=HumanEditor"
+    matcher: IsVisible
+    timeout: 5000
+
+  - type: Expect
+    target: "name=EvidenceList"
+    matcher: IsVisible
+    timeout: 5000
+
+  - type: Expect
+    target: "name=JobMlEditor"
+    matcher: IsVisible
+    timeout: 5000
+
+  - type: Click
+    target: "name=NewJobMlDocumentButton"
+
+  - type: TypeText
+    target: "name=HumanEditor"
+    value: "# Jane Smith\n\n## Experience\n\n### Example Corp {#example-corp}\n\nLed the modernisation of a high-volume ASP.NET Core platform while maintaining production availability.\n\nDesigned and operated its Kubernetes deployment for customer-facing workloads."
+
+  - type: Click
+    target: "name=GenerateLinksButton"
+
+  - type: Expect
+    target: "name=EditorStatus"
+    matcher: HasText
+    value: "Generated 2 derived claims. Review is required before they count as direct coverage."
+    timeout: 5000
+
+  - type: Expect
+    target: "name=EvidenceGraphStatus"
+    matcher: HasText
+    value: "Evidence graph valid: True"
+    timeout: 5000
+
+  - type: Screenshot
+    value: 01-jobml-linked-editor
+
+  - type: Click
+    target: "inside(name=EvidenceList) type=ListBoxItem"
+
+  - type: Expect
+    target: "name=SelectionStatus"
+    matcher: HasText
+    value: "#example-corp:p2  →  example-corp-claim-2  ·  valid"
+    timeout: 5000
+
+  - type: Screenshot
+    value: 02-jobml-link-selected
+
+  - type: TypeText
+    target: "name=HumanEditor"
+    value: "# Jane Smith\n\n## Experience\n\n### Example Corp {#example-corp}\n\nContributed to a platform modernisation."
+
+  - type: Expect
+    target: "name=EvidenceGraphStatus"
+    matcher: HasText
+    value: "Evidence graph valid: False"
+    timeout: 5000
+
+  - type: Screenshot
+    value: 03-jobml-drift-detected

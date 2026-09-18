@@ -144,7 +144,7 @@
 
             <!-- Filters -->
             <Grid ColumnDefinitions="*,8,Auto">
-              <TextBox Grid.Column="0" Text="{Binding SkillSearch}" Watermark="Search skills..."
+              <TextBox Grid.Column="0" Text="{Binding SkillSearch}" PlaceholderText="Search skills..."
                        CornerRadius="4" Padding="8,4" FontSize="12"/>
               <ComboBox Grid.Column="2" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
                         MinWidth="140" FontSize="12"/>
@@ -251,7 +251,7 @@
             <!-- Add skill -->
             <Border Background="{DynamicResource LrPageBgBrush}" CornerRadius="4" Padding="10,6">
               <Grid ColumnDefinitions="*,8,Auto,8,Auto">
-                <TextBox Grid.Column="0" Text="{Binding NewSkillName}" Watermark="Add a skill..."
+                <TextBox Grid.Column="0" Text="{Binding NewSkillName}" PlaceholderText="Add a skill..."
                          CornerRadius="4" Padding="8,4" FontSize="12"/>
                 <ComboBox Grid.Column="2" SelectedItem="{Binding NewSkillCategory}" MinWidth="120" FontSize="11">
                   <ComboBoxItem Content="Language"/>

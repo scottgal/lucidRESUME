@@ -22,5 +22,7 @@ root.Subcommands.Add(RankCommand.Build());
 root.Subcommands.Add(FixCommand.Build());
 root.Subcommands.Add(GenerateCommand.Build());
 root.Subcommands.Add(SearchCommand.Build());
+root.Subcommands.Add(JobMlCommand.Build());
+root.Subcommands.Add(RenderCommand.Build());
 
 return await root.Parse(args).InvokeAsync();

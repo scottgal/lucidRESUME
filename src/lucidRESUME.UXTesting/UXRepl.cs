@@ -343,10 +343,11 @@ public sealed class UXRepl
         if (args.Length == 0) return "Usage: service <TypeName>";
         
         var typeName = string.Join(" ", args);
-        var service = _ctx.Services?.GetService(Type.GetType(typeName) ?? 
+        var serviceType = Type.GetType(typeName) ??
             AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
-                .FirstOrDefault(t => t.Name == typeName || t.FullName == typeName));
+                .FirstOrDefault(t => t.Name == typeName || t.FullName == typeName);
+        var service = serviceType is null ? null : _ctx.Services?.GetService(serviceType);
         
         return service?.ToString() ?? $"Service not found: {typeName}";
     }
@@ -447,7 +448,7 @@ public sealed class UXRepl
             bitmap.Render(_ctx.MainWindow);
             
             using var stream = File.Create(filePath);
-            bitmap.Save(stream);
+            bitmap.Save(stream, PngBitmapEncoderOptions.Default);
         });
         
         return filePath;

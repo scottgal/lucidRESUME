@@ -7,16 +7,16 @@
   <Grid ColumnDefinitions="*,*" Margin="16,12">
 
     <!-- LEFT: job input form -->
-    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
+    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
 
       <!-- Header -->
       <TextBlock Grid.Row="0" Text="Tailor Resume" FontSize="18" FontWeight="Bold"
                  Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,16"/>
 
-      <!-- Ollama unavailable warning -->
+      <!-- AI provider unavailable warning -->
       <Border Grid.Row="1" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
-              IsVisible="{Binding IsOllamaUnavailable}">
-        <TextBlock Text="Ollama is not reachable. Start Ollama before tailoring."
+              IsVisible="{Binding IsAiUnavailable}">
+        <TextBlock Text="The selected AI provider is unavailable. Check Profile → AI Provider before tailoring."
                    Foreground="{DynamicResource LrAccentPeachBrush}" FontSize="12" TextWrapping="Wrap"/>
       </Border>
 
@@ -44,28 +44,36 @@
       <!-- Job Title -->
       <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Job Title" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <TextBox Text="{Binding JobTitle}" Watermark="e.g. Senior Software Engineer"/>
+        <TextBox Text="{Binding JobTitle}" PlaceholderText="e.g. Senior Software Engineer"/>
       </StackPanel>
 
       <!-- Company -->
       <StackPanel Grid.Row="4" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Company" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <TextBox Text="{Binding Company}" Watermark="e.g. Acme Corp"/>
+        <TextBox Text="{Binding Company}" PlaceholderText="e.g. Acme Corp"/>
       </StackPanel>
 
       <!-- Job Description -->
       <StackPanel Grid.Row="5" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Job Description" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
         <TextBox Text="{Binding JobDescriptionText}"
-                 Watermark="Paste the full job description here…"
+                 PlaceholderText="Paste the full job description here…"
                  AcceptsReturn="True"
                  TextWrapping="Wrap"
                  Height="200"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
       </StackPanel>
 
+      <!-- Output template -->
+      <StackPanel Grid.Row="6" Spacing="4" Margin="0,0,0,10">
+        <TextBlock Text="Output Template" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
+        <ComboBox x:Name="OutputTemplateSelector" ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate}"/>
+        <TextBlock Text="{Binding SelectedTemplate.Description}" FontSize="10"
+                   Foreground="{DynamicResource LrSubtleTextBrush}" TextWrapping="Wrap"/>
+      </StackPanel>
+
       <!-- Tailor buttons -->
-      <Grid Grid.Row="6" ColumnDefinitions="*,8,*" Margin="0,4,0,8">
+      <Grid Grid.Row="7" ColumnDefinitions="*,8,*" Margin="0,4,0,8">
         <Button Grid.Column="0"
                 Content="Smart Compress"
                 Command="{Binding SmartCompressCommand}"
@@ -89,11 +97,11 @@
       </Grid>
 
       <!-- Progress bar -->
-      <ProgressBar Grid.Row="7" IsVisible="{Binding IsTailoring}"
+      <ProgressBar Grid.Row="8" IsVisible="{Binding IsTailoring}"
                    IsIndeterminate="True" Margin="0,0,0,8"/>
 
       <!-- Status / Error -->
-      <StackPanel Grid.Row="8" Spacing="4">
+      <StackPanel Grid.Row="9" Spacing="4">
         <TextBlock Text="{Binding CompressionStats}" Foreground="{DynamicResource LrAccentPurpleBrush}" FontSize="11"
                    IsVisible="{Binding CompressionStats, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                    TextWrapping="Wrap"/>
@@ -133,13 +141,15 @@
         </ScrollViewer>
       </Border>
 
-      <!-- Export button -->
-      <Button Grid.Row="2"
-              Content="Export as Markdown"
-              Command="{Binding ExportCommand}"
-              IsVisible="{Binding HasResult}"
-              Padding="16,8"
-              Margin="0,8,0,0"/>
+      <!-- Export buttons -->
+      <Grid Grid.Row="2" ColumnDefinitions="*,8,*,8,*" Margin="0,8,0,0" IsVisible="{Binding HasResult}">
+        <Button x:Name="ExportMarkdownButton" Grid.Column="0" Content="Markdown + JobML" Command="{Binding ExportCommand}"
+                CommandParameter="markdown" Padding="12,8"/>
+        <Button x:Name="ExportWordButton" Grid.Column="2" Content="Word" Command="{Binding ExportCommand}"
+                CommandParameter="docx" Padding="12,8"/>
+        <Button x:Name="ExportPdfButton" Grid.Column="4" Content="PDF" Command="{Binding ExportCommand}"
+                CommandParameter="pdf" Padding="12,8"/>
+      </Grid>
 
     </Grid>
 

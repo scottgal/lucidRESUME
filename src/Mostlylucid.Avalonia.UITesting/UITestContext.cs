@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
@@ -174,6 +175,8 @@ public sealed class UITestContext
 
     [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(
         "Walks dotted property paths on consumer-defined ViewModels via reflection. Under PublishTrimmed/PublishAot the trimmer may remove properties whose only access path is here.")]
+    [SuppressMessage("Performance", "CA1822:Mark members as static",
+        Justification = "Property access is part of the stateful test-context public API.")]
     public object? GetProperty(object target, string propertyPath)
     {
         var parts = propertyPath.Split('.');
@@ -203,6 +206,8 @@ public sealed class UITestContext
 
     [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode(
         "Walks dotted property paths on consumer-defined ViewModels via reflection. Under PublishTrimmed/PublishAot the trimmer may remove properties whose only access path is here.")]
+    [SuppressMessage("Performance", "CA1822:Mark members as static",
+        Justification = "Property mutation is part of the stateful test-context public API.")]
     public bool SetProperty(object target, string propertyPath, object? value)
     {
         var parts = propertyPath.Split('.');
@@ -250,11 +255,15 @@ public sealed class UITestContext
             "Add a custom converter or pass the value pre-converted.");
     }
 
+    [SuppressMessage("Performance", "CA1822:Mark members as static",
+        Justification = "UI dispatch is exposed through the test-context instance API.")]
     public async Task<T> RunOnUIThreadAsync<T>(Func<T> action)
     {
         return await Dispatcher.UIThread.InvokeAsync(action);
     }
 
+    [SuppressMessage("Performance", "CA1822:Mark members as static",
+        Justification = "UI dispatch is exposed through the test-context instance API.")]
     public async Task RunOnUIThreadAsync(Action action)
     {
         await Dispatcher.UIThread.InvokeAsync(action);

@@ -20,6 +20,14 @@
 
 Everything runs locally on your machine. No accounts. No data leaving your device unless you choose to.
 
+The Apply workflow can also use the OpenAI Responses API when explicitly configured.
+It builds the prompt from the reviewed merged resume, LinkedIn and GitHub evidence,
+then exports one evidence-linked artifact as Markdown + JobML, Word, or PDF. The
+human resume is followed by a labelled **MACHINE AREA** containing JobML and a link
+to [the design article](https://mostlylucid.net/blog/the-problem-with-resumes).
+See [resume output and template design](docs/resume-output-design.md) for the full flow,
+template rationale, and configuration.
+
 > Built with .NET 10 + Avalonia. Runs on Windows, macOS, and Linux.
 
 ---
@@ -39,6 +47,16 @@ No invented skills. No guessing. Just structured inference over your actual work
 
 This is the foundation everything else builds on - matching, tailoring, gap analysis, career direction.
 
+The experimental **JobML 0.1 editor** places authoritative human Markdown on the
+left, editable JobML on the right, and live evidence links between them. Selecting
+a link highlights both the supporting prose and machine reference. As prose
+changes, claims are marked `valid`, `changed`, `missing`, or `ambiguous`;
+generated claims never become evidence without explicit acceptance. Markdown may
+be shorter for a particular role while JobML retains higher-resolution external
+evidence. See the [JobML specification](docs/jobml-0.1-specification.md),
+[implementation profile](docs/jobml-0.1.md), and
+[GitHub repository extension](docs/jobml-github-extension-0.1.md).
+
 | | |
 |---|---|
 | ![DOCX Preview](docs/screenshots/docx-preview.png) | ![My Data Dashboard](docs/screenshots/my-data-page.png) |
@@ -51,7 +69,7 @@ Every major job site wants your email, your browsing history, and permission to 
 
 ***lucid*RESUME** does things differently:
 
-- **Local-first AI** - tailoring runs through [Ollama](https://ollama.ai) on your hardware. Or use Anthropic/OpenAI APIs if you prefer.
+- **Local-first AI** - the default is [grug 9B Q4_K_M](https://huggingface.co/ProCreations/grug-9b-gguf) running in-process through LLamaSharp. Ollama, Anthropic, and OpenAI remain optional providers.
 - **No account required** - data stored in a local SQLite database. You own it.
 - **Honest tailoring** - the AI never invents skills or experience you don't have.
 - **Career direction (based on your actual skill graph)** - not just "match this job" but "what to do next to reach your target cluster".
@@ -69,6 +87,9 @@ Every major job site wants your email, your browsing history, and permission to 
 - Import PDF or DOCX resumes
 - **DOCX preview** powered by [Morph](https://github.com/SimonCropp/Morph) — cross-platform document-to-image rendering in pure C#, no LibreOffice needed
 - **LinkedIn data export** — drop your LinkedIn ZIP archive and it auto-detects and imports your full profile: positions, skills (with endorsement counts), education, projects, contact info
+- **GitHub evidence** - imports Linguist language totals, topics, README-derived
+  candidates, project dates, and repository provenance. Observed technologies are
+  kept separate from reviewed personal claims.
 - All imports merge into a **single unified candidate document** using embedding cosine similarity — no duplicates, full source tracking
 - Handles two-column, LaTeX, complex formatting
 - Template learning: learns your resume's structure on first parse, deterministic on subsequent imports
@@ -122,9 +143,11 @@ JSON Resume (standard schema), Markdown, **DOCX** (Word via OpenXml), and **PDF*
 - [Release & Archive Guide](docs/release.md) - release workflow, platform archives, and single-page docs archive.
 - [Technical Architecture](docs/architecture.md) - modules, data flow, persistence, and extraction pipeline.
 - [Document Layout Detection](docs/layout-detection.md) - DocLayNet YOLO model, structural hashing, template communities.
+- [JobML 0.1 Specification](docs/jobml-0.1-specification.md) - normative document model, evidence reconciliation, review states, and extensions.
+- [JobML GitHub Extension](docs/jobml-github-extension-0.1.md) - repository quality, attribution, and skill-observation model.
 - [In-App User Manual](src/lucidRESUME/Resources/user-manual.md) - the same help content embedded in the desktop app.
 
-### CLI (17 Commands)
+### CLI
 
 ```bash
 lucidresume parse          --file cv.docx [--output result.json]
@@ -144,6 +167,10 @@ lucidresume search         --prompt "senior .NET developer remote"
 lucidresume extract-jd     --job "JD text" [--output jd.json]
 lucidresume github-import  --username scottgal
 lucidresume batch-test     --dir resumes/
+lucidresume jobml validate  --file resume.jobml.md
+lucidresume jobml reconcile --file resume.jobml.md
+lucidresume jobml coverage  --file resume.jobml.md
+lucidresume jobml cold-parser-probe --file resume.jobml.md
 ```
 
 ---
@@ -171,12 +198,18 @@ That's it. ONNX models (~600MB) are downloaded automatically on first launch. No
 
 AI tailoring is optional — everything else works without it.
 
-**Option 1: Local AI with [Ollama](https://ollama.ai) (recommended)**
-1. Install Ollama
-2. Pull a model: `ollama pull qwen3.5:4b`
-3. That's it — lucidRESUME connects to `localhost:11434` automatically
+**Option 1: Local AI with LLamaSharp (recommended)**
+1. Open **Profile → AI Provider**
+2. Keep `llamasharp` selected and click **Download local model**
+3. Restart the app after the 5.63 GB Q4_K_M download completes
 
-**Option 2: Cloud AI (Anthropic or OpenAI)**
+The model is loaded lazily, uses its embedded chat template, and is shared between extraction and tailoring. Apple Silicon uses the Metal support included in the LLamaSharp CPU backend; other platforms have a portable CPU fallback. Set `LlamaSharp:ModelPath`, `ContextSize`, or `GpuLayerCount` in `lucidresume.json` to override the defaults.
+
+**Option 2: Local AI with [Ollama](https://ollama.ai)**
+1. Install Ollama and run `ollama pull qwen3.5:4b`
+2. Select `ollama` under **Profile → AI Provider**
+
+**Option 3: Cloud AI (Anthropic or OpenAI)**
 1. Open the **Profile** page in the app
 2. Enter your API key and select the provider
 
@@ -190,7 +223,7 @@ cd lucidRESUME
 dotnet run --project src/lucidRESUME/lucidRESUME.csproj
 ```
 
-Requires [.NET 10 SDK](https://dotnet.microsoft.com/download). See [docs/release.md](docs/release.md) for the release workflow.
+Requires [.NET 10 SDK](https://dotnet.microsoft.com/download). The default solution is desktop-only, so `dotnet build lucidRESUME.sln` and `dotnet test lucidRESUME.sln` do not require mobile workloads. See [docs/release.md](docs/release.md) for the release workflow.
 
 ---
 
@@ -207,14 +240,14 @@ ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) power semantic matching throughout
 ### Architecture
 
 ```
-lucidRESUME (Avalonia UI - 9 pages: My CV, My Data, Career, Jobs, Add Job, Apply, Pipeline, Profile, Help)
+lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, Apply, Pipeline, Profile, Help)
     ├── Ingestion        Resume parsing, DocLayNet layout detection, Morph preview, LinkedIn import
     ├── Extraction       ONNX NER (2 models) + Microsoft.Recognizers pipeline
     ├── Parsing          DOCX/PDF/TXT extraction, ATS pattern detection, template learning
     ├── JobSpec          JD parsing (5-layer RRF: Structural + NER + Taxonomy + LLM + Entity), URL scraping
     ├── JobSearch        7 job board adapters + orchestrator + deduplicator
     ├── Matching         Skill ledger, skill graph, career planner, taxonomy centroids, entity lookup
-    ├── AI               Ollama/Anthropic/OpenAI providers, AI detection, de-AI, translation
+    ├── AI               LLamaSharp/Ollama/Anthropic/OpenAI providers, AI detection, de-AI, translation
     ├── EmailTracker     IMAP scanning, email classification, application matching
     ├── Export           JSON Resume + Markdown + DOCX + PDF exporters
     ├── Collabora        LibreOffice/editor integration, document openers

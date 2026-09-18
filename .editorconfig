@@ -1,0 +1,7 @@
+root = true
+
+[*.cs]
+# Keep the full SDK analyzer set enabled, but reserve build-breaking severity for
+# correctness and security diagnostics. Performance findings remain visible in
+# the IDE without drowning normal builds in advisory-only output.
+dotnet_analyzer_diagnostic.category-Performance.severity = suggestion

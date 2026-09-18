@@ -27,6 +27,7 @@ namespace lucidRESUME;
 
 public partial class App : Application
 {
+    private static int _uxTestStarted;
     private IServiceProvider? _provider;
     
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
@@ -50,7 +51,7 @@ public partial class App : Application
             reviewVm.OnApplied = () =>
             {
                 mainVm.NavigateCommand.Execute("Resume");
-                _ = resumePage.ImportFromPathAsync(target.FileName); // re-show the resume
+                _ = resumePage.ReloadAsync();
             };
             reviewVm.OnCancelled = () => mainVm.NavigateCommand.Execute("Resume");
             mainVm.ShowTransientPage(reviewVm);
@@ -67,9 +68,9 @@ public partial class App : Application
             {
                 var scriptPath = GetArgValue(args, "--script");
                 var outputDir = GetArgValue(args, "--output") ?? "ux-test-results";
-                
                 mainWindow.Opened += async (_, _) =>
                 {
+                    if (Interlocked.Exchange(ref _uxTestStarted, 1) != 0) return;
                     await RunUxTestAsync(mainWindow, mainVm, scriptPath, outputDir);
                 };
             }
@@ -144,7 +145,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Error: {ex}");
         }
         finally
         {
@@ -209,9 +210,14 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        var appDataDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "lucidRESUME");
+        var appDataDir = Environment.GetEnvironmentVariable("LUCIDRESUME_DATA_DIR");
+        if (string.IsNullOrWhiteSpace(appDataDir))
+        {
+            appDataDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "lucidRESUME");
+        }
+        appDataDir = Path.GetFullPath(appDataDir);
         Directory.CreateDirectory(appDataDir);
         var aiSettingsPath = Path.Combine(appDataDir, "ai-settings.json");
 
@@ -242,6 +248,8 @@ public partial class App : Application
         services.AddHttpClient<Services.StartupHealthCheck>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ResumePageViewModel>();
+        services.AddSingleton(new Services.JobMlWorkspacePath(Path.Combine(appDataDir, "jobml-workspace.md")));
+        services.AddSingleton<JobMlEditorPageViewModel>();
         services.AddSingleton<JobsPageViewModel>();
         services.AddSingleton<SearchPageViewModel>();
         services.AddSingleton<ApplyPageViewModel>();

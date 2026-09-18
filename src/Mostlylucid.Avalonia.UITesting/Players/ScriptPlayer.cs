@@ -122,6 +122,9 @@ public sealed class ScriptPlayer
                 case ActionType.Navigate:
                     await ExecuteNavigateAsync(action);
                     break;
+                case ActionType.ImportFile:
+                    await ExecuteImportFileAsync(action);
+                    break;
                 case ActionType.Click:
                     await ExecuteClickAsync(action);
                     break;
@@ -314,6 +317,14 @@ public sealed class ScriptPlayer
             else if (control is TabItem tabItem)
             {
                 tabItem.IsSelected = true;
+            }
+            else if (control is ListBoxItem listBoxItem)
+            {
+                // A scripted click on an item should have the same observable
+                // selection effect as a pointer click. Focusing the container
+                // alone leaves SelectionChanged handlers and bindings untouched.
+                listBoxItem.IsSelected = true;
+                listBoxItem.Focus();
             }
             else if (control is RadioButton radio)
             {
@@ -663,7 +674,7 @@ public sealed class ScriptPlayer
         await Task.Delay(100);
     }
 
-    private async Task ExecuteWaitAsync(UIAction action)
+    private static async Task ExecuteWaitAsync(UIAction action)
     {
         var ms = int.TryParse(action.Value, out var v) ? v : action.DelayMs;
         if (ms > 0)
@@ -764,6 +775,43 @@ public sealed class ScriptPlayer
         });
     }
 
+    /// <summary>
+    /// Imports a document through an application's resume page without opening a native file picker.
+    /// The host shell exposes GetPage("Resume") and the page exposes ImportFromPathAsync(string).
+    /// Missing files or host hooks are failures, never silent skips.
+    /// </summary>
+    private async Task ExecuteImportFileAsync(UIAction action)
+    {
+        if (_window is null)
+            throw new InvalidOperationException("No target window for ImportFile");
+        if (string.IsNullOrWhiteSpace(action.Value))
+            throw new InvalidOperationException("ImportFile requires a file path");
+
+        var filePath = Path.GetFullPath(action.Value, Directory.GetCurrentDirectory());
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("Import fixture was not found", filePath);
+
+        _navigateAction?.Invoke("Resume");
+        await Task.Delay(200);
+
+        var shell = _window.DataContext
+            ?? throw new InvalidOperationException("The main window has no view model");
+        var getPage = shell.GetType().GetMethod("GetPage")
+            ?? throw new InvalidOperationException("The shell does not expose GetPage(string)");
+        var resumePage = getPage.Invoke(shell, ["Resume"])
+            ?? throw new InvalidOperationException("The shell did not return the Resume page");
+        if (action.Target?.Equals("Fast", StringComparison.OrdinalIgnoreCase) == true)
+            resumePage.GetType().GetProperty("ImportMode")?.SetValue(resumePage, "Fast");
+        var import = resumePage.GetType().GetMethod("ImportFromPathAsync", [typeof(string)])
+            ?? throw new InvalidOperationException("The Resume page does not expose ImportFromPathAsync(string)");
+
+        if (import.Invoke(resumePage, [filePath]) is not Task task)
+            throw new InvalidOperationException("ImportFromPathAsync did not return a Task");
+
+        await task;
+        Log?.Invoke(this, $"    Imported: {Path.GetFileName(filePath)}");
+    }
+
     private async Task ExecuteExpectAsync(UIAction action)
     {
         var window = GetTargetWindow(action.WindowId)
@@ -788,7 +836,7 @@ public sealed class ScriptPlayer
         var key = name.Trim();
         // Allow "Not.HasText" / "not.HasText" / "!HasText" prefixes for negation.
         var negate = false;
-        if (key.StartsWith("!"))
+        if (key.StartsWith('!'))
         {
             negate = true;
             key = key[1..];

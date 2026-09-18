@@ -131,4 +131,41 @@ public class MarkdownSectionParserTests
         Assert.Single(resume.Skills);
         Assert.Equal("Existing", resume.Skills[0].Name);
     }
+
+    [Fact]
+    public void PopulateSections_ParsesPortableContactTitleFirstRoleAndEducation()
+    {
+        const string markdown = """
+            # Jane Smith
+            Edinburgh, Scotland, UK | jane@example.com | linkedin.com/in/jane | github.com/jane | jane.dev
+
+            ## Profile
+            Platform engineer.
+
+            ## Experience
+            ### Lead Developer | Example Ltd | Jan 2022–Present {#lead-developer-example}
+            - Built a platform used in production.
+
+            ## Education
+            **BSc (Hons) Psychology** | University of Stirling | Sep 1992–Jun 1996
+            """;
+        var resume = ResumeDocument.Create("portable.md", "text/markdown", markdown.Length);
+
+        MarkdownSectionParser.PopulateSections(resume, markdown);
+
+        Assert.Equal("jane@example.com", resume.Personal.Email);
+        Assert.Equal("Edinburgh, Scotland, UK", resume.Personal.Location);
+        Assert.Equal("linkedin.com/in/jane", resume.Personal.LinkedInUrl);
+        Assert.Equal("github.com/jane", resume.Personal.GitHubUrl);
+        Assert.Equal("jane.dev", resume.Personal.WebsiteUrl);
+        var experience = Assert.Single(resume.Experience);
+        Assert.Equal("Lead Developer", experience.Title);
+        Assert.Equal("Example Ltd", experience.Company);
+        Assert.Null(experience.Location);
+        var education = Assert.Single(resume.Education);
+        Assert.Equal("BSc (Hons) Psychology", education.Degree);
+        Assert.Equal("University of Stirling", education.Institution);
+        Assert.Equal(1992, education.StartDate?.Year);
+        Assert.Equal(1996, education.EndDate?.Year);
+    }
 }

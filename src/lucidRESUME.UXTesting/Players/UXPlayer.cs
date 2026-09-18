@@ -427,7 +427,7 @@ public sealed class UXPlayer
                 bitmap.Render(_window);
                 
                 using var stream = File.Create(filePath);
-                bitmap.Save(stream);
+                bitmap.Save(stream, PngBitmapEncoderOptions.Default);
                 
                 var fileInfo = new FileInfo(filePath);
                 Log?.Invoke(this, $"    Saved {fileInfo.Length / 1024}KB");

@@ -30,8 +30,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<LinkedInZipParser>();
         services.AddDirectParsing();
         services.AddTransient<IResumeParser, ResumeParser>();
+        services.AddTransient<ResumeCorpusLoader>();
         return services;
     }
 }
-
 

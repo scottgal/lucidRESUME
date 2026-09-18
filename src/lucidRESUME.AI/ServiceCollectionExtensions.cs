@@ -12,29 +12,59 @@ public static class ServiceCollectionExtensions
         services.Configure<OllamaOptions>(config.GetSection("Ollama"));
         services.Configure<AnthropicOptions>(config.GetSection("Anthropic"));
         services.Configure<OpenAiOptions>(config.GetSection("OpenAi"));
+        services.Configure<LlamaSharpOptions>(config.GetSection("LlamaSharp"));
         services.Configure<TailoringOptions>(config.GetSection("Tailoring"));
         services.Configure<EmbeddingOptions>(config.GetSection("Embedding"));
 
-        // Provider selection: Tailoring.Provider (default: "ollama")
-        var tailoringProvider = config.GetSection("Tailoring").GetValue<string>("Provider") ?? "ollama";
+        // Provider selection: local, in-process LLamaSharp is the default.
+        var tailoringProvider = config.GetSection("Tailoring").GetValue<string>("Provider") ?? "llamasharp";
+        var extractionProvider = config.GetSection("Tailoring").GetValue<string>("ExtractionProvider")
+                                 ?? tailoringProvider;
+
+        services.AddHttpClient<LlamaSharpModelManager>(client =>
+            client.Timeout = Timeout.InfiniteTimeSpan);
+        services.AddSingleton<LlamaSharpRuntime>();
 
         switch (tailoringProvider.ToLowerInvariant())
         {
+            case "llamasharp":
+                services.AddSingleton<IAiTailoringService, LlamaSharpTailoringService>();
+                break;
             case "anthropic":
                 services.AddHttpClient<IAiTailoringService, AnthropicTailoringService>()
                     .AddStandardResilienceHandler();
-                services.AddHttpClient<ILlmExtractionService, AnthropicExtractionService>(client =>
-                    client.Timeout = TimeSpan.FromSeconds(60));
                 break;
             case "openai":
                 services.AddHttpClient<IAiTailoringService, OpenAiTailoringService>()
-                    .AddStandardResilienceHandler();
-                services.AddHttpClient<ILlmExtractionService, OpenAiExtractionService>(client =>
-                    client.Timeout = TimeSpan.FromSeconds(60));
+                    .AddStandardResilienceHandler(options =>
+                    {
+                        // Full evidence catalogues and complete resume outputs routinely
+                        // take longer than the standard handler's 10 second attempt limit.
+                        options.AttemptTimeout.Timeout = TimeSpan.FromMinutes(2);
+                        options.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(5);
+                        options.CircuitBreaker.SamplingDuration = TimeSpan.FromMinutes(5);
+                    });
                 break;
             default: // ollama
                 services.AddHttpClient<IAiTailoringService, OllamaTailoringService>()
                     .AddStandardResilienceHandler();
+                break;
+        }
+
+        switch (extractionProvider.ToLowerInvariant())
+        {
+            case "llamasharp":
+                services.AddSingleton<ILlmExtractionService, LlamaSharpExtractionService>();
+                break;
+            case "anthropic":
+                services.AddHttpClient<ILlmExtractionService, AnthropicExtractionService>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(60));
+                break;
+            case "openai":
+                services.AddHttpClient<ILlmExtractionService, OpenAiExtractionService>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(60));
+                break;
+            default:
                 services.AddHttpClient<ILlmExtractionService, OllamaExtractionService>(client =>
                     client.Timeout = TimeSpan.FromSeconds(60));
                 break;

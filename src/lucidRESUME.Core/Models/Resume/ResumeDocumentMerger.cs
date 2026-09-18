@@ -1,4 +1,5 @@
 using lucidRESUME.Core.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace lucidRESUME.Core.Models.Resume;
 
@@ -132,7 +133,7 @@ public sealed class ResumeDocumentMerger
     /// <summary>
     /// Apply only the accepted items from a preview to the target document.
     /// </summary>
-    public void ApplyPreview(ResumeDocument target, ImportPreview preview)
+    public static void ApplyPreview(ResumeDocument target, ImportPreview preview)
     {
         var source = preview.SourceName;
 
@@ -325,24 +326,33 @@ public sealed class ResumeDocumentMerger
     {
         if (string.IsNullOrWhiteSpace(incoming.Company)) return null;
 
-        var incomingEmb = await _embedder.EmbedAsync(incoming.Company, ct);
+        // Deterministic path first. Imports must remain usable while a local model is
+        // absent, partially downloaded, or incompatible with the current runtime.
+        var normalizedIncoming = NormalizeName(incoming.Company);
+        foreach (var exp in existing)
+        {
+            if (string.IsNullOrWhiteSpace(exp.Company)) continue;
+            var normalizedExisting = NormalizeName(exp.Company);
+            if (CompaniesMatch(normalizedExisting, normalizedIncoming)
+                && SameRoleIdentity(exp, incoming))
+                return exp;
+        }
+
+        float[] incomingEmb;
+        try { incomingEmb = await _embedder.EmbedAsync(incoming.Company, ct); }
+        catch { return null; }
 
         foreach (var exp in existing)
         {
             if (string.IsNullOrWhiteSpace(exp.Company)) continue;
 
-            var existingEmb = await _embedder.EmbedAsync(exp.Company, ct);
+            float[] existingEmb;
+            try { existingEmb = await _embedder.EmbedAsync(exp.Company, ct); }
+            catch { continue; }
             var similarity = _embedder.CosineSimilarity(incomingEmb, existingEmb);
 
             if (similarity < CompanyMatchThreshold) continue;
-
-            // Company matches — check date overlap
-            if (exp.StartDate is null || incoming.StartDate is null) return exp;
-            var aEnd = (exp.IsCurrent ? DateOnly.FromDateTime(DateTime.Today) : exp.EndDate ?? DateOnly.FromDateTime(DateTime.Today)).DayNumber;
-            var bEnd = (incoming.IsCurrent ? DateOnly.FromDateTime(DateTime.Today) : incoming.EndDate ?? DateOnly.FromDateTime(DateTime.Today)).DayNumber;
-            if (exp.StartDate.Value.DayNumber <= bEnd + DateOverlapGraceDays &&
-                incoming.StartDate.Value.DayNumber <= aEnd + DateOverlapGraceDays)
-                return exp;
+            if (DatesOverlap(exp, incoming) && SameRolePeriod(exp, incoming)) return exp;
         }
         return null;
     }
@@ -354,10 +364,14 @@ public sealed class ResumeDocumentMerger
         if (exact != null) return exact;
 
         // Semantic match for aliases ("K8s" ≈ "Kubernetes")
-        var incomingEmb = await _embedder.EmbedAsync(skillName, ct);
+        float[] incomingEmb;
+        try { incomingEmb = await _embedder.EmbedAsync(skillName, ct); }
+        catch { return null; }
         foreach (var skill in existing)
         {
-            var existingEmb = await _embedder.EmbedAsync(skill.Name, ct);
+            float[] existingEmb;
+            try { existingEmb = await _embedder.EmbedAsync(skill.Name, ct); }
+            catch { continue; }
             if (_embedder.CosineSimilarity(incomingEmb, existingEmb) >= 0.85f)
                 return skill;
         }
@@ -369,15 +383,100 @@ public sealed class ResumeDocumentMerger
     {
         if (string.IsNullOrWhiteSpace(incoming.Institution)) return null;
 
-        var incomingEmb = await _embedder.EmbedAsync(incoming.Institution, ct);
+        var exact = existing.FirstOrDefault(education =>
+            NormalizeName(education.Institution ?? "") == NormalizeName(incoming.Institution));
+        if (exact != null) return exact;
+
+        float[] incomingEmb;
+        try { incomingEmb = await _embedder.EmbedAsync(incoming.Institution, ct); }
+        catch { return null; }
         foreach (var edu in existing)
         {
             if (string.IsNullOrWhiteSpace(edu.Institution)) continue;
-            var existingEmb = await _embedder.EmbedAsync(edu.Institution, ct);
+            float[] existingEmb;
+            try { existingEmb = await _embedder.EmbedAsync(edu.Institution, ct); }
+            catch { continue; }
             if (_embedder.CosineSimilarity(incomingEmb, existingEmb) >= CompanyMatchThreshold)
                 return edu;
         }
         return null;
+    }
+
+    private static bool DatesOverlap(WorkExperience existing, WorkExperience incoming)
+    {
+        if (existing.StartDate is null || incoming.StartDate is null) return true;
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var existingEnd = (existing.IsCurrent ? today : existing.EndDate ?? today).DayNumber;
+        var incomingEnd = (incoming.IsCurrent ? today : incoming.EndDate ?? today).DayNumber;
+        return existing.StartDate.Value.DayNumber <= incomingEnd + DateOverlapGraceDays
+               && incoming.StartDate.Value.DayNumber <= existingEnd + DateOverlapGraceDays;
+    }
+
+    private static bool SameRolePeriod(WorkExperience existing, WorkExperience incoming)
+    {
+        var existingTitle = NormalizeName(existing.Title ?? "");
+        var incomingTitle = NormalizeName(incoming.Title ?? "");
+        var titlesRelated = TitlesRelated(existingTitle, incomingTitle);
+        if (titlesRelated) return true;
+        if (existing.StartDate is null || incoming.StartDate is null) return false;
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var existingEnd = existing.IsCurrent ? today : existing.EndDate ?? today;
+        var incomingEnd = incoming.IsCurrent ? today : incoming.EndDate ?? today;
+        var overlapStart = existing.StartDate > incoming.StartDate ? existing.StartDate.Value : incoming.StartDate.Value;
+        var overlapEnd = existingEnd < incomingEnd ? existingEnd : incomingEnd;
+        return overlapEnd.DayNumber - overlapStart.DayNumber >= 180;
+    }
+
+    private static bool SameRoleIdentity(WorkExperience existing, WorkExperience incoming)
+    {
+        if (DatesOverlap(existing, incoming) && SameRolePeriod(existing, incoming)) return true;
+        if (existing.StartDate is null || incoming.StartDate is null) return false;
+        return (TitlesRelated(NormalizeName(existing.Title ?? ""), NormalizeName(incoming.Title ?? ""))
+                || TitleTokenSimilarity(existing.Title, incoming.Title) >= 0.6)
+               && Math.Abs(existing.StartDate.Value.DayNumber - incoming.StartDate.Value.DayNumber) <= 550;
+    }
+
+    private static double TitleTokenSimilarity(string? first, string? second)
+    {
+        static HashSet<string> Tokens(string? value) => Regex.Matches(value?.ToLowerInvariant() ?? "", "[a-z]+")
+            .Select(match => CanonicalTitleToken(match.Value))
+            .Where(token => token is not "contract" and not "contractor")
+            .ToHashSet(StringComparer.Ordinal);
+        var left = Tokens(first);
+        var right = Tokens(second);
+        if (left.Count == 0 || right.Count == 0) return 0;
+        return (double)left.Intersect(right).Count() / left.Union(right).Count();
+    }
+
+    private static string CanonicalTitleToken(string token) => token switch
+    {
+        "developer" or "development" => "develop",
+        "engineer" or "engineering" => "engineer",
+        "architect" or "architecture" => "architect",
+        "manager" or "management" => "manage",
+        _ => token
+    };
+
+    private static bool CompaniesMatch(string existing, string incoming)
+    {
+        return existing == incoming || existing.Contains(incoming, StringComparison.Ordinal) ||
+               incoming.Contains(existing, StringComparison.Ordinal);
+    }
+
+    private static bool TitlesRelated(string existing, string incoming) =>
+        existing.Length > 0 && incoming.Length > 0 &&
+        (existing == incoming || existing.Contains(incoming, StringComparison.Ordinal) ||
+         incoming.Contains(existing, StringComparison.Ordinal));
+
+    private static string NormalizeName(string value)
+    {
+        var normalized = new string(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+        string[] suffixes = ["limited", "ltd", "plc", "corporation", "corp", "incorporated", "inc"];
+        foreach (var suffix in suffixes)
+            if (normalized.EndsWith(suffix, StringComparison.Ordinal) && normalized.Length > suffix.Length)
+                normalized = normalized[..^suffix.Length];
+        return normalized;
     }
 
     private async Task DetectExperienceAnomaliesAsync(
@@ -454,10 +553,14 @@ public sealed class ResumeDocumentMerger
 
         target.Location ??= incoming.Location;
 
-        if (incoming.StartDate.HasValue && (target.StartDate is null || incoming.StartDate < target.StartDate))
+        if (incoming.StartDate.HasValue && (target.StartDate is null ||
+            (Math.Abs(incoming.StartDate.Value.DayNumber - target.StartDate.Value.DayNumber) <= DateOverlapGraceDays &&
+             incoming.StartDate < target.StartDate)))
             target.StartDate = incoming.StartDate;
         if (incoming.IsCurrent) target.IsCurrent = true;
-        if (!target.IsCurrent && incoming.EndDate.HasValue && (target.EndDate is null || incoming.EndDate > target.EndDate))
+        if (!target.IsCurrent && incoming.EndDate.HasValue && (target.EndDate is null ||
+            (Math.Abs(incoming.EndDate.Value.DayNumber - target.EndDate.Value.DayNumber) <= DateOverlapGraceDays &&
+             incoming.EndDate > target.EndDate)))
             target.EndDate = incoming.EndDate;
 
         foreach (var tech in incoming.Technologies)

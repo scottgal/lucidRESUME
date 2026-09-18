@@ -164,8 +164,13 @@ public static class TemplateHintsBuilder
         HashSet<string> sectionTexts,
         ref bool hasTable)
     {
-        var body = doc.MainDocumentPart!.Document.Body!;
-        var styles = doc.MainDocumentPart.StyleDefinitionsPart?.Styles;
+        var mainDocumentPart = doc.MainDocumentPart
+            ?? throw new InvalidDataException("The Word document has no main document part.");
+        var document = mainDocumentPart.Document
+            ?? throw new InvalidDataException("The Word document part has no document root.");
+        var body = document.Body
+            ?? throw new InvalidDataException("The Word document has no body.");
+        var styles = mainDocumentPart.StyleDefinitionsPart?.Styles;
 
         if (body.Descendants<Table>().Any()) hasTable = true;
 

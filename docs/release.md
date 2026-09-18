@@ -23,6 +23,9 @@ The release also includes a documentation archive in both `.zip` and `.tar.gz` f
 - `README.md` - product overview and quickstart.
 - `architecture.md` - technical architecture.
 - `user-manual.md` - in-app help manual.
+- `jobml-0.1-specification.md` - normative JobML document and processor rules.
+- `jobml-github-extension-0.1.md` - repository quality, attribution, and skill observation extension.
+- `jobml-0.1.schema.json` - deterministic validation schema.
 
 The GitHub release page itself is populated with Markdown release notes that cover basic usage, configuration options, and macOS Gatekeeper guidance.
 

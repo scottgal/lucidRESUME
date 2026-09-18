@@ -3,6 +3,8 @@ using lucidRESUME.AI;
 using lucidRESUME.Cli.Infrastructure;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Profile;
+using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.Export;
 using lucidRESUME.Matching;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,8 +18,9 @@ public static class TailorCommand
 {
     public static Command Build()
     {
-        var resumeOpt = new Option<FileInfo>("--resume") { Required = true, Description = "Resume file (PDF or DOCX)" };
+        var resumeOpt = new Option<FileInfo?>("--resume") { Description = "Resume file (PDF or DOCX)" };
         resumeOpt.Aliases.Add("-r");
+        var resumeDirOpt = new Option<DirectoryInfo?>("--resume-dir") { Description = "Directory of resume sources to merge into an evidence ledger" };
 
         var jobOpt = new Option<string?>("--job") { Description = "Job description text or URL" };
         jobOpt.Aliases.Add("-j");
@@ -27,22 +30,27 @@ public static class TailorCommand
 
         var configOpt = new Option<FileInfo?>("--config") { Description = "Path to lucidresume.json config" };
         var evalOnlyOpt = new Option<bool>("--eval-only") { Description = "Only evaluate quality, don't tailor" };
+        var formatOpt = new Option<string?>("--format") { Description = "Output format: markdown (default), docx, pdf, all" };
+        var templateOpt = new Option<string?>("--template") { Description = "Output template: ats-classic, modern-professional, compact-technical" };
 
         var jobFileOpt = new Option<FileInfo?>("--job-file") { Description = "Job description file (alternative to --job)" };
 
         var cmd = new Command("tailor", "Tailor a resume for a specific job description")
         {
-            resumeOpt, jobOpt, jobFileOpt, outputOpt, configOpt, evalOnlyOpt
+            resumeOpt, resumeDirOpt, jobOpt, jobFileOpt, outputOpt, configOpt, evalOnlyOpt, formatOpt, templateOpt
         };
 
         cmd.SetAction(async (result, ct) =>
         {
-            var resumeFile = result.GetValue(resumeOpt)!;
+            var resumeFile = result.GetValue(resumeOpt);
+            var resumeDirectory = result.GetValue(resumeDirOpt);
             var jobText = result.GetValue(jobOpt);
             var jobFile = result.GetValue(jobFileOpt);
             var output = result.GetValue(outputOpt);
             var config = result.GetValue(configOpt);
             var evalOnly = result.GetValue(evalOnlyOpt);
+            var format = result.GetValue(formatOpt) ?? "markdown";
+            var template = ResumeTemplateCatalog.Get(result.GetValue(templateOpt));
 
             // Resolve JD from --job or --job-file
             if (string.IsNullOrWhiteSpace(jobText) && jobFile is { Exists: true })
@@ -53,21 +61,13 @@ public static class TailorCommand
                 return;
             }
 
-            if (!resumeFile.Exists)
-            {
-                Console.Error.WriteLine($"File not found: {resumeFile.FullName}");
-                return;
-            }
-
             var services = ServiceBootstrap.Build(config?.FullName);
-            var resumeParser = services.GetRequiredService<IResumeParser>();
             var jobParser = services.GetRequiredService<IJobSpecParser>();
             var qualityAnalyser = services.GetRequiredService<IResumeQualityAnalyser>();
             var compressor = services.GetRequiredService<SemanticCompressor>();
 
             // Parse resume (awaits LLM skill recovery if triggered)
-            Console.Error.WriteLine($"Parsing {resumeFile.Name}...");
-            var resume = await Infrastructure.ParseHelper.ParseAndAwaitAsync(resumeParser, resumeFile.FullName, ct);
+            var resume = await ResumeInputHelper.LoadAsync(services, resumeFile, resumeDirectory, ct);
             Console.Error.WriteLine($"  {resume.Skills.Count} skills, {resume.Experience.Count} positions");
 
             // Parse JD
@@ -104,13 +104,11 @@ public static class TailorCommand
                 return;
             }
 
-            // Trigger availability check (services start with IsAvailable=false until checked)
-            if (tailoringService is AI.OllamaTailoringService ollama)
-                await ollama.CheckAvailabilityAsync(ct);
+            await tailoringService.CheckAvailabilityAsync(ct);
 
             if (!tailoringService.IsAvailable)
             {
-                Console.Error.WriteLine("AI provider not reachable. Start Ollama or configure API keys.");
+                Console.Error.WriteLine("AI provider unavailable. For LLamaSharp, download the configured GGUF model; otherwise check the selected provider's configuration.");
                 Console.Error.WriteLine("Use --eval-only to skip tailoring.");
                 return;
             }
@@ -118,6 +116,8 @@ public static class TailorCommand
             Console.Error.WriteLine($"Tailoring via AI...");
             var profile = new UserProfile(); // empty profile for CLI
             var tailored = await tailoringService.TailorAsync(resume, jd, profile, ct);
+            var artifact = services.GetRequiredService<ResumeArtifactBuilder>()
+                .Build(resume, tailored, jd, template.Id);
 
             // Quality after
             Console.Error.WriteLine("Evaluating tailored quality...");
@@ -129,16 +129,7 @@ public static class TailorCommand
             Console.Error.WriteLine($"\n  Quality delta: {(delta >= 0 ? "+" : "")}{delta} points");
 
             // Output
-            var markdown = tailored.RawMarkdown ?? tailored.PlainText ?? "";
-            if (output is not null)
-            {
-                await File.WriteAllTextAsync(output.FullName, markdown, ct);
-                Console.Error.WriteLine($"Written to {output.FullName}");
-            }
-            else
-            {
-                Console.Write(markdown);
-            }
+            await ResumeOutputWriter.WriteAsync(services, artifact, format, output, ct);
         });
 
         return cmd;

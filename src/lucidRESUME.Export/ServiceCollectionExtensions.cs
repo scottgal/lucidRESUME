@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IResumeExporter, MarkdownExporter>();
         services.AddSingleton<IResumeExporter, DocxExporter>();
         services.AddSingleton<IResumeExporter, PdfExporter>();
+        services.AddSingleton<ResumeArtifactBuilder>();
         return services;
     }
 }

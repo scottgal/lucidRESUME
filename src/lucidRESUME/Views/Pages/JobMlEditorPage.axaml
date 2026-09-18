@@ -1,0 +1,146 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:controls="using:lucidRESUME.Views.Controls"
+             x:Class="lucidRESUME.Views.Pages.JobMlEditorPage"
+             x:DataType="vm:JobMlEditorPageViewModel">
+  <UserControl.Styles>
+    <Style Selector="ListBoxItem:selected Border.evidence-card">
+      <Setter Property="BorderBrush" Value="{DynamicResource LrAccentBlueBrush}"/>
+      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="Background" Value="{DynamicResource LrAccentBlueBgBrush}"/>
+    </Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource LrPageBgBrush}">
+    <Border Grid.Row="0" Padding="14,9" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource LrBorderBrush}">
+      <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="7">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <StackPanel Orientation="Horizontal" Spacing="7">
+            <Button x:Name="NewJobMlDocumentButton" Content="New" Command="{Binding NewDocumentCommand}"/>
+            <Button Content="Open" Command="{Binding OpenCommand}"/>
+            <Button Content="Save" Command="{Binding SaveCommand}"/>
+            <Border Width="1" Background="{DynamicResource LrBorderBrush}" Margin="5,2"/>
+            <Button x:Name="GenerateLinksButton" Content="Generate links" Command="{Binding GenerateDraftCommand}"/>
+            <Button Content="Accept drift" Command="{Binding AcceptEvidenceChangesCommand}"/>
+            <Button Content="Accept claims" Command="{Binding AcceptDraftClaimsCommand}"/>
+            <Button Content="Publish" Command="{Binding PublishReviewedSnapshotCommand}"
+                    IsVisible="{Binding HasLinkedResume}"/>
+          </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Border Background="{DynamicResource LrAccentBlueBgBrush}" CornerRadius="10" Padding="8,2">
+            <TextBlock Text="{Binding EvidenceLinkCount, StringFormat='Links  {0}'}" FontSize="10"
+                       Foreground="{DynamicResource LrAccentBlueBrush}"/>
+          </Border>
+          <Border Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="10" Padding="8,2">
+            <TextBlock Text="{Binding BrokenLinkCount, StringFormat='Drift  {0}'}" FontSize="10"
+                       Foreground="{DynamicResource LrAccentYellowBrush}"/>
+          </Border>
+          <TextBlock Text="{Binding IsDirty, StringFormat='Unsaved: {0}'}" FontSize="10"
+                     Foreground="{DynamicResource LrSecondaryTextBrush}" VerticalAlignment="Center"/>
+        </StackPanel>
+        <TextBlock x:Name="SelectionStatus" Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding SelectionSummary}" FontSize="11"
+                   Foreground="{DynamicResource LrSecondaryTextBrush}" TextTrimming="CharacterEllipsis"/>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="4*,270,4*" Margin="12" ColumnSpacing="10">
+      <Grid Grid.Column="0" RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="*,Auto" Margin="4,0,4,6">
+          <StackPanel>
+            <TextBlock Text="HUMAN" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource LrAccentGreenBrush}"/>
+            <TextBlock Text="Authoritative résumé prose" FontSize="15" FontWeight="SemiBold"/>
+          </StackPanel>
+          <TextBlock Grid.Column="1" Text="Markdown" FontSize="10" VerticalAlignment="Bottom"
+                     Foreground="{DynamicResource LrSubtleTextBrush}"/>
+        </Grid>
+        <TabControl Grid.Row="1" x:Name="HumanTabs">
+          <TabItem Header="Write">
+            <TextBox x:Name="HumanEditor" Text="{Binding HumanMarkdown, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Menlo,Consolas,Courier New"
+                     FontSize="12"
+                     SelectionBrush="{DynamicResource LrAccentGreenBrush}"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+          </TabItem>
+          <TabItem Header="Preview">
+            <Border Background="{DynamicResource LrCardBgBrush}" Padding="14">
+              <controls:MarkdownViewer x:Name="HumanPreview" Markdown="{Binding PreviewMarkdown}"/>
+            </Border>
+          </TabItem>
+        </TabControl>
+      </Grid>
+
+      <Grid Grid.Column="1" RowDefinitions="Auto,2*,Auto,*">
+        <Border Background="{DynamicResource LrSurfaceBgBrush}" CornerRadius="7" Padding="10,7" Margin="0,0,0,7">
+          <StackPanel HorizontalAlignment="Center">
+            <TextBlock Text="LIVE LINKS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource LrAccentBlueBrush}"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="PROSE  ⇄  CLAIM" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+          </StackPanel>
+        </Border>
+        <ListBox x:Name="EvidenceList" Grid.Row="1" ItemsSource="{Binding Evidence}"
+                 SelectedItem="{Binding SelectedEvidence, Mode=TwoWay}"
+                 SelectionChanged="EvidenceList_OnSelectionChanged"
+                 Background="Transparent" BorderThickness="0">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:JobMlEvidenceItem">
+              <Border Classes="evidence-card" Background="{DynamicResource LrCardBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}"
+                      BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                <StackPanel Spacing="4">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Reference}" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource LrAccentGreenBrush}" TextTrimming="CharacterEllipsis"/>
+                    <Border Grid.Column="1" Background="{DynamicResource LrAccentBlueBgBrush}" CornerRadius="8" Padding="5,1">
+                      <TextBlock Text="{Binding State}" FontSize="9" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                    </Border>
+                  </Grid>
+                  <TextBlock Text="⇄" HorizontalAlignment="Center" Foreground="{DynamicResource LrAccentBlueBrush}"/>
+                  <TextBlock Text="{Binding ClaimId}" FontSize="10" FontWeight="SemiBold"
+                             Foreground="{DynamicResource LrAccentPurpleBrush}" TextTrimming="CharacterEllipsis"/>
+                  <TextBlock Text="{Binding Statement}" FontSize="10" TextWrapping="Wrap" MaxHeight="50"/>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock Grid.Row="2" Text="Diagnostics" FontWeight="SemiBold" FontSize="11" Margin="4,8,0,5"/>
+        <ListBox Grid.Row="3" ItemsSource="{Binding Diagnostics}" Background="Transparent" BorderThickness="0">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:JobMlDiagnosticItem">
+              <TextBlock TextWrapping="Wrap" FontSize="9" Margin="2,0,2,5">
+                <Run Text="{Binding Severity}" FontWeight="SemiBold"/><Run Text=" "/>
+                <Run Text="{Binding Code}"/><Run Text=": "/><Run Text="{Binding Message}"/>
+              </TextBlock>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
+
+      <Grid Grid.Column="2" RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="*,Auto" Margin="4,0,4,6">
+          <StackPanel>
+            <TextBlock Text="MACHINE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource LrAccentPurpleBrush}"/>
+            <TextBlock Text="JobML claims and evidence" FontSize="15" FontWeight="SemiBold"/>
+          </StackPanel>
+          <TextBlock Grid.Column="1" Text="YAML · variable resolution" FontSize="10" VerticalAlignment="Bottom"
+                     Foreground="{DynamicResource LrSubtleTextBrush}"/>
+        </Grid>
+        <TextBox x:Name="JobMlEditor" Grid.Row="1" Text="{Binding JobMlText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True" TextWrapping="NoWrap" FontFamily="Menlo,Consolas,Courier New"
+                 FontSize="11"
+                 SelectionBrush="{DynamicResource LrAccentPurpleBrush}"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+      </Grid>
+    </Grid>
+
+    <Border Grid.Row="2" Padding="14,7" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource LrBorderBrush}">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock x:Name="EditorStatus" Text="{Binding StatusMessage}" FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+        <TextBlock x:Name="EvidenceGraphStatus" Grid.Column="1" Text="{Binding IsValid, StringFormat='Evidence graph valid: {0}'}" FontSize="10"
+                   Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

@@ -40,6 +40,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         ResumePageViewModel resumePage,
+        JobMlEditorPageViewModel jobMlEditorPage,
         JobsPageViewModel jobsPage,
         SearchPageViewModel searchPage,
         ApplyPageViewModel applyPage,
@@ -54,6 +55,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _pages = new Dictionary<string, ViewModelBase>(StringComparer.OrdinalIgnoreCase)
         {
             ["Resume"] = resumePage,
+            ["JobML"] = jobMlEditorPage,
             ["MyData"] = myDataPage,
             ["Career"] = careerPlannerPage,
             ["Jobs"] = jobsPage,
@@ -66,6 +68,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _currentPage = resumePage;
         _healthCheck = healthCheck;
         _watchPoller = watchPoller;
+
+        resumePage.OpenInJobMl = (markdown, resumeId) =>
+        {
+            var loaded = jobMlEditorPage.TryLoadMarkdown(markdown, resumeId);
+            SelectedNav = "JobML";
+            CurrentPage = jobMlEditorPage;
+            return loaded;
+        };
+        jobMlEditorPage.SnapshotPublished = resumePage.ReloadAsync;
     }
 
     public async Task InitAsync()
@@ -87,7 +98,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                         NerLabel = message;
                         NerColor = "...";
                         break;
-                    case "ollama":
+                    case "ai":
                         OllamaLabel = message;
                         OllamaColor = "...";
                         break;
@@ -126,10 +137,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             NerColor = "Offline";
         }
 
-        OllamaLabel = _healthCheck.OllamaAvailable
-            ? $"Ollama: connected ({_healthCheck.OllamaUrl})"
-            : "Ollama: offline";
-        OllamaColor = _healthCheck.OllamaAvailable ? "Connected" : "Offline";
+        OllamaLabel = _healthCheck.AiStatus;
+        OllamaColor = _healthCheck.AiAvailable ? "Connected" : "Offline";
 
         if (_healthCheck.DoclingEnabled)
         {
