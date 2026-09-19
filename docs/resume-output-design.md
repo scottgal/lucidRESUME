@@ -10,7 +10,7 @@ The supported role-specific document path is:
 4. Paste a job advert into Project.
 5. Select an output template and project the relevant accepted ledger records.
 6. Review the human-owned prose and its JobML evidence links.
-7. Export the same artifact as Markdown, DOCX, or PDF.
+7. Export the same projection as Markdown, DOCX, or PDF.
 
 Ingestion may use deterministic parsers, NER, or an optional LLM to propose ledger
 records. Inferred records remain review-required. An optional AI authoring step may
@@ -18,10 +18,10 @@ also offer a clearly labelled prose draft or sample. It does not publish prose o
 create accepted evidence. A person must review and edit it.
 
 Rendering does not call a model, reparse its own output, rewrite human prose, or
-infer provenance. Markdown and JobML are emitted together from one revisioned
-projection whose blocks already carry ledger claim IDs. JobML may retain more
-detail than the role-specific prose, but every claim must still trace to reviewed
-human or external evidence.
+infer provenance. Human prose and cJobML references are emitted together from one
+revisioned projection whose blocks already carry ledger claim IDs. Full JobML may
+retain more detail than the role-specific prose, but every claim must still trace
+to reviewed human or external evidence.
 
 This is not an automated application path and it is not detector evasion. The
 goal is a clean separation: natural human writing for people, and explicit,
@@ -31,16 +31,19 @@ If the source ledger changes after projection, export fails until the role-speci
 projection is rebuilt. This prevents a visually plausible document from carrying
 stale evidence links.
 
-The portable artifact ends with:
+The portable artifact uses inline reference markers and ends with:
 
 ```text
-MACHINE AREA
-  link to the JobML article
-  fenced JobML YAML
+References
+  cJobML one-line semantic contract
+  optional complete JobML endpoint
+  numbered external evidence
 ```
 
-The DOCX and PDF exports put that machine area on a new page. The visible resume
-remains an ordinary single-column document.
+The DOCX and PDF exports render the same compact references as Markdown. The
+full selectors, quoted evidence, fingerprints, reconciliation state, and review
+metadata remain in the editable JobML source. cJobML is a publication projection,
+not another source format.
 
 ## Template research
 

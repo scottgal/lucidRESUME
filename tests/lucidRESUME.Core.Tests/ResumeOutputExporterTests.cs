@@ -10,7 +10,7 @@ namespace lucidRESUME.Core.Tests;
 public sealed class ResumeOutputExporterTests
 {
     [Fact]
-    public async Task DocxExport_ContainsHumanResumeMachineAreaAndArticleLink()
+    public async Task DocxExport_ContainsHumanResumeAndCompactScientificReferences()
     {
         var resume = CreateResume(ResumeTemplateCatalog.ModernProfessionalId);
 
@@ -21,17 +21,23 @@ public sealed class ResumeOutputExporterTests
         var mainPart = document.MainDocumentPart!;
         var text = mainPart.Document!.Body!.InnerText;
         Assert.Contains("Jane Smith", text);
-        Assert.Contains("MACHINE AREA", text);
-        Assert.Contains("jobml:", text);
+        Assert.Contains("References", text);
+        Assert.Contains("cJobML 0.1", text);
+        Assert.Contains("[1]", text);
+        Assert.Contains("Reduced RAG", text);
+        Assert.DoesNotContain("MACHINE AREA", text);
+        Assert.DoesNotContain("fingerprint:", text);
         Assert.Contains(mainPart.HyperlinkRelationships,
-            relationship => relationship.Uri.ToString() == JobMlArtifactComposer.ArticleUrl);
+            relationship => relationship.Uri.ToString() == "https://mostlylucid.net/reduced-rag");
+        Assert.Contains(mainPart.HyperlinkRelationships,
+            relationship => relationship.Uri.ToString() == "https://example.com/jane.jobml");
     }
 
     [Theory]
     [InlineData(ResumeTemplateCatalog.AtsClassicId)]
     [InlineData(ResumeTemplateCatalog.ModernProfessionalId)]
     [InlineData(ResumeTemplateCatalog.CompactTechnicalId)]
-    public async Task PdfExport_RendersEveryTemplateWithMachineArea(string templateId)
+    public async Task PdfExport_RendersEveryTemplateWithCompactReferences(string templateId)
     {
         var bytes = await new PdfExporter().ExportAsync(CreateResume(templateId));
 
@@ -40,7 +46,7 @@ public sealed class ResumeOutputExporterTests
     }
 
     [Fact]
-    public async Task MarkdownExport_ReturnsPortableHumanAndJobMlArtifact()
+    public async Task MarkdownExport_ReturnsOnePassParseableCJobMlProjection()
     {
         var resume = CreateResume(ResumeTemplateCatalog.AtsClassicId);
 
@@ -48,8 +54,12 @@ public sealed class ResumeOutputExporterTests
         var markdown = System.Text.Encoding.UTF8.GetString(bytes);
 
         Assert.Contains("# Jane Smith", markdown);
-        Assert.Contains("## MACHINE AREA", markdown);
-        Assert.Contains("```jobml", markdown);
+        Assert.Contains("[[1]](#ref-1)", markdown);
+        Assert.Contains("## References", markdown);
+        Assert.Contains("cJobML 0.1", markdown);
+        Assert.DoesNotContain("```jobml", markdown);
+        Assert.True(CJobMlParser.TryParse(markdown, out var compact, out var error), error);
+        Assert.Single(compact!.References);
     }
 
     [Fact]
@@ -165,6 +175,19 @@ public sealed class ResumeOutputExporterTests
     {
         const string markdown = "# Jane Smith\n\n## Experience\n\n### Engineer at Example Corp\n\nBuilt a reliable platform for customers.";
         var file = JobMlDraftGenerator.Generate(markdown);
+        file.Data.Document.CompleteLedger = "https://example.com/jane.jobml";
+        var claim = Assert.Single(file.Data.Claims);
+        claim.Review = "accepted";
+        claim.Evidence.Add(new JobMlEvidence
+        {
+            Id = "reduced-rag",
+            Type = "article",
+            Uri = "https://mostlylucid.net/reduced-rag",
+            Title = "Reduced RAG",
+            Authors = ["S. Galloway"],
+            Publisher = "MostlyLucid",
+            Published = "2025-04-12"
+        });
         var resume = ResumeDocument.Create("jane.md", "text/markdown", markdown.Length);
         resume.Personal.FullName = "Jane Smith";
         resume.Personal.Email = "jane@example.com";

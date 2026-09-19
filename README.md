@@ -30,9 +30,10 @@ what to edit, accept, and publish.
 
 Projection does not call a language model. It selects reviewed resume, LinkedIn,
 and GitHub ledger records, preserves the accepted human prose, and exports one
-evidence-linked artifact as Markdown + JobML, Word, or PDF. The human resume is
-followed by a labelled **MACHINE AREA** containing JobML and a link
-to [the design article](https://mostlylucid.net/blog/the-problem-with-resumes).
+evidence-linked artifact as Markdown, Word, or PDF. Published documents use
+inline numbered citations and a compact cJobML References section. Full JobML,
+including drift and editing metadata, can be published at a linked endpoint.
+See [the design article](https://mostlylucid.net/blog/the-problem-with-resumes).
 See [resume output and template design](docs/resume-output-design.md) for the full flow,
 template rationale, and configuration.
 
@@ -78,6 +79,7 @@ evidence. Its default **Document** tab is a debounced live DOCX projection throu
 the selected output template, rendered by Morph beside those evidence links. It
 does not re-extract or reinterpret the ledger. See the
 [JobML specification](docs/jobml-0.1-specification.md),
+[cJobML publication specification](docs/cjobml-0.1-specification.md),
 [implementation profile](docs/jobml-0.1.md), and
 [GitHub repository extension](docs/jobml-github-extension-0.1.md).
 
@@ -168,6 +170,7 @@ JSON Resume (standard schema), Markdown, **DOCX** (Word via OpenXml), and **PDF*
 - [Technical Architecture](docs/architecture.md) - modules, data flow, persistence, and extraction pipeline.
 - [Document Layout Detection](docs/layout-detection.md) - DocLayNet YOLO model, structural hashing, template communities.
 - [JobML 0.1 Specification](docs/jobml-0.1-specification.md) - normative document model, evidence reconciliation, review states, and extensions.
+- [cJobML 0.1 Publication Projection](docs/cjobml-0.1-specification.md) - compact numbered citations, references, full-ledger endpoints, and one-pass parsing.
 - [JobML GitHub Extension](docs/jobml-github-extension-0.1.md) - repository quality, attribution, and skill-observation model.
 - [In-App User Manual](src/lucidRESUME/Resources/user-manual.md) - the same help content embedded in the desktop app.
 
@@ -195,6 +198,8 @@ lucidresume jobml validate  --file resume.jobml.md
 lucidresume jobml reconcile --file resume.jobml.md
 lucidresume jobml coverage  --file resume.jobml.md
 lucidresume jobml cold-parser-probe --file resume.jobml.md
+lucidresume jobml compact --file resume.jobml.md --complete-ledger https://example.net/resume.jobml --output resume.md
+lucidresume jobml link-post --file resume.jobml.md --claim claim-id --url https://example.net/article --output linked.jobml.md
 ```
 
 ---
@@ -310,19 +315,19 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test    # 333 tests across 9 projects
+dotnet test    # 343 tests across 9 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 64 | Persistence, models, multi-resume, round-trip |
+| Core.Tests | 67 | Persistence, models, multi-resume, export, linked posts |
 | Extraction.Tests | 23 | NER, recognizers, RRF fusion pipeline |
-| AI.Tests | 23 | Providers, embeddings, deterministic projection |
+| AI.Tests | 24 | Providers, embeddings, deterministic projection, gated live OpenAI checks |
 | Matching.Tests | 52 | Skill scoring, filters, voting, quality word lists |
 | JobSpec.Tests | 8 | JD parsing, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
 | GitHub.Tests | 24 | Language map, LinkedIn parser, document merger |
-| JobML.Tests | 18 | Parsing, validation, drift, reversible links |
+| JobML.Tests | 24 | Parsing, validation, drift, reversible links, cJobML projection |
 | Avalonia.UITesting.Tests | 96 | Input, scripts, locators, screenshots, REPL |
 
 ---

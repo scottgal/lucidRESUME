@@ -220,11 +220,14 @@ authoring step. That output is not accepted prose and does not enter the ledger
 as fact. You must review, edit, and accept it. Projection and export never ask a
 model to make the text look human or to invent missing coverage.
 
-The saved document contains normal Markdown followed by a labelled **MACHINE
-AREA** and one fenced `jobml` block. It remains readable without JobML-aware
-software.
+The saved source artifact contains normal Markdown followed by one fenced `jobml`
+block. Published Markdown, Word, and PDF
+use inline numbered citations and a compact cJobML **References** section instead.
+The compact section can link to a published full JobML endpoint and remains
+readable without JobML-aware software.
 
 For the full format, see the [JobML 0.1 specification](../../../docs/jobml-0.1-specification.md)
+and [cJobML 0.1 publication specification](../../../docs/cjobml-0.1-specification.md)
 and [GitHub repository extension](../../../docs/jobml-github-extension-0.1.md).
 
 ---

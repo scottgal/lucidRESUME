@@ -3,6 +3,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.JobML;
 
 namespace lucidRESUME.Export;
 
@@ -17,6 +18,7 @@ public sealed class DocxExporter : IResumeExporter
     public Task<byte[]> ExportAsync(ResumeDocument resume, CancellationToken ct = default)
     {
         var template = ExportArtifact.Template(resume);
+        var compact = ExportArtifact.CompactJobMl(resume);
         using var ms = new MemoryStream();
         using (var doc = WordprocessingDocument.Create(ms, WordprocessingDocumentType.Document, true))
         {
@@ -48,7 +50,9 @@ public sealed class DocxExporter : IResumeExporter
             if (!string.IsNullOrWhiteSpace(p.Summary))
             {
                 body.Append(CreateParagraph("Summary", "Heading2"));
-                body.Append(CreateParagraph(p.Summary));
+                var paragraph = CreateParagraph(p.Summary);
+                AppendCitationMarkers(paragraph, ExportArtifact.CitationNumbers(p.Summary, compact));
+                body.Append(paragraph);
             }
 
             // Put the searchable technical inventory before the chronology.
@@ -77,7 +81,11 @@ public sealed class DocxExporter : IResumeExporter
                     if (exp.Technologies.Count > 0)
                         body.Append(CreateParagraph($"Technologies: {string.Join(", ", exp.Technologies)}", fontSize: 18, color: template.AccentHex, italic: true, fontFamily: template.FontFamily));
                     foreach (var a in exp.Achievements)
-                        body.Append(CreateBullet(a));
+                    {
+                        var paragraph = CreateBullet(a);
+                        AppendCitationMarkers(paragraph, ExportArtifact.CitationNumbers(a, compact));
+                        body.Append(paragraph);
+                    }
                     body.Append(CreateParagraph("")); // spacing
                 }
             }
@@ -113,21 +121,29 @@ public sealed class DocxExporter : IResumeExporter
                 {
                     body.Append(CreateParagraph(proj.Name, bold: true));
                     if (!string.IsNullOrWhiteSpace(proj.Description))
-                        body.Append(CreateParagraph(proj.Description, fontSize: 20));
+                    {
+                        var paragraph = CreateParagraph(proj.Description, fontSize: 20);
+                        AppendCitationMarkers(paragraph, ExportArtifact.CitationNumbers(proj.Description, compact));
+                        body.Append(paragraph);
+                    }
                     if (proj.Technologies.Count > 0)
                         body.Append(CreateParagraph(string.Join(", ", proj.Technologies), fontSize: 18, color: template.AccentHex, fontFamily: template.FontFamily));
                 }
             }
 
-            AppendMachineArea(mainPart, body, resume, template);
+            AppendReferences(mainPart, body, compact, template);
 
             // Set page margins
             var margin = (int)Math.Round(template.PageMarginPoints * 20);
             body.Append(new SectionProperties(
                 new PageMargin
                 {
-                    Top = margin, Right = (uint)margin, Bottom = margin, Left = (uint)margin,
-                    Header = 360u, Footer = 360u
+                    Top = margin,
+                    Right = (uint)margin,
+                    Bottom = margin,
+                    Left = (uint)margin,
+                    Header = 360u,
+                    Footer = 360u
                 }));
         }
 
@@ -146,7 +162,8 @@ public sealed class DocxExporter : IResumeExporter
                     new FontSize { Val = "48" }, // 24pt
                     new Color { Val = template.AccentHex }
                 )
-            ) { Type = StyleValues.Paragraph, StyleId = "Heading1" },
+            )
+            { Type = StyleValues.Paragraph, StyleId = "Heading1" },
             new Style(
                 new StyleName { Val = "Heading2" },
                 new StyleRunProperties(
@@ -158,7 +175,8 @@ public sealed class DocxExporter : IResumeExporter
                 new StyleParagraphProperties(
                     new SpacingBetweenLines { Before = "200", After = "60" }
                 )
-            ) { Type = StyleValues.Paragraph, StyleId = "Heading2" }
+            )
+            { Type = StyleValues.Paragraph, StyleId = "Heading2" }
         );
     }
 
@@ -213,23 +231,77 @@ public sealed class DocxExporter : IResumeExporter
         return para;
     }
 
-    private static void AppendMachineArea(MainDocumentPart mainPart, Body body, ResumeDocument resume, ResumeTemplate template)
+    private static void AppendCitationMarkers(Paragraph paragraph, IReadOnlyList<int> numbers)
     {
-        var yaml = ExportArtifact.JobMlYaml(resume);
-        if (string.IsNullOrWhiteSpace(yaml)) return;
+        if (numbers.Count == 0) return;
+        paragraph.Append(new Run(new Text(" ")));
+        for (var index = 0; index < numbers.Count; index++)
+        {
+            if (index > 0) paragraph.Append(new Run(new Text(", ")));
+            var number = numbers[index];
+            paragraph.Append(new Hyperlink(
+                new Run(
+                    new RunProperties(
+                        new Color { Val = "0563C1" },
+                        new Underline { Val = UnderlineValues.Single }),
+                    new Text($"[{number}]")))
+            {
+                Anchor = $"ref-{number}",
+                History = OnOffValue.FromBoolean(true)
+            });
+        }
+    }
 
-        body.Append(new Paragraph(new Run(new Break { Type = BreakValues.Page })));
-        body.Append(CreateParagraph("MACHINE AREA", "Heading2"));
-        body.Append(CreateParagraph("Machine-readable evidence and claim links. This is not replacement resume prose.",
+    private static void AppendReferences(MainDocumentPart mainPart, Body body,
+        CJobMlProjection? compact, ResumeTemplate template)
+    {
+        if (compact is null || compact.References.Count == 0) return;
+
+        body.Append(CreateParagraph("References", "Heading2"));
+        body.Append(CreateParagraph(CJobMlProjector.SemanticPreamble,
             fontSize: 16, color: "666666", fontFamily: template.FontFamily));
 
-        var relationship = mainPart.AddHyperlinkRelationship(new Uri(ExportArtifact.MachineArticleUrl), true);
-        body.Append(new Paragraph(new Hyperlink(
-            new Run(new RunProperties(new Color { Val = template.AccentHex }, new Underline { Val = UnderlineValues.Single }),
-                new Text("What is this?"))) { Id = relationship.Id }));
+        if (Uri.TryCreate(compact.CompleteLedger, UriKind.Absolute, out var completeLedger))
+        {
+            var relationship = mainPart.AddHyperlinkRelationship(completeLedger, true);
+            var paragraph = CreateParagraph("Full JobML: ", fontSize: 16, color: "666666", fontFamily: template.FontFamily);
+            paragraph.Append(new Hyperlink(
+                new Run(new RunProperties(new Color { Val = template.AccentHex }, new Underline { Val = UnderlineValues.Single }),
+                    new Text(completeLedger.ToString())))
+            { Id = relationship.Id });
+            body.Append(paragraph);
+        }
 
-        foreach (var line in yaml.Split('\n'))
-            body.Append(CreateParagraph(line, fontSize: 14, color: "555555", fontFamily: "Consolas"));
+        foreach (var reference in compact.References)
+        {
+            var paragraph = new Paragraph(
+                new ParagraphProperties(
+                    new Indentation { Left = "360", Hanging = "360" },
+                    new SpacingBetweenLines { After = "80" }));
+            var bookmarkId = (10_000 + reference.Number).ToString();
+            paragraph.Append(new BookmarkStart { Id = bookmarkId, Name = $"ref-{reference.Number}" });
+
+            var uriToken = string.IsNullOrWhiteSpace(reference.Evidence.Uri)
+                ? null
+                : $"<{reference.Evidence.Uri}>";
+            var text = reference.PlainText;
+            if (uriToken is not null)
+                text = text.Replace(uriToken + ".", "", StringComparison.Ordinal).TrimEnd();
+            paragraph.Append(new Run(new RunProperties(new FontSize { Val = "16" }),
+                new Text(text + (uriToken is null ? "" : " ")) { Space = SpaceProcessingModeValues.Preserve }));
+
+            if (Uri.TryCreate(reference.Evidence.Uri, UriKind.Absolute, out var uri))
+            {
+                var relationship = mainPart.AddHyperlinkRelationship(uri, true);
+                paragraph.Append(new Hyperlink(
+                    new Run(new RunProperties(new FontSize { Val = "16" }, new Color { Val = template.AccentHex },
+                            new Underline { Val = UnderlineValues.Single }),
+                        new Text(uri.ToString())))
+                { Id = relationship.Id });
+            }
+            paragraph.Append(new BookmarkEnd { Id = bookmarkId });
+            body.Append(paragraph);
+        }
     }
 
     private static Paragraph CreateHorizontalRule()

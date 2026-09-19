@@ -237,7 +237,7 @@ jobs:
             echo
             echo "Version: ${version}"
             echo
-            echo "Generated from the product guide, architecture, user manual, JobML specification, and GitHub extension."
+            echo "Generated from the product guide, architecture, user manual, JobML and cJobML specifications, and GitHub extension."
             echo
             echo "---"
             echo
@@ -257,10 +257,14 @@ jobs:
             echo
             echo "---"
             echo
+            sed -n '1,$p' docs/cjobml-0.1-specification.md
+            echo
+            echo "---"
+            echo
             sed -n '1,$p' docs/jobml-github-extension-0.1.md
           } > "${out_dir}/lucidRESUME-docs-single-page.md"
           cp README.md docs/architecture.md docs/jobml-0.1.md docs/jobml-0.1-specification.md \
-            docs/jobml-github-extension-0.1.md docs/jobml-0.1.schema.json \
+            docs/cjobml-0.1-specification.md docs/jobml-github-extension-0.1.md docs/jobml-0.1.schema.json \
             src/lucidRESUME/Resources/user-manual.md "$out_dir/"
           (cd artifacts/docs && zip -qr "../release/${name}.zip" "$name")
           tar -czf "artifacts/release/${name}.tar.gz" -C artifacts/docs "$name"

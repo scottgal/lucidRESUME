@@ -75,6 +75,13 @@ public sealed class JobMlDocumentMetadata
 
     [YamlMember(Alias = "language")]
     public string Language { get; set; } = "en-GB";
+
+    /// <summary>
+    /// Optional published endpoint for the complete full-resolution JobML ledger.
+    /// Compact cJobML outputs expose this link instead of embedding editing metadata.
+    /// </summary>
+    [YamlMember(Alias = "complete_ledger")]
+    public string? CompleteLedger { get; set; }
 }
 
 public sealed class JobMlEntity
@@ -135,6 +142,10 @@ public sealed class JobMlClaimConcepts
 
 public sealed class JobMlEvidence
 {
+    /// <summary>Stable evidence identity in the full-resolution projection.</summary>
+    [YamlMember(Alias = "id")]
+    public string? Id { get; set; }
+
     [YamlMember(Alias = "type")]
     public string Type { get; set; } = "prose";
 
@@ -149,6 +160,22 @@ public sealed class JobMlEvidence
 
     [YamlMember(Alias = "qualification")]
     public string? Qualification { get; set; }
+
+    /// <summary>Bibliographic metadata used by the compact scientific-style projection.</summary>
+    [YamlMember(Alias = "title")]
+    public string? Title { get; set; }
+
+    [YamlMember(Alias = "authors")]
+    public List<string> Authors { get; set; } = [];
+
+    [YamlMember(Alias = "publisher")]
+    public string? Publisher { get; set; }
+
+    [YamlMember(Alias = "published")]
+    public string? Published { get; set; }
+
+    [YamlMember(Alias = "accessed")]
+    public string? Accessed { get; set; }
 
     [YamlMember(Alias = "fingerprint")]
     public JobMlFingerprint? Fingerprint { get; set; }

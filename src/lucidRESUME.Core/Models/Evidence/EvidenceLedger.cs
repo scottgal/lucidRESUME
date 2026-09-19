@@ -22,6 +22,11 @@ public sealed class EvidenceRecord
     public string Text { get; set; } = "";
     public string FastHash { get; set; } = "";
     public string? ExternalUri { get; set; }
+    public string? Title { get; set; }
+    public List<string> Authors { get; set; } = [];
+    public string? Publisher { get; set; }
+    public DateOnly? PublishedOn { get; set; }
+    public DateOnly? AccessedOn { get; set; }
     public string ExtractionMethod { get; set; } = "deterministic";
     public double Confidence { get; set; } = 1.0;
 }

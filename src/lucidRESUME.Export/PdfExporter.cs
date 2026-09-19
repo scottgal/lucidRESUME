@@ -1,5 +1,6 @@
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.JobML;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -22,6 +23,7 @@ public sealed class PdfExporter : IResumeExporter
     public Task<byte[]> ExportAsync(ResumeDocument resume, CancellationToken ct = default)
     {
         var template = ExportArtifact.Template(resume);
+        var compact = ExportArtifact.CompactJobMl(resume);
         var bytes = Document.Create(container =>
         {
             container.Page(page =>
@@ -33,7 +35,7 @@ public sealed class PdfExporter : IResumeExporter
                 page.DefaultTextStyle(x => x.FontSize(template.BodyFontSize).FontFamily("Lato"));
 
                 page.Header().Element(c => ComposeHeader(c, resume.Personal, template));
-                page.Content().Element(c => ComposeContent(c, resume, template));
+                page.Content().Element(c => ComposeContent(c, resume, template, compact));
                 page.Footer().AlignCenter().Text(t =>
                 {
                     t.CurrentPageNumber();
@@ -67,7 +69,8 @@ public sealed class PdfExporter : IResumeExporter
         });
     }
 
-    private static void ComposeContent(IContainer container, ResumeDocument resume, ResumeTemplate template)
+    private static void ComposeContent(IContainer container, ResumeDocument resume, ResumeTemplate template,
+        CJobMlProjection? compact)
     {
         container.PaddingTop(8).Column(col =>
         {
@@ -75,7 +78,8 @@ public sealed class PdfExporter : IResumeExporter
             if (!string.IsNullOrWhiteSpace(resume.Personal.Summary))
             {
                 col.Item().Element(c => SectionHeading(c, "Summary", template));
-                col.Item().Text(resume.Personal.Summary).FontSize(9).LineHeight(1.4f);
+                col.Item().Text(resume.Personal.Summary + CitationMarker(resume.Personal.Summary, compact))
+                    .FontSize(9).LineHeight(1.4f);
                 col.Item().PaddingBottom(8);
             }
 
@@ -128,7 +132,7 @@ public sealed class PdfExporter : IResumeExporter
                         col.Item().PaddingLeft(12).Row(row =>
                         {
                             row.ConstantItem(8).Text("•").FontSize(8);
-                            row.RelativeItem().Text(a).FontSize(9).LineHeight(1.3f);
+                            row.RelativeItem().Text(a + CitationMarker(a, compact)).FontSize(9).LineHeight(1.3f);
                         });
 
                     col.Item().PaddingBottom(6);
@@ -172,7 +176,7 @@ public sealed class PdfExporter : IResumeExporter
                 {
                     col.Item().Text(proj.Name).Bold().FontSize(9);
                     if (!string.IsNullOrWhiteSpace(proj.Description))
-                        col.Item().Text(proj.Description).FontSize(8);
+                        col.Item().Text(proj.Description + CitationMarker(proj.Description, compact)).FontSize(8);
                     if (proj.Technologies.Count > 0)
                         col.Item().Text(string.Join(", ", proj.Technologies))
                             .FontSize(8).Italic().FontColor($"#{template.AccentHex}");
@@ -180,7 +184,7 @@ public sealed class PdfExporter : IResumeExporter
                 }
             }
 
-            AppendMachineArea(col, resume, template);
+            AppendReferences(col, compact, template);
         });
     }
 
@@ -193,19 +197,37 @@ public sealed class PdfExporter : IResumeExporter
         });
     }
 
-    private static void AppendMachineArea(ColumnDescriptor col, ResumeDocument resume, ResumeTemplate template)
+    private static string CitationMarker(string text, CJobMlProjection? compact)
     {
-        var yaml = ExportArtifact.JobMlYaml(resume);
-        if (string.IsNullOrWhiteSpace(yaml)) return;
+        var numbers = ExportArtifact.CitationNumbers(text, compact);
+        return numbers.Count == 0 ? "" : $" {CJobMlProjector.Marker(numbers)}";
+    }
 
-        col.Item().PageBreak();
-        col.Item().Text("MACHINE AREA").FontSize(template.SectionFontSize).Bold().FontColor($"#{template.AccentHex}");
-        col.Item().Text("Machine-readable evidence and claim links. This is not replacement resume prose.")
+    private static void AppendReferences(ColumnDescriptor col, CJobMlProjection? compact, ResumeTemplate template)
+    {
+        if (compact is null || compact.References.Count == 0) return;
+
+        col.Item().Element(c => SectionHeading(c, "References", template));
+        col.Item().Text(CJobMlProjector.SemanticPreamble)
             .FontSize(8).FontColor(Colors.Grey.Darken1);
-        col.Item().Hyperlink(ExportArtifact.MachineArticleUrl).Text("What is this?")
-            .FontSize(8).FontColor($"#{template.AccentHex}").Underline();
-        col.Item().PaddingTop(8).Text(yaml).FontFamily("Lato").FontSize(6.5f).LineHeight(1.15f)
-            .FontColor(Colors.Grey.Darken2);
+        if (Uri.TryCreate(compact.CompleteLedger, UriKind.Absolute, out var completeLedger))
+            col.Item().Hyperlink(completeLedger.ToString()).Text($"Full JobML: {completeLedger}")
+                .FontSize(7).FontColor($"#{template.AccentHex}").Underline();
+
+        foreach (var reference in compact.References)
+        {
+            var uriToken = string.IsNullOrWhiteSpace(reference.Evidence.Uri)
+                ? null
+                : $"<{reference.Evidence.Uri}>";
+            var text = reference.PlainText;
+            if (uriToken is not null)
+                text = text.Replace(uriToken + ".", "", StringComparison.Ordinal).TrimEnd();
+            col.Item().PaddingTop(3).Text(text).FontSize(7).LineHeight(1.15f)
+                .FontColor(Colors.Grey.Darken2);
+            if (Uri.TryCreate(reference.Evidence.Uri, UriKind.Absolute, out var uri))
+                col.Item().PaddingLeft(12).Hyperlink(uri.ToString()).Text(uri.ToString())
+                    .FontSize(6.5f).FontColor($"#{template.AccentHex}").Underline();
+        }
     }
 
     private static string FormatDates(DateOnly? start, DateOnly? end, bool isCurrent)

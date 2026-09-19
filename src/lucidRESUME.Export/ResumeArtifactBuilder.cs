@@ -64,7 +64,10 @@ public sealed class ResumeArtifactBuilder
             Document = new JobMlDocumentMetadata
             {
                 Id = EvidenceLedgerBuilder.Slug(source.Personal.FullName ?? "resume"),
-                Language = "en-GB"
+                Language = "en-GB",
+                CompleteLedger = Uri.TryCreate(source.CompleteJobMlUri, UriKind.Absolute, out _)
+                    ? source.CompleteJobMlUri
+                    : TryReadCompleteLedger(source.JobMlSource)
             },
             Job = new JobMlJob { Id = EvidenceLedgerBuilder.Slug(job.Title ?? "target-role") }
         };
@@ -104,9 +107,20 @@ public sealed class ResumeArtifactBuilder
                 if (!evidenceById.TryGetValue(evidenceId, out var evidence))
                     throw new InvalidOperationException($"Ledger claim '{ledgerClaim.Id}' references missing evidence '{evidenceId}'.");
                 claim.Evidence.Add(!string.IsNullOrWhiteSpace(evidence.ExternalUri)
-                    ? new JobMlEvidence { Type = "repository", Uri = evidence.ExternalUri }
+                    ? new JobMlEvidence
+                    {
+                        Id = evidence.Id,
+                        Type = EvidenceType(evidence),
+                        Uri = evidence.ExternalUri,
+                        Title = evidence.Title ?? EvidenceTitle(evidence),
+                        Authors = [.. evidence.Authors],
+                        Publisher = evidence.Publisher ?? PublisherFromUri(evidence.ExternalUri),
+                        Published = evidence.PublishedOn?.ToString("yyyy-MM-dd"),
+                        Accessed = evidence.AccessedOn?.ToString("yyyy-MM-dd")
+                    }
                     : new JobMlEvidence
                     {
+                        Id = evidence.Id,
                         Type = "source_ledger",
                         Ref = $"ledger://{evidence.Id}",
                         Fingerprint = new JobMlFingerprint { Text = evidence.FastHash },
@@ -182,6 +196,31 @@ public sealed class ResumeArtifactBuilder
         }));
         return new JobMlFile(markdown, root);
     }
+
+    private static string? TryReadCompleteLedger(string? source)
+    {
+        if (string.IsNullOrWhiteSpace(source)) return null;
+        return new JobMlParser().TryParse(source, out var file, out _)
+            ? file!.Data.Document.CompleteLedger
+            : null;
+    }
+
+    private static string EvidenceType(EvidenceRecord evidence)
+    {
+        if (string.Equals(evidence.Kind, "article", StringComparison.OrdinalIgnoreCase)) return "article";
+        if (Uri.TryCreate(evidence.ExternalUri, UriKind.Absolute, out var uri) &&
+            uri.Host.Contains("github.com", StringComparison.OrdinalIgnoreCase)) return "repository";
+        return string.IsNullOrWhiteSpace(evidence.Kind) ? "external" : evidence.Kind;
+    }
+
+    private static string EvidenceTitle(EvidenceRecord evidence)
+    {
+        var separator = evidence.Text.IndexOf(':');
+        return separator > 0 ? evidence.Text[..separator].Trim() : evidence.Kind;
+    }
+
+    private static string? PublisherFromUri(string? uri) =>
+        Uri.TryCreate(uri, UriKind.Absolute, out var parsed) ? parsed.Host.Replace("www.", "", StringComparison.OrdinalIgnoreCase) : null;
 
     private static string RemoveExistingJobMl(string markdown)
     {

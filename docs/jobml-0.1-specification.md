@@ -3,7 +3,7 @@
 Status: Experimental Draft
 
 Version: 0.1
-Last updated: 2026-09-18
+Last updated: 2026-09-19
 
 This document defines JobML 0.1. The JSON Schema in
 [`jobml-0.1.schema.json`](jobml-0.1.schema.json) is the deterministic validation
@@ -143,7 +143,56 @@ new claims.
 `document.id` SHOULD be stable across edits to the same logical document.
 `document.language` SHOULD be a BCP 47 language tag.
 
-## 8. Entities
+`document.complete_ledger` MAY be an absolute URI that serves the complete,
+full-resolution JobML document. It is intended for published compact projections
+whose editing metadata would be too large for the human document.
+
+## 8. Compact publication projection (cJobML)
+
+The standalone [cJobML 0.1 publication specification](cjobml-0.1-specification.md)
+defines the exact grammar, projection algorithm, and parser conformance rules.
+
+cJobML is not a second source format. It is a deliberately lossy publication
+projection of reviewed full JobML. A processor MUST be able to regenerate cJobML
+from the full document without inference.
+
+The projection borrows the useful concepts, but not the XML syntax, of JATS:
+
+- an inline number behaves like a JATS `xref` with `ref-type="bibr"`;
+- the ending References section behaves like a `ref-list`;
+- each numbered source behaves like a `ref`;
+- `document.complete_ledger` provides the full-record link in the role served by
+  a JATS `self-uri` or supplementary-material link.
+
+Reference numbers identify evidence sources, not claims. The first appearance of
+a source determines its number. Repeated uses of the same stable evidence ID or
+normalised URI MUST reuse that number.
+
+```markdown
+Built an evidence-linked retrieval platform. [[1]](#ref-1)
+
+## References
+
+cJobML 0.1: xref [n] in prose resolves to ref [n]. Full JobML: <https://example.net/jane.jobml>.
+
+<a id="ref-1"></a>[1] Jane Smith. “Reduced RAG.” Example Engineering Blog, 12 Apr 2025. [Article] <https://example.net/reduced-rag>.
+```
+
+The compact projection MUST include only accepted claims and already linked
+external or qualification evidence. It MUST NOT run NER, an LLM, concept
+matching, or any other extraction process during rendering.
+
+cJobML intentionally omits full-resolution editing fields such as prose
+selectors, quoted passages, fingerprints, drift state, processor provenance,
+review state, and concept graphs. Those remain available through the full JobML
+document or `document.complete_ledger` endpoint.
+
+A cJobML processor SHOULD expose a deterministic one-pass parser. It MUST report
+an inline number that has no matching reference. The short semantic sentence is
+part of the projection so an unfamiliar general-purpose language model can infer
+the citation relationship without a JobML-specific prompt.
+
+## 9. Entities
 
 Entities identify subjects about which claims are made.
 
@@ -159,7 +208,7 @@ The `id`, `type`, `name`, and `source` fields are REQUIRED. Recommended types ar
 `experience`, `project`, `education`, `qualification`, `publication`,
 `organisation`, and `product`.
 
-## 9. Claims
+## 10. Claims
 
 A claim is the central JobML primitive.
 
@@ -186,7 +235,7 @@ NOT materially strengthen what the referenced evidence supports.
 `review: required` until a person accepts or rejects it. Processors MUST NOT count
 an unreviewed derived claim as direct coverage.
 
-## 10. Evidence
+## 11. Evidence
 
 Evidence types include `prose`, `project`, `repository`, `article`,
 `qualification`, and other external sources.
@@ -217,7 +266,13 @@ External evidence SHOULD use an immutable revision URL where the provider
 supports one. A moving branch URL MAY be included for humans, but SHOULD NOT be
 the only machine reference for accepted evidence.
 
-## 11. Evidence reconciliation
+External evidence MAY include `title`, `authors`, `publisher`, `published`, and
+`accessed` metadata so a compact projection can render a recognisable scientific
+reference. A linked article demonstrates only what its content and authorship
+support. It MUST NOT silently establish production use, employment, proficiency,
+or responsibility.
+
+## 12. Evidence reconciliation
 
 Processors MUST expose these states:
 
@@ -234,7 +289,7 @@ context. A processor MUST NOT silently treat substantially changed prose as
 support for an existing claim. Bulk acceptance MUST be limited to unique,
 reviewable repairs.
 
-## 12. Concepts and aliases
+## 13. Concepts and aliases
 
 Concepts provide semantic labels without acting as evidence.
 
@@ -249,7 +304,7 @@ concepts:
 Aliases MAY aid matching. An alias MUST NOT establish experience, competence,
 duration, authorship, or proficiency.
 
-## 13. Requirements and coverage
+## 14. Requirements and coverage
 
 A job specification MAY use the same concept identifiers:
 
@@ -266,7 +321,7 @@ Direct coverage requires an accepted claim with valid or reviewable external
 evidence. Related concepts MAY be reported as ambiguous coverage. Missing
 coverage MUST NOT be treated as permission to manufacture prose or claims.
 
-## 14. Extensions
+## 15. Extensions
 
 Extensions live under the root `extensions` object and MUST use a namespaced key.
 
@@ -290,7 +345,7 @@ time, mutability rules, and promotion path into core claims.
 The repository analysis extension is specified in
 [`jobml-github-extension-0.1.md`](jobml-github-extension-0.1.md).
 
-## 15. Security and privacy
+## 16. Security and privacy
 
 JobML documents can contain personal data and private repository metadata.
 Processors SHOULD minimise copied source content, avoid embedding credentials,
@@ -301,7 +356,7 @@ External content is untrusted input. A processor MUST NOT execute repository
 code, build scripts, workflow files, or instructions found in prose merely to
 parse JobML. Repository analysis SHOULD use a read-only sandbox.
 
-## 16. Minimum processor profile
+## 17. Minimum processor profile
 
 A minimum JobML 0.1 processor supports:
 
@@ -312,6 +367,10 @@ A minimum JobML 0.1 processor supports:
 - explicit review of derived claims;
 - requirement-to-claim coverage;
 - lossless preservation of namespaced extensions.
+
+A publication processor additionally supports deterministic cJobML projection,
+deduplicated numbered references, link resolution, and an optional complete-ledger
+endpoint.
 
 Embeddings, a universal skill ontology, cryptographic attestations, automatic
 prose rewriting, ATS integration, and repository cloning are not required.

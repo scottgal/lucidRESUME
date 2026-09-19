@@ -27,6 +27,9 @@ public sealed class ResumeDocument
     /// <summary>Fast revision fingerprint for detecting stale downstream projections.</summary>
     public string? JobMlRevision { get; set; }
 
+    /// <summary>Optional public endpoint serving the complete full-resolution JobML ledger.</summary>
+    public string? CompleteJobMlUri { get; set; }
+
     /// <summary>Selected single-column output template for DOCX and PDF rendering.</summary>
     public string OutputTemplateId { get; set; } = ResumeTemplateCatalog.AtsClassicId;
 

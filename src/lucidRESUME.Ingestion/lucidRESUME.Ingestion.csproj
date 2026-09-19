@@ -5,6 +5,7 @@
     <PackageReference Include="AngleSharp" Version="1.8.1" />
     <ProjectReference Include="..\lucidRESUME.Core\lucidRESUME.Core.csproj" />
     <ProjectReference Include="..\lucidRESUME.Extraction\lucidRESUME.Extraction.csproj" />
+    <ProjectReference Include="..\lucidRESUME.JobML\lucidRESUME.JobML.csproj" />
     <ProjectReference Include="..\lucidRESUME.Parsing\lucidRESUME.Parsing.csproj" />
   </ItemGroup>
 

@@ -1,6 +1,7 @@
 using System.Text;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.JobML;
 
 namespace lucidRESUME.Export;
 
@@ -11,7 +12,12 @@ public sealed class MarkdownExporter : IResumeExporter
     public Task<byte[]> ExportAsync(ResumeDocument resume, CancellationToken ct = default)
     {
         if (!string.IsNullOrWhiteSpace(resume.JobMlSource))
+        {
+            var parser = new JobMlParser();
+            if (parser.TryParse(resume.JobMlSource, out var full, out _))
+                return Task.FromResult(Encoding.UTF8.GetBytes(CJobMlProjector.Project(full!).Markdown));
             return Task.FromResult(Encoding.UTF8.GetBytes(resume.JobMlSource));
+        }
 
         if (!string.IsNullOrWhiteSpace(resume.CanonicalMarkdown))
             return Task.FromResult(Encoding.UTF8.GetBytes(resume.CanonicalMarkdown));

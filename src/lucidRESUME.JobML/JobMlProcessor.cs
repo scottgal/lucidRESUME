@@ -25,6 +25,9 @@ public sealed class JobMlProcessor
             diagnostics.Add(Error("JML002", "document.id is required.", "document.id"));
         if (string.IsNullOrWhiteSpace(root.Document.Language) || !LanguageTag.IsMatch(root.Document.Language))
             diagnostics.Add(Error("JML003", "document.language must be a language tag such as en-GB.", "document.language"));
+        if (!string.IsNullOrWhiteSpace(root.Document.CompleteLedger) &&
+            !Uri.TryCreate(root.Document.CompleteLedger, UriKind.Absolute, out _))
+            diagnostics.Add(Error("JML008", "document.complete_ledger must be an absolute URI.", "document.complete_ledger"));
 
         CheckUniqueIds(root.Entities.Select(e => e.Id), "entity", "entities", diagnostics);
         CheckUniqueIds(root.Claims.Select(c => c.Id), "claim", "claims", diagnostics);

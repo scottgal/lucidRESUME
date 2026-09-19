@@ -24,6 +24,7 @@ The release also includes a documentation archive in both `.zip` and `.tar.gz` f
 - `architecture.md` - technical architecture.
 - `user-manual.md` - in-app help manual.
 - `jobml-0.1-specification.md` - normative JobML document and processor rules.
+- `cjobml-0.1-specification.md` - compact publication projection and parser rules.
 - `jobml-github-extension-0.1.md` - repository quality, attribution, and skill observation extension.
 - `jobml-0.1.schema.json` - deterministic validation schema.
 

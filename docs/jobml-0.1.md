@@ -49,6 +49,46 @@ Its `document` and `questions` are given to each model; `groundTruth` is withhel
 
 The self-description intentionally remains short. JobML 0.1 does not embed an ontology, prose-generation policy, parser program, or full specification.
 
+## Compact publication projection
+
+Normative publication profile: [`cjobml-0.1-specification.md`](cjobml-0.1-specification.md)
+
+The editable artifact contains full JobML. A published résumé normally does not.
+Instead, lucidRESUME projects accepted external evidence into compact scientific
+citations called cJobML:
+
+```markdown
+Built an evidence-linked retrieval platform. [[1]](#ref-1)
+
+## References
+
+cJobML 0.1: xref [n] in prose resolves to ref [n]. Full JobML: <https://example.net/jane.jobml>.
+
+<a id="ref-1"></a>[1] Jane Smith. “Reduced RAG.” MostlyLucid, 12 Apr 2025. [Article] <https://example.net/reduced-rag>.
+```
+
+cJobML is a lossy projection, not another editable format. It keeps the JATS-like
+ideas needed for publication: inline cross-references, a reference list, stable
+source identity, and a link to the complete record. Full-resolution prose quotes,
+selectors, fingerprints, drift state, and review metadata stay in full JobML.
+
+Projection never extracts or reinterprets evidence. It numbers external sources
+already attached to accepted claims. The deterministic parser rejects unresolved
+numbers, and a cold OpenAI Responses API integration test verifies that an
+unfamiliar model can recover the claim, source number, source URL, and complete
+record URL from the compact document alone.
+
+Use these commands to produce the compact document or add an article to a claim:
+
+```bash
+lucidresume jobml compact --file resume.jobml.md --complete-ledger https://example.net/jane.jobml --output resume.md
+lucidresume jobml link-post --file resume.jobml.md --claim retrieval-platform --url https://example.net/reduced-rag --output resume-linked.jobml.md
+```
+
+`link-post` captures deterministic page metadata and content provenance. It does
+not generate a claim. The person still chooses which existing claim, if any, the
+article supports.
+
 ## Evidence identity and reversibility
 
 Evidence is identified by three complementary mechanisms:
