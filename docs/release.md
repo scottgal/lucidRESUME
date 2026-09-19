@@ -47,7 +47,7 @@ matching macOS runner before upload.
 
 ## Creating A Release
 
-1. Ensure CI is green on `master`.
+1. Ensure CI is green on `main`.
 2. Choose a semantic version, for example `1.0.0`.
 3. Create and push the tag:
 
