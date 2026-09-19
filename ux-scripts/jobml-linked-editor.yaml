@@ -9,6 +9,9 @@ actions:
   - type: Navigate
     value: JobML
 
+  - type: Click
+    target: type=TabItem:has-text(Write)
+
   - type: Expect
     target: "name=HumanEditor"
     matcher: IsVisible

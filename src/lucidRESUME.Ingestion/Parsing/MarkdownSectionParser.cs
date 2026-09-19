@@ -379,7 +379,7 @@ public static class MarkdownSectionParser
         if (resume.Personal.FullName != null) return;
         var firstHeading = lines.FirstOrDefault(l => l.StartsWith("# ") || l.StartsWith("## "));
         if (firstHeading == null) return;
-        var raw = firstHeading.TrimStart('#').Trim();
+        var raw = StableAnchorPattern.Replace(firstHeading.TrimStart('#').Trim(), "");
         var namePart = raw.Split('|')[0].Trim();
         if (namePart.Length <= 2 || IsKnownSection(namePart) || namePart.Contains('@')) return;
 

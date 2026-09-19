@@ -1,0 +1,46 @@
+name: jobml-live-word-preview
+description: Verify an ingested resume gets a live template-rendered Word preview beside JobML evidence.
+default_delay: 200
+
+actions:
+  - type: Wait
+    value: "1200"
+
+  - type: Navigate
+    value: Resume
+
+  - type: ImportFile
+    target: Fast
+    value: test-data/resumes/Scott_Galloway_CTO.docx
+
+  - type: Expect
+    target: name=ResumeContent
+    matcher: IsVisible
+    timeout: 15000
+
+  - type: Click
+    target: type=Button:has-text(Edit JobML)
+
+  - type: Expect
+    target: name=DocumentPreviewStatus
+    matcher: HasText
+    value: Live ATS Classic Word preview
+    timeout: 15000
+
+  - type: Expect
+    target: name=DocumentPreviewImage
+    matcher: IsVisible
+    timeout: 5000
+
+  - type: Expect
+    target: name=EvidenceList
+    matcher: IsVisible
+    timeout: 5000
+
+  - type: Expect
+    target: name=JobMlEditor
+    matcher: IsVisible
+    timeout: 5000
+
+  - type: Screenshot
+    value: jobml-live-word-document-and-evidence

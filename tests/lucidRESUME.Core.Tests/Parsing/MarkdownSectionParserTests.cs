@@ -5,6 +5,17 @@ namespace lucidRESUME.Core.Tests.Parsing;
 
 public class MarkdownSectionParserTests
 {
+    [Fact]
+    public void PopulateSections_StripsStableAnchorFromCandidateName()
+    {
+        var resume = ResumeDocument.Create("resume.md", "text/markdown", 0);
+
+        MarkdownSectionParser.PopulateSections(resume,
+            "# Jane Smith {#jane-smith}\n\n## Summary {#summary}\n\nPlatform engineer.");
+
+        Assert.Equal("Jane Smith", resume.Personal.FullName);
+    }
+
     // Minimal resume markdown matching the Docling output format
     private const string SampleMarkdown = """
         ## Scott Galloway | .NET Developer | Remote

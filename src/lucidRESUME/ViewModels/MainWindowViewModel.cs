@@ -69,9 +69,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _healthCheck = healthCheck;
         _watchPoller = watchPoller;
 
-        resumePage.OpenInJobMl = (markdown, resumeId) =>
+        resumePage.OpenInJobMl = (markdown, resumeId, templateId) =>
         {
-            var loaded = jobMlEditorPage.TryLoadMarkdown(markdown, resumeId);
+            var loaded = jobMlEditorPage.TryLoadMarkdown(markdown, resumeId, templateId);
             SelectedNav = "JobML";
             CurrentPage = jobMlEditorPage;
             return loaded;

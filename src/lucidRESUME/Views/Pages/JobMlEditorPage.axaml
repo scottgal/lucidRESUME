@@ -46,15 +46,45 @@
 
     <Grid Grid.Row="1" ColumnDefinitions="4*,270,4*" Margin="12" ColumnSpacing="10">
       <Grid Grid.Column="0" RowDefinitions="Auto,*">
-        <Grid ColumnDefinitions="*,Auto" Margin="4,0,4,6">
+        <Grid RowDefinitions="Auto,Auto" Margin="4,0,4,6">
           <StackPanel>
             <TextBlock Text="HUMAN" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource LrAccentGreenBrush}"/>
             <TextBlock Text="Authoritative résumé prose" FontSize="15" FontWeight="SemiBold"/>
           </StackPanel>
-          <TextBlock Grid.Column="1" Text="Markdown" FontSize="10" VerticalAlignment="Bottom"
-                     Foreground="{DynamicResource LrSubtleTextBrush}"/>
+          <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,5,0,0">
+            <ComboBox x:Name="EditorTemplateSelector" ItemsSource="{Binding Templates}"
+                      SelectedItem="{Binding SelectedTemplate}" MinWidth="150" FontSize="10" Padding="6,2"/>
+            <TextBlock x:Name="DocumentPreviewStatus" Grid.Column="1" Text="{Binding DocumentPreviewStatus}" FontSize="9"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       Foreground="{DynamicResource LrSubtleTextBrush}"/>
+          </Grid>
         </Grid>
-        <TabControl Grid.Row="1" x:Name="HumanTabs">
+        <TabControl Grid.Row="1" x:Name="HumanTabs" SelectedIndex="{Binding HumanTabIndex, Mode=TwoWay}">
+          <TabItem Header="Document">
+            <Grid RowDefinitions="*,Auto">
+              <Border Background="{DynamicResource LrCardBgBrush}" Padding="8" ClipToBounds="True">
+                <Panel>
+                  <Image x:Name="DocumentPreviewImage" Source="{Binding DocumentPreviewImage}" Stretch="Uniform"/>
+                  <TextBlock Text="{Binding DocumentPreviewStatus}" HorizontalAlignment="Center"
+                             VerticalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
+                             Foreground="{DynamicResource LrSubtleTextBrush}"
+                             IsVisible="{Binding !HasDocumentPreview}"/>
+                </Panel>
+              </Border>
+              <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center"
+                          Spacing="8" Margin="0,6,0,0">
+                <Button x:Name="PreviousDocumentPageButton" Content="‹" Command="{Binding PreviousDocumentPageCommand}"
+                        Width="32" Height="32"/>
+                <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}">
+                  <Run Text="{Binding DocumentPreviewPage}"/>
+                  <Run Text=" / "/>
+                  <Run Text="{Binding DocumentPreviewPageCount}"/>
+                </TextBlock>
+                <Button x:Name="NextDocumentPageButton" Content="›" Command="{Binding NextDocumentPageCommand}"
+                        Width="32" Height="32"/>
+              </StackPanel>
+            </Grid>
+          </TabItem>
           <TabItem Header="Write">
             <TextBox x:Name="HumanEditor" Text="{Binding HumanMarkdown, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Menlo,Consolas,Courier New"
@@ -63,7 +93,7 @@
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
           </TabItem>
-          <TabItem Header="Preview">
+          <TabItem Header="Markdown">
             <Border Background="{DynamicResource LrCardBgBrush}" Padding="14">
               <controls:MarkdownViewer x:Name="HumanPreview" Markdown="{Binding PreviewMarkdown}"/>
             </Border>

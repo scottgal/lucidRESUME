@@ -41,7 +41,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     public Action<Core.Models.Resume.ResumeDocument, Core.Models.Resume.ImportPreview>? ShowImportReview { get; set; }
 
     /// <summary>Set by the shell to transfer the selected résumé into the reversible JobML editor.</summary>
-    public Func<string, Guid, bool>? OpenInJobMl { get; set; }
+    public Func<string, Guid, string, bool>? OpenInJobMl { get; set; }
 
     // LibreOffice-generated page image paths (fallback when Docling unavailable)
     private string[] _libreOfficePageImages = [];
@@ -501,7 +501,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
                 : !string.IsNullOrWhiteSpace(Resume.RawMarkdown)
                     ? Resume.RawMarkdown
                     : Encoding.UTF8.GetString(await _markdownExporter.ExportAsync(Resume));
-            var loaded = OpenInJobMl(markdown!, Resume.ResumeId);
+            var loaded = OpenInJobMl(markdown!, Resume.ResumeId, Resume.OutputTemplateId);
             StatusMessage = loaded
                 ? "Opened this résumé in the JobML editor."
                 : "JobML editor opened without replacing its unsaved workspace.";

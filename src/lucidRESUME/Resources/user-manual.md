@@ -168,14 +168,22 @@ in one reversible Markdown file.
 
 The editor has three linked areas:
 
-1. **Human** on the left contains the authoritative Markdown prose. Use **Write**
-   to edit it or **Preview** to see the rendered resume.
+1. **Human** on the left contains three views of the same revision. **Document**
+   is the live Word-layout projection, **Write** edits the authoritative Markdown,
+   and **Markdown** provides a fast structural preview.
 2. **Live Links** in the centre shows every connection from a prose passage or
    external source to a JobML claim.
 3. **Machine** on the right contains editable JobML YAML.
 
 Select a link card to highlight both the supporting prose and its JobML reference.
 Moving the caret through linked prose or a JobML reference selects the other side.
+
+After an imported resume is opened in JobML, **Document** is selected by default.
+The template selector changes typography, spacing, and pagination. Editing prose
+waits briefly, exports the current Markdown to DOCX, and renders its pages with
+Morph. This preview follows the current editor text; it is not a frozen image of
+the originally imported file. Template rendering never reruns extraction or asks
+an LLM to reinterpret the resume.
 
 ### Extracting and reviewing links
 

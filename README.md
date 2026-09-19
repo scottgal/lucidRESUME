@@ -74,7 +74,10 @@ a link highlights both the supporting prose and machine reference. As prose
 changes, claims are marked `valid`, `changed`, `missing`, or `ambiguous`;
 inferred claims never become evidence without explicit acceptance. Markdown may
 be shorter for a particular role while JobML retains higher-resolution external
-evidence. See the [JobML specification](docs/jobml-0.1-specification.md),
+evidence. Its default **Document** tab is a debounced live DOCX projection through
+the selected output template, rendered by Morph beside those evidence links. It
+does not re-extract or reinterpret the ledger. See the
+[JobML specification](docs/jobml-0.1-specification.md),
 [implementation profile](docs/jobml-0.1.md), and
 [GitHub repository extension](docs/jobml-github-extension-0.1.md).
 
