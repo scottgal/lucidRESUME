@@ -18,7 +18,7 @@ internal static partial class ExportArtifact
 
     public static CJobMlProjection? CompactJobMl(ResumeDocument resume)
     {
-        if (string.IsNullOrWhiteSpace(resume.JobMlSource)) return null;
+        if (!resume.IncludeCompactJobMl || string.IsNullOrWhiteSpace(resume.JobMlSource)) return null;
         var parser = new JobMlParser();
         return parser.TryParse(resume.JobMlSource, out var file, out _)
             ? CJobMlProjector.Project(file!)

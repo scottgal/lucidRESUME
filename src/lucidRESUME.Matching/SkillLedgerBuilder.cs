@@ -77,6 +77,17 @@ public sealed class SkillLedgerBuilder
                     Confidence = 0.70
                 });
             }
+            foreach (var concept in SkillTaxonomy.FindCanonicalMentions(resume.RawMarkdown))
+            {
+                if (entries.ContainsKey(concept)) continue;
+                var entry = GetOrCreate(entries, concept);
+                entry.Evidence.Add(new SkillEvidence
+                {
+                    SourceText = concept,
+                    Source = EvidenceSource.NerExtracted,
+                    Confidence = 0.80
+                });
+            }
         }
 
         // Pre-embed all known skill names (from Skills section + NER + taxonomy) for semantic matching
@@ -110,6 +121,23 @@ public sealed class SkillLedgerBuilder
             // Achievement bullets - semantic + substring matching
             foreach (var achievement in exp.Achievements)
             {
+                foreach (var concept in SkillTaxonomy.FindCanonicalMentions(achievement))
+                {
+                    var entry = GetOrCreate(entries, concept);
+                    if (!entry.Evidence.Any(item => item.ExperienceId == exp.Id &&
+                                                    string.Equals(item.SourceText, achievement, StringComparison.Ordinal)))
+                        entry.Evidence.Add(new SkillEvidence
+                        {
+                            ExperienceId = exp.Id,
+                            Company = exp.Company,
+                            JobTitle = exp.Title,
+                            SourceText = achievement,
+                            StartDate = exp.StartDate,
+                            EndDate = exp.IsCurrent ? null : exp.EndDate,
+                            Source = EvidenceSource.AchievementBullet,
+                            Confidence = 0.90
+                        });
+                }
                 var matchedSkills = await FindSkillMentionsAsync(
                     achievement, entries.Keys.ToList(), skillEmbeddings, ct);
                 foreach (var (skillName, confidence) in matchedSkills)

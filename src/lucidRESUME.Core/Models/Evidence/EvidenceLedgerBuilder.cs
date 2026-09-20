@@ -30,6 +30,8 @@ public static partial class EvidenceLedgerBuilder
             .Select(group => group.First())
             .ToList();
         var ledger = Rebuild(resume);
+        foreach (var evidence in ledger.Evidence)
+            evidence.Title = "Canonical career ledger";
         foreach (var claim in ledger.Claims)
         {
             var aggregateEvidence = claim.EvidenceIds

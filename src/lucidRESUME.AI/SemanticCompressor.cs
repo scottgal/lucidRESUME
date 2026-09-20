@@ -150,27 +150,37 @@ public sealed class SemanticCompressor
         var contactParts = new List<string>();
         if (!string.IsNullOrEmpty(resume.Personal.Email)) contactParts.Add(resume.Personal.Email);
         if (!string.IsNullOrEmpty(resume.Personal.Phone)) contactParts.Add(resume.Personal.Phone);
+        if (!string.IsNullOrEmpty(resume.Personal.Location)) contactParts.Add(resume.Personal.Location);
+        if (!string.IsNullOrEmpty(resume.Personal.LinkedInUrl)) contactParts.Add(resume.Personal.LinkedInUrl);
         if (!string.IsNullOrEmpty(resume.Personal.GitHubUrl)) contactParts.Add(resume.Personal.GitHubUrl);
+        if (!string.IsNullOrEmpty(resume.Personal.WebsiteUrl)) contactParts.Add(resume.Personal.WebsiteUrl);
         if (contactParts.Count > 0)
         {
             md.AppendLine(string.Join(" | ", contactParts));
-            foreach (var field in new[] { "email", "phone", "github" })
-                Bind(projection, sourceLedger, $"personal:{field}", "#document:p1");
+            md.AppendLine();
+        }
+        if (!string.IsNullOrWhiteSpace(jd.Title))
+        {
+            md.AppendLine($"**Target role:** {jd.Title.Trim()}");
+            md.AppendLine();
         }
         md.AppendLine();
 
         // Compressed summary - targeted to the JD
         if (!string.IsNullOrWhiteSpace(resume.Personal.Summary))
         {
-            md.AppendLine("## Summary {#summary}");
             var summary = SelectSummary(resume.Personal.Summary,
                 roleProfile is null
                     ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                     : _taxonomy.GetRoleSkills(roleProfile));
-            md.AppendLine(summary);
-            md.AppendLine();
-            Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
-            projection.Personal.Summary = summary;
+            if (!string.IsNullOrWhiteSpace(summary))
+            {
+                md.AppendLine("## Summary {#summary}");
+                md.AppendLine(summary);
+                md.AppendLine();
+                Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
+                projection.Personal.Summary = summary;
+            }
         }
 
         // Relevant experience only
@@ -283,6 +293,9 @@ public sealed class SemanticCompressor
                     ? edu.Degree ?? ""
                     : $"{edu.Degree} | {edu.FieldOfStudy}";
                 md.AppendLine($"**{qualification}** | {edu.Institution ?? ""}");
+                var educationDates = FormatDateRange(edu.StartDate, edu.EndDate, false);
+                if (!string.IsNullOrWhiteSpace(educationDates))
+                    md.AppendLine($"*{educationDates}*");
                 md.AppendLine();
                 projection.Education.Add(edu);
                 Bind(projection, sourceLedger, $"education:{edu.Id:N}", $"#education:p{educationParagraph++}");
@@ -298,7 +311,9 @@ public sealed class SemanticCompressor
             Markdown = compressedMd,
             OriginalRoleCount = resume.Experience.Count,
             IncludedRoleCount = includedRoles,
-            OriginalSkillCount = resume.Skills.Count,
+            // This ratio describes target requirements, not the size of the
+            // candidate's source skill catalogue.
+            OriginalSkillCount = matchResult.Matches.Count,
             MatchedSkillCount = matchResult.Matches.Count(m => m.IsMatched),
             OverallFit = matchResult.OverallFit,
             Gaps = matchResult.Gaps,
@@ -368,8 +383,12 @@ public sealed class SemanticCompressor
 
     private static string SelectSummary(string summary, IReadOnlySet<string> roleSkills)
     {
-        var sentences = Regex.Split(summary.Trim(), @"(?<=[.!?])\s+")
-            .Where(sentence => !string.IsNullOrWhiteSpace(sentence)).ToList();
+        var cleaned = Regex.Replace(summary,
+            @"(?im)^.*desired\s+job\s+title\s*:.*(?:\r?\n|$)", "").Trim();
+        var sentences = Regex.Split(cleaned, @"(?<=[.!?])\s+")
+            .Where(sentence => !string.IsNullOrWhiteSpace(sentence))
+            .Where(sentence => !Regex.IsMatch(sentence.Trim(), @"^desired\s+job\s+title\s*:", RegexOptions.IgnoreCase))
+            .ToList();
         var profileWords = Tokens(string.Join(' ', roleSkills));
         var ranked = sentences.Select((sentence, index) => new
             {
@@ -389,7 +408,7 @@ public sealed class SemanticCompressor
             selected.Add(sentence.Trim());
             words += count;
         }
-        return selected.Count == 0 ? summary.Trim() : string.Join(' ', selected);
+        return selected.Count == 0 ? cleaned : string.Join(' ', selected);
     }
 
     private static string FormatDateRange(DateOnly? start, DateOnly? end, bool isCurrent)

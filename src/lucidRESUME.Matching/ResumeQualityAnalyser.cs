@@ -180,9 +180,13 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
                 continue;
             }
 
-            if (exp.Achievements.Count < 3)
+            // A targeted projection intentionally carries a smaller evidence packet.
+            // Two strong, traceable bullets are sufficient there; the complete
+            // source resume still receives the conventional 3-6 guidance.
+            var minimumBullets = resume.Projection is null ? 3 : 2;
+            if (exp.Achievements.Count < minimumBullets)
                 findings.Add(new($"Experience[{j}]", FindingSeverity.Warning,
-                    "FEW_BULLETS", $"{jobLabel}: only {exp.Achievements.Count} bullet(s) - aim for 3-6"));
+                    "FEW_BULLETS", $"{jobLabel}: only {exp.Achievements.Count} bullet(s) - aim for {minimumBullets}-6"));
 
             if (exp.Achievements.Count > 8)
                 findings.Add(new($"Experience[{j}]", FindingSeverity.Info,
@@ -499,7 +503,13 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         var resumeTerms = resume.Skills
             .Select(s => s.Name)
             .Concat(resume.Experience.SelectMany(e => e.Technologies))
+            // Selected prose is evidence too. Ignoring it makes a projection lose
+            // alignment merely because its concise skills section is not exhaustive.
+            .Concat(resume.Experience.SelectMany(e => e.Achievements))
+            .Concat(resume.Experience.Select(e => e.Title).Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!))
+            .Concat(string.IsNullOrWhiteSpace(resume.Personal.Summary) ? [] : [resume.Personal.Summary!])
             .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(300)
             .ToList();
 
         // Supplement with plain-text tokens when skill list is thin

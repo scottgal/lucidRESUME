@@ -29,11 +29,16 @@ public static class RenderCommand
         {
             Description = "Output template: ats-classic, modern-professional, compact-technical"
         };
+        var compactJobMlOption = new Option<bool>("--cjobml")
+        {
+            DefaultValueFactory = _ => true,
+            Description = "Include compact cJobML citations and References in exported files (default: true)"
+        };
         var configOption = new Option<FileInfo?>("--config") { Description = "Config file" };
 
         var command = new Command("render", "Render a portable JobML resume without calling an AI provider")
         {
-            fileOption, outputOption, formatOption, templateOption, configOption
+            fileOption, outputOption, formatOption, templateOption, configOption, compactJobMlOption
         };
         command.SetAction(async (result, cancellationToken) =>
         {
@@ -47,6 +52,7 @@ public static class RenderCommand
             resume.JobMlSource = source;
             resume.JobMlRevision = MarkdownEvidenceIndex.Fingerprint(parsed.Markdown);
             resume.OutputTemplateId = ResumeTemplateCatalog.Get(result.GetValue(templateOption)).Id;
+            resume.IncludeCompactJobMl = result.GetValue(compactJobMlOption);
             MarkdownSectionParser.PopulateSections(resume, parsed.Markdown);
 
             var services = ServiceBootstrap.Build(result.GetValue(configOption)?.FullName);

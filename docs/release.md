@@ -32,10 +32,11 @@ The GitHub release page itself is populated with Markdown release notes that cov
 
 ## macOS Gatekeeper
 
-The macOS app bundle and its native libraries are ad-hoc signed, but the bundle is
-not Apple-notarized. Control-click `lucidRESUME.app`, choose **Open**, and confirm
-the first launch. If macOS still blocks a quarantined library, use a per-app
-exception after extracting the archive:
+The macOS app bundle and each native executable are ad-hoc signed, but the bundle
+is not Apple-notarized. The application payload and native libraries remain in
+`Contents/Resources/app` rather than being extracted on first launch. Control-click
+`lucidRESUME.app`, choose **Open**, and confirm the first launch. If macOS still
+blocks the downloaded app, use a per-app exception after extracting the archive:
 
 ```bash
 xattr -dr com.apple.quarantine ~/Applications/lucidRESUME.app
@@ -48,12 +49,13 @@ matching macOS runner before upload.
 ## Creating A Release
 
 1. Ensure CI is green on `main`.
-2. Choose a semantic version, for example `1.0.0`.
+2. Choose a semantic version in the current `2.x` release line, for example
+   `2.1.0`.
 3. Create and push the tag:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v2.1.0
+git push origin v2.1.0
 ```
 
 The `Release - App Archives` workflow will build, archive, checksum, and attach the files to a GitHub release.

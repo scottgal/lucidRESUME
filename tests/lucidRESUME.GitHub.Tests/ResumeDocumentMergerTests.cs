@@ -162,6 +162,60 @@ public class ResumeDocumentMergerTests
     }
 
     [Fact]
+    public async Task MergeInto_ReplacesImplausibleEducationRangeWithPlausibleEvidence()
+    {
+        var target = ResumeDocument.Create("derived.md", "text/markdown", 100);
+        target.Education.Add(new Education
+        {
+            Institution = "University of Stirling",
+            Degree = "BSc (Hons) Psychology",
+            StartDate = new DateOnly(1992, 9, 1),
+            EndDate = new DateOnly(1992, 10, 1)
+        });
+        var incoming = ResumeDocument.Create("source.docx", "application/docx", 100);
+        incoming.Education.Add(new Education
+        {
+            Institution = "University of Stirling",
+            Degree = "BSc (Hons) Psychology",
+            StartDate = new DateOnly(1992, 9, 1),
+            EndDate = new DateOnly(1996, 6, 1)
+        });
+
+        var anomalies = await _merger.MergeIntoAsync(target, incoming, "source.docx");
+
+        var education = Assert.Single(target.Education);
+        Assert.Equal(new DateOnly(1992, 9, 1), education.StartDate);
+        Assert.Equal(new DateOnly(1996, 6, 1), education.EndDate);
+        Assert.Contains(anomalies, anomaly => anomaly.Type == AnomalyType.DateMismatch);
+    }
+
+    [Fact]
+    public async Task MergeInto_DoesNotSilentlyChooseBetweenTwoPlausibleEducationRanges()
+    {
+        var target = ResumeDocument.Create("first.docx", "application/docx", 100);
+        target.Education.Add(new Education
+        {
+            Institution = "Example University",
+            StartDate = new DateOnly(2018, 9, 1),
+            EndDate = new DateOnly(2021, 6, 1)
+        });
+        var incoming = ResumeDocument.Create("second.docx", "application/docx", 100);
+        incoming.Education.Add(new Education
+        {
+            Institution = "Example University",
+            StartDate = new DateOnly(2017, 9, 1),
+            EndDate = new DateOnly(2021, 6, 1)
+        });
+
+        var anomalies = await _merger.MergeIntoAsync(target, incoming, "second.docx");
+
+        var education = Assert.Single(target.Education);
+        Assert.Equal(new DateOnly(2018, 9, 1), education.StartDate);
+        Assert.Equal(new DateOnly(2021, 6, 1), education.EndDate);
+        Assert.Contains(anomalies, anomaly => anomaly.Type == AnomalyType.DateMismatch);
+    }
+
+    [Fact]
     public async Task MergeInto_FillsPersonalInfoGaps()
     {
         var target = ResumeDocument.Create("resume.docx", "application/docx", 100);

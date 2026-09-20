@@ -29,6 +29,21 @@ public class ResumeDateParserTests
         Assert.False(result.IsCurrent);
     }
 
+    [Fact]
+    public void ExtractFirstDateRange_LabelledEducationRange_IgnoresFieldLabels()
+    {
+        const string text = "Start Date: Sep 1992 - End Date: Jun 1996";
+
+        var result = ResumeDateParser.ExtractFirstDateRange(text);
+
+        Assert.NotNull(result);
+        Assert.Equal(new DateOnly(1992, 9, 1), result.Start);
+        Assert.Equal(new DateOnly(1996, 6, 1), result.End);
+        Assert.False(result.IsCurrent);
+        Assert.Equal("Sep 1992 - End Date: Jun 1996",
+            text[result.MatchStart..(result.MatchEnd + 1)]);
+    }
+
     [Theory]
     [InlineData("Jan 2020 – Present")]
     [InlineData("Jan 2020 - Present")]

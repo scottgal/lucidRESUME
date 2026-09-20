@@ -1,13 +1,14 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:controls="using:lucidRESUME.Views.Controls"
              x:DataType="vm:ApplyPageViewModel"
              x:Class="lucidRESUME.Views.Pages.ApplyPage">
 
   <Grid ColumnDefinitions="*,*" Margin="16,12">
 
     <!-- LEFT: job input form -->
-    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
+    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
 
       <!-- Header -->
       <TextBlock Grid.Row="0" Text="Project Resume" FontSize="18" FontWeight="Bold"
@@ -43,19 +44,19 @@
       <!-- Job Title -->
       <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Job Title" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <TextBox Text="{Binding JobTitle}" PlaceholderText="e.g. Senior Software Engineer"/>
+        <TextBox x:Name="ProjectionJobTitle" Text="{Binding JobTitle}" PlaceholderText="e.g. Senior Software Engineer"/>
       </StackPanel>
 
       <!-- Company -->
       <StackPanel Grid.Row="4" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Company" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <TextBox Text="{Binding Company}" PlaceholderText="e.g. Acme Corp"/>
+        <TextBox x:Name="ProjectionCompany" Text="{Binding Company}" PlaceholderText="e.g. Acme Corp"/>
       </StackPanel>
 
       <!-- Job Description -->
       <StackPanel Grid.Row="5" Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Job Description" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <TextBox Text="{Binding JobDescriptionText}"
+        <TextBox x:Name="ProjectionJobDescription" Text="{Binding JobDescriptionText}"
                  PlaceholderText="Paste the full job description here…"
                  AcceptsReturn="True"
                  TextWrapping="Wrap"
@@ -71,9 +72,15 @@
                    Foreground="{DynamicResource LrSubtleTextBrush}" TextWrapping="Wrap"/>
       </StackPanel>
 
+      <CheckBox x:Name="IncludeCompactJobMlCheckBox" Grid.Row="7"
+                IsChecked="{Binding IncludeCompactJobMl, Mode=TwoWay}"
+                Content="Include compact cJobML evidence references"
+                ToolTip.Tip="Adds inline citations and a compact machine-readable References section; full editing metadata stays in the ledger"
+                Margin="0,0,0,10"/>
+
       <!-- Projection action -->
-      <Grid Grid.Row="7" ColumnDefinitions="*,8,*" Margin="0,4,0,8">
-        <Button Grid.Column="0" Grid.ColumnSpan="3"
+      <Grid Grid.Row="8" ColumnDefinitions="*,8,*" Margin="0,4,0,8">
+        <Button x:Name="ProjectResumeButton" Grid.Column="0" Grid.ColumnSpan="3"
                 Content="Project Resume"
                 Command="{Binding SmartCompressCommand}"
                 IsEnabled="{Binding !IsTailoring}"
@@ -86,15 +93,15 @@
       </Grid>
 
       <!-- Progress bar -->
-      <ProgressBar Grid.Row="8" IsVisible="{Binding IsTailoring}"
+      <ProgressBar Grid.Row="9" IsVisible="{Binding IsTailoring}"
                    IsIndeterminate="True" Margin="0,0,0,8"/>
 
       <!-- Status / Error -->
-      <StackPanel Grid.Row="9" Spacing="4">
+      <StackPanel Grid.Row="10" Spacing="4">
         <TextBlock Text="{Binding CompressionStats}" Foreground="{DynamicResource LrAccentPurpleBrush}" FontSize="11"
                    IsVisible="{Binding CompressionStats, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                    TextWrapping="Wrap"/>
-        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"
+        <TextBlock x:Name="ProjectionStatus" Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"
                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
         <Border Background="{DynamicResource LrAccentRedBgBrush}" Padding="10,6" CornerRadius="4"
                 IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
@@ -122,12 +129,9 @@
       <!-- Result -->
       <Border Grid.Row="1" Background="{DynamicResource LrPageBgBrush}" CornerRadius="4"
               IsVisible="{Binding HasResult}">
-        <ScrollViewer Padding="12">
-          <TextBlock Text="{Binding TailoredMarkdown}"
-                     TextWrapping="Wrap" Foreground="{DynamicResource LrPrimaryTextBrush}"
-                     FontFamily="Cascadia Code,Consolas,monospace"
-                     FontSize="12" LineHeight="18"/>
-        </ScrollViewer>
+        <controls:MarkdownViewer x:Name="ProjectedResumeText"
+                                 Markdown="{Binding TailoredMarkdown}"
+                                 Margin="12"/>
       </Border>
 
       <!-- Export buttons -->

@@ -1,0 +1,22 @@
+name: cjobml-toggle-smoke
+description: Verify the compact JobML export option is a working two-way checkbox
+default_delay: 150
+
+actions:
+  - type: Wait
+    value: "1200"
+  - type: Navigate
+    value: apply
+  - type: Expect
+    target: IncludeCompactJobMlCheckBox
+    matcher: IsChecked
+  - type: Click
+    target: IncludeCompactJobMlCheckBox
+  - type: Expect
+    target: IncludeCompactJobMlCheckBox
+    matcher: IsUnchecked
+  - type: Click
+    target: IncludeCompactJobMlCheckBox
+  - type: Expect
+    target: IncludeCompactJobMlCheckBox
+    matcher: IsChecked

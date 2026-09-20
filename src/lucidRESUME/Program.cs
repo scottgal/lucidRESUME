@@ -28,8 +28,7 @@ class Program
             return audit.IsComplete ? 0 : 2;
         }
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-        return 0;
+        return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.

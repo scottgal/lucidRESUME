@@ -1,4 +1,5 @@
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Validation;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Resume;
@@ -21,6 +22,7 @@ public sealed class ResumeOutputExporterTests
         var mainPart = document.MainDocumentPart!;
         var text = mainPart.Document!.Body!.InnerText;
         Assert.Contains("Jane Smith", text);
+        Assert.Contains("Target role: Platform Engineer", text);
         Assert.Contains("References", text);
         Assert.Contains("cJobML 0.1", text);
         Assert.Contains("[1]", text);
@@ -31,6 +33,27 @@ public sealed class ResumeOutputExporterTests
             relationship => relationship.Uri.ToString() == "https://mostlylucid.net/reduced-rag");
         Assert.Contains(mainPart.HyperlinkRelationships,
             relationship => relationship.Uri.ToString() == "https://example.com/jane.jobml");
+        var validationErrors = new OpenXmlValidator().Validate(document).ToList();
+        Assert.True(validationErrors.Count == 0,
+            string.Join(Environment.NewLine, validationErrors.Select(error =>
+                $"{error.Part?.Uri}: {error.Path?.XPath}: {error.Description}")));
+    }
+
+    [Theory]
+    [InlineData(ResumeTemplateCatalog.AtsClassicId)]
+    [InlineData(ResumeTemplateCatalog.ModernProfessionalId)]
+    [InlineData(ResumeTemplateCatalog.CompactTechnicalId)]
+    public async Task DocxExport_IsValidOpenXmlForEveryTemplate(string templateId)
+    {
+        var bytes = await new DocxExporter().ExportAsync(CreateResume(templateId));
+
+        using var stream = new MemoryStream(bytes);
+        using var document = WordprocessingDocument.Open(stream, false);
+        var validationErrors = new OpenXmlValidator().Validate(document).ToList();
+
+        Assert.True(validationErrors.Count == 0,
+            string.Join(Environment.NewLine, validationErrors.Select(error =>
+                $"{error.Part?.Uri}: {error.Path?.XPath}: {error.Description}")));
     }
 
     [Theory]
@@ -60,6 +83,38 @@ public sealed class ResumeOutputExporterTests
         Assert.DoesNotContain("```jobml", markdown);
         Assert.True(CJobMlParser.TryParse(markdown, out var compact, out var error), error);
         Assert.Single(compact!.References);
+    }
+
+    [Fact]
+    public async Task MarkdownExport_PreservesFullJobMlWhenCompactProjectionWouldBeEmpty()
+    {
+        const string markdown = "# Jane Smith\n\n## Experience\n\nBuilt a reliable platform for customers.";
+        var file = JobMlDraftGenerator.Generate(markdown);
+        Assert.All(file.Data.Claims, claim => claim.Review = "accepted");
+        var source = JobMlArtifactComposer.Compose(file);
+        var resume = ResumeDocument.Create("jane.md", "text/markdown", source.Length);
+        resume.JobMlSource = source;
+
+        var exported = System.Text.Encoding.UTF8.GetString(
+            await new MarkdownExporter().ExportAsync(resume));
+
+        Assert.Contains("## MACHINE AREA", exported);
+        Assert.Contains("```jobml", exported);
+        Assert.True(new JobMlParser().TryParse(exported, out _, out var error), error);
+    }
+
+    [Fact]
+    public async Task MarkdownExport_CanOmitCompactJobMlForHumanOnlyCopy()
+    {
+        var resume = CreateResume(ResumeTemplateCatalog.AtsClassicId);
+        resume.IncludeCompactJobMl = false;
+
+        var markdown = System.Text.Encoding.UTF8.GetString(
+            await new MarkdownExporter().ExportAsync(resume));
+
+        Assert.Equal(resume.CanonicalMarkdown, markdown);
+        Assert.DoesNotContain("## References", markdown);
+        Assert.DoesNotContain("MACHINE AREA", markdown);
     }
 
     [Fact]
@@ -135,7 +190,12 @@ public sealed class ResumeOutputExporterTests
         Assert.DoesNotContain("\n    all:", artifact.JobMlSource);
         Assert.DoesNotContain("MACHINE AREA", artifact.CanonicalMarkdown);
         Assert.Equal(job.JobId, artifact.TailoredForJobId);
+        Assert.Equal("Platform Engineer", artifact.TargetRole);
         Assert.True(new JobMlParser().TryParse(artifact.JobMlSource!, out var parsed, out var parseError), parseError);
+        var compact = CJobMlProjector.Project(parsed!);
+        Assert.Contains("[Resume Source]", compact.Markdown);
+        Assert.DoesNotContain("ledger://", compact.Markdown);
+        Assert.DoesNotContain("fingerprint", compact.Markdown, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(JobMlProcessor.Validate(parsed!), diagnostic =>
             diagnostic.Severity == JobMlDiagnosticSeverity.Error);
     }
@@ -201,6 +261,7 @@ public sealed class ResumeOutputExporterTests
         resume.CanonicalMarkdown = file.Markdown;
         resume.JobMlSource = JobMlArtifactComposer.Compose(file);
         resume.OutputTemplateId = templateId;
+        resume.TargetRole = "Platform Engineer";
         return resume;
     }
 }

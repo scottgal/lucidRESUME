@@ -112,6 +112,37 @@ public class MatcherTests
         });
 
     [Fact]
+    public Task ContainsText_SearchesRenderedDescendantsOfCustomControl()
+        => _fx.DispatchAsync(() =>
+        {
+            var custom = new UserControl
+            {
+                Content = new StackPanel
+                {
+                    Children =
+                    {
+                        new TextBlock { Text = "Human resume" },
+                        new TextBlock { Text = "cJobML 0.1" }
+                    }
+                }
+            };
+
+            Assert.True(new ContainsTextMatcher("cJobML 0.1").Evaluate(custom).Pass);
+            Assert.False(new ContainsTextMatcher("MACHINE AREA").Evaluate(custom).Pass);
+        });
+
+    [Fact]
+    public Task HasText_ReadsTextBlockRuns()
+        => _fx.DispatchAsync(() =>
+        {
+            var text = new TextBlock();
+            text.Inlines!.Add(new global::Avalonia.Controls.Documents.Run("cJobML "));
+            text.Inlines.Add(new global::Avalonia.Controls.Documents.Run("0.1"));
+
+            Assert.True(new HasTextMatcher("cJobML 0.1").Evaluate(text).Pass);
+        });
+
+    [Fact]
     public Task MatchesRegex_Pattern()
         => _fx.DispatchAsync(() =>
         {

@@ -17,6 +17,18 @@ public sealed class SkillTaxonomyServiceTests
         Assert.True(matches.Count <= 6, "Nested aliases produced: " + string.Join(", ", matches));
     }
 
+    [Fact]
+    public void LeadershipAliasesRecogniseOnlyExplicitEvidencePhrases()
+    {
+        var concepts = SkillTaxonomy.FindCanonicalMentions(
+            "Recruited senior developers and drove the ASP.NET release lifecycle.");
+
+        Assert.Contains("hiring", concepts);
+        Assert.Contains("release ownership", concepts);
+        Assert.DoesNotContain("commercial judgement", concepts);
+        Assert.DoesNotContain("stakeholder communication", concepts);
+    }
+
     private sealed class NoOpEmbedder : IEmbeddingService
     {
         public Task<float[]> EmbedAsync(string text, CancellationToken ct = default) => Task.FromResult(Array.Empty<float>());

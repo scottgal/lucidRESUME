@@ -1,0 +1,10 @@
+# Curated leadership vocabulary used for deterministic evidence recognition.
+# These are narrow phrase equivalences, not permission to infer a capability.
+hiring: recruitment, recruiting, team recruitment, recruit senior developers, recruited senior developers, hired engineering team
+release ownership: release lifecycle, release governance, release management, release delivery
+stakeholder communication: stakeholder management, stakeholder collaboration, supplier liaison, product team liaison, client communication
+commercial judgement: commercial alignment, commercial strategy, commercial objectives, cost-conscious architecture
+executive communication: executive stakeholder communication, board communication, vc pitch development
+clear communication: stakeholder communication, client communication, supplier liaison
+ownership: delivery ownership, release ownership, technical ownership, end-to-end ownership
+operational resilience: production reliability, reliability engineering, disaster recovery, incident management

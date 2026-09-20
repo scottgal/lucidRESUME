@@ -14,7 +14,7 @@ namespace lucidRESUME.Ingestion.Parsing;
 /// rather than hand-crafted regex - handles all common date formats including
 /// "Jan 2020 – Present", "2019–2022", "2020 - now", "October 2018 to date".
 /// </summary>
-public static class MarkdownSectionParser
+public static partial class MarkdownSectionParser
 {
     private static readonly Regex StableAnchorPattern = new(@"\s*\{#[A-Za-z][A-Za-z0-9_.-]*\}\s*$", RegexOptions.Compiled);
     /// <summary>
@@ -37,6 +37,23 @@ public static class MarkdownSectionParser
             // Fallback: if skills still empty, scan pre-heading area for "Hard Skills:" etc.
             if (resume.Skills.Count == 0)
                 ExtractSkillsFromPreHeader(resume, markdown.Split('\n'));
+
+            // A layout fingerprint identifies formatting, not content. Documents made
+            // from the same Word template can have radically different section shapes.
+            // Keep the template result only when it is at least as coherent as a fresh
+            // heading/date parse of the actual text.
+            var heuristic = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
+            PopulateSections(heuristic, markdown);
+            if (ExperienceScore(heuristic) > ExperienceScore(resume))
+                resume.Experience = heuristic.Experience;
+            if (heuristic.Skills.Count > resume.Skills.Count)
+                resume.Skills = heuristic.Skills;
+            if (heuristic.Education.Count > resume.Education.Count)
+                resume.Education = heuristic.Education;
+            if (heuristic.Projects.Count > resume.Projects.Count)
+                resume.Projects = heuristic.Projects;
+            if (heuristic.Certifications.Count > resume.Certifications.Count)
+                resume.Certifications = heuristic.Certifications;
             return;
         }
 
@@ -96,6 +113,11 @@ public static class MarkdownSectionParser
         // ── 9. Education inline-label fallback ────────────────────────────────
         if (resume.Education.Count == 0)
             ExtractEducationFromInlineLabel(resume, lines);
+
+        // Some Word documents render the top-level "Skills" label as ordinary
+        // text while retaining styled subheadings beneath it.
+        if (resume.Skills.Count == 0)
+            ExtractSkillsFromPreHeader(resume, lines);
     }
 
     // ── Structured path (template-hint driven) ────────────────────────────────
@@ -227,11 +249,45 @@ public static class MarkdownSectionParser
     private static void ExtractSkillsFromPreHeader(ResumeDocument resume, string[] lines)
     {
         string? pendingCategory = null;
+        var inSkillsBlock = false;
 
         foreach (var rawLine in lines)
         {
             var line = rawLine.Trim();
             if (string.IsNullOrWhiteSpace(line)) { pendingCategory = null; continue; }
+
+            var classified = SectionClassifier.ClassifyHeading(line);
+            if (classified == "Skills")
+            {
+                inSkillsBlock = true;
+                pendingCategory = null;
+                continue;
+            }
+            if (inSkillsBlock && classified is not null)
+            {
+                inSkillsBlock = false;
+                pendingCategory = null;
+            }
+
+            if (inSkillsBlock)
+            {
+                if (line.StartsWith('#'))
+                {
+                    pendingCategory = line.TrimStart('#').Trim();
+                    continue;
+                }
+                if (line.Length <= 30 && line.IndexOfAny([',', ';', '/', '–', '—']) < 0 &&
+                    line is "Technical" or "Other" or "Leadership" or "Management")
+                {
+                    pendingCategory = line;
+                    continue;
+                }
+                var before = resume.Skills.Count;
+                ParseSkills(resume, [line]);
+                if (pendingCategory is not null)
+                    foreach (var skill in resume.Skills.Skip(before)) skill.Category = pendingCategory;
+                continue;
+            }
 
             // Skip markdown headings but don't stop scanning
             if (line.StartsWith('#')) { pendingCategory = null; continue; }
@@ -534,10 +590,13 @@ public static class MarkdownSectionParser
             }
 
             // Split on common skill delimiters
-            var parts = line.Split([',', ';', '•', '·', '\t'], StringSplitOptions.RemoveEmptyEntries);
+            var parts = SplitSkillItems(line);
             foreach (var part in parts)
             {
-                var skill = part.Trim().TrimStart('-', '*', ' ');
+                var skill = SkillYearsSuffix().Replace(part.Trim().TrimStart('-', '*', ' '), "").Trim().TrimEnd('.');
+                skill = NumericParenthetical().Replace(skill, "").Trim();
+                if (skill.Count(character => character == '(') > skill.Count(character => character == ')'))
+                    skill = skill[..skill.IndexOf('(')].Trim();
                 // Skip noise: very short, very long, or containing full sentences
                 if (skill.Length < 2 || skill.Length > 50 || skill.Contains("experience") ||
                     skill.Count(c => c == ' ') > 5) continue;
@@ -566,6 +625,15 @@ public static class MarkdownSectionParser
             {
                 if (current != null) resume.Experience.Add(current);
                 current = ParseJobHeading(line.TrimStart('#').Trim().Replace("[JOB]", "").Trim());
+                continue;
+            }
+
+            // Common compact form: "Company - Role - Jan 2020 - Present". Match
+            // this before treating a dated heading as a date-only separator.
+            if (TryParseDatedRoleLine(line, out var datedRole))
+            {
+                if (current != null) resume.Experience.Add(current);
+                current = datedRole;
                 continue;
             }
 
@@ -637,6 +705,12 @@ public static class MarkdownSectionParser
             }
 
             if (current == null) continue;
+
+            if (string.IsNullOrWhiteSpace(current.Title) && line.Length <= 100 && LooksLikeJobTitle(line))
+            {
+                current.Title = line.TrimStart('#', ' ', '-', '*');
+                continue;
+            }
 
             // Inline date range that IS the full line content (date-only separator)
             var dateRange = ResumeDateParser.ExtractFirstDateRange(line);
@@ -1088,6 +1162,56 @@ public static class MarkdownSectionParser
         return true;
     }
 
+    private static bool TryParseDatedRoleLine(string line, out WorkExperience job)
+    {
+        job = new WorkExperience();
+        if (line.Length > 220) return false;
+        var content = line.TrimStart('#').Trim();
+        var range = ResumeDateParser.ExtractFirstDateRange(content);
+        if (range is null) return false;
+
+        var identity = string.Concat(content.AsSpan(0, range.MatchStart),
+                content.AsSpan(range.MatchEnd + 1))
+            .Trim(' ', '-', '–', '—', '.', ':');
+        identity = PresentTail().Replace(identity, "").Trim(' ', '-', '–', '—', '.', ':');
+        if (!LooksLikeJobTitle(identity) && !line.StartsWith('#')) return false;
+
+        // Normalise compact "Company- Role" boundaries without touching hyphens
+        // inside ordinary words.
+        identity = CompactRoleSeparator().Replace(identity, " - ");
+        job = ParseJobHeading(identity);
+        ApplyDateRange(job, range);
+        if (PresentTail().IsMatch(content))
+        {
+            job.EndDate = null;
+            job.IsCurrent = true;
+        }
+        return !string.IsNullOrWhiteSpace(job.Company) || !string.IsNullOrWhiteSpace(job.Title);
+    }
+
+    private static IReadOnlyList<string> SplitSkillItems(string line)
+    {
+        var result = new List<string>();
+        var start = 0;
+        var depth = 0;
+        for (var index = 0; index < line.Length; index++)
+        {
+            var character = line[index];
+            if (character == '(') depth++;
+            else if (character == ')' && depth > 0) depth--;
+            var spacedSlash = character == '/' && index > 0 && index + 1 < line.Length &&
+                              char.IsWhiteSpace(line[index - 1]) && char.IsWhiteSpace(line[index + 1]);
+            var semanticDash = character is '–' or '—' && index > 0 && index + 1 < line.Length &&
+                               char.IsWhiteSpace(line[index - 1]) && char.IsWhiteSpace(line[index + 1]) &&
+                               !Regex.IsMatch(line[(index + 1)..], @"^\s*\d+\+?\s*years?", RegexOptions.IgnoreCase);
+            if (depth != 0 || character is not (',' or ';' or '•' or '·' or '\t') && !spacedSlash && !semanticDash) continue;
+            if (index > start) result.Add(line[start..index]);
+            start = index + 1;
+        }
+        if (start < line.Length) result.Add(line[start..]);
+        return result;
+    }
+
     private static bool LooksLikeJobTitle(string value)
     {
         string[] roleTerms =
@@ -1098,6 +1222,11 @@ public static class MarkdownSectionParser
         ];
         return roleTerms.Any(term => value.Contains(term, StringComparison.OrdinalIgnoreCase));
     }
+
+    private static int ExperienceScore(ResumeDocument resume) =>
+        resume.Experience.Count * 5 +
+        resume.Experience.Count(item => !string.IsNullOrWhiteSpace(item.Company) &&
+                                        !string.IsNullOrWhiteSpace(item.Title)) * 10;
 
     private static void ApplyDateRange(WorkExperience job, DateRangeResult range)
     {
@@ -1204,4 +1333,16 @@ public static class MarkdownSectionParser
 
         return s.TrimStart(':', ' ');
     }
+
+    [GeneratedRegex(@"\s*[-–—]\s*\d+\+?\s*years?\+?.*$", RegexOptions.IgnoreCase)]
+    private static partial Regex SkillYearsSuffix();
+
+    [GeneratedRegex(@"\s*\(\+?\d+\)\s*$")]
+    private static partial Regex NumericParenthetical();
+
+    [GeneratedRegex(@"(?<=\S)\s*[-–—]\s+(?=\S)")]
+    private static partial Regex CompactRoleSeparator();
+
+    [GeneratedRegex(@"\s*[-–—]\s*(?:present|current|now|to date)\s*\.?$", RegexOptions.IgnoreCase)]
+    private static partial Regex PresentTail();
 }

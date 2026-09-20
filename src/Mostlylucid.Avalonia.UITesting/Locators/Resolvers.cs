@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.LogicalTree;
@@ -151,13 +152,27 @@ public sealed class TextLocator : Locator
 
     internal static string? GetDisplayedText(Control c) => c switch
     {
-        TextBlock tb => tb.Text,
+        TextBlock tb => tb.Text ?? (tb.Inlines is null
+            ? null
+            : string.Concat(tb.Inlines.OfType<Run>().Select(run => run.Text))),
         TextBox tx => tx.Text,
         HeaderedContentControl hcc when hcc.Header is string hs => hs,
         HeaderedItemsControl hic when hic.Header is string hs => hs,
         ContentControl cc when cc.Content is string s => s,
         _ => null
     };
+
+    internal static string? GetDisplayedTextIncludingDescendants(Control control)
+    {
+        var direct = GetDisplayedText(control);
+        if (direct is not null) return direct;
+        var text = NameLocator.Walk(control)
+            .Skip(1)
+            .Select(GetDisplayedText)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToList();
+        return text.Count == 0 ? null : string.Join('\n', text);
+    }
 }
 
 /// <summary>

@@ -1,4 +1,5 @@
 using Microsoft.Recognizers.Text.DateTime;
+using System.Text.RegularExpressions;
 
 namespace lucidRESUME.Extraction.Recognizers;
 
@@ -20,8 +21,14 @@ public static class ResumeDateParser
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
 
+        // Labels such as "Start Date:" and "End Date:" confuse the generic recognizer
+        // ("End Date" has been observed resolving to October). Blank the labels while
+        // preserving their length so the returned source offsets remain valid.
+        var recognizerText = Regex.Replace(text, @"\b(?:start|end)\s+date\s*:\s*",
+            match => new string(' ', match.Length), RegexOptions.IgnoreCase);
+
         List<Microsoft.Recognizers.Text.ModelResult> results;
-        try { results = DateTimeRecognizer.RecognizeDateTime(text, Culture); }
+        try { results = DateTimeRecognizer.RecognizeDateTime(recognizerText, Culture); }
         catch { return null; }
 
         foreach (var result in results)

@@ -274,8 +274,7 @@ public sealed class ResumeDocumentMerger
                     existing.ImportSources.Add(sourceName);
                 existing.Degree ??= edu.Degree;
                 existing.FieldOfStudy ??= edu.FieldOfStudy;
-                existing.StartDate ??= edu.StartDate;
-                existing.EndDate ??= edu.EndDate;
+                MergeEducationDates(existing, edu, sourceName, anomalies);
             }
             else
             {
@@ -319,6 +318,48 @@ public sealed class ResumeDocumentMerger
 
         target.LastModifiedAt = DateTimeOffset.UtcNow;
         return anomalies;
+    }
+
+    private static void MergeEducationDates(
+        Education existing, Education incoming, string sourceName, List<ImportAnomaly> anomalies)
+    {
+        if (existing.StartDate is null)
+            existing.StartDate = incoming.StartDate;
+        if (existing.EndDate is null)
+            existing.EndDate = incoming.EndDate;
+
+        if (existing.StartDate is null || existing.EndDate is null ||
+            incoming.StartDate is null || incoming.EndDate is null)
+            return;
+
+        if (existing.StartDate == incoming.StartDate && existing.EndDate == incoming.EndDate)
+            return;
+
+        anomalies.Add(new ImportAnomaly
+        {
+            Type = AnomalyType.DateMismatch,
+            Description = $"Education dates differ for {existing.Institution}: " +
+                          $"{existing.StartDate:MMM yyyy}-{existing.EndDate:MMM yyyy} vs " +
+                          $"{incoming.StartDate:MMM yyyy}-{incoming.EndDate:MMM yyyy}",
+            Severity = AnomalySeverity.Warning,
+            Source = sourceName,
+        });
+
+        // A parsed one-month degree is a common artefact of a lone year being expanded
+        // into a range. Prefer a complete, plausible academic span from another source,
+        // but leave competing plausible ranges unchanged for human review.
+        if (!IsPlausibleEducationRange(existing.StartDate.Value, existing.EndDate.Value) &&
+            IsPlausibleEducationRange(incoming.StartDate.Value, incoming.EndDate.Value))
+        {
+            existing.StartDate = incoming.StartDate;
+            existing.EndDate = incoming.EndDate;
+        }
+    }
+
+    private static bool IsPlausibleEducationRange(DateOnly start, DateOnly end)
+    {
+        var days = end.DayNumber - start.DayNumber;
+        return days >= 180 && days <= 365 * 8 + 2;
     }
 
     private async Task<WorkExperience?> FindMatchingExperienceAsync(

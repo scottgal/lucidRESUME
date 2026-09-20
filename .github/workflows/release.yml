@@ -107,9 +107,7 @@ jobs:
           --no-restore
           -o artifacts/publish/${{ matrix.rid }}
           -p:Version=${{ steps.version.outputs.VERSION }}
-          -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=true
-          -p:IncludeAllContentForSelfExtract=true
+          -p:PublishSingleFile=false
           -p:DebugSymbols=false
           -p:DebugType=None
 
@@ -120,8 +118,15 @@ jobs:
           set -euo pipefail
           bundle="artifacts/bundle/lucidRESUME.app"
           contents="$bundle/Contents"
-          mkdir -p "$contents/MacOS" "$contents/Resources"
-          cp "artifacts/publish/${{ matrix.rid }}/lucidRESUME" "$contents/MacOS/lucidRESUME"
+          app_payload="$contents/Resources/app"
+          mkdir -p "$contents/MacOS" "$app_payload"
+          cp -R "artifacts/publish/${{ matrix.rid }}/." "$app_payload/"
+          cat > "$contents/MacOS/lucidRESUME" <<'LAUNCHER'
+          #!/bin/sh
+          app_root="$(CDPATH= cd -- "$(dirname -- "$0")/../Resources/app" && pwd)"
+          exec "$app_root/lucidRESUME" "$@"
+          LAUNCHER
+          chmod 755 "$contents/MacOS/lucidRESUME"
           cat > "$contents/Info.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -139,8 +144,28 @@ jobs:
             <key>NSHighResolutionCapable</key><true/>
           </dict></plist>
           PLIST
+          find "$app_payload" -type f -print0 |
+            while IFS= read -r -d '' native_binary; do
+              if file "$native_binary" | grep -q 'Mach-O'; then
+                codesign --force --sign - --timestamp=none "$native_binary"
+              fi
+            done
           codesign --force --sign - --timestamp=none "$bundle"
-          codesign --verify --deep --strict --verbose=2 "$bundle"
+          codesign --verify --strict --verbose=2 "$bundle"
+
+      - name: Verify Avalonia native library is bundled on macOS
+        if: ${{ startsWith(matrix.rid, 'osx-') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_payload="artifacts/bundle/lucidRESUME.app/Contents/Resources/app"
+          test -s "$app_payload/libAvaloniaNative.dylib"
+          find "$app_payload" -type f -print0 |
+            while IFS= read -r -d '' native_binary; do
+              if file "$native_binary" | grep -q 'Mach-O'; then
+                codesign --verify --strict --verbose=2 "$native_binary"
+              fi
+            done
 
       - name: Audit shipped import and matching assets
         shell: bash

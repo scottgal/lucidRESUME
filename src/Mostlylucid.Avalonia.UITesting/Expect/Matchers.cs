@@ -112,7 +112,7 @@ public class HasTextMatcher : Matcher
 
     public override MatcherResult Evaluate(Control control)
     {
-        var actual = TextLocator.GetDisplayedText(control);
+        var actual = TextLocator.GetDisplayedTextIncludingDescendants(control);
         if (actual is null)
             return MatcherResult.Failed($"{control.GetType().Name} has no displayed text");
         var match = Exact ? actual == Expected : actual.Contains(Expected, StringComparison.Ordinal);

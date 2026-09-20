@@ -34,7 +34,7 @@ public sealed class PdfExporter : IResumeExporter
                 // clean machines and CI instead of depending on system fonts.
                 page.DefaultTextStyle(x => x.FontSize(template.BodyFontSize).FontFamily("Lato"));
 
-                page.Header().Element(c => ComposeHeader(c, resume.Personal, template));
+                page.Header().Element(c => ComposeHeader(c, resume, template));
                 page.Content().Element(c => ComposeContent(c, resume, template, compact));
                 page.Footer().AlignCenter().Text(t =>
                 {
@@ -48,8 +48,9 @@ public sealed class PdfExporter : IResumeExporter
         return Task.FromResult(bytes);
     }
 
-    private static void ComposeHeader(IContainer container, PersonalInfo p, ResumeTemplate template)
+    private static void ComposeHeader(IContainer container, ResumeDocument resume, ResumeTemplate template)
     {
+        var p = resume.Personal;
         container.Column(col =>
         {
             if (p.FullName != null)
@@ -64,6 +65,9 @@ public sealed class PdfExporter : IResumeExporter
             if (p.WebsiteUrl != null) contacts.Add(p.WebsiteUrl);
             if (contacts.Count > 0)
                 col.Item().Text(string.Join("  |  ", contacts)).FontSize(8).FontColor(Colors.Grey.Medium);
+            if (!string.IsNullOrWhiteSpace(resume.TargetRole))
+                col.Item().Text($"Target role: {resume.TargetRole}").FontSize(9).Bold()
+                    .FontColor($"#{template.AccentHex}");
 
             col.Item().PaddingTop(4).LineHorizontal(0.5f).LineColor(Colors.Grey.Lighten2);
         });

@@ -57,7 +57,8 @@ The inputs to a projection are:
 - a valid full JobML document;
 - accepted claims;
 - prose evidence which resolves in the Markdown;
-- external or qualification evidence already linked to those claims.
+- external, qualification, or imported résumé-source evidence already linked to
+  those claims.
 
 The human prose remains authoritative about what the published résumé says. Full
 JobML remains authoritative about claim identity, evidence identity, review state,
@@ -107,6 +108,10 @@ Reference numbers identify evidence sources, not claims. Multiple claims which
 cite the same evidence identity MUST reuse the same number. A claim which cites
 several sources MAY carry several numbers.
 
+Several exact passages imported from the same résumé source MAY share one compact
+source citation. Their passage identities, locators, selectors, and checksums remain
+distinct in full JobML. This is publication compression, not evidence merging.
+
 Numbers MUST be positive, consecutive integers assigned in order of first
 appearance in the prose.
 
@@ -125,7 +130,9 @@ without a URI MAY use the issuer and qualification identity.
 The bibliographic text SHOULD include the available author, title, publisher, and
 publication date. It MUST NOT invent missing metadata. Evidence type labels are
 human-readable forms such as `Article`, `Repository`, `Project`, or
-`Qualification`.
+`Qualification`. `Resume Source` identifies an imported résumé source. It MAY
+omit a URI and name the source document, but MUST retain exact evidence identities
+in full JobML.
 
 Linked posts are evidence sources. A post can support authorship, demonstrated
 knowledge, or the reasoning it contains. Its presence MUST NOT silently establish
@@ -168,7 +175,8 @@ A conforming publisher performs these deterministic steps:
 
 1. read accepted claims from the full JobML document;
 2. resolve each claim's in-document prose evidence;
-3. select only external or qualification evidence already attached to that claim;
+3. select only external, qualification, or imported résumé-source evidence already
+   attached to that claim;
 4. deduplicate sources by stable evidence identity, then normalised URI;
 5. assign numbers in first-prose-appearance order;
 6. append linked markers to the resolved prose spans;

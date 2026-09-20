@@ -62,6 +62,11 @@ public static class ServiceCollectionExtensions
 
         switch (extractionProvider.ToLowerInvariant())
         {
+            case "none":
+            case "disabled":
+                // Deterministic-only ingestion is a supported operating mode.
+                // Do not silently fall back to a network or local model.
+                break;
             case "llamasharp":
                 services.AddSingleton<ILlmExtractionService, LlamaSharpExtractionService>();
                 break;
@@ -73,10 +78,14 @@ public static class ServiceCollectionExtensions
                 services.AddHttpClient<ILlmExtractionService, OpenAiExtractionService>(client =>
                     client.Timeout = TimeSpan.FromSeconds(60));
                 break;
-            default:
+            case "ollama":
                 services.AddHttpClient<ILlmExtractionService, OllamaExtractionService>(client =>
                     client.Timeout = TimeSpan.FromSeconds(60));
                 break;
+            default:
+                throw new InvalidOperationException(
+                    $"Unknown Tailoring:ExtractionProvider '{extractionProvider}'. " +
+                    "Use none, llamasharp, ollama, openai, or anthropic.");
         }
 
         // Model discovery for settings UI

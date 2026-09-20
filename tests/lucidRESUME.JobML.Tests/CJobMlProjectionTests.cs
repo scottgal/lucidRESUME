@@ -89,6 +89,35 @@ public sealed class CJobMlProjectionTests
     }
 
     [Fact]
+    public void Projection_CitesImportedResumeSourceWithoutPublishingEditingMetadata()
+    {
+        var full = AcceptedFile();
+        full.Data.Document.CompleteLedger = null;
+        var claim = full.Data.Claims.Single();
+        claim.Evidence.RemoveAll(evidence =>
+            !string.Equals(evidence.Type, "prose", StringComparison.OrdinalIgnoreCase));
+        claim.Evidence.Add(new JobMlEvidence
+        {
+            Id = "evidence:source:achievement:1",
+            Type = "source_ledger",
+            Ref = "ledger://evidence:source:achievement:1",
+            Title = "original-resume.docx",
+            Fingerprint = new JobMlFingerprint { Text = "fnv1a64:1234" },
+            Selector = new JobMlTextSelector { Exact = "Original supporting passage." }
+        });
+
+        var compact = CJobMlProjector.Project(full);
+        var parsed = CJobMlParser.Parse(compact.Markdown);
+
+        Assert.Contains("platform. [[1]](#ref-1)", compact.Markdown);
+        Assert.Contains("“original-resume.docx.” [Resume Source]", compact.Markdown);
+        Assert.DoesNotContain("Original supporting passage", compact.Markdown);
+        Assert.DoesNotContain("fnv1a64", compact.Markdown);
+        Assert.DoesNotContain("ledger://", compact.Markdown);
+        Assert.Single(parsed.References);
+    }
+
+    [Fact]
     public void Parser_RejectsUnresolvedXref()
     {
         var compact = CJobMlProjector.Project(AcceptedFile()).Markdown

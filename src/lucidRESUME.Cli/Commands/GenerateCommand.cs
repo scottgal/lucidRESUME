@@ -28,11 +28,16 @@ public static class GenerateCommand
         outputOpt.Aliases.Add("-o");
         var formatOpt = new Option<string?>("--format") { Description = "Output format: markdown (default), docx, pdf, all" };
         var templateOpt = new Option<string?>("--template") { Description = "Output template: ats-classic, modern-professional, compact-technical" };
+        var compactJobMlOpt = new Option<bool>("--cjobml")
+        {
+            DefaultValueFactory = _ => true,
+            Description = "Include compact cJobML citations and References in exported files (default: true)"
+        };
         var configOpt = new Option<FileInfo?>("--config") { Description = "Config file" };
 
         var cmd = new Command("generate", "Project a resume from the evidence ledger for a target role")
         {
-            resumeOpt, resumeDirOpt, promptOpt, outputOpt, formatOpt, templateOpt, configOpt
+            resumeOpt, resumeDirOpt, promptOpt, outputOpt, formatOpt, templateOpt, configOpt, compactJobMlOpt
         };
 
         cmd.SetAction(async (result, ct) =>
@@ -44,6 +49,7 @@ public static class GenerateCommand
             var format = result.GetValue(formatOpt) ?? "markdown";
             var template = ResumeTemplateCatalog.Get(result.GetValue(templateOpt));
             var config = result.GetValue(configOpt);
+            var includeCompactJobMl = result.GetValue(compactJobMlOpt);
 
             var sp = ServiceBootstrap.Build(config?.FullName);
             var resume = await ResumeInputHelper.LoadAsync(sp, file, resumeDirectory, ct);
@@ -59,6 +65,7 @@ public static class GenerateCommand
                 .CompressAsync(resume, syntheticJd, ct);
             var artifact = sp.GetRequiredService<ResumeArtifactBuilder>()
                 .Build(resume, projected.Projection, syntheticJd, template.Id);
+            artifact.IncludeCompactJobMl = includeCompactJobMl;
 
             await ResumeOutputWriter.WriteAsync(sp, artifact, format, output, ct);
         });

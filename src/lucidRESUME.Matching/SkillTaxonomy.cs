@@ -60,6 +60,35 @@ public sealed class SkillTaxonomy
         return string.Equals(ca, cb, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Finds canonical concepts whose canonical name or curated alias occurs as a
+    /// complete phrase in evidence text. This is deterministic vocabulary lookup,
+    /// not semantic inference.
+    /// </summary>
+    public static IReadOnlySet<string> FindCanonicalMentions(string text)
+    {
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var taxonomy in AllTaxonomies.Value.Values)
+        foreach (var (phrase, canonical) in taxonomy.AliasToCanonical)
+        {
+            if (phrase.Length < 3) continue;
+            var start = 0;
+            while ((start = text.IndexOf(phrase, start, StringComparison.OrdinalIgnoreCase)) >= 0)
+            {
+                var before = start == 0 || !char.IsLetterOrDigit(text[start - 1]);
+                var end = start + phrase.Length;
+                var after = end == text.Length || !char.IsLetterOrDigit(text[end]);
+                if (before && after)
+                {
+                    result.Add(canonical);
+                    break;
+                }
+                start++;
+            }
+        }
+        return result;
+    }
+
     /// <summary>Returns all loaded taxonomy names (for diagnostics).</summary>
     public static IReadOnlyList<string> LoadedTaxonomies =>
         AllTaxonomies.Value.Keys.ToList();

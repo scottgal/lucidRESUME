@@ -1,4 +1,5 @@
 using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.ExtendedProperties;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using lucidRESUME.Core.Interfaces;
@@ -22,6 +23,17 @@ public sealed class DocxExporter : IResumeExporter
         using var ms = new MemoryStream();
         using (var doc = WordprocessingDocument.Create(ms, WordprocessingDocumentType.Document, true))
         {
+            // Include standard document metadata so office suites can identify the
+            // producer and display a useful title without inspecting resume content.
+            doc.PackageProperties.Creator = "lucidRESUME";
+            doc.PackageProperties.Title = string.IsNullOrWhiteSpace(resume.TargetRole)
+                ? "Resume"
+                : $"Resume for {resume.TargetRole}";
+            var extendedProperties = doc.AddExtendedFilePropertiesPart();
+            extendedProperties.Properties = new Properties(
+                new Application("lucidRESUME"),
+                new ApplicationVersion("2.0"));
+
             var mainPart = doc.AddMainDocumentPart();
             mainPart.Document = new Document(new Body());
 
@@ -43,6 +55,9 @@ public sealed class DocxExporter : IResumeExporter
             if (p.WebsiteUrl != null) contacts.Add(p.WebsiteUrl);
             if (contacts.Count > 0)
                 body.Append(CreateParagraph(string.Join("  |  ", contacts), fontSize: 18, color: "555555", fontFamily: template.FontFamily));
+            if (!string.IsNullOrWhiteSpace(resume.TargetRole))
+                body.Append(CreateParagraph($"Target role: {resume.TargetRole}", fontSize: 20,
+                    color: template.AccentHex, bold: true, fontFamily: template.FontFamily));
 
             body.Append(CreateHorizontalRule());
 
@@ -157,23 +172,23 @@ public sealed class DocxExporter : IResumeExporter
             new Style(
                 new StyleName { Val = "Heading1" },
                 new StyleRunProperties(
-                    new Bold(),
                     new RunFonts { Ascii = template.FontFamily, HighAnsi = template.FontFamily },
-                    new FontSize { Val = "48" }, // 24pt
-                    new Color { Val = template.AccentHex }
+                    new Bold(),
+                    new Color { Val = template.AccentHex },
+                    new FontSize { Val = "48" } // 24pt
                 )
             )
             { Type = StyleValues.Paragraph, StyleId = "Heading1" },
             new Style(
                 new StyleName { Val = "Heading2" },
-                new StyleRunProperties(
-                    new Bold(),
-                    new RunFonts { Ascii = template.FontFamily, HighAnsi = template.FontFamily },
-                    new FontSize { Val = ((int)Math.Round(template.SectionFontSize * 2)).ToString() },
-                    new Color { Val = template.AccentHex }
-                ),
                 new StyleParagraphProperties(
                     new SpacingBetweenLines { Before = "200", After = "60" }
+                ),
+                new StyleRunProperties(
+                    new RunFonts { Ascii = template.FontFamily, HighAnsi = template.FontFamily },
+                    new Bold(),
+                    new Color { Val = template.AccentHex },
+                    new FontSize { Val = ((int)Math.Round(template.SectionFontSize * 2)).ToString() }
                 )
             )
             { Type = StyleValues.Paragraph, StyleId = "Heading2" }
@@ -185,11 +200,11 @@ public sealed class DocxExporter : IResumeExporter
     {
         var run = new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve });
         var rp = new RunProperties();
-        if (fontSize != 22) rp.Append(new FontSize { Val = fontSize.ToString() });
-        if (color != null) rp.Append(new Color { Val = color });
+        if (fontFamily != null) rp.Append(new RunFonts { Ascii = fontFamily, HighAnsi = fontFamily });
         if (bold) rp.Append(new Bold());
         if (italic) rp.Append(new Italic());
-        if (fontFamily != null) rp.Append(new RunFonts { Ascii = fontFamily, HighAnsi = fontFamily });
+        if (color != null) rp.Append(new Color { Val = color });
+        if (fontSize != 22) rp.Append(new FontSize { Val = fontSize.ToString() });
         if (rp.HasChildren) run.PrependChild(rp);
 
         var para = new Paragraph(run);
@@ -205,7 +220,7 @@ public sealed class DocxExporter : IResumeExporter
             new Text(exp.Title ?? "") { Space = SpaceProcessingModeValues.Preserve });
         var sepRun = new Run(new RunProperties(new FontSize { Val = "24" }),
             new Text(" — ") { Space = SpaceProcessingModeValues.Preserve });
-        var compRun = new Run(new RunProperties(new FontSize { Val = "24" }, new Color { Val = template.AccentHex }),
+        var compRun = new Run(new RunProperties(new Color { Val = template.AccentHex }, new FontSize { Val = "24" }),
             new Text(exp.Company ?? "") { Space = SpaceProcessingModeValues.Preserve });
         para.Append(titleRun, sepRun, compRun);
         return para;
@@ -224,7 +239,7 @@ public sealed class DocxExporter : IResumeExporter
     private static Paragraph CreateSkillGroup(string category, List<string> skills, ResumeTemplate template)
     {
         var para = new Paragraph();
-        para.Append(new Run(new RunProperties(new Bold(), new FontSize { Val = "20" }, new Color { Val = template.AccentHex }),
+        para.Append(new Run(new RunProperties(new Bold(), new Color { Val = template.AccentHex }, new FontSize { Val = "20" }),
             new Text($"{category}: ") { Space = SpaceProcessingModeValues.Preserve }));
         para.Append(new Run(new RunProperties(new FontSize { Val = "20" }),
             new Text(string.Join(", ", skills)) { Space = SpaceProcessingModeValues.Preserve }));
@@ -276,8 +291,8 @@ public sealed class DocxExporter : IResumeExporter
         {
             var paragraph = new Paragraph(
                 new ParagraphProperties(
-                    new Indentation { Left = "360", Hanging = "360" },
-                    new SpacingBetweenLines { After = "80" }));
+                    new SpacingBetweenLines { After = "80" },
+                    new Indentation { Left = "360", Hanging = "360" }));
             var bookmarkId = (10_000 + reference.Number).ToString();
             paragraph.Append(new BookmarkStart { Id = bookmarkId, Name = $"ref-{reference.Number}" });
 
@@ -294,8 +309,8 @@ public sealed class DocxExporter : IResumeExporter
             {
                 var relationship = mainPart.AddHyperlinkRelationship(uri, true);
                 paragraph.Append(new Hyperlink(
-                    new Run(new RunProperties(new FontSize { Val = "16" }, new Color { Val = template.AccentHex },
-                            new Underline { Val = UnderlineValues.Single }),
+                    new Run(new RunProperties(new Color { Val = template.AccentHex },
+                            new FontSize { Val = "16" }, new Underline { Val = UnderlineValues.Single }),
                         new Text(uri.ToString())))
                 { Id = relationship.Id });
             }

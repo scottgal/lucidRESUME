@@ -5,7 +5,7 @@ namespace lucidRESUME.JobML;
 
 /// <summary>
 /// Produces the deliberately lossy publication view of full JobML. It does not
-/// infer claims or evidence. It only numbers already-linked external evidence,
+/// infer claims or evidence. It only numbers already-linked publication evidence,
 /// adds those numbers to the cited prose, and renders a bibliography.
 /// </summary>
 public static class CJobMlProjector
@@ -106,10 +106,19 @@ public static class CJobMlProjector
     private static bool IsCompactReference(JobMlEvidence evidence) =>
         !IsProseEvidence(evidence) &&
         (Uri.TryCreate(evidence.Uri, UriKind.Absolute, out _) ||
-         string.Equals(evidence.Type, "qualification", StringComparison.OrdinalIgnoreCase));
+         string.Equals(evidence.Type, "qualification", StringComparison.OrdinalIgnoreCase) ||
+         IsResumeSource(evidence));
+
+    private static bool IsResumeSource(JobMlEvidence evidence) =>
+        string.Equals(evidence.Type, "source_ledger", StringComparison.OrdinalIgnoreCase) &&
+        !string.IsNullOrWhiteSpace(evidence.Id) &&
+        !string.IsNullOrWhiteSpace(evidence.Title);
 
     private static string ReferenceKey(JobMlEvidence evidence)
     {
+        // A compact citation identifies the imported document. Full JobML retains the
+        // exact evidence ID, locator, selector and checksum for each supporting passage.
+        if (IsResumeSource(evidence)) return $"resume-source:{evidence.Title!.Trim()}";
         if (!string.IsNullOrWhiteSpace(evidence.Id)) return $"id:{evidence.Id.Trim()}";
         if (!string.IsNullOrWhiteSpace(evidence.Uri)) return $"uri:{NormalizeUri(evidence.Uri)}";
         return $"qualification:{evidence.Issuer}|{evidence.Qualification}";
@@ -141,7 +150,7 @@ public static class CJobMlProjector
 
         if (!string.IsNullOrWhiteSpace(evidence.Published))
             builder.Append(FormatDate(evidence.Published)).Append(". ");
-        builder.Append('[').Append(Humanize(evidence.Type)).Append("] ");
+        builder.Append('[').Append(EvidenceTypeLabel(evidence.Type)).Append("] ");
         if (!string.IsNullOrWhiteSpace(evidence.Uri))
             builder.Append('<').Append(evidence.Uri).Append(">.");
         if (!string.IsNullOrWhiteSpace(evidence.Accessed))
@@ -157,6 +166,11 @@ public static class CJobMlProjector
 
     private static string Humanize(string value) =>
         CultureInfo.InvariantCulture.TextInfo.ToTitleCase(value.Replace('_', ' ').Replace('-', ' '));
+
+    private static string EvidenceTypeLabel(string value) =>
+        string.Equals(value, "source_ledger", StringComparison.OrdinalIgnoreCase)
+            ? "Resume Source"
+            : Humanize(value);
 }
 
 public sealed record CJobMlProjection(

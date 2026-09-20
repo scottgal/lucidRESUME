@@ -495,16 +495,22 @@ User secrets (`dotnet user-secrets`) for API keys. Environment variables with `L
 
 ## 11. Testing
 
-161 tests across 6 projects. No mocking frameworks - direct service instantiation.
+371 tests across 11 projects. Tests favour direct service instantiation and fixed
+fixtures, with fake HTTP handlers where a provider boundary must be exercised.
 
 | Project | What it tests |
 |---------|--------------|
-| Core.Tests | AppState persistence, JobApplication model, SQLite round-trip |
-| Extraction.Tests | NER detector, recognizer pipeline |
-| AI.Tests | Embedding service, similarity scoring |
-| Matching.Tests | Skill scoring, filters, aspect voting, quality word-list loading |
+| Core.Tests | Persistence, models, multi-resume merge, parsing, and output export |
+| Extraction.Tests | NER detector, recognizer pipeline, and date recognition |
+| AI.Tests | Providers, embeddings, bounded editing, and deterministic projection |
+| Matching.Tests | Skill scoring, filters, aspect voting, role profiles, and output quality |
 | JobSpec.Tests | JD parsing, salary extraction |
 | EmailTracker.Tests | Email classifier rules, application matcher |
+| GitHub.Tests | Repository evidence, LinkedIn parsing, and document merging |
+| JobML.Tests | Validation, drift, reversible links, and cJobML projection |
+| Compiler.Tests | Deterministic evidence selection and projection orchestration |
+| Web.Tests | ASP.NET Core endpoint and compiler control |
+| Avalonia.UITesting.Tests | Locators, input, scripts, screenshots, and UI assertions |
 
 ### UX Testing
 

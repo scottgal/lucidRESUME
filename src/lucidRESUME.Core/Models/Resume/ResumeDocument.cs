@@ -30,8 +30,17 @@ public sealed class ResumeDocument
     /// <summary>Optional public endpoint serving the complete full-resolution JobML ledger.</summary>
     public string? CompleteJobMlUri { get; set; }
 
+    /// <summary>
+    /// Include the compact, publication-safe cJobML citation projection in exported
+    /// Markdown, Word, and PDF files. Full JobML remains the internal source snapshot.
+    /// </summary>
+    public bool IncludeCompactJobMl { get; set; } = true;
+
     /// <summary>Selected single-column output template for DOCX and PDF rendering.</summary>
     public string OutputTemplateId { get; set; } = ResumeTemplateCatalog.AtsClassicId;
+
+    /// <summary>The role this immutable projection was compiled for.</summary>
+    public string? TargetRole { get; set; }
 
     /// <summary>Filesystem cache key for page images (null if not yet cached).</summary>
     public string? ImageCacheKey { get; set; }

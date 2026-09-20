@@ -17,6 +17,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
 {
     private readonly SemanticCompressor _compressor;
     private readonly ICoverageAnalyser _coverageAnalyser;
+    private readonly IJobSpecParser _jobParser;
     private readonly IAppStore _store;
     private readonly ResumeArtifactBuilder _artifactBuilder;
     private readonly IReadOnlyList<IResumeExporter> _exporters;
@@ -38,6 +39,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
 
     public IReadOnlyList<ResumeTemplate> Templates { get; } = ResumeTemplateCatalog.All;
     [ObservableProperty] private ResumeTemplate _selectedTemplate = ResumeTemplateCatalog.All[0];
+    [ObservableProperty] private bool _includeCompactJobMl = true;
 
     // Compression stats
     [ObservableProperty] private string? _compressionStats;
@@ -49,12 +51,13 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     [ObservableProperty] private string _companyTypeLabel = "";
 
     public ApplyPageViewModel(SemanticCompressor compressor,
-        ICoverageAnalyser coverageAnalyser, IAppStore store,
+        ICoverageAnalyser coverageAnalyser, IJobSpecParser jobParser, IAppStore store,
         ResumeArtifactBuilder artifactBuilder,
         IEnumerable<IResumeExporter> exporters)
     {
         _compressor = compressor;
         _coverageAnalyser = coverageAnalyser;
+        _jobParser = jobParser;
         _store = store;
         _artifactBuilder = artifactBuilder;
         _exporters = exporters.ToList();
@@ -110,28 +113,31 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             var resume = _contextResume ?? state.SelectedResume;
             if (resume is null) { ErrorMessage = "No resume loaded."; return; }
 
-            var job = _contextJob ?? new JobDescription
+            var job = _contextJob ?? await _jobParser.ParseFromTextAsync(JobDescriptionText);
+            if (_contextJob is null)
             {
-                JobId = Guid.NewGuid(),
-                CreatedAt = DateTimeOffset.UtcNow,
-                Title = JobTitle,
-                Company = Company,
-                RawText = JobDescriptionText
-            };
+                // The explicit form values are authoritative. Parsing supplies the
+                // requirement ledger, not a replacement title or company.
+                job.Title = JobTitle;
+                job.Company = Company;
+            }
 
             // Step 1: Semantic compression - filter to relevant evidence only
             StatusMessage = "Analysing skill coverage…";
             var compressed = await _compressor.CompressAsync(resume, job);
 
             CompressionStats = $"{compressed.IncludedRoleCount}/{compressed.OriginalRoleCount} roles, " +
-                $"{compressed.MatchedSkillCount}/{compressed.OriginalSkillCount} skills, " +
+                $"{compressed.MatchedSkillCount}/{compressed.OriginalSkillCount} requirements, " +
                 $"fit: {compressed.OverallFit:P0}" +
                 (compressed.Gaps.Count > 0 ? $", gaps: {string.Join(", ", compressed.Gaps.Take(3))}" : "");
 
             // Step 2: Render the selected ledger records without re-inference.
             StatusMessage = "Rendering evidence projection…";
             _generatedResume = _artifactBuilder.Build(resume, compressed.Projection, job, SelectedTemplate.Id);
-            TailoredMarkdown = _generatedResume.JobMlSource ?? _generatedResume.RawMarkdown ?? compressed.Markdown;
+            _generatedResume.IncludeCompactJobMl = IncludeCompactJobMl;
+            // Preview the human document. JobML remains embedded in the downloaded
+            // artefact and is available through the evidence/editor surfaces.
+            RefreshPreview();
             HasResult = true;
             StatusMessage = $"Projected {compressed.IncludedRoleCount} of {compressed.OriginalRoleCount} roles.";
         }
@@ -209,5 +215,28 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     partial void OnSelectedTemplateChanged(ResumeTemplate value)
     {
         if (_generatedResume is not null) _generatedResume.OutputTemplateId = value.Id;
+    }
+
+    partial void OnIncludeCompactJobMlChanged(bool value)
+    {
+        if (_generatedResume is null) return;
+        _generatedResume.IncludeCompactJobMl = value;
+        RefreshPreview();
+    }
+
+    private void RefreshPreview()
+    {
+        if (_generatedResume is null) return;
+        var human = _generatedResume.CanonicalMarkdown ?? _generatedResume.RawMarkdown ?? "";
+        if (!_generatedResume.IncludeCompactJobMl || string.IsNullOrWhiteSpace(_generatedResume.JobMlSource))
+        {
+            TailoredMarkdown = human;
+            return;
+        }
+
+        var parser = new lucidRESUME.JobML.JobMlParser();
+        TailoredMarkdown = parser.TryParse(_generatedResume.JobMlSource, out var full, out _)
+            ? lucidRESUME.JobML.CJobMlProjector.Project(full!).Markdown
+            : human;
     }
 }

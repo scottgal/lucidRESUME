@@ -239,6 +239,12 @@ lucidresume jobml compact --file resume.jobml.md --complete-ledger https://examp
 lucidresume jobml link-post --file resume.jobml.md --claim claim-id --url https://example.net/article --output linked.jobml.md
 ```
 
+Role projections include compact cJobML citations in Markdown, Word, and PDF by
+default. Pass `--cjobml false` to `tailor`, `generate`, or `render` for a
+human-only copy. Compact references can cite imported résumé sources and public
+evidence without copying full passages, selectors, or drift hashes out of the
+complete ledger.
+
 ---
 
 ## Getting Started
@@ -356,20 +362,22 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test    # 343 tests across 9 projects
+dotnet test lucidRESUME.sln    # 371 tests across 11 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 67 | Persistence, models, multi-resume, export, linked posts |
-| Extraction.Tests | 23 | NER, recognizers, RRF fusion pipeline |
-| AI.Tests | 24 | Providers, embeddings, deterministic projection, gated live OpenAI checks |
-| Matching.Tests | 52 | Skill scoring, filters, voting, quality word lists |
+| Core.Tests | 74 | Persistence, models, multi-resume, export, linked posts |
+| Extraction.Tests | 24 | NER, recognizers, RRF fusion pipeline |
+| AI.Tests | 27 | Providers, embeddings, deterministic projection, gated live OpenAI checks |
+| Matching.Tests | 57 | Skill scoring, filters, voting, projection quality |
 | JobSpec.Tests | 8 | JD parsing, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
-| GitHub.Tests | 24 | Language map, LinkedIn parser, document merger |
-| JobML.Tests | 24 | Parsing, validation, drift, reversible links, cJobML projection |
-| Avalonia.UITesting.Tests | 96 | Input, scripts, locators, screenshots, REPL |
+| GitHub.Tests | 26 | Language map, LinkedIn parser, document merger |
+| JobML.Tests | 26 | Parsing, validation, drift, reversible links, cJobML projection |
+| Compiler.Tests | 4 | Deterministic evidence selection and projection orchestration |
+| Web.Tests | 2 | ASP.NET Core endpoint and projection control |
+| Avalonia.UITesting.Tests | 98 | Input, scripts, locators, screenshots, REPL |
 
 ---
 

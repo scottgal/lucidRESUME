@@ -65,7 +65,8 @@ public sealed class TemplateRegistry
 
         _logger.LogInformation("Matched template '{Name}' (similarity={Score:P0})", best.Name, bestScore);
         best.MatchCount++;
-        await SaveAsync(ct);
+        // Match counts are diagnostic only. Writing on every read makes parallel
+        // ingestion processes contend for the same registry and can corrupt it.
         return best;
     }
 

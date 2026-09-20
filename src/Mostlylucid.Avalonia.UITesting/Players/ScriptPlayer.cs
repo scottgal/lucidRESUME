@@ -300,7 +300,14 @@ public sealed class ScriptPlayer
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            if (control is Button button)
+            if (control is ToggleButton toggle)
+            {
+                // ToggleButton derives from Button, so this branch must precede
+                // the generic Button branch. Change state once; two-way bindings
+                // observe IsChecked directly.
+                toggle.IsChecked = !(toggle.IsChecked ?? false);
+            }
+            else if (control is Button button)
             {
                 // Always raise ClickEvent so the Button's own Click handler (XAML Click="...")
                 // runs. Then ALSO invoke any bound Command. This matches what a real pointer
@@ -308,11 +315,6 @@ public sealed class ScriptPlayer
                 button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 if (button.Command?.CanExecute(button.CommandParameter) == true)
                     button.Command.Execute(button.CommandParameter);
-            }
-            else if (control is ToggleButton toggle)
-            {
-                toggle.IsChecked = !(toggle.IsChecked ?? false);
-                toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
             else if (control is TabItem tabItem)
             {

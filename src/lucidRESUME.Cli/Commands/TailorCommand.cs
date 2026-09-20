@@ -32,12 +32,18 @@ public static class TailorCommand
         var evalOnlyOpt = new Option<bool>("--eval-only") { Description = "Only evaluate quality; do not project an output" };
         var formatOpt = new Option<string?>("--format") { Description = "Output format: markdown (default), docx, pdf, all" };
         var templateOpt = new Option<string?>("--template") { Description = "Output template: ats-classic, modern-professional, compact-technical" };
+        var compactJobMlOpt = new Option<bool>("--cjobml")
+        {
+            DefaultValueFactory = _ => true,
+            Description = "Include compact cJobML citations and References in exported files (default: true)"
+        };
 
         var jobFileOpt = new Option<FileInfo?>("--job-file") { Description = "Job description file (alternative to --job)" };
 
         var cmd = new Command("tailor", "Project a resume from the ledger for a specific job description")
         {
-            resumeOpt, resumeDirOpt, jobOpt, jobFileOpt, outputOpt, configOpt, evalOnlyOpt, formatOpt, templateOpt
+            resumeOpt, resumeDirOpt, jobOpt, jobFileOpt, outputOpt, configOpt, evalOnlyOpt, formatOpt, templateOpt,
+            compactJobMlOpt
         };
 
         cmd.SetAction(async (result, ct) =>
@@ -51,6 +57,7 @@ public static class TailorCommand
             var evalOnly = result.GetValue(evalOnlyOpt);
             var format = result.GetValue(formatOpt) ?? "markdown";
             var template = ResumeTemplateCatalog.Get(result.GetValue(templateOpt));
+            var includeCompactJobMl = result.GetValue(compactJobMlOpt);
 
             // Resolve JD from --job or --job-file
             if (string.IsNullOrWhiteSpace(jobText) && jobFile is { Exists: true })
@@ -86,7 +93,7 @@ public static class TailorCommand
             // Compress
             Console.Error.WriteLine("Compressing...");
             var compressed = await compressor.CompressAsync(resume, jd, ct);
-            Console.Error.WriteLine($"  Fit: {compressed.OverallFit:P0}, {compressed.IncludedRoleCount}/{compressed.OriginalRoleCount} roles, {compressed.MatchedSkillCount}/{compressed.OriginalSkillCount} skills");
+            Console.Error.WriteLine($"  Fit: {compressed.OverallFit:P0}, {compressed.IncludedRoleCount}/{compressed.OriginalRoleCount} roles, {compressed.MatchedSkillCount}/{compressed.OriginalSkillCount} requirements");
             if (compressed.Gaps.Count > 0)
                 Console.Error.WriteLine($"  Gaps: {string.Join(", ", compressed.Gaps)}");
 
@@ -99,6 +106,7 @@ public static class TailorCommand
             Console.Error.WriteLine("Rendering deterministic evidence projection...");
             var artifact = services.GetRequiredService<ResumeArtifactBuilder>()
                 .Build(resume, compressed.Projection, jd, template.Id);
+            artifact.IncludeCompactJobMl = includeCompactJobMl;
 
             // Quality after
             Console.Error.WriteLine("Evaluating projected quality...");

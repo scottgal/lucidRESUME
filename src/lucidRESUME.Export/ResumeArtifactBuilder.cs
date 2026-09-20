@@ -40,6 +40,7 @@ public sealed class ResumeArtifactBuilder
         result.JobMlSource = artifact;
         result.JobMlRevision = MarkdownEvidenceIndex.Fingerprint(jobMl.Markdown);
         result.OutputTemplateId = templateId;
+        result.TargetRole = job.Title;
         result.MarkTailoredFor(job.JobId);
 
         result.Personal = projection.Personal;
@@ -123,6 +124,11 @@ public sealed class ResumeArtifactBuilder
                         Id = evidence.Id,
                         Type = "source_ledger",
                         Ref = $"ledger://{evidence.Id}",
+                        // cJobML cites the imported source document, not a copy of the
+                        // passage. Exact text, locator and drift hash remain in full JobML.
+                        Title = evidence.SourceName.EndsWith("-merged.md", StringComparison.OrdinalIgnoreCase)
+                            ? "Canonical career ledger"
+                            : evidence.SourceName,
                         Fingerprint = new JobMlFingerprint { Text = evidence.FastHash },
                         Selector = new JobMlTextSelector { Exact = evidence.Text }
                     });

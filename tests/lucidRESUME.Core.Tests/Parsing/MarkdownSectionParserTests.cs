@@ -1,5 +1,6 @@
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Ingestion.Parsing;
+using lucidRESUME.Parsing;
 
 namespace lucidRESUME.Core.Tests.Parsing;
 
@@ -178,5 +179,55 @@ public class MarkdownSectionParserTests
         Assert.Equal("University of Stirling", education.Institution);
         Assert.Equal(1992, education.StartDate?.Year);
         Assert.Equal(1996, education.EndDate?.Year);
+    }
+
+    [Fact]
+    public void PopulateSections_RejectsIncoherentTemplateHintsAndRecoversCompactCareer()
+    {
+        const string markdown = """
+            # Scott Galloway
+
+            Skills
+            ### Technical
+            ASP.NET Core / .NET Core - 5 years
+            Azure / AWS - 5 years
+            Distributed Systems Architecture (Cloud / Self-Hosted - 20 years
+            ### Other
+            Team Lead / Development Manager - 15 years+
+            Development team recruitment / problem solving - 8 years
+
+            ## Work
+            ### Consulting - Lead Developer / Architect / Managing Director - 01/2012 - Present
+            Recruited senior developers and acted as CTO for proposals and VC pitches.
+            Huozhi Limited- Technical Consultant / Dev Lead - June 2018 - December 2019.
+            Delivered a fintech modernisation programme.
+            ### Microsoft Corp. - 01/2007-10/2009
+            Program Manager (II) ASP.NET Team
+            Led release governance and bug triage.
+            ### StormID - Lead Developer - 02/2003 - 06/2005
+            Delivered high-volume web applications.
+            """;
+        var misleadingTemplateSections = new List<DocumentSection>
+        {
+            new()
+            {
+                Heading = "Work",
+                SemanticType = "Experience",
+                Body = "02/1998 - 02/1999\n" + markdown,
+                Level = 2
+            }
+        };
+        var resume = ResumeDocument.Create("simple.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", markdown.Length);
+
+        MarkdownSectionParser.PopulateSections(resume, markdown, misleadingTemplateSections);
+
+        Assert.True(resume.Experience.Count >= 4, $"Recovered only {resume.Experience.Count} roles");
+        Assert.Contains(resume.Experience, role => role.Company?.Contains("Consulting") == true &&
+                                                   role.Title?.Contains("Lead Developer") == true);
+        Assert.Contains(resume.Experience, role => role.Company?.Contains("Microsoft") == true &&
+                                                   role.Title?.Contains("Program Manager") == true);
+        Assert.Contains(resume.Skills, skill => skill.Name == "ASP.NET Core");
+        Assert.Contains(resume.Skills, skill => skill.Name == "Distributed Systems Architecture");
+        Assert.Contains(resume.Skills, skill => skill.Name == "Development team recruitment");
     }
 }

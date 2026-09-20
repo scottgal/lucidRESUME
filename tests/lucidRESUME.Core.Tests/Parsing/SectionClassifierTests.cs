@@ -17,4 +17,10 @@ public class SectionClassifierTests
         var result = SectionClassifier.ClassifyHeading(heading);
         Assert.Equal(expected, result);
     }
+
+    [Fact]
+    public void ClassifyHeading_DoesNotTreatWorkflowAsWorkSection()
+    {
+        Assert.Null(SectionClassifier.ClassifyHeading("## Workflow improvements"));
+    }
 }

@@ -1,0 +1,146 @@
+name: local-quality-loop
+description: Clean-state multi-resume ingestion and three-role projection acceptance loop
+default_delay: 250
+
+actions:
+  - type: Wait
+    value: "2500"
+
+  - type: ImportFile
+    target: Fast
+    value: /Users/scottgalloway/Desktop/resumes/CV.docx
+  - type: Wait
+    value: "2500"
+  - type: Screenshot
+    value: 01-first-resume
+
+  - type: ImportFile
+    target: Fast
+    value: /Users/scottgalloway/Desktop/resumes/Scott_Galloway_Resume.docx
+  - type: Wait
+    value: "1500"
+  - type: Click
+    target: ApplyAllImportButton
+  - type: Wait
+    value: "2500"
+
+  - type: ImportFile
+    target: Fast
+    value: /Users/scottgalloway/Desktop/resumes/SimpleResume.docx
+  - type: Wait
+    value: "1500"
+  - type: Click
+    target: ApplyAllImportButton
+  - type: Wait
+    value: "2500"
+
+  - type: ImportFile
+    target: Fast
+    value: /Users/scottgalloway/Desktop/resumes/resume.docx
+  - type: Wait
+    value: "1500"
+  - type: Click
+    target: ApplyAllImportButton
+  - type: Wait
+    value: "2500"
+  - type: Screenshot
+    value: 02-complete-ingested-resume
+
+  - type: Navigate
+    value: apply
+  - type: TypeText
+    target: ProjectionJobTitle
+    value: Lead Developer
+  - type: TypeText
+    target: ProjectionCompany
+    value: Acceptance Test
+  - type: TypeText
+    target: ProjectionJobDescription
+    value: |
+      We need a hands-on lead developer to own architecture and delivery of cloud-hosted web platforms.
+      Required: strong C# and ASP.NET Core experience; technical leadership, mentoring and code review; API and distributed-system design; automated testing, CI/CD and release ownership; Azure, containers and production performance engineering.
+      Preferred: Kubernetes, PostgreSQL or SQL Server, and practical use of AI-assisted development.
+  - type: Click
+    target: ProjectResumeButton
+  - type: Wait
+    value: "4000"
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: IsVisible
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: Not.HasText
+    value: Desired Job Title
+  - type: Screenshot
+    value: 03-lead-developer-projection
+
+  - type: TypeText
+    target: ProjectionJobTitle
+    value: Head of Engineering
+  - type: TypeText
+    target: ProjectionJobDescription
+    value: |
+      Lead a distributed engineering organisation through growth and change while retaining hands-on technical credibility.
+      Required: engineering management, coaching, hiring and team development; predictable delivery, release governance and quality standards; architecture strategy, cloud platforms and legacy modernisation; application security, technical risk and incident ownership; communication with product, commercial and executive stakeholders.
+      Preferred: DevOps and CI/CD transformation, budget and resource planning, and experience in a resource-constrained product company.
+  - type: Click
+    target: ProjectResumeButton
+  - type: Wait
+    value: "4000"
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: IsVisible
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: Not.HasText
+    value: Desired Job Title
+  - type: Screenshot
+    value: 04-head-of-engineering-projection
+
+  - type: TypeText
+    target: ProjectionJobTitle
+    value: Chief Technology Officer
+  - type: TypeText
+    target: ProjectionJobDescription
+    value: |
+      Own technology strategy and engineering execution for a growing software company.
+      Required: executive engineering leadership and organisational design; product and platform architecture strategy; building and mentoring engineering teams; security governance, technical risk and operational resilience; commercial judgement, prioritisation and stakeholder communication; cloud-native architecture and modernising legacy systems.
+      Preferred: hands-on software engineering credibility, AI and data strategy, technical due diligence and scaling through rapid growth.
+  - type: Click
+    target: ProjectResumeButton
+  - type: Wait
+    value: "4000"
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: IsVisible
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: Not.HasText
+    value: Desired Job Title
+  - type: Screenshot
+    value: 05-cto-projection
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: ContainsText
+    value: cJobML 0.1
+  - type: Expect
+    target: IncludeCompactJobMlCheckBox
+    matcher: IsChecked
+  - type: Click
+    target: IncludeCompactJobMlCheckBox
+  - type: Expect
+    target: IncludeCompactJobMlCheckBox
+    matcher: IsUnchecked
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: Not.ContainsText
+    value: cJobML 0.1
+  - type: Click
+    target: IncludeCompactJobMlCheckBox
+  - type: Expect
+    target: IncludeCompactJobMlCheckBox
+    matcher: IsChecked
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: ContainsText
+    value: cJobML 0.1

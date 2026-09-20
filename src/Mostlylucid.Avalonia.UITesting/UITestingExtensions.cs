@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Mostlylucid.Avalonia.UITesting;
@@ -129,7 +130,7 @@ internal class UITestingStartup
 
                 await mcp.RunStdioAsync();
 
-                desktop.Shutdown(0);
+                RequestShutdown(desktop, 0);
             });
         }
         else if (_args.HasArg("--ux-repl") || _args.HasArg("--mlui-repl"))
@@ -150,7 +151,7 @@ internal class UITestingStartup
 
                 await repl.RunAsync();
 
-                desktop.Shutdown(0);
+                RequestShutdown(desktop, 0);
             });
         }
         else if (_args.HasArg("--ux-test") || _args.HasArg("--mlui-test"))
@@ -159,7 +160,7 @@ internal class UITestingStartup
             var outputDir = _args.GetArgValue("--output") ?? "ux-test-results";
 
             window.Opened += (_, _) => _ = RunSafelyAsync("ui_test",
-                () => RunScriptAsync(window, viewModel, navigateAction, scriptPath, outputDir, desktop));
+                () => RunScriptAsync(window, navigateAction, scriptPath, outputDir, desktop, ctx));
         }
     }
 
@@ -179,8 +180,9 @@ internal class UITestingStartup
         }
     }
 
-    private async Task RunScriptAsync(Window window, object? viewModel, Action<string>? navigateAction,
-        string? scriptPath, string outputDir, IClassicDesktopStyleApplicationLifetime desktop)
+    private async Task RunScriptAsync(Window window, Action<string>? navigateAction,
+        string? scriptPath, string outputDir, IClassicDesktopStyleApplicationLifetime desktop,
+        UITestContext ctx)
     {
         try
         {
@@ -189,7 +191,7 @@ internal class UITestingStartup
             if (string.IsNullOrEmpty(scriptPath) || !File.Exists(scriptPath))
             {
                 _options.Log?.Invoke($"Script not found: {scriptPath}");
-                desktop.Shutdown(1);
+                RequestShutdown(desktop, 1);
                 return;
             }
 
@@ -197,10 +199,6 @@ internal class UITestingStartup
             var script = Scripts.ScriptLoader.ParseYaml(yaml);
 
             Directory.CreateDirectory(outputDir);
-
-            var ctx = new UITestContext { MainWindow = window, Navigate = navigateAction };
-            if (_options.EnableCrossWindowTracking)
-                ctx.EnableCrossWindowTracking();
 
             var player = new Players.ScriptPlayer(outputDir, _options.DefaultDelay, _options.CaptureScreenshotsByDefault, ctx);
 
@@ -224,13 +222,21 @@ internal class UITestingStartup
             _options.Log?.Invoke($"Result: {(result.Success ? "PASS" : "FAIL")}");
             _options.Log?.Invoke($"Screenshots: {outputDir}");
             await Task.Delay(500);
-            desktop.Shutdown(result.Success ? 0 : 1);
+            RequestShutdown(desktop, result.Success ? 0 : 1);
         }
         catch (Exception ex)
         {
             _options.Log?.Invoke($"Error: {ex.Message}");
             await Task.Delay(500);
-            desktop.Shutdown(1);
+            RequestShutdown(desktop, 1);
         }
+    }
+
+    private static void RequestShutdown(IClassicDesktopStyleApplicationLifetime desktop, int exitCode)
+    {
+        // Let the current Opened/async continuation unwind before Avalonia tears down
+        // native windows. Immediate shutdown from that continuation can race macOS
+        // backend callbacks and terminate with a recursive_mutex failure.
+        Dispatcher.UIThread.Post(() => desktop.Shutdown(exitCode), DispatcherPriority.Background);
     }
 }
