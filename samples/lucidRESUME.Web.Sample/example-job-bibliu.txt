@@ -1,0 +1,28 @@
+Vice President of Engineering
+
+BibliU is a UK remote, technology-led B2B company serving universities and
+publishers. It is hiring a VP Engineering to lead and grow a roughly 15-person
+engineering function across application and platform work.
+
+The role owns team leadership, engineering standards, technical governance,
+security posture, and delivery against the product roadmap. The first six months
+focus on earning the team's trust, making delivery predictable, and establishing
+practical AI-assisted development with suitable guardrails and review.
+
+Must have:
+
+- Significant VP, Director, or CTO-level software engineering leadership.
+- A track record of leading teams through change.
+- Delivery accountability for complex web and mobile applications, including release governance.
+- Experience managing engineering teams and technical leads.
+- Full-stack TypeScript and AWS experience.
+- Ownership of application security, secure coding, vulnerability management, audits, and customer security review.
+
+Good to have:
+
+- Development governance, DevOps, CI/CD, and quality assurance standards.
+- Cloud-native architecture and modern development frameworks.
+- Practical AI-assisted development, including tooling, guardrails, review, and measurement.
+- SaaS, EdTech, FinTech, or another product-led digital environment.
+- International and multi-region deployments.
+- Experience in a resource-constrained scale-up where sequencing matters.

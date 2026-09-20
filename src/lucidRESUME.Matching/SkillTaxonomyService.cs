@@ -3,7 +3,7 @@ using lucidRESUME.Core.Interfaces;
 namespace lucidRESUME.Matching;
 
 /// <summary>
-/// Provides skill centroid matching from a preloaded taxonomy (5,630 skills across 16 roles).
+/// Provides skill and role-centroid matching from shipped taxonomy assets.
 /// Used by JD parser to find skills embedded in prose and by the UI for instant archetype matching.
 ///
 /// Architecture:
@@ -29,9 +29,39 @@ public sealed class SkillTaxonomyService : ISkillTaxonomy
     /// <summary>All role names (e.g. "Backend Developer", "DevOps Engineer").</summary>
     public IReadOnlyList<string> Roles => _data.Value.Roles;
 
+    /// <summary>Describes the exact product assets loaded by this installation.</summary>
+    public SkillTaxonomyDiagnostics Diagnostics => new(
+        _data.Value.SourcePaths,
+        _data.Value.AllSkills.Count,
+        _data.Value.Roles.Count,
+        _data.Value.RoleSkills.ToDictionary(x => x.Key, x => x.Value.Count, StringComparer.OrdinalIgnoreCase));
+
     /// <summary>Skills for a specific role archetype.</summary>
     public IReadOnlySet<string> GetRoleSkills(string role) =>
         _data.Value.RoleSkills.TryGetValue(role, out var skills) ? skills : new HashSet<string>();
+
+    /// <summary>
+    /// Returns the normalised mean embedding of a shipped role profile. The source skills are
+    /// always available offline; vector materialisation is deterministic for the configured embedder.
+    /// </summary>
+    public async Task<float[]> GetRoleCentroidAsync(string role, CancellationToken ct = default)
+    {
+        if (!_data.Value.RoleSkills.TryGetValue(role, out var skills) || skills.Count == 0)
+            return [];
+
+        var vectors = new List<float[]>();
+        foreach (var skill in skills)
+            vectors.Add(await _embedder.EmbedAsync(skill, ct));
+        var dimensions = vectors.Min(x => x.Length);
+        if (dimensions == 0) return [];
+        var centroid = new float[dimensions];
+        foreach (var vector in vectors)
+            for (var i = 0; i < dimensions; i++) centroid[i] += vector[i];
+        var magnitude = MathF.Sqrt(centroid.Sum(x => x * x));
+        if (magnitude > 1e-8f)
+            for (var i = 0; i < centroid.Length; i++) centroid[i] /= magnitude;
+        return centroid;
+    }
 
     /// <summary>
     /// Finds known skills in text using exact match against the taxonomy.
@@ -41,12 +71,11 @@ public sealed class SkillTaxonomyService : ISkillTaxonomy
     public List<string> FindSkillsExact(string text)
     {
         var lower = text.ToLowerInvariant();
-        var found = new List<string>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var candidates = new List<(string Skill, int Start, int End)>();
 
         foreach (var skill in _data.Value.AllSkills)
         {
-            if (skill.Length < 2) continue;
+            if (!IsUsefulSkill(skill)) continue;
 
             // Exact word boundary match (avoid "C" matching "Company")
             var skillLower = skill.ToLowerInvariant();
@@ -62,17 +91,34 @@ public sealed class SkillTaxonomyService : ISkillTaxonomy
                 if (skillLower.Length <= 2)
                     isWordBoundary = isWordBoundary && (before == ' ' || before == ',' || before == '\n' || idx == 0);
 
-                if (isWordBoundary && seen.Add(skill))
+                if (isWordBoundary)
                 {
-                    found.Add(skill);
-                    break;
+                    candidates.Add((skill, idx, idx + skillLower.Length));
                 }
 
                 idx = lower.IndexOf(skillLower, idx + 1, StringComparison.Ordinal);
             }
         }
 
-        return found;
+        // Taxonomies contain nested aliases ("cloud", "cloud architecture", etc.).
+        // Keep the longest non-overlapping phrase at each occurrence so one sentence
+        // cannot explode into dozens of artificial requirements.
+        var selected = new List<(string Skill, int Start, int End)>();
+        foreach (var candidate in candidates.OrderByDescending(x => x.End - x.Start).ThenBy(x => x.Start))
+        {
+            if (selected.Any(x => candidate.Start < x.End && candidate.End > x.Start)) continue;
+            selected.Add(candidate);
+        }
+        return selected.OrderBy(x => x.Start).Select(x => x.Skill)
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static bool IsUsefulSkill(string skill)
+    {
+        if (skill.Length is < 2 or > 60) return false;
+        if (skill.Count(char.IsWhiteSpace) >= 7) return false;
+        if (skill.Count(c => c == '(') != skill.Count(c => c == ')')) return false;
+        return true;
     }
 
     /// <summary>
@@ -175,17 +221,10 @@ public sealed class SkillTaxonomyService : ISkillTaxonomy
 
     private static TaxonomyData LoadTaxonomy()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Resources", "taxonomies", "skill-taxonomy.txt");
-        if (!File.Exists(path))
-        {
-            var asmDir = Path.GetDirectoryName(typeof(SkillTaxonomyService).Assembly.Location)!;
-            path = Path.Combine(asmDir, "Resources", "taxonomies", "skill-taxonomy.txt");
-        }
-
         var allSkills = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var roleSkills = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-
-        if (File.Exists(path))
+        var sourcePaths = ProductAssetInventory.ResolveTaxonomyFiles(AppContext.BaseDirectory);
+        foreach (var path in sourcePaths)
         {
             foreach (var line in File.ReadLines(path))
             {
@@ -209,6 +248,7 @@ public sealed class SkillTaxonomyService : ISkillTaxonomy
             AllSkills = allSkills,
             Roles = roleSkills.Keys.OrderBy(r => r).ToList(),
             RoleSkills = roleSkills,
+            SourcePaths = sourcePaths,
         };
     }
 
@@ -217,6 +257,13 @@ public sealed class SkillTaxonomyService : ISkillTaxonomy
         public HashSet<string> AllSkills { get; init; } = [];
         public List<string> Roles { get; init; } = [];
         public Dictionary<string, HashSet<string>> RoleSkills { get; init; } = new();
+        public IReadOnlyList<string> SourcePaths { get; init; } = [];
         public Dictionary<string, float[]> SkillEmbeddings { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 }
+
+public sealed record SkillTaxonomyDiagnostics(
+    IReadOnlyList<string> SourcePaths,
+    int UniqueSkills,
+    int RoleCount,
+    IReadOnlyDictionary<string, int> SkillsPerRole);

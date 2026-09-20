@@ -28,9 +28,12 @@ can offer an explicitly labelled prose draft or sample. A draft is not accepted
 prose, evidence, or a published claim. The person remains the author and decides
 what to edit, accept, and publish.
 
-Projection does not call a language model. It selects reviewed resume, LinkedIn,
-and GitHub ledger records, preserves the accepted human prose, and exports one
-evidence-linked artifact as Markdown, Word, or PDF. Published documents use
+Projection itself is deterministic. It selects reviewed resume, LinkedIn, and
+GitHub ledger records and starts with the accepted human prose. An optional,
+bounded editing stage may tighten those selected passages with local grug 9B or
+OpenAI. Each pass is rejected if it introduces claims, evidence IDs, numbers, or
+sections outside the deterministic selection. The result exports as one
+evidence-linked artifact in Markdown, Word, or PDF. Published documents use
 inline numbered citations and a compact cJobML References section. Full JobML,
 including drift and editing metadata, can be published at a linked endpoint.
 See [the design article](https://mostlylucid.net/blog/the-problem-with-resumes).
@@ -146,10 +149,43 @@ Every major job site wants your email, your browsing history, and permission to 
 - **Search query generator**: suggests job searches from your strongest skill communities
 
 ### Evidence Projection
-- Projects role-specific resumes directly from stable skill-ledger claims
+- Treats the complete 10+ page human résumé and full JobML ledger as source code
+- Detects role requirements, then deterministically plans sections and selects evidence
 - Semantic compression: 13 roles -> 6 relevant -> filtered to evidence-backed bullets
-- Renders Markdown and JobML together without output-time evidence inference
+- Optionally runs bounded tightening and human-voice passes over selected source prose
+- Renders Markdown and JobML together without output-time evidence re-inference
 - Preserves human-owned prose while JobML carries explicit machine detail
+
+### Embeddable web compiler
+
+`lucidRESUME.Web` is an ASP.NET Core control for the narrow publish-and-compile
+workflow. It does not ingest LinkedIn exports, repositories, or old CVs. That
+happens upstream in the desktop application. The control accepts the already
+complete Markdown + JobML master, publishes an immutable revision, accepts a job
+description, and returns a shorter evidence-bounded projection with Markdown,
+Word, and PDF downloads.
+
+![JobML web compiler rendering an evidence-linked projection](docs/screenshots/jobml-web-compiler.png)
+
+```csharp
+builder.Services.AddLucidResumeCompiler(builder.Configuration);
+
+var app = builder.Build();
+app.UseAntiforgery();
+app.MapLucidResumeCompiler();
+app.Run();
+```
+
+Run the included host with:
+
+```bash
+dotnet run --project samples/lucidRESUME.Web.Sample
+```
+
+The current master is served at `/lucidresume/api/jobml`; immutable revisions are
+served at `/lucidresume/api/jobml/{revision}` with ETags and long-lived cache
+headers. API keys remain server-side. See the
+[web compiler guide](docs/jobml-web-compiler.md).
 
 ### Personal ATS (Pipeline)
 
@@ -171,6 +207,7 @@ JSON Resume (standard schema), Markdown, **DOCX** (Word via OpenXml), and **PDF*
 - [Document Layout Detection](docs/layout-detection.md) - DocLayNet YOLO model, structural hashing, template communities.
 - [JobML 0.1 Specification](docs/jobml-0.1-specification.md) - normative document model, evidence reconciliation, review states, and extensions.
 - [cJobML 0.1 Publication Projection](docs/cjobml-0.1-specification.md) - compact numbered citations, references, full-ledger endpoints, and one-pass parsing.
+- [JobML Web Compiler](docs/jobml-web-compiler.md) - complete master publication, deterministic role projection, bounded prose editing, and ASP.NET Core integration.
 - [JobML GitHub Extension](docs/jobml-github-extension-0.1.md) - repository quality, attribution, and skill-observation model.
 - [In-App User Manual](src/lucidRESUME/Resources/user-manual.md) - the same help content embedded in the desktop app.
 
@@ -274,7 +311,9 @@ It does not rerun NER or an LLM, and it refuses stale evidence. This keeps the
 human prose and the JobML evidence graph reversible: each rendered claim points
 back to the exact ingested evidence and source revision that justified it.
 
-**Skill taxonomy**: preloaded from Kaggle datasets via DuckDB — 16 role archetypes, cross-industry coverage (not just tech), priority classification. Used by both resume AND JD parsers to find skills embedded in prose. Plain-text JDs went from 0 to 60+ extracted skills.
+**Skill taxonomy**: 19,983 preprocessed entries from the documented Kaggle/LinkedIn datasets ship with the application, together with priority data and compact leadership profiles for Lead Developer, Head of Engineering, CTO and VP Engineering. These source terms are the reproducible seeds for exact matching and locally materialised role centroids. No personal résumé, ledger or user database is part of the preload. Used by both resume and JD parsers to find skills embedded in prose.
+
+The exact clean-install boundary, dataset provenance and release audit are documented in [Product data and clean-install contract](docs/product-assets.md).
 
 ONNX embeddings (`all-MiniLM-L6-v2`, 384-dim) power semantic matching throughout. **[DocLayNet YOLO model](docs/layout-detection.md)** detects document structure from rendered page images — titles, section headers, tables, lists — producing a structural hash for template identification. Docling (Docker) adds ML-based PDF layout detection for complex documents; PdfPig with column detection as local fallback.
 
@@ -289,6 +328,8 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
     ├── JobSearch        7 job board adapters + orchestrator + deduplicator
     ├── Matching         Skill ledger, skill graph, career planner, taxonomy centroids, entity lookup
     ├── AI               LLamaSharp/Ollama/Anthropic/OpenAI ingestion and draft-authoring providers
+    ├── Compiler         Complete JobML master -> deterministic role-specific projection
+    ├── Web              Embeddable ASP.NET Core publish, preview, and export control
     ├── EmailTracker     IMAP scanning, email classification, application matching
     ├── Export           JSON Resume + Markdown + DOCX + PDF exporters
     ├── Collabora        LibreOffice/editor integration, document openers

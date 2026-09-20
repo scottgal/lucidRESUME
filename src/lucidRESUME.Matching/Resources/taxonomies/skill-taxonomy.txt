@@ -1,5 +1,5 @@
 # Role|Skill taxonomy from Kaggle job_skills_updated.xlsx
-# 9444 entries, 5630 unique skills, 16 roles
+# 19,983 entries, 16,169 unique skills, 17 source roles (Kaggle plus LinkedIn General)
 Backend Developer|.NET
 Backend Developer|.NET 8
 Backend Developer|.NET Core

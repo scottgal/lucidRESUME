@@ -72,6 +72,23 @@ public sealed class CJobMlProjectionTests
     }
 
     [Fact]
+    public void Projection_PublishesCompleteLedgerEndpointWithoutExternalReferences()
+    {
+        var full = AcceptedFile();
+        full.Data.Claims.Single().Evidence.RemoveAll(evidence =>
+            !string.Equals(evidence.Type, "prose", StringComparison.OrdinalIgnoreCase));
+
+        var compact = CJobMlProjector.Project(full);
+
+        Assert.Empty(compact.References);
+        Assert.Contains("## References", compact.Markdown);
+        Assert.Contains("Full JobML: <https://example.com/jane.jobml>", compact.Markdown);
+        var parsed = CJobMlParser.Parse(compact.Markdown);
+        Assert.Empty(parsed.References);
+        Assert.Equal("https://example.com/jane.jobml", parsed.CompleteLedger?.ToString());
+    }
+
+    [Fact]
     public void Parser_RejectsUnresolvedXref()
     {
         var compact = CJobMlProjector.Project(AcceptedFile()).Markdown

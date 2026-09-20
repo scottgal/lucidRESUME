@@ -95,10 +95,11 @@ public sealed class JobSpecParser : IJobSpecParser
 
         try
         {
-            // Fast exact match against 5,630 known skills
+            // Fast exact match against the shipped cross-industry skill catalogue.
             var exactMatches = _taxonomy.FindSkillsExact(text);
             foreach (var skill in exactMatches)
-                candidates.Add(new("skill", skill, 0.75, "taxonomy"));
+                candidates.Add(new(IsInPreferredSection(text, skill) ? "preferredskill" : "skill",
+                    skill, 0.75, "taxonomy"));
         }
         catch { /* taxonomy failure is non-fatal */ }
 
@@ -187,7 +188,10 @@ public sealed class JobSpecParser : IJobSpecParser
         if (fused.Company is not null)
         {
             var isKnown = _entityLookup?.IsKnownCompany(fused.Company.Value) ?? false;
-            if (fused.Company.Confidence >= 0.70 || isKnown)
+            var structural = fused.Company.Sources.Any(source =>
+                source.Equals("structural", StringComparison.OrdinalIgnoreCase));
+            var corroboratedKnownEntity = isKnown && fused.Company.Sources.Count >= 2;
+            if (structural || corroboratedKnownEntity)
                 job.Company = fused.Company.Value;
         }
         if (fused.Location is not null) job.Location = fused.Location.Value;
@@ -210,6 +214,23 @@ public sealed class JobSpecParser : IJobSpecParser
             job.Benefits = fused.Benefits.Select(s => s.Value).ToList();
         if (fused.Education is not null)
             job.RequiredEducation = fused.Education.Value;
+    }
+
+    private static bool IsInPreferredSection(string text, string skill)
+    {
+        var preferred = false;
+        foreach (var rawLine in text.Split('\n'))
+        {
+            var line = rawLine.Trim();
+            if (Regex.IsMatch(line, @"^#{1,4}\s*(preferred|nice to have|good to have|desirable)\b", RegexOptions.IgnoreCase))
+            {
+                preferred = true;
+                continue;
+            }
+            if (preferred && Regex.IsMatch(line, @"^#{1,4}\s+", RegexOptions.IgnoreCase)) preferred = false;
+            if (preferred && line.Contains(skill, StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
     }
 
     // -------------------------------------------------------------------------

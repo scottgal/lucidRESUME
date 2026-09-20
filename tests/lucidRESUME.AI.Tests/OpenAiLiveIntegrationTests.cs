@@ -1,4 +1,5 @@
 using lucidRESUME.AI;
+using lucidRESUME.Compiler;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Jobs;
@@ -15,6 +16,45 @@ namespace lucidRESUME.AI.Tests;
 
 public sealed class OpenAiLiveIntegrationTests
 {
+    [Fact]
+    public async Task ResponsesApi_PerformsBoundedCompositionPass_WhenApiKeyIsSupplied()
+    {
+        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        if (string.IsNullOrWhiteSpace(apiKey)) return;
+
+        var provider = new OpenAiResumeCompositionProvider(new HttpClient(),
+            Options.Create(new OpenAiOptions
+            {
+                ApiKey = apiKey,
+                Model = Environment.GetEnvironmentVariable("LUCIDRESUME_OPENAI_TEST_MODEL") ?? "gpt-5-mini",
+                MaxTokens = 1_200,
+                TimeoutSeconds = 120
+            }));
+        var claim = new JobMlClaim
+        {
+            Id = "claim-1", Subject = "role-1",
+            Statement = "Led a 10-person engineering team through platform change."
+        };
+        var selected = new SelectedClaim(claim, "Example Ltd",
+            "Led a 10-person engineering team through platform change, while remaining hands-on with C#.",
+            ["evidence-1"], .95, []);
+        var packet = new EvidencePacket("role-1", "Example Ltd", "Tighten", 30, [selected], ["req-1"]);
+        var requirement = new CompilerRequirement("req-1", "engineering leadership", RequirementKind.Required,
+            "engineering leadership");
+        var block = new CompositionBlock("role-1", selected.Prose, [claim.Id], ["evidence-1"]);
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow,
+            [requirement], [packet], [], [], "onnx");
+
+        var draft = await provider.RunPassAsync(new CompositionPassRequest(
+            CompositionPass.Tighten, "untrusted vacancy text", manifest, [block], [block]));
+
+        Assert.Empty(new CompositionValidator().Validate(draft, [block], manifest));
+        var output = Assert.Single(draft.Blocks);
+        Assert.Equal([claim.Id], output.ClaimIds);
+        Assert.Equal(["evidence-1"], output.EvidenceIds);
+        Assert.DoesNotContain('—', output.Text);
+    }
+
     [Fact]
     public async Task ResponsesApi_GeneratesGroundedResume_WhenApiKeyIsSupplied()
     {

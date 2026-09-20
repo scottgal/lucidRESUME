@@ -1,4 +1,5 @@
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Compiler;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,6 +25,14 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<LlamaSharpModelManager>(client =>
             client.Timeout = Timeout.InfiniteTimeSpan);
         services.AddSingleton<LlamaSharpRuntime>();
+        services.AddSingleton<IResumeCompositionProvider, LlamaSharpResumeCompositionProvider>();
+        services.AddHttpClient<IResumeCompositionProvider, OpenAiResumeCompositionProvider>()
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromMinutes(2);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(5);
+                options.CircuitBreaker.SamplingDuration = TimeSpan.FromMinutes(5);
+            });
 
         switch (tailoringProvider.ToLowerInvariant())
         {

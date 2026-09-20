@@ -6,6 +6,7 @@ using lucidRESUME.Core.Models.Skills;
 using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Matching;
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 namespace lucidRESUME.AI;
 
@@ -20,6 +21,8 @@ namespace lucidRESUME.AI;
 /// </summary>
 public sealed class SemanticCompressor
 {
+    private const int MaximumDetailedRoles = 7;
+    private const int MaximumSummaryWords = 105;
     private static readonly HashSet<string> GenericSkillLabels = new(StringComparer.OrdinalIgnoreCase)
     {
         "engineering", "systems", "system", "technical", "tech", "technology", "technologies",
@@ -30,6 +33,7 @@ public sealed class SemanticCompressor
     private readonly JdSkillLedgerBuilder _jdLedgerBuilder;
     private readonly SkillLedgerMatcher _matcher;
     private readonly IEmbeddingService _embedder;
+    private readonly SkillTaxonomyService _taxonomy;
     private readonly ILogger<SemanticCompressor> _logger;
 
     public SemanticCompressor(
@@ -37,12 +41,14 @@ public sealed class SemanticCompressor
         JdSkillLedgerBuilder jdLedgerBuilder,
         SkillLedgerMatcher matcher,
         IEmbeddingService embedder,
+        SkillTaxonomyService taxonomy,
         ILogger<SemanticCompressor> logger)
     {
         _ledgerBuilder = ledgerBuilder;
         _jdLedgerBuilder = jdLedgerBuilder;
         _matcher = matcher;
         _embedder = embedder;
+        _taxonomy = taxonomy;
         _logger = logger;
     }
 
@@ -63,7 +69,7 @@ public sealed class SemanticCompressor
             matchResult.Matches.Count(m => m.IsMatched), matchResult.Matches.Count);
 
         // Collect the most relevant experience IDs - roles that evidence required skills
-        var relevantRoleIds = new HashSet<Guid>();
+        var roleRequirements = new Dictionary<Guid, HashSet<string>>();
         var skillToEvidence = new Dictionary<string, List<SkillEvidence>>();
 
         foreach (var match in matchResult.Matches.Where(m => m.IsMatched))
@@ -80,17 +86,42 @@ public sealed class SemanticCompressor
             foreach (var evidence in skillToEvidence[match.RequiredSkill])
             {
                 if (evidence.ExperienceId.HasValue)
-                    relevantRoleIds.Add(evidence.ExperienceId.Value);
+                {
+                    if (!roleRequirements.TryGetValue(evidence.ExperienceId.Value, out var supported))
+                        roleRequirements[evidence.ExperienceId.Value] = supported = new(StringComparer.OrdinalIgnoreCase);
+                    supported.Add(match.RequiredSkill);
+                }
             }
         }
 
-        // Always include current role and most recent 2 roles (even if no direct skill match)
-        var recentRoles = resume.Experience
-            .OrderByDescending(e => e.StartDate)
-            .Take(3)
-            .Select(e => e.Id);
-        foreach (var id in recentRoles)
-            relevantRoleIds.Add(id);
+        var roleScores = roleRequirements.ToDictionary(x => x.Key, x => (double)x.Value.Count);
+        var roleProfile = ResolveRoleProfile(jd.Title);
+        var roleCentroid = roleProfile is null ? [] : await _taxonomy.GetRoleCentroidAsync(roleProfile, ct);
+        if (roleCentroid.Length > 0)
+        {
+            foreach (var experience in resume.Experience.Where(IsUsableRole))
+            {
+                var roleText = string.Join(' ', new[] { experience.Title, experience.Company }
+                    .Concat(experience.Achievements).Where(x => !string.IsNullOrWhiteSpace(x))!);
+                var similarity = _embedder.CosineSimilarity(roleCentroid, await _embedder.EmbedAsync(roleText, ct));
+                roleScores[experience.Id] = roleScores.GetValueOrDefault(experience.Id) + Math.Max(0, similarity) * 8;
+                if (MentionsRole(roleText, roleProfile!)) roleScores[experience.Id] += 5;
+            }
+        }
+
+        // Recency is a modest tie-breaker, not permission for broad skill matches to emit
+        // an eleven-role chronology. A projection needs enough evidence, not every match.
+        var orderedByRecency = resume.Experience.OrderByDescending(e => e.StartDate).ToList();
+        for (var i = 0; i < Math.Min(3, orderedByRecency.Count); i++)
+            roleScores[orderedByRecency[i].Id] = roleScores.GetValueOrDefault(orderedByRecency[i].Id) + (3 - i) * .75;
+
+        var selectedRoleIds = resume.Experience
+            .Where(IsUsableRole)
+            .OrderByDescending(exp => roleScores.GetValueOrDefault(exp.Id))
+            .ThenByDescending(exp => exp.StartDate)
+            .Take(MaximumDetailedRoles)
+            .Select(exp => exp.Id)
+            .ToHashSet();
 
         var sourceLedger = EvidenceLedgerBuilder.EnsureCurrent(resume);
         var projection = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
@@ -132,9 +163,14 @@ public sealed class SemanticCompressor
         if (!string.IsNullOrWhiteSpace(resume.Personal.Summary))
         {
             md.AppendLine("## Summary {#summary}");
-            md.AppendLine(resume.Personal.Summary);
+            var summary = SelectSummary(resume.Personal.Summary,
+                roleProfile is null
+                    ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                    : _taxonomy.GetRoleSkills(roleProfile));
+            md.AppendLine(summary);
             md.AppendLine();
             Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
+            projection.Personal.Summary = summary;
         }
 
         // Relevant experience only
@@ -143,8 +179,7 @@ public sealed class SemanticCompressor
         var includedRoles = 0;
         foreach (var exp in resume.Experience.OrderByDescending(e => e.StartDate))
         {
-            if (!relevantRoleIds.Contains(exp.Id) && includedRoles >= 3)
-                continue; // skip non-relevant roles after we have 3
+            if (!selectedRoleIds.Contains(exp.Id)) continue;
 
             md.AppendLine($"### {exp.Title ?? ""} - {exp.Company ?? ""} {{#experience-{exp.Id:N}}}");
             var dateRange = FormatDateRange(exp.StartDate, exp.EndDate, exp.IsCurrent);
@@ -181,7 +216,7 @@ public sealed class SemanticCompressor
                 ImportSources = [.. exp.ImportSources]
             };
             var paragraph = string.IsNullOrEmpty(dateRange) ? 1 : 2;
-            foreach (var a in relevantAchievements.Take(5)) // cap at 5 per role
+            foreach (var a in relevantAchievements.Take(3))
             {
                 md.AppendLine($"- {a}");
                 md.AppendLine();
@@ -296,6 +331,66 @@ public sealed class SemanticCompressor
         .Where(token => token.Length > 2)
         .Select(token => token.Length > 7 ? token[..6] : token.TrimEnd('s'))
         .ToHashSet(StringComparer.Ordinal);
+
+    private static bool IsUsableRole(WorkExperience experience)
+    {
+        if (experience.Achievements.Count == 0) return false;
+        if (string.IsNullOrWhiteSpace(experience.Company) || string.IsNullOrWhiteSpace(experience.Title)) return false;
+        // Common legacy-parser artefact: the date is mistaken for the company and
+        // "Present" becomes part of the title. The real role is retained elsewhere.
+        if (Regex.IsMatch(experience.Company, @"^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$")) return false;
+        return !experience.Title.StartsWith("Present ", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? ResolveRoleProfile(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return null;
+        if (title.Contains("chief technology", StringComparison.OrdinalIgnoreCase) ||
+            Regex.IsMatch(title, @"\bCTO\b", RegexOptions.IgnoreCase)) return "CTO";
+        if (title.Contains("vp", StringComparison.OrdinalIgnoreCase) &&
+            title.Contains("engineering", StringComparison.OrdinalIgnoreCase)) return "VP of Engineering";
+        if (title.Contains("head", StringComparison.OrdinalIgnoreCase) &&
+            title.Contains("engineering", StringComparison.OrdinalIgnoreCase)) return "Head of Engineering";
+        if (title.Contains("lead", StringComparison.OrdinalIgnoreCase) &&
+            title.Contains("developer", StringComparison.OrdinalIgnoreCase)) return "Lead Developer";
+        return null;
+    }
+
+    private static bool MentionsRole(string text, string role) => role switch
+    {
+        "CTO" => Regex.IsMatch(text, @"\bCTO\b|chief technology", RegexOptions.IgnoreCase),
+        "VP of Engineering" => Regex.IsMatch(text, @"\bVP\b.*engineering|vice president.*engineering", RegexOptions.IgnoreCase),
+        "Head of Engineering" => text.Contains("Head of Engineering", StringComparison.OrdinalIgnoreCase),
+        "Lead Developer" => text.Contains("Lead Developer", StringComparison.OrdinalIgnoreCase) ||
+                            text.Contains("Development Lead", StringComparison.OrdinalIgnoreCase),
+        _ => false
+    };
+
+    private static string SelectSummary(string summary, IReadOnlySet<string> roleSkills)
+    {
+        var sentences = Regex.Split(summary.Trim(), @"(?<=[.!?])\s+")
+            .Where(sentence => !string.IsNullOrWhiteSpace(sentence)).ToList();
+        var profileWords = Tokens(string.Join(' ', roleSkills));
+        var ranked = sentences.Select((sentence, index) => new
+            {
+                Sentence = sentence,
+                Index = index,
+                Score = Tokens(sentence).Intersect(profileWords).Count() + (index == 0 ? .5 : 0)
+            })
+            .OrderByDescending(x => x.Score).ThenBy(x => x.Index).Take(3)
+            .OrderBy(x => x.Index).ToList();
+        var selected = new List<string>();
+        var words = 0;
+        foreach (var item in ranked)
+        {
+            var sentence = item.Sentence;
+            var count = Regex.Matches(sentence, @"\b[\p{L}\p{N}][\p{L}\p{N}'’-]*\b").Count;
+            if (words + count > MaximumSummaryWords) continue;
+            selected.Add(sentence.Trim());
+            words += count;
+        }
+        return selected.Count == 0 ? summary.Trim() : string.Join(' ', selected);
+    }
 
     private static string FormatDateRange(DateOnly? start, DateOnly? end, bool isCurrent)
     {

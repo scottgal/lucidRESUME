@@ -1,0 +1,499 @@
+# JobML web compiler plan
+
+**Status:** proposed, implementation not started
+**Target:** .NET 10 / ASP.NET Core 10
+**Product sentence:** Paste the job. Get the right version of you.
+
+## 1. Product boundary
+
+The web feature compiles a role-specific resume from a prebuilt, reviewed JobML
+ledger. It does not ingest arbitrary resumes, LinkedIn archives, repositories, or
+other career sources. Those remain the responsibility of lucidRESUME's ingestion
+and editor applications.
+
+```text
+full JobML ledger + job description
+    -> verified requirements
+    -> deterministic evidence selection
+    -> role-specific human resume
+    -> JobML/cJobML evidence projection
+    -> Markdown, Word, and PDF
+```
+
+The job description is a query, not a source of candidate facts. The compiler may
+select, order, omit, and emphasise accepted ledger claims. It must not promote a
+job requirement, embedding match, or language-model inference into candidate
+evidence.
+
+The default path preserves existing human prose. OpenAI or LLamaSharp may produce
+an explicitly labelled draft from the selected claims, but the draft is not
+canonical until a person reviews and accepts it. Export is always a deterministic
+projection of the accepted revision.
+
+### Non-goals
+
+- generic resume, LinkedIn, GitHub, or PDF/DOCX ingestion;
+- automated job applications;
+- creating evidence during tailoring;
+- silently rewriting the canonical ledger;
+- fetching arbitrary external evidence while compiling;
+- storing OpenAI credentials or sending them to the browser;
+- using an LLM during final rendering or download.
+
+## 2. Proposed projects
+
+### `lucidRESUME.Compiler`
+
+A UI-independent application layer which references the existing JobML, JobSpec,
+Matching, AI, and Export projects. It owns the compile workflow and can later be
+reused by the CLI and Avalonia application.
+
+Primary contracts:
+
+```csharp
+public interface IJobMlCompiler
+{
+    Task<CompilationResult> CompileAsync(
+        JobMlSnapshot ledger,
+        string jobDescription,
+        CompilationOptions options,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IProseDraftProvider
+{
+    Task<ProseDraft> DraftAsync(
+        DraftRequest request,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IJobMlSnapshotStore
+{
+    Task<JobMlSnapshot?> GetCurrentAsync(CancellationToken cancellationToken = default);
+    Task<JobMlSnapshot> PublishAsync(string source, CancellationToken cancellationToken = default);
+}
+```
+
+The compiler accepts `JobMlFile`/`JobMlSnapshot`, not a newly inferred
+`ResumeDocument`. An adapter may be added only where an existing exporter still
+requires the older model.
+
+### `lucidRESUME.Web`
+
+A Razor Class Library containing:
+
+- a server-rendered compiler page with a small progressively enhanced JavaScript
+  control;
+- a Minimal API route group for validation, job analysis, compilation, draft
+  review, and downloads;
+- static web assets and styles isolated under the library asset path;
+- ASP.NET Core registration and endpoint extension methods.
+
+Razor Pages is preferred over a Blazor circuit for the first version. This is a
+form/document workflow, it keeps hosting requirements small, and it works without
+a persistent server connection. Long-running local-model work can report progress
+with server-sent events if measurement shows it is needed.
+
+Expected host setup:
+
+```csharp
+builder.Services.AddLucidResumeCompiler(builder.Configuration);
+
+var app = builder.Build();
+app.UseStaticFiles();
+app.MapLucidResumeCompiler("/resume").RequireAuthorization();
+app.MapPublishedJobMl("/.well-known/jobml");
+```
+
+The mapping methods return endpoint builders so a host can apply its own
+authorization, rate limits, CORS policy, or route prefix. The sample host will
+show a secure default configuration; anonymous access to the editing and compile
+surface will require an explicit option.
+
+### `samples/lucidRESUME.Web.Sample`
+
+A minimal runnable host demonstrating local ONNX embeddings, optional LLamaSharp,
+optional OpenAI, filesystem snapshot publication, authorization, and all download
+formats. It is an example host, not a second product implementation.
+
+## 3. Canonical snapshot and JobML endpoint
+
+An accepted upload creates one immutable `JobMlSnapshot`:
+
+```text
+original Markdown + full JobML
+validation diagnostics
+evidence reconciliation states
+canonical revision digest
+accepted claim/evidence index
+precomputed embeddings (optional cache)
+published bytes and metadata
+```
+
+Publication is transactional:
+
+1. parse exactly one fenced `jobml` block;
+2. validate schema and identifiers;
+3. reconcile every evidence reference and fingerprint;
+4. reject publication when an accepted claim has missing, ambiguous, changed, or
+   unknown evidence;
+5. build the searchable claim index;
+6. write a new versioned snapshot to a temporary location;
+7. atomically make that revision current.
+
+The endpoint serves pre-generated bytes. It never reparses or invokes a model on
+GET.
+
+- `GET /.well-known/jobml` serves the current snapshot with `ETag` and
+  `Last-Modified`, using revalidation rather than `immutable` caching.
+- `GET /.well-known/jobml/{revision}.jobml.md` serves the immutable revision.
+- Role-specific cJobML output links to the immutable revision so its evidence
+  explanation remains reproducible after a later ledger update.
+- `HEAD` is supported for cheap revision checks.
+- A failed update leaves the previous published revision untouched.
+
+Evidence `fnv1a64` fingerprints remain drift detectors, not authenticity claims.
+The published artifact revision should use SHA-256 because it identifies exact
+bytes and is also suitable for HTTP ETags. These two hashes have different jobs.
+
+The full endpoint can contain personal or private data. Publishing it anonymously
+is opt-in and has a separate policy from the authenticated compiler UI.
+
+## 4. Compile pipeline
+
+### Stage A: validate the ledger
+
+Only these claims are eligible:
+
+- human-declared claims with valid evidence, or claims explicitly marked
+  `review: accepted`;
+- at least one resolvable prose or external evidence item;
+- no changed, missing, or ambiguous evidence used by the claim;
+- a stable claim ID and subject;
+- no unreviewed derived, requirement-derived, or draft-only fact promoted during
+  this request.
+
+Validation failures are shown before job matching. The user can inspect them but
+cannot compile an apparently verified resume from invalid evidence.
+
+### Stage B: parse the job description
+
+The existing structural, NER, taxonomy, and optional LLM signals are retained,
+but the compiler needs a richer requirement result than the current flat
+`JobDescription` lists. Each requirement should carry:
+
+- stable request-local ID;
+- exact source span/quote;
+- `required`, `preferred`, or `responsibility` classification;
+- normalized concepts and aliases;
+- extraction sources and confidence;
+- optional user correction.
+
+The raw advert is untrusted data. Instructions inside it cannot change compiler
+rules. Version 1 accepts pasted text only; URL scraping is outside this control's
+scope.
+
+### Stage C: match requirements to accepted claims
+
+Matching is deterministic for fixed inputs and model versions. Candidate scores
+combine, in descending authority:
+
+1. exact concept ID;
+2. declared alias/taxonomy equivalence;
+3. lexical phrase overlap;
+4. embedding similarity;
+5. evidence strength and recency as ranking signals, never as proof.
+
+Every result records the contributing scores and the matched claim/evidence IDs.
+A threshold must not turn a related concept into direct evidence. The UI shows
+direct coverage, related evidence, ambiguous matches, and real gaps separately.
+
+The selector adopts DoomSummarizer's useful evidence-assignment shape:
+
+- score first, compose later;
+- impose a hard relevance floor before anything reaches a drafting model;
+- use maximal marginal relevance to avoid selecting five near-duplicate claims;
+- cap evidence per source/role so one verbose employer does not crowd out the
+  rest of the career;
+- maintain a global used-claim set to prevent the same accomplishment appearing
+  in several sections;
+- set an evidence and token budget for every output section.
+
+Unlike DoomSummarizer, the compiler does not extract new propositions from the
+source text. Accepted JobML claims already are the atomic, reviewed propositions.
+Their stable claim and evidence IDs must survive assignment unchanged.
+
+The default embedder is the existing local ONNX `all-MiniLM-L6-v2` service. The
+model ID, model digest, dimensions, and thresholds are recorded in the compilation
+manifest. A later OpenAI embedding adapter can implement `IEmbeddingService`, but
+it is not needed for the first usable release.
+
+### Stage D: assemble the deterministic projection
+
+The compiler selects and orders source prose blocks already bound to eligible
+claims. It generates a `ProjectionManifest` containing:
+
+- source JobML revision;
+- job-description digest;
+- parsed requirement set;
+- selected claim IDs and evidence IDs;
+- inclusion order and section placement;
+- match scores and reasons;
+- template and compiler versions.
+
+The same manifest drives the preview, JobML projection, cJobML references, and all
+exports. No exporter performs matching or inference.
+
+Each planned section receives an immutable `EvidencePacket`, conceptually similar
+to DoomSummarizer's assigned evidence corpus but stricter:
+
+```text
+section intent
+selected JobML claim IDs
+supporting evidence IDs and source prose
+requirement IDs being answered
+selection score breakdown
+maximum output length
+facts already used elsewhere
+```
+
+Output length is evidence-sensitive. Rich, distinct evidence can support a fuller
+section; sparse or weakly related evidence produces a shorter section or no
+section. The compiler never pads a thin evidence packet with generic prose.
+
+### Stage E: optional prose draft
+
+The UI offers `Use original prose` by default and `Create evidence-bound draft`
+as an explicit action.
+
+Both OpenAI and LLamaSharp receive only the selected evidence catalogue plus the
+job context. Their response contract is block-oriented JSON, not free-form
+Markdown:
+
+```json
+{
+  "blocks": [
+    {
+      "text": "...",
+      "claim_ids": ["claim:..."],
+      "evidence_ids": ["evidence:..."]
+    }
+  ],
+  "warnings": []
+}
+```
+
+OpenAI uses the Responses API with strict JSON Schema and `store: false`. The API
+key remains server-side and comes from ASP.NET Core configuration/secret storage.
+The implementation records request IDs for diagnostics without logging resume
+content. OpenAI documents that API content may still be present in abuse-monitoring
+logs under the account's data controls, so the UI must disclose when data will
+leave the host.
+
+The LLamaSharp path must add constrained JSON output or a strict parse/repair and
+retry boundary. The current local tailoring service returns unconstrained
+Markdown and cannot satisfy this contract as-is.
+
+Generated blocks are mechanically checked:
+
+- all IDs exist in the selected manifest;
+- every substantive block has evidence;
+- dates, employers, titles, numbers, and named technologies are entailed by the
+  cited evidence;
+- unknown IDs and unsupported blocks are rejected, not quietly stripped;
+- acceptance is explicit and creates a new projection revision, never new source
+  evidence.
+
+The validator borrows DoomSummarizer's whitelist checks for URLs, titles, named
+entities, numbers, and dates, plus its cross-section drift and repetition checks.
+It deliberately tightens factual validation: cosine similarity is a useful alert
+and ranking signal, not proof that prose is entailed. An accepted block must cite
+allowed claim IDs, pass exact-value checks, and remain within what those claims
+state. Uncertain semantic entailment is sent to human review rather than accepted
+on an embedding threshold.
+
+### Stage F: export
+
+Once prose is accepted, the existing deterministic Markdown, DOCX, PDF, and cJobML
+exporters render from one projection manifest. The preview and downloaded artifact
+must share the same revision and template. Full JobML is linked through
+`document.complete_ledger` using the immutable published snapshot URL.
+
+## 5. Web experience
+
+The first release is a single guided surface:
+
+1. **Ledger**: upload or replace one full Markdown + JobML file; show revision,
+   validation, claim count, evidence count, and publication state.
+2. **Job**: paste the advert; parse and display required, preferred, and
+   responsibility items with source highlighting.
+3. **Evidence**: show requirement-to-claim coverage, why each match occurred, and
+   true gaps. Allow include, exclude, and pin decisions without editing evidence.
+4. **Resume**: preview the deterministic projection. Optionally request an
+   evidence-bound OpenAI or LLamaSharp draft and review changes block by block.
+5. **Export**: download Markdown, DOCX, or PDF and inspect the JobML/cJobML links
+   used by that exact artifact.
+
+The fast path remains: upload ledger once, paste a job, compile, download. Detail
+is available by expanding the evidence trail rather than forcing every user to
+understand JobML first.
+
+## 6. Security and operational defaults
+
+- Validate upload content type and extension, cap request and decompressed sizes,
+  and keep the initial feature to one plain-text Markdown/JobML file.
+- Parse YAML with a bounded input and reject duplicate identifiers and excessive
+  collections before indexing.
+- Use antiforgery for browser mutations and authorization on upload, compile,
+  draft, and download endpoints.
+- Treat the advert, ledger prose, and external evidence text as untrusted model
+  input. Do not permit them to select tools, URLs, models, or system prompts.
+- Do not dereference external evidence URLs during compilation.
+- Apply request timeouts, cancellation, rate limits, and a single-flight gate for
+  LLamaSharp inference.
+- Do not log source prose, job adverts, generated drafts, or API keys.
+- Store snapshots outside `wwwroot`; serve them through authorized endpoints.
+- Default to ephemeral compile sessions. Only accepted ledger snapshots and
+  explicitly retained artifacts are durable.
+- Add liveness plus readiness checks for snapshot storage and configured model
+  providers.
+
+## 7. Evaluation fixture: BibliU VP Engineering
+
+The supplied BibliU advert becomes the first checked-in job fixture. A hand-labelled
+expected requirement set should include at least:
+
+- VP/Director/CTO-level engineering leadership;
+- leading teams through change and making delivery predictable;
+- complex web/mobile delivery and release governance;
+- management of engineers, managers, and technical leads;
+- full-stack TypeScript and AWS as required constraints;
+- application security, secure coding, vulnerability management, audits, and
+  customer security review;
+- DevOps, CI/CD, QA, cloud-native architecture, and technical governance;
+- commercial risk communication to senior leadership;
+- practical AI-assisted development with guardrails, review, and measured gains;
+- SaaS/EdTech/FinTech, international or multi-region systems, analytics, and
+  resource-constrained scale-up experience as preferred context.
+
+This catches the present danger of reducing senior responsibilities to a bag of
+technology keywords.
+
+Provider evaluation uses the same immutable ledger, advert, expected requirements,
+and selection manifest for OpenAI and grug 9B. Report:
+
+- requirement extraction precision/recall by priority;
+- selected-claim precision/recall;
+- invalid evidence reference count;
+- unsupported factual assertion count, whose release threshold is zero;
+- direct versus merely related coverage classification;
+- deterministic export reproducibility;
+- latency, token count, peak memory, and output parse success;
+- human ratings for clarity, voice preservation, and usefulness.
+
+Also measure evidence diversity, duplicated-claim rate across sections, evidence
+packet utilisation, and whether output length contracts when the available
+evidence is weak. These are direct adaptations of DoomSummarizer's composition
+controls.
+
+Local and cloud output are not judged only by fluency. A fluent unsupported claim
+is a failed compilation.
+
+## 8. Test plan
+
+### Unit
+
+- JobML snapshot validation and accepted-claim filtering;
+- requirement source spans and priority classification;
+- exact, alias, lexical, and embedding score components;
+- threshold boundaries and related/direct distinction;
+- stable manifest generation from fixed inputs;
+- MMR diversity, per-role caps, used-claim tracking, and evidence-sensitive length;
+- draft response validation and unsupported-claim rejection;
+- endpoint revision/ETag calculation.
+
+### Integration
+
+- `WebApplicationFactory` coverage for DI, routing, authorization, antiforgery,
+  upload limits, update rollback, endpoint caching, and each export format;
+- publish a valid ledger, attempt an invalid replacement, and prove the old
+  snapshot remains current;
+- compile the BibliU fixture and verify every output block resolves to accepted
+  source evidence;
+- OpenAI contract tests with a fake HTTP handler plus an opt-in live test;
+- LLamaSharp tests separated into model-present integration tests so normal CI
+  does not download a multi-gigabyte model.
+
+### Browser
+
+- Playwright verifies ledger upload, advert paste, requirement review, evidence
+  expansion, preview, provider choice, draft acceptance, and DOCX/PDF download;
+- accessibility checks cover keyboard operation, labels, focus order, status
+  updates, and error summaries;
+- visual snapshots cover desktop and narrow layouts.
+
+### Format and ATS checks
+
+- validate full JobML and parse generated cJobML in one pass;
+- extract text from DOCX/PDF and compare headings, dates, bullets, citations, and
+  reading order with the manifest;
+- run OpenResume's parser as a regression oracle where its supported input/output
+  can be automated, but do not treat one parser as universal ATS certification;
+- retain fixture outputs for at least two structurally different ATS-style
+  parsers when a maintainable open-source option is confirmed.
+
+## 9. Delivery phases
+
+### Phase 0: contract tests and fixture
+
+Check in the BibliU advert, expected requirements, a small synthetic full JobML
+ledger, and golden selection/output manifests. No UI work starts until direct,
+related, ambiguous, and absent coverage can be asserted.
+
+### Phase 1: pure compiler
+
+Implement immutable snapshots, full-JobML validation, richer job requirements,
+evidence-only matching, deterministic selection, projection manifests, and
+Markdown/cJobML output. Wire the CLI to exercise it before introducing HTTP.
+
+Exit: repeated runs with the same inputs are byte-identical and every selected
+block is traceable to valid accepted evidence.
+
+### Phase 2: endpoint package and sample host
+
+Add the Razor Class Library, registration/mapping extensions, secure upload,
+pre-generated current/versioned JobML endpoints, compile APIs, server-rendered
+workflow, and Markdown/DOCX/PDF downloads.
+
+Exit: the sample host requires only the documented service and endpoint calls,
+and the complete flow passes integration and browser tests.
+
+### Phase 3: provider-neutral drafting
+
+Introduce the block-based draft contract, OpenAI strict structured output,
+LLamaSharp constrained/validated output, review UI, and provider evaluation report.
+
+Exit: no provider can produce an accepted or downloadable unsupported block, and
+provider failures fall back to the deterministic human-prose projection.
+
+### Phase 4: hardening and packaging
+
+Add resource limits, observability, accessibility fixes, package metadata,
+deployment guidance, versioned schema docs, and reproducible release artifacts.
+
+Exit: clean-host installation, Linux/macOS/Windows CI, published NuGet package,
+and a release candidate tested against the BibliU fixture and a real private
+ledger without committing personal data.
+
+## 10. Decisions to keep fixed during implementation
+
+1. Full JobML is the input authority; the job advert never becomes career evidence.
+2. Selection happens before prose drafting and is deterministic.
+3. Drafting is optional, labelled, evidence-bound, and reviewable.
+4. Rendering is a projection, never re-inference.
+5. The public JobML endpoint serves a precomputed immutable revision.
+6. The UI is a thin hostable surface over a compiler that has no HTTP dependency.
+7. Missing evidence is shown as a gap, never filled with plausible text.
+8. Reuse DoomSummarizer's composition concepts, not its article-specific data
+   model or proposition extraction. Avoid a runtime dependency until a genuinely
+   shared, small abstraction exists.

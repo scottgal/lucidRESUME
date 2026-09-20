@@ -142,6 +142,34 @@ jobs:
           codesign --force --sign - --timestamp=none "$bundle"
           codesign --verify --deep --strict --verbose=2 "$bundle"
 
+      - name: Audit shipped import and matching assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rid="${{ matrix.rid }}"
+          publish="artifacts/publish/$rid"
+          host_arch="$(uname -m)"
+          compatible=true
+          if [[ "$rid" == *-arm64 && "$host_arch" != "arm64" && "$host_arch" != "aarch64" ]]; then compatible=false; fi
+          if [[ "$rid" == *-x64 && "$host_arch" == "arm64" ]]; then compatible=false; fi
+          if [[ "$compatible" == true ]]; then
+            executable="$publish/lucidRESUME"
+            if [[ "$rid" == win-* ]]; then executable="${executable}.exe"; fi
+            "$executable" --asset-audit
+          elif [[ "$rid" != osx-* ]]; then
+            test -s "$publish/Resources/taxonomies/skill-taxonomy.txt"
+            test -s "$publish/Resources/taxonomies/skill-priorities.txt"
+            test -s "$publish/Resources/taxonomies/role-archetypes.txt"
+            test -s "$publish/Resources/github-language-map.txt"
+            echo "Cross-architecture build: verified external product assets without launching $rid."
+          else
+            echo "Cross-architecture macOS build: content is embedded; source audit passed in release-validation."
+          fi
+          if find "$publish" -type f \( -name 'data.db' -o -name '*.jobml.md' -o -name '*openapikey*' \) | grep -q .; then
+            echo "Release contains user data, a ledger snapshot, or a credential-like file." >&2
+            exit 1
+          fi
+
       - name: Smoke-test packaged macOS app
         if: ${{ startsWith(matrix.rid, 'osx-') }}
         shell: bash
@@ -237,7 +265,7 @@ jobs:
             echo
             echo "Version: ${version}"
             echo
-            echo "Generated from the product guide, architecture, user manual, JobML and cJobML specifications, and GitHub extension."
+          echo "Generated from the product guide, architecture, product-assets contract, user manual, compiler guide, JobML and cJobML specifications, and GitHub extension."
             echo
             echo "---"
             echo
@@ -249,7 +277,15 @@ jobs:
             echo
             echo "---"
             echo
+            sed -n '1,$p' docs/product-assets.md
+            echo
+            echo "---"
+            echo
             sed -n '1,$p' src/lucidRESUME/Resources/user-manual.md
+            echo
+            echo "---"
+            echo
+            sed -n '1,$p' docs/jobml-web-compiler.md
             echo
             echo "---"
             echo
@@ -263,7 +299,8 @@ jobs:
             echo
             sed -n '1,$p' docs/jobml-github-extension-0.1.md
           } > "${out_dir}/lucidRESUME-docs-single-page.md"
-          cp README.md docs/architecture.md docs/jobml-0.1.md docs/jobml-0.1-specification.md \
+          cp README.md docs/architecture.md docs/product-assets.md docs/jobml-web-compiler.md \
+            docs/jobml-0.1.md docs/jobml-0.1-specification.md \
             docs/cjobml-0.1-specification.md docs/jobml-github-extension-0.1.md docs/jobml-0.1.schema.json \
             src/lucidRESUME/Resources/user-manual.md "$out_dir/"
           (cd artifacts/docs && zip -qr "../release/${name}.zip" "$name")
@@ -353,7 +390,7 @@ jobs:
 
           | Area | Default | How to configure |
           |------|---------|------------------|
-          | Local AI | LLamaSharp with grug 9B | Download the optional GGUF model from Profile. It assists ingestion and can offer explicit authoring drafts, never output rendering. |
+          | Local AI | LLamaSharp with grug 9B | Download the optional GGUF model from Profile. It assists ingestion and can perform bounded edits of already-selected evidence. Rendering never re-infers evidence. |
           | Cloud AI | Off | Add Anthropic or OpenAI API keys with user secrets, environment variables, or the Profile page. |
           | PDF layout | Local parser fallback | Enable Docling for ML-based layout extraction on complex PDFs. |
           | Embeddings and NER | Auto-download on first run | Allow the first-run model download, or pre-populate the app data model cache. |

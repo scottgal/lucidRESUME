@@ -1,0 +1,70 @@
+# Curated role archetypes used as compact, shipped centroid seeds.
+# Role|Skill. These are selection priors, not claims about a candidate.
+Lead Developer|Software architecture
+Lead Developer|Hands-on development
+Lead Developer|Technical leadership
+Lead Developer|Code review
+Lead Developer|Mentoring
+Lead Developer|Delivery ownership
+Lead Developer|System design
+Lead Developer|API design
+Lead Developer|Testing
+Lead Developer|CI/CD
+Lead Developer|Cloud architecture
+Lead Developer|Performance engineering
+Lead Developer|Security
+Lead Developer|Stakeholder communication
+Lead Developer|Legacy modernization
+Head of Engineering|Engineering management
+Head of Engineering|Team building
+Head of Engineering|Coaching and mentoring
+Head of Engineering|Delivery predictability
+Head of Engineering|Engineering standards
+Head of Engineering|Technical governance
+Head of Engineering|Architecture strategy
+Head of Engineering|Hiring
+Head of Engineering|Organisational change
+Head of Engineering|DevOps
+Head of Engineering|CI/CD
+Head of Engineering|Quality assurance
+Head of Engineering|Application security
+Head of Engineering|Technical risk
+Head of Engineering|Commercial alignment
+Head of Engineering|Executive communication
+CTO|Technology strategy
+CTO|Engineering leadership
+CTO|Architecture strategy
+CTO|Organisational design
+CTO|Team building
+CTO|Hiring
+CTO|Budget ownership
+CTO|Commercial strategy
+CTO|Technical due diligence
+CTO|Technical risk
+CTO|Security governance
+CTO|Product strategy
+CTO|Platform strategy
+CTO|Cloud architecture
+CTO|Digital transformation
+CTO|Legacy modernization
+CTO|Executive communication
+CTO|Board communication
+CTO|Mergers and acquisitions
+VP of Engineering|Engineering leadership
+VP of Engineering|Engineering management
+VP of Engineering|Organisational change
+VP of Engineering|Delivery predictability
+VP of Engineering|Release governance
+VP of Engineering|Engineering standards
+VP of Engineering|Technical governance
+VP of Engineering|Application security
+VP of Engineering|Vulnerability management
+VP of Engineering|Architecture strategy
+VP of Engineering|Technical risk
+VP of Engineering|Commercial alignment
+VP of Engineering|Team growth
+VP of Engineering|DevOps
+VP of Engineering|CI/CD
+VP of Engineering|Quality assurance
+VP of Engineering|AI-assisted development
+VP of Engineering|Executive communication

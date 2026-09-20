@@ -193,6 +193,11 @@ A conforming cJobML parser MUST:
 A parser SHOULD complete those operations in one forward pass after locating the
 References section. It does not need the full JobML schema.
 
+An endpoint-only projection with no numbered references is valid when it contains
+an absolute `Full JobML` URI. This is useful when the selected résumé has accepted
+ledger-backed claims but no public external evidence. A References section with
+neither numbered references nor a complete-ledger URI is invalid.
+
 ## 11. Semantic obviousness
 
 Given only the published résumé, without this specification or a JobML-specific

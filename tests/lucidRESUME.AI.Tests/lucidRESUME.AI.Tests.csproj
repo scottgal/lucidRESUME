@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\lucidRESUME.AI\lucidRESUME.AI.csproj" />
+    <ProjectReference Include="..\..\src\lucidRESUME.Compiler\lucidRESUME.Compiler.csproj" />
     <ProjectReference Include="..\..\src\lucidRESUME.Core\lucidRESUME.Core.csproj" />
     <ProjectReference Include="..\..\src\lucidRESUME.Matching\lucidRESUME.Matching.csproj" />
     <ProjectReference Include="..\..\src\lucidRESUME.JobML\lucidRESUME.JobML.csproj" />

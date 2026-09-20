@@ -2,11 +2,44 @@ using System.Net;
 using lucidRESUME.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using lucidRESUME.Compiler;
+using lucidRESUME.JobML;
 
 namespace lucidRESUME.AI.Tests;
 
 public sealed class LlamaSharpIntegrationTests
 {
+    [Fact]
+    public async Task InstalledGrugModel_PerformsBoundedSingleSectionEdit()
+    {
+        var options = Options.Create(new LlamaSharpOptions { MaxTokens = 1_400, Temperature = 0.1f });
+        var manager = new LlamaSharpModelManager(new HttpClient(), options,
+            NullLogger<LlamaSharpModelManager>.Instance);
+        if (!manager.IsModelPresent) return;
+
+        using var runtime = new LlamaSharpRuntime(options, manager, NullLogger<LlamaSharpRuntime>.Instance);
+        var provider = new LlamaSharpResumeCompositionProvider(runtime);
+        var claim = new JobMlClaim
+        {
+            Id = "claim-1", Subject = "role-1",
+            Statement = "Led a 10-person engineering team through platform change."
+        };
+        const string prose = "Led a 10-person engineering team through platform change, while remaining hands-on with C#.";
+        var selected = new SelectedClaim(claim, "Example Ltd", prose, ["evidence-1"], .95, []);
+        var requirement = new CompilerRequirement("req-1", "engineering leadership", RequirementKind.Required,
+            "engineering leadership");
+        var packet = new EvidencePacket("role-1", "Example Ltd", "Tighten", 30, [selected], ["req-1"]);
+        var block = new CompositionBlock("role-1", prose, [claim.Id], ["evidence-1"]);
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow,
+            [requirement], [packet], [], [], "onnx");
+
+        var draft = await provider.RunPassAsync(new CompositionPassRequest(
+            CompositionPass.Tighten, "ignored vacancy", manifest, [block], [block]));
+
+        Assert.Empty(new CompositionValidator().Validate(draft, [block], manifest));
+        Assert.DoesNotContain('—', Assert.Single(draft.Blocks).Text);
+    }
+
     [Fact]
     public void RemoveThinking_ReturnsOnlyFinalAnswer()
     {

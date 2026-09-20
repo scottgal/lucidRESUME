@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\lucidRESUME.Compiler\lucidRESUME.Compiler.csproj" />
     <ProjectReference Include="..\lucidRESUME.Core\lucidRESUME.Core.csproj" />
     <ProjectReference Include="..\lucidRESUME.Matching\lucidRESUME.Matching.csproj" />
   </ItemGroup>

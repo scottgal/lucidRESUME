@@ -26,6 +26,18 @@ see progress in the sidebar status panel:
 
 All three status indicators should turn green. If NER or Embeddings show red, the app will still work but with reduced extraction accuracy.
 
+The application archive already contains the shared import data: the processed
+19,983-row skill catalogue, priority classifications, leadership role profiles,
+entity lookups, GitHub language mapping, dictionaries, and writing-quality lists.
+These are product assets and are available before any resume is imported. Role
+centroids are built locally from those inspectable seeds. Large public ONNX and
+GGUF weights are downloaded into your application-data directory; interrupted or
+invalid ONNX files are detected and replaced atomically.
+
+Release archives never include a user's `data.db`, resumes, JobML ledger snapshots,
+generated projections, or provider credentials. Maintainers can verify an extracted
+installation with `lucidRESUME --asset-audit`.
+
 ### Quick Workflow
 
 1. **Import** your resume (PDF or DOCX) on the **My CV** page
@@ -428,8 +440,28 @@ The career planner generates job search queries from your skill communities:
 <!-- help:authoring-drafts -->
 If you ask an AI provider for a draft or sample, the result remains an authoring
 suggestion. Review and edit it as human prose, then reconcile its evidence before
-accepting it. Project never rewrites prose while it renders a role-specific
-document.
+accepting it. The desktop **Project** renderer never re-infers evidence while it
+renders a role-specific document.
+
+### Complete resume and web compiler
+
+Your canonical source can be deliberately long. Include all useful human-written
+job detail, responsibilities, projects, posts, repositories, and the full JobML
+ledger. Think of it as the complete career record, not the two-page document sent
+to an employer.
+
+The optional ASP.NET Core web compiler accepts that already-built complete source
+and a pasted job description. It detects requirements, selects accepted claims
+and their human passages, reports unsupported requirements as honest gaps, then
+exports a shorter Markdown, Word, or PDF projection. It also publishes the full
+JobML ledger at stable current and immutable revision endpoints.
+
+The compiler can return the selected prose unchanged. If you explicitly enable
+polishing, local grug 9B or OpenAI runs tightening and human-voice editing passes.
+Those passes still start from selected human prose. Output is rejected if it
+changes claim or evidence identities, adds numbers, copies unsupported target-role
+terms, invents sections, or exceeds the section budget. No pass can convert the
+job advert into candidate experience.
 
 ---
 
@@ -517,7 +549,9 @@ Auto-detected events are flagged so you can verify them.
 ### LLamaSharp with grug 9B (Default - Local)
 
 Download the optional GGUF model from Profile. It runs in-process and is used for
-ingestion assistance and optional authoring drafts, not projection or export.
+ingestion assistance, optional authoring drafts, and explicitly enabled bounded
+polishing of already-selected human prose. Deterministic projection and export do
+not require it.
 
 ### Ollama (Alternative Local Provider)
 

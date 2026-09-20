@@ -5,6 +5,7 @@ using lucidRESUME.Ingestion.Docling;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
+using Microsoft.ML.OnnxRuntime;
 
 namespace lucidRESUME.Services;
 
@@ -149,9 +150,10 @@ public sealed class StartupHealthCheck
         var modelPath = ResolvePath(_embeddingOpts.OnnxModelPath);
         var vocabPath = ResolvePath(_embeddingOpts.VocabPath);
 
-        OnnxModelReady = File.Exists(modelPath);
+        OnnxModelReady = IsUsableOnnx(modelPath) && File.Exists(vocabPath);
         if (!OnnxModelReady && AutoDownloadModels)
         {
+            DeleteInvalidModel(modelPath);
             _logger.LogWarning("ONNX embedding model not found at {Path}. Downloading...", modelPath);
             try
             {
@@ -186,9 +188,10 @@ public sealed class StartupHealthCheck
         var generalModelPath = ResolvePath(_config["GeneralNer:ModelPath"] ?? "models/ner/model.onnx");
         var generalVocabPath = ResolvePath(_config["GeneralNer:VocabPath"] ?? "models/ner/vocab.txt");
 
-        GeneralNerReady = File.Exists(generalModelPath) && File.Exists(generalVocabPath);
+        GeneralNerReady = IsUsableOnnx(generalModelPath) && File.Exists(generalVocabPath);
         if (!GeneralNerReady && AutoDownloadModels)
         {
+            DeleteInvalidModel(generalModelPath);
             _logger.LogWarning("General NER model not found. Downloading dslim/bert-base-NER...");
             try
             {
@@ -213,9 +216,10 @@ public sealed class StartupHealthCheck
         var resumeModelPath = ResolvePath(_config["OnnxNer:ModelPath"] ?? "models/resume-ner/model.onnx");
         var resumeVocabPath = ResolvePath(_config["OnnxNer:VocabPath"] ?? "models/resume-ner/vocab.txt");
 
-        ResumeNerReady = File.Exists(resumeModelPath) && File.Exists(resumeVocabPath);
+        ResumeNerReady = IsUsableOnnx(resumeModelPath) && File.Exists(resumeVocabPath);
         if (!ResumeNerReady && AutoDownloadModels)
         {
+            DeleteInvalidModel(resumeModelPath);
             _logger.LogInformation("Resume NER model not found. Downloading from HuggingFace...");
             try
             {
@@ -226,7 +230,7 @@ public sealed class StartupHealthCheck
                 if (!File.Exists(resumeVocabPath))
                     await DownloadFileAsync(ResumeNerVocabUrl, resumeVocabPath, ct);
 
-                ResumeNerReady = File.Exists(resumeModelPath) && File.Exists(resumeVocabPath);
+                ResumeNerReady = IsUsableOnnx(resumeModelPath) && File.Exists(resumeVocabPath);
                 if (ResumeNerReady)
                     _logger.LogInformation("Resume NER model downloaded successfully");
             }
@@ -248,7 +252,8 @@ public sealed class StartupHealthCheck
 
         var totalBytes = response.Content.Headers.ContentLength;
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
-        await using var file = File.Create(targetPath);
+        var temporaryPath = targetPath + ".download";
+        await using var file = File.Create(temporaryPath);
 
         var buffer = new byte[81920];
         long downloaded = 0;
@@ -272,6 +277,9 @@ public sealed class StartupHealthCheck
                 ReportStatus(serviceKey, progress);
             }
         }
+        await file.FlushAsync(ct);
+        file.Close();
+        File.Move(temporaryPath, targetPath, true);
     }
 
     private async Task DownloadFileAsync(string url, string targetPath, CancellationToken ct)
@@ -282,8 +290,37 @@ public sealed class StartupHealthCheck
         using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
-        await using var file = File.Create(targetPath);
-        await stream.CopyToAsync(file, ct);
+        var temporaryPath = targetPath + ".download";
+        await using (var file = File.Create(temporaryPath))
+            await stream.CopyToAsync(file, ct);
+        File.Move(temporaryPath, targetPath, true);
+    }
+
+    private static bool IsUsableOnnx(string path)
+    {
+        if (!File.Exists(path)) return false;
+        try
+        {
+            using var options = new SessionOptions
+            {
+                GraphOptimizationLevel = GraphOptimizationLevel.ORT_DISABLE_ALL,
+                InterOpNumThreads = 1,
+                IntraOpNumThreads = 1
+            };
+            using var session = new InferenceSession(path, options);
+            return session.InputMetadata.Count > 0 && session.OutputMetadata.Count > 0;
+        }
+        catch (Exception ex) when (ex is OnnxRuntimeException or IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    private static void DeleteInvalidModel(string path)
+    {
+        if (File.Exists(path) && !IsUsableOnnx(path)) File.Delete(path);
+        var partial = path + ".download";
+        if (File.Exists(partial)) File.Delete(partial);
     }
 
     private static string ResolvePath(string path) =>

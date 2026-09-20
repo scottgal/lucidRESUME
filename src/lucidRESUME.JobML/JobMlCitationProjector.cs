@@ -53,13 +53,18 @@ public static class CJobMlProjector
         }
 
         var markdown = InsertCitations(file.Markdown, anchors);
-        if (references.Count > 0)
+        var hasCompleteLedger = Uri.TryCreate(file.Data.Document.CompleteLedger,
+            UriKind.Absolute, out var completeLedger);
+        var hasAcceptedClaim = file.Data.Claims.Any(claim =>
+            string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase));
+        if (references.Count > 0 || hasCompleteLedger && hasAcceptedClaim)
         {
             var bibliography = string.Join("\n\n", references.Select(reference => reference.Markdown));
             var preamble = SemanticPreamble;
-            if (Uri.TryCreate(file.Data.Document.CompleteLedger, UriKind.Absolute, out var completeLedger))
+            if (hasCompleteLedger)
                 preamble += $" Full JobML: <{completeLedger}>.";
-            markdown = $"{markdown.TrimEnd()}\n\n{ReferencesHeading}\n\n{preamble}\n\n{bibliography}\n";
+            markdown = $"{markdown.TrimEnd()}\n\n{ReferencesHeading}\n\n{preamble}" +
+                       (references.Count > 0 ? $"\n\n{bibliography}" : "") + "\n";
         }
 
         return new CJobMlProjection(markdown, anchors, references, file.Data.Document.CompleteLedger);
