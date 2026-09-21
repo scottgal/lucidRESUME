@@ -40,13 +40,13 @@ public sealed class WopiHost : IAsyncDisposable
         if (IsRunning) return;
 
         _cts = new CancellationTokenSource();
-        
+
         try
         {
             _listener.Start();
             IsRunning = true;
             LogMessage?.Invoke(this, $"WOPI Host started on port {_port}");
-            
+
             _ = Task.Run(() => ListenAsync(_cts.Token));
         }
         catch (Exception ex)
@@ -64,7 +64,7 @@ public sealed class WopiHost : IAsyncDisposable
         _listener.Stop();
         IsRunning = false;
         LogMessage?.Invoke(this, "WOPI Host stopped");
-        
+
         await Task.CompletedTask;
     }
 
@@ -72,12 +72,12 @@ public sealed class WopiHost : IAsyncDisposable
     {
         var fileId = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(filePath)))
             .Replace("/", "_").Replace("+", "-").TrimEnd('=');
-        
+
         var accessToken = Guid.NewGuid().ToString("N");
-        
+
         _accessTokens[fileId] = accessToken;
         _filePaths[fileId] = filePath;
-        
+
         LogMessage?.Invoke(this, $"Registered file: {Path.GetFileName(filePath)} -> {fileId}");
         return fileId;
     }
@@ -131,13 +131,13 @@ public sealed class WopiHost : IAsyncDisposable
     {
         var request = context.Request;
         var response = context.Response;
-        
+
         try
         {
             var path = request.Url?.AbsolutePath ?? "";
-            
+
             LogMessage?.Invoke(this, $"{request.HttpMethod} {path}");
-            
+
             if (path == "/wopi/discovery")
             {
                 await HandleDiscoveryAsync(response);
@@ -223,7 +223,7 @@ public sealed class WopiHost : IAsyncDisposable
     private async Task HandleCheckFileInfoAsync(HttpListenerResponse response, string fileId)
     {
         var filePath = _filePaths.GetValueOrDefault(fileId);
-        
+
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
         {
             response.StatusCode = 404;
@@ -231,7 +231,7 @@ public sealed class WopiHost : IAsyncDisposable
         }
 
         var fileInfo = new FileInfo(filePath);
-        
+
         var info = new WopiCheckFileInfo
         {
             BaseFileName = fileInfo.Name,
@@ -255,7 +255,7 @@ public sealed class WopiHost : IAsyncDisposable
     private async Task HandleGetFileAsync(HttpListenerResponse response, string fileId)
     {
         var filePath = _filePaths.GetValueOrDefault(fileId);
-        
+
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
         {
             response.StatusCode = 404;
@@ -271,7 +271,7 @@ public sealed class WopiHost : IAsyncDisposable
     private async Task HandlePutFileAsync(HttpListenerRequest request, HttpListenerResponse response, string fileId)
     {
         var filePath = _filePaths.GetValueOrDefault(fileId);
-        
+
         if (string.IsNullOrEmpty(filePath))
         {
             response.StatusCode = 404;
@@ -322,7 +322,7 @@ public sealed class WopiHost : IAsyncDisposable
     {
         var query = request.Url?.Query;
         if (string.IsNullOrEmpty(query)) return false;
-        
+
         var queryParams = QueryStringParser.Parse(query);
         var token = queryParams.GetValueOrDefault("access_token");
         var expectedToken = _accessTokens.GetValueOrDefault(fileId);

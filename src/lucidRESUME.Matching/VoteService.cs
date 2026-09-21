@@ -80,12 +80,12 @@ public sealed class VoteService
 
     private static string? AspectTypeToField(AspectType type) => type switch
     {
-        AspectType.Skill         => "skills",
-        AspectType.WorkModel     => "work_model",
-        AspectType.CompanyType   => "company_type",
-        AspectType.Industry      => "industry",
-        AspectType.SalaryBand    => null,          // salary handled via numeric filters elsewhere
+        AspectType.Skill => "skills",
+        AspectType.WorkModel => "work_model",
+        AspectType.CompanyType => "company_type",
+        AspectType.Industry => "industry",
+        AspectType.SalaryBand => null,          // salary handled via numeric filters elsewhere
         AspectType.CultureSignal => null,          // no structured field for culture signals
-        _                        => null
+        _ => null
     };
 }

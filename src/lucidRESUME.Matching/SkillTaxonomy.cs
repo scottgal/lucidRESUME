@@ -69,23 +69,23 @@ public sealed class SkillTaxonomy
     {
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var taxonomy in AllTaxonomies.Value.Values)
-        foreach (var (phrase, canonical) in taxonomy.AliasToCanonical)
-        {
-            if (phrase.Length < 3) continue;
-            var start = 0;
-            while ((start = text.IndexOf(phrase, start, StringComparison.OrdinalIgnoreCase)) >= 0)
+            foreach (var (phrase, canonical) in taxonomy.AliasToCanonical)
             {
-                var before = start == 0 || !char.IsLetterOrDigit(text[start - 1]);
-                var end = start + phrase.Length;
-                var after = end == text.Length || !char.IsLetterOrDigit(text[end]);
-                if (before && after)
+                if (phrase.Length < 3) continue;
+                var start = 0;
+                while ((start = text.IndexOf(phrase, start, StringComparison.OrdinalIgnoreCase)) >= 0)
                 {
-                    result.Add(canonical);
-                    break;
+                    var before = start == 0 || !char.IsLetterOrDigit(text[start - 1]);
+                    var end = start + phrase.Length;
+                    var after = end == text.Length || !char.IsLetterOrDigit(text[end]);
+                    if (before && after)
+                    {
+                        result.Add(canonical);
+                        break;
+                    }
+                    start++;
                 }
-                start++;
             }
-        }
         return result;
     }
 

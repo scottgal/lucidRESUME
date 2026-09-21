@@ -15,7 +15,7 @@ public sealed class CompilerTests
         try
         {
             var store = new FileSystemJobMlSnapshotStore(Options.Create(new JobMlCompilerOptions
-                { SnapshotDirectory = directory }));
+            { SnapshotDirectory = directory }));
             var snapshot = await store.PublishAsync(Fixture.Source);
             var current = await store.GetCurrentAsync();
             var versioned = await store.GetAsync(snapshot.Revision);
@@ -53,6 +53,67 @@ public sealed class CompilerTests
     }
 
     [Fact]
+    public async Task Compiler_never_selects_a_claim_which_requires_review()
+    {
+        var file = new JobMlParser().Parse(Fixture.Source);
+        // Legacy ledgers emitted "extracted". It must be treated as machine-derived,
+        // not accepted merely because it is not the newer "derived" spelling.
+        file.Data.Claims.Single().Origin = "extracted";
+        file.Data.Claims.Single().Review = "required";
+        var snapshot = new JobMlSnapshot(new string('a', 64), DateTimeOffset.UtcNow,
+            Fixture.Source, file, JobMlProcessor.Validate(file));
+        var compiler = new JobMlResumeCompiler(new FakeJobParser(),
+            new ResumeCompositionOrchestrator([], new CompositionValidator()));
+
+        var result = await compiler.CompileAsync(snapshot, "VP Engineering with TypeScript and AWS.");
+
+        Assert.Empty(result.ProjectedJobMl.Data.Claims);
+        Assert.DoesNotContain("Led a 15 engineer", result.HumanMarkdown);
+    }
+
+    [Fact]
+    public async Task Compiler_multi_claim_section_has_valid_projection_fingerprints()
+    {
+        var parser = new JobMlParser();
+        var file = parser.Parse(Fixture.Source);
+        file = file with
+        {
+            Markdown = file.Markdown + "\n\nImproved AWS release governance across the platform."
+        };
+        file.Data.Claims.Add(new JobMlClaim
+        {
+            Id = "release-governance",
+            Subject = "example-role",
+            Statement = "Improved AWS release governance.",
+            Review = "accepted",
+            Origin = "declared",
+            Concepts = new JobMlClaimConcepts { Skills = ["aws"] },
+            Evidence =
+            [
+                new JobMlEvidence
+                {
+                    Type = "prose", Ref = "#example-role:p2",
+                    Fingerprint = new JobMlFingerprint
+                    {
+                        Text = MarkdownEvidenceIndex.Fingerprint("Improved AWS release governance across the platform.")
+                    }
+                }
+            ]
+        });
+        var snapshot = new JobMlSnapshot(new string('a', 64), DateTimeOffset.UtcNow,
+            parser.Serialize(file), file, JobMlProcessor.Validate(file));
+        var compiler = new JobMlResumeCompiler(new FakeJobParser(),
+            new ResumeCompositionOrchestrator([], new CompositionValidator()));
+
+        var result = await compiler.CompileAsync(snapshot, "VP Engineering with TypeScript and AWS.");
+        var resolutions = JobMlProcessor.Reconcile(result.ProjectedJobMl);
+
+        Assert.Equal(2, result.ProjectedJobMl.Data.Claims.Count);
+        Assert.All(resolutions.SelectMany(item => item.Evidence), evidence =>
+            Assert.True(evidence.State is EvidenceState.Valid or EvidenceState.External));
+    }
+
+    [Fact]
     public async Task Orchestrator_discards_a_pass_that_invents_a_number()
     {
         var claim = new JobMlClaim { Id = "leadership", Subject = "role", Statement = "Led engineering." };
@@ -62,7 +123,7 @@ public sealed class CompilerTests
         var orchestrator = new ResumeCompositionOrchestrator([new InventingProvider()], new CompositionValidator());
 
         var result = await orchestrator.ComposeAsync(manifest, "lead a team", new CompilationOptions
-            { ComposeProse = true, CompositionProvider = "bad" });
+        { ComposeProse = true, CompositionProvider = "bad" });
 
         Assert.Equal("Led a 15 engineer team.", result.Blocks.Single().Text);
         Assert.Contains(result.Warnings, x => x.Contains("numeric fact '40'"));
@@ -80,7 +141,7 @@ public sealed class CompilerTests
         var orchestrator = new ResumeCompositionOrchestrator([new VacancyCopyingProvider()], new CompositionValidator());
 
         var result = await orchestrator.ComposeAsync(manifest, "Terraform experience", new CompilationOptions
-            { ComposeProse = true, CompositionProvider = "copy" });
+        { ComposeProse = true, CompositionProvider = "copy" });
 
         Assert.Equal("Led an engineering team.", result.Blocks.Single().Text);
         Assert.Contains(result.Warnings, x => x.Contains("target-role term 'terraform'"));

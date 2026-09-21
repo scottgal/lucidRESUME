@@ -81,8 +81,12 @@ public sealed class AnthropicTailoringService : IAiTailoringService
         if (!_options.IsConfigured) { _isAvailable = false; return false; }
         try
         {
-            var request = new { model = _options.Model, max_tokens = 1,
-                messages = new[] { new { role = "user", content = "ping" } } };
+            var request = new
+            {
+                model = _options.Model,
+                max_tokens = 1,
+                messages = new[] { new { role = "user", content = "ping" } }
+            };
             var response = await _http.PostAsJsonAsync("v1/messages", request, ct);
             _isAvailable = response.IsSuccessStatusCode;
             return _isAvailable;
@@ -103,8 +107,11 @@ public sealed class AnthropicTailoringService : IAiTailoringService
 
         if (resumeTerms.Count > 0 && jdTerms.Count > 0)
         {
-            try { termMappings = await _termNormalizer.FindMatchesAsync(jdTerms, resumeTerms,
-                _tailoringOptions.TermNormalizationMinSimilarity, ct); }
+            try
+            {
+                termMappings = await _termNormalizer.FindMatchesAsync(jdTerms, resumeTerms,
+                _tailoringOptions.TermNormalizationMinSimilarity, ct);
+            }
             catch (Exception ex) { _logger.LogWarning(ex, "Term normalization failed"); }
         }
 

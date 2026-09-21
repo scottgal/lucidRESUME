@@ -34,7 +34,9 @@ jobs:
       - name: Restore
         run: dotnet restore lucidRESUME.sln
       - name: Build
-        run: dotnet build lucidRESUME.sln -c Release --no-restore
+        run: dotnet build lucidRESUME.sln -c Release --no-restore --warnaserror
+      - name: Verify formatting
+        run: dotnet format lucidRESUME.sln --verify-no-changes --no-restore --severity warn
       - name: Test
         run: dotnet test lucidRESUME.sln -c Release --no-build
       - name: Audit dependencies

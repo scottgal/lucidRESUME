@@ -47,6 +47,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             CREATE TABLE IF NOT EXISTS applications (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS search_watches (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings USING vec0(embedding float[384]);
+            CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings_768 USING vec0(embedding float[768]);
             CREATE TABLE IF NOT EXISTS vec_meta (
                 rowid INTEGER PRIMARY KEY,
                 source_type TEXT NOT NULL,

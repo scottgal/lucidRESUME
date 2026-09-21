@@ -62,14 +62,16 @@ public sealed class ResumeDocumentMerger
                     {
                         Type = AnomalyType.TitleMismatch,
                         Description = $"Title differs for {match.Company}: '{match.Title}' vs '{exp.Title}'",
-                        Severity = AnomalySeverity.Info, Source = sourceName,
+                        Severity = AnomalySeverity.Info,
+                        Source = sourceName,
                     });
                 if (datesDiffer)
                     preview.Anomalies.Add(new ImportAnomaly
                     {
                         Type = AnomalyType.DateMismatch,
                         Description = $"Start date differs for {match.Company}: {match.StartDate:MMM yyyy} vs {exp.StartDate:MMM yyyy}",
-                        Severity = AnomalySeverity.Warning, Source = sourceName,
+                        Severity = AnomalySeverity.Warning,
+                        Source = sourceName,
                     });
             }
             else
@@ -123,7 +125,8 @@ public sealed class ResumeDocumentMerger
             {
                 Type = AnomalyType.NameMismatch,
                 Description = $"Name differs: '{target.Personal.FullName}' vs '{incoming.Personal.FullName}'",
-                Severity = AnomalySeverity.Warning, Source = sourceName,
+                Severity = AnomalySeverity.Warning,
+                Source = sourceName,
             });
         }
 

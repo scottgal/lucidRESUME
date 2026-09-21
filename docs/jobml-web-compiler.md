@@ -83,6 +83,7 @@ Minimal configuration:
   "LucidResumeCompiler": {
     "SnapshotDirectory": "App_Data/jobml",
     "MaximumUploadBytes": 4194304,
+    "MaximumJobDescriptionBytes": 262144,
     "CompilationCacheMinutes": 30,
     "RequireAuthenticatedWriter": true
   },

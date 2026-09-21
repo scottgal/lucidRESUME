@@ -430,7 +430,7 @@ Launch with `dotnet run -- --ux-repl`. Available commands:
 | `describe [name]` | Screenshot + ASCII art | `desc current-state` |
 | `wait <ms>` | Wait | `wait 1000` |
 | `waitfor <path> <val>` | Wait for property | `waitfor IsLoading False` |
-| `assert <path> <val>` | Assert property value | `assert FullName "Scott"` |
+| `assert <path> <val>` | Assert property value | `assert FullName "Alex"` |
 | `run <script.yaml>` | Run a script | `run ux-scripts/all-pages.yaml` |
 | `record [--video]` | Start recording | `record --video` |
 | `stop` | Stop recording | `stop` |
@@ -530,7 +530,7 @@ An LLM using the MCP server to test lucidRESUME:
 LLM: ui_see → sees the Resume page with ASCII art
 LLM: ui_navigate(page: "profile") → navigates to Profile
 LLM: ui_see → sees Profile page, notices FullName field
-LLM: ui_get(path: "FullName") → "Scott Galloway"
+LLM: ui_get(path: "FullName") → "Alex Example"
 LLM: ui_controls → sees all named controls with bounds
 LLM: ui_navigate(page: "jobs") → goes to Jobs page
 LLM: ui_see → sees empty state with "No jobs yet"

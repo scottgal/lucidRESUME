@@ -154,7 +154,7 @@ public sealed class ResumeCorpusLoader
     {
         if (string.IsNullOrWhiteSpace(experience.Company) || string.IsNullOrWhiteSpace(experience.Title)) return false;
         var company = experience.Company.Trim();
-        if (company.Length <= 3 || company.Equals("Redmond", StringComparison.OrdinalIgnoreCase)) return false;
+        if (company.Length <= 3) return false;
         if (experience.StartDate.HasValue && experience.EndDate.HasValue && experience.EndDate < experience.StartDate) return false;
         return experience.Title.Trim('*', '#', ' ').Length >= 3;
     }
@@ -205,7 +205,7 @@ public sealed class ResumeCorpusLoader
             "Mentoring aspiring developers", "Lead Developer", "Senior .NET Developer",
             "Development Lead", "Head of Engineering", "CTO", "Led globally distributed teams"
         ];
-        string[] sentenceMarkers = ["delivered ", "including ", "driving ", "and high", "in various", "scott galloway"];
+        string[] sentenceMarkers = ["delivered ", "including ", "driving ", "and high", "in various"];
         if (value.Length is < 2 or > 50 || value.Count(char.IsWhiteSpace) > 5 || value.EndsWith('.') ||
             excluded.Contains(value, StringComparer.OrdinalIgnoreCase) ||
             sentenceMarkers.Any(marker => value.Contains(marker, StringComparison.OrdinalIgnoreCase)))
@@ -228,14 +228,19 @@ public sealed class ResumeCorpusLoader
         var degree = education.Degree?.Trim();
         var field = education.FieldOfStudy?.Trim();
 
-        if (institution?.StartsWith("University of Stirling,", StringComparison.OrdinalIgnoreCase) == true)
+        var institutionSeparator = institution?.IndexOf(',') ?? -1;
+        if (institutionSeparator > 0 &&
+            (institution![..institutionSeparator].Contains("university", StringComparison.OrdinalIgnoreCase) ||
+             institution[..institutionSeparator].Contains("college", StringComparison.OrdinalIgnoreCase)))
         {
-            degree ??= institution[(institution.IndexOf(',') + 1)..].Trim();
-            institution = "University of Stirling";
+            degree ??= institution[(institutionSeparator + 1)..].Trim();
+            institution = institution[..institutionSeparator].Trim();
         }
-        if (string.IsNullOrWhiteSpace(institution) && field?.Contains("University of Stirling", StringComparison.OrdinalIgnoreCase) == true)
+        if (string.IsNullOrWhiteSpace(institution) &&
+            (field?.Contains("university", StringComparison.OrdinalIgnoreCase) == true ||
+             field?.Contains("college", StringComparison.OrdinalIgnoreCase) == true))
         {
-            institution = "University of Stirling";
+            institution = field.Trim();
             field = null;
         }
 

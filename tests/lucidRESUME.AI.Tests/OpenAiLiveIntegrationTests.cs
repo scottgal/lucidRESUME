@@ -32,7 +32,8 @@ public sealed class OpenAiLiveIntegrationTests
             }));
         var claim = new JobMlClaim
         {
-            Id = "claim-1", Subject = "role-1",
+            Id = "claim-1",
+            Subject = "role-1",
             Statement = "Led a 10-person engineering team through platform change."
         };
         var selected = new SelectedClaim(claim, "Example Ltd",

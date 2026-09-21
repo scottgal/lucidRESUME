@@ -42,13 +42,13 @@ public sealed class JobMlResumeCompiler(
 
         var matches = new List<ClaimMatch>();
         foreach (var requirement in requirements)
-        foreach (var claim in candidates)
-        {
-            var (score, reason, direct) = await ScoreAsync(requirement, claim, concepts, cancellationToken);
-            if (score >= options.RelatedThreshold)
-                matches.Add(new ClaimMatch(requirement.Id, claim.Id,
-                    direct ? MatchKind.Direct : MatchKind.Related, score, reason));
-        }
+            foreach (var claim in candidates)
+            {
+                var (score, reason, direct) = await ScoreAsync(requirement, claim, concepts, cancellationToken);
+                if (score >= options.RelatedThreshold)
+                    matches.Add(new ClaimMatch(requirement.Id, claim.Id,
+                        direct ? MatchKind.Direct : MatchKind.Related, score, reason));
+            }
 
         var selected = SelectClaims(candidates, matches, reconciled, entities, index, options);
         var sections = selected.GroupBy(x => x.Claim.Subject, StringComparer.OrdinalIgnoreCase)
@@ -148,12 +148,12 @@ public sealed class JobMlResumeCompiler(
         var selectedById = selected.ToDictionary(x => x.Claim.Id, StringComparer.OrdinalIgnoreCase);
         var claims = new List<JobMlClaim>();
         foreach (var block in blocks)
-        foreach (var claimId in block.ClaimIds.Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            if (!selectedById.TryGetValue(claimId, out var selectedClaim)) continue;
-            var original = selectedClaim.Claim;
-            var passageText = MarkdownEvidenceIndex.NormalizeText(block.Text);
-            var evidence = new List<JobMlEvidence>
+            foreach (var claimId in block.ClaimIds.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!selectedById.TryGetValue(claimId, out var selectedClaim)) continue;
+                var original = selectedClaim.Claim;
+                var passageText = MarkdownEvidenceIndex.NormalizeText(block.Text);
+                var evidence = new List<JobMlEvidence>
             {
                 new()
                 {
@@ -162,18 +162,23 @@ public sealed class JobMlResumeCompiler(
                     Selector = new JobMlTextSelector { Exact = passageText }
                 }
             };
-            evidence.AddRange(original.Evidence.Where(e => !IsProse(e)).Select(CloneEvidence));
-            claims.Add(new JobMlClaim
-            {
-                Id = original.Id, Subject = original.Subject, Statement = original.Statement,
-                Concepts = new JobMlClaimConcepts
+                evidence.AddRange(original.Evidence.Where(e => !IsProse(e)).Select(CloneEvidence));
+                claims.Add(new JobMlClaim
                 {
-                    Skills = [.. original.Concepts.Skills], Capabilities = [.. original.Concepts.Capabilities],
-                    Domains = [.. original.Concepts.Domains]
-                },
-                Evidence = evidence, Origin = original.Origin, Review = "accepted"
-            });
-        }
+                    Id = original.Id,
+                    Subject = original.Subject,
+                    Statement = original.Statement,
+                    Concepts = new JobMlClaimConcepts
+                    {
+                        Skills = [.. original.Concepts.Skills],
+                        Capabilities = [.. original.Concepts.Capabilities],
+                        Domains = [.. original.Concepts.Domains]
+                    },
+                    Evidence = evidence,
+                    Origin = original.Origin,
+                    Review = "accepted"
+                });
+            }
         claims = claims.DistinctBy(x => x.Id, StringComparer.OrdinalIgnoreCase).ToList();
         var entityIds = claims.Select(x => x.Subject).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var conceptIds = claims.SelectMany(x => x.Concepts.All).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -182,11 +187,12 @@ public sealed class JobMlResumeCompiler(
             Header = source.Data.Header,
             Document = new JobMlDocumentMetadata
             {
-                Id = source.Data.Document.Id + "-projection", Language = source.Data.Document.Language,
+                Id = source.Data.Document.Id + "-projection",
+                Language = source.Data.Document.Language,
                 CompleteLedger = ledgerUri ?? source.Data.Document.CompleteLedger
             },
             Entities = source.Data.Entities.Where(x => entityIds.Contains(x.Id)).Select(x => new JobMlEntity
-                { Id = x.Id, Name = x.Name, Type = x.Type, Source = $"#{blocks.First(b => b.ClaimIds.Any(id => selectedById.GetValueOrDefault(id)?.Claim.Subject.Equals(x.Id, StringComparison.OrdinalIgnoreCase) == true)).SectionId}" }).ToList(),
+            { Id = x.Id, Name = x.Name, Type = x.Type, Source = $"#{blocks.First(b => b.ClaimIds.Any(id => selectedById.GetValueOrDefault(id)?.Claim.Subject.Equals(x.Id, StringComparison.OrdinalIgnoreCase) == true)).SectionId}" }).ToList(),
             Claims = claims,
             Concepts = source.Data.Concepts.Where(x => conceptIds.Contains(x.Id)).ToList()
         };
@@ -202,7 +208,10 @@ public sealed class JobMlResumeCompiler(
         return identity + "\n\n" + string.Join("\n\n", blocks.Select(block =>
         {
             var heading = packets.First(x => x.SectionId == block.SectionId).Heading;
-            return $"## {heading} {{#{block.SectionId}}}\n\n{block.Text.Trim()}";
+            // A composition block is the evidence passage for every claim it contains.
+            // Keep it as one Markdown paragraph so :p1 and its fingerprint describe the
+            // same text even when the source block combined several claim passages.
+            return $"## {heading} {{#{block.SectionId}}}\n\n{MarkdownEvidenceIndex.NormalizeText(block.Text)}";
         }));
     }
 
@@ -227,15 +236,25 @@ public sealed class JobMlResumeCompiler(
             .Take(40).Select((x, i) => new CompilerRequirement($"req-{i + 1}", x, RequirementKind.Responsibility, x)).ToList();
 
     private static bool IsAccepted(JobMlClaim claim) =>
-        !string.Equals(claim.Origin, "derived", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase);
     private static bool IsProse(JobMlEvidence evidence) =>
         evidence.Type.Equals("prose", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(evidence.Uri);
     private static JobMlEvidence CloneEvidence(JobMlEvidence e) => new()
     {
-        Id = e.Id, Type = e.Type, Ref = e.Ref, Uri = e.Uri, Issuer = e.Issuer,
-        Qualification = e.Qualification, Title = e.Title, Authors = [.. e.Authors], Publisher = e.Publisher,
-        Published = e.Published, Accessed = e.Accessed, Fingerprint = e.Fingerprint, Selector = e.Selector, State = e.State
+        Id = e.Id,
+        Type = e.Type,
+        Ref = e.Ref,
+        Uri = e.Uri,
+        Issuer = e.Issuer,
+        Qualification = e.Qualification,
+        Title = e.Title,
+        Authors = [.. e.Authors],
+        Publisher = e.Publisher,
+        Published = e.Published,
+        Accessed = e.Accessed,
+        Fingerprint = e.Fingerprint,
+        Selector = e.Selector,
+        State = e.State
     };
     private static HashSet<string> Tokens(string value) => TokenPattern.Matches(value.ToLowerInvariant()).Select(x => x.Value).ToHashSet();
     private static int WordCount(string value) => Regex.Matches(value, @"\b[\p{L}\p{N}][\p{L}\p{N}'’-]*\b").Count;

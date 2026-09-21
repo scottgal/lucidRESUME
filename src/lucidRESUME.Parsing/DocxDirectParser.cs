@@ -291,7 +291,7 @@ public sealed class DocxDirectParser : IDocumentParser
         foreach (var raw in hints.SectionMap.Keys.Where(k => !k.Contains(' ') && k.Length >= 4))
         {
             var titleCase = char.ToUpperInvariant(raw[0]) + raw[1..];
-            var allCaps   = raw.ToUpperInvariant();
+            var allCaps = raw.ToUpperInvariant();
 
             foreach (var kw in new[] { titleCase, allCaps })
             {

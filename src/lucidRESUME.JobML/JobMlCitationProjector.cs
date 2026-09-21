@@ -19,6 +19,8 @@ public static class CJobMlProjector
         ArgumentNullException.ThrowIfNull(file);
 
         var index = MarkdownEvidenceIndex.Create(file.Markdown);
+        var resolutions = JobMlProcessor.Reconcile(file)
+            .ToDictionary(item => item.Claim.Id, StringComparer.OrdinalIgnoreCase);
         var references = new List<CJobMlReference>();
         var referenceNumbers = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var anchors = new List<CJobMlAnchor>();
@@ -27,7 +29,15 @@ public static class CJobMlProjector
         {
             if (!string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase))
                 continue;
+            if (!resolutions.TryGetValue(claim.Id, out var resolution) ||
+                resolution.Evidence.Count == 0 ||
+                resolution.Evidence.Any(item => item.State is not (EvidenceState.Valid or EvidenceState.External)))
+                throw new JobMlProjectionException(
+                    $"Accepted claim '{claim.Id}' has changed, missing, or ambiguous evidence.");
             var proseEvidence = claim.Evidence.FirstOrDefault(IsProseEvidence);
+            if (proseEvidence is not null && string.IsNullOrWhiteSpace(proseEvidence.Fingerprint?.Text))
+                throw new JobMlProjectionException(
+                    $"Accepted claim '{claim.Id}' has prose evidence without a drift fingerprint.");
             if (string.IsNullOrWhiteSpace(proseEvidence?.Ref) ||
                 !index.TryGet(proseEvidence.Ref, out var passage))
                 continue;
@@ -192,3 +202,5 @@ public sealed record CJobMlReference(
     JobMlEvidence Evidence,
     string Markdown,
     string PlainText);
+
+public sealed class JobMlProjectionException(string message) : InvalidOperationException(message);

@@ -65,9 +65,9 @@ public static class ExportCommand
             var fmt = format.ToLowerInvariant() switch
             {
                 "json" or "jsonresume" => ExportFormat.JsonResume,
-                "md" or "markdown"    => ExportFormat.Markdown,
-                "docx" or "word"      => ExportFormat.Docx,
-                "pdf"                 => ExportFormat.Pdf,
+                "md" or "markdown" => ExportFormat.Markdown,
+                "docx" or "word" => ExportFormat.Docx,
+                "pdf" => ExportFormat.Pdf,
                 _ => (ExportFormat?)null
             };
 

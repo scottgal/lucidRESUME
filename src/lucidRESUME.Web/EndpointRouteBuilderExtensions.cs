@@ -75,6 +75,8 @@ public static class EndpointRouteBuilderExtensions
         catch (AntiforgeryValidationException) { return Results.BadRequest(new { error = "Invalid antiforgery token." }); }
         if (string.IsNullOrWhiteSpace(request.JobDescription))
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["jobDescription"] = ["Paste a job description."] });
+        if (Encoding.UTF8.GetByteCount(request.JobDescription) > configured.Value.MaximumJobDescriptionBytes)
+            return Results.Problem("The job description exceeds the configured input limit.", statusCode: 413);
         var snapshot = string.IsNullOrWhiteSpace(request.SourceRevision)
             ? await store.GetCurrentAsync(ct)
             : await store.GetAsync(request.SourceRevision, ct);
@@ -97,9 +99,14 @@ public static class EndpointRouteBuilderExtensions
             result.PublishedMarkdown, "<a id=\"ref-\\d+\"></a>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         return Results.Ok(new
         {
-            result.CompilationId, result.HumanMarkdown, result.PublishedMarkdown,
-            publishedHtml = Markdown.ToHtml(previewMarkdown, markdownPipeline), result.Manifest,
-            result.UsedCompositionProvider, result.CompositionProvider, result.Warnings,
+            result.CompilationId,
+            result.HumanMarkdown,
+            result.PublishedMarkdown,
+            publishedHtml = Markdown.ToHtml(previewMarkdown, markdownPipeline),
+            result.Manifest,
+            result.UsedCompositionProvider,
+            result.CompositionProvider,
+            result.Warnings,
             downloads = new
             {
                 markdown = $"{context.Request.PathBase}{routeBase}/api/export/{result.CompilationId}/markdown",

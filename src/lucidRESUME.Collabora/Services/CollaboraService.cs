@@ -5,6 +5,7 @@ namespace lucidRESUME.Collabora.Services;
 
 public sealed class CollaboraService : IAsyncDisposable
 {
+    private const string ContainerName = "collabora-code-lucidresume";
     private readonly WopiHost _wopiHost;
     private readonly CollaboraOptions _options;
     private Process? _dockerProcess;
@@ -34,7 +35,7 @@ public sealed class CollaboraService : IAsyncDisposable
             {
                 await EnsureCodeRunningAsync();
             }
-            
+
             await _wopiHost.StartAsync();
             _isInitialized = true;
             LogMessage?.Invoke(this, "Collabora service started successfully");
@@ -82,7 +83,7 @@ public sealed class CollaboraService : IAsyncDisposable
 
     private async Task StartCodeContainerAsync()
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && 
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
             !RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
             !RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
@@ -90,39 +91,24 @@ public sealed class CollaboraService : IAsyncDisposable
             return;
         }
 
-        var containerName = "collabora-code-lucidresume";
-        
-        var stopArgs = $"stop {containerName} 2>nul || true";
-        var removeArgs = $"rm -f {containerName} 2>nul || true";
-        
-        var startArgs = $"run -d --name {containerName} " +
-                       $"-p 9980:9980 " +
-                       $"-e \"extra_params=--o:ssl.enable=false --o:allowed_languages=en_US\" " +
-                       $"collabora/code";
-
         try
         {
-            var psi = new ProcessStartInfo
-            {
-                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "cmd.exe" : "docker",
-                Arguments = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
-                    ? $"/c docker {stopArgs} && docker {removeArgs} && docker {startArgs}"
-                    : $"{stopArgs} && {removeArgs} && {startArgs}",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
+            await RunDockerAsync(["stop", ContainerName], ignoreFailure: true);
+            await RunDockerAsync(["rm", "-f", ContainerName], ignoreFailure: true);
+            _dockerProcess = await RunDockerAsync([
+                "run", "-d", "--name", ContainerName,
+                "-p", "9980:9980",
+                "-e", "extra_params=--o:ssl.enable=false --o:allowed_languages=en_US",
+                "collabora/code"
+            ]);
 
-            _dockerProcess = Process.Start(psi);
-            
             if (_dockerProcess != null)
             {
                 await _dockerProcess.WaitForExitAsync();
                 LogMessage?.Invoke(this, "CODE container started");
-                
+
                 await Task.Delay(3000);
-                
+
                 var retries = 10;
                 while (retries > 0)
                 {
@@ -134,7 +120,7 @@ public sealed class CollaboraService : IAsyncDisposable
                     await Task.Delay(1000);
                     retries--;
                 }
-                
+
                 LogMessage?.Invoke(this, "CODE container started but not responding");
             }
         }
@@ -145,14 +131,57 @@ public sealed class CollaboraService : IAsyncDisposable
         }
     }
 
+    private static async Task<Process?> RunDockerAsync(
+        IEnumerable<string> arguments, bool ignoreFailure = false)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "docker",
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+        foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+        var process = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Docker could not be started.");
+        await process.WaitForExitAsync();
+        if (ignoreFailure)
+        {
+            process.Dispose();
+            return null;
+        }
+        if (!ignoreFailure && process.ExitCode != 0)
+        {
+            var exitCode = process.ExitCode;
+            var error = await process.StandardError.ReadToEndAsync();
+            process.Dispose();
+            throw new InvalidOperationException($"Docker failed with exit code {exitCode}: {error.Trim()}");
+        }
+        return process;
+    }
+
     private void StopCodeContainer()
     {
-        if (_dockerProcess != null && !_dockerProcess.HasExited)
+        try
         {
-            _dockerProcess.Kill();
-            _dockerProcess.Dispose();
-            _dockerProcess = null;
+            using var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "docker",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            process.StartInfo.ArgumentList.Add("stop");
+            process.StartInfo.ArgumentList.Add(ContainerName);
+            process.Start();
+            process.WaitForExit(5000);
         }
+        catch { /* Docker is optional and may already be stopped. */ }
+        _dockerProcess?.Dispose();
+        _dockerProcess = null;
     }
 
     public string RegisterFile(string filePath) => _wopiHost.RegisterFile(filePath);

@@ -20,12 +20,12 @@ public sealed class UXRecorder
     public void StartRecording(Window window)
     {
         if (_isRecording) return;
-        
+
         _window = window;
         _isRecording = true;
         _lastActionTime = DateTime.UtcNow;
         _actions.Clear();
-        
+
         AttachEventHandlers();
         Log?.Invoke(this, "Recording started");
     }
@@ -33,7 +33,7 @@ public sealed class UXRecorder
     public void StopRecording()
     {
         if (!_isRecording) return;
-        
+
         DetachEventHandlers();
         _isRecording = false;
         Log?.Invoke(this, $"Recording stopped. {_actions.Count} actions captured");
@@ -52,7 +52,7 @@ public sealed class UXRecorder
     private void AttachEventHandlers()
     {
         if (_window == null) return;
-        
+
         _window.PointerPressed += OnPointerPressed;
         _window.KeyDown += OnKeyDown;
         _window.AddHandler(TextBox.TextChangedEvent, OnTextChanged);
@@ -61,7 +61,7 @@ public sealed class UXRecorder
     private void DetachEventHandlers()
     {
         if (_window == null) return;
-        
+
         _window.PointerPressed -= OnPointerPressed;
         _window.KeyDown -= OnKeyDown;
         _window.RemoveHandler(TextBox.TextChangedEvent, OnTextChanged);
@@ -70,12 +70,12 @@ public sealed class UXRecorder
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (!_isRecording) return;
-        
+
         var source = e.Source as Control;
         var target = FindClickableParent(source);
-        
+
         if (target == null) return;
-        
+
         var action = new UXAction
         {
             Type = e.ClickCount > 1 ? ActionType.DoubleClick : ActionType.Click,
@@ -83,14 +83,14 @@ public sealed class UXRecorder
             Description = $"Click on {target.GetType().Name}",
             DelayMs = CalculateDelay()
         };
-        
+
         RecordAction(action);
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (!_isRecording) return;
-        
+
         if (e.Key == Key.Enter || e.Key == Key.Escape || e.Key == Key.Tab)
         {
             var action = new UXAction
@@ -101,7 +101,7 @@ public sealed class UXRecorder
                 Description = $"Press {e.Key}",
                 DelayMs = CalculateDelay()
             };
-            
+
             RecordAction(action);
         }
     }
@@ -109,14 +109,14 @@ public sealed class UXRecorder
     private void OnTextChanged(object? sender, TextChangedEventArgs e)
     {
         if (!_isRecording) return;
-        
+
         var source = e.Source as TextBox;
         if (source == null) return;
-        
+
         var controlId = GetControlIdentifier(source);
-        var lastTextAction = _actions.LastOrDefault(a => 
+        var lastTextAction = _actions.LastOrDefault(a =>
             a.Type == ActionType.TypeText && a.Target == controlId);
-        
+
         if (lastTextAction != null)
         {
             lastTextAction.Value = source.Text;
@@ -131,7 +131,7 @@ public sealed class UXRecorder
                 Description = $"Type in {source.Name ?? source.GetType().Name}",
                 DelayMs = CalculateDelay()
             };
-            
+
             RecordAction(action);
         }
     }
@@ -140,7 +140,7 @@ public sealed class UXRecorder
     {
         _actions.Add(action);
         _lastActionTime = DateTime.UtcNow;
-        
+
         Log?.Invoke(this, $"  [{action.Type}] {action.Target ?? ""} {action.Value ?? ""}");
         ActionRecorded?.Invoke(this, action);
     }
@@ -156,7 +156,7 @@ public sealed class UXRecorder
         {
             if (control is Button or TabItem or ListBoxItem or MenuItem or CheckBox or RadioButton)
                 return control;
-            
+
             control = control.Parent as Control;
         }
         return null;
@@ -165,15 +165,15 @@ public sealed class UXRecorder
     private static string GetControlIdentifier(Control? control)
     {
         if (control == null) return "";
-        
+
         if (!string.IsNullOrEmpty(control.Name))
             return control.Name;
-        
+
         var type = control.GetType().Name;
-        
+
         if (control is Button btn && btn.Content is string text)
             return $"{type}:{text}";
-        
+
         return type;
     }
 }

@@ -26,7 +26,7 @@ public static class RankCommand
         var outputOpt = new Option<FileInfo?>("--output") { Description = "Output JSON file" };
         outputOpt.Aliases.Add("-o");
         var limitOpt = new Option<int>("--limit") { Description = "Max candidates to return" };
-        
+
         var configOpt = new Option<FileInfo?>("--config") { Description = "Config file" };
 
         var cmd = new Command("rank", "Rank resumes against a job description — the employer's view")

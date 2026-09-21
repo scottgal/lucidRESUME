@@ -275,6 +275,8 @@
               IsVisible="{Binding IsSaved}" HorizontalAlignment="Left">
         <TextBlock Text="Saved" Foreground="{DynamicResource LrAccentGreenBrush}" FontWeight="SemiBold" FontSize="13"/>
       </Border>
+      <TextBlock Text="{Binding SaveError}" Foreground="{DynamicResource LrAccentRedBrush}" FontSize="12"
+                 IsVisible="{Binding SaveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
     </StackPanel>
   </ScrollViewer>

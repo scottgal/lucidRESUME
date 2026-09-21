@@ -8,6 +8,24 @@ namespace lucidRESUME.Matching.Tests;
 public sealed class JobMlSkillLedgerTests
 {
     [Fact]
+    public async Task RawImport_DoesNotPromoteLlmOrNerSkillsBeforeReview()
+    {
+        var resume = ResumeDocument.Create("resume.docx", "application/docx", 100);
+        resume.Skills.Add(new Skill { Name = "Kubernetes", ImportSources = ["LLM extraction"] });
+        resume.Entities.Add(new Core.Models.Extraction.ExtractedEntity
+        {
+            Value = "Terraform",
+            Classification = "NerSkill",
+            Source = Core.Models.Extraction.DetectionSource.Ner,
+            Confidence = 0.9
+        });
+
+        var ledger = await new SkillLedgerBuilder(new UnusedEmbeddingService()).BuildAsync(resume);
+
+        Assert.Empty(ledger.Entries);
+    }
+
+    [Fact]
     public async Task PublishedJobMl_UsesOnlyAcceptedClaimsWithValidEvidence()
     {
         const string markdown = """
@@ -22,7 +40,9 @@ public sealed class JobMlSkillLedgerTests
         var file = JobMlDraftGenerator.Generate(markdown);
         file.Data.Concepts.Add(new JobMlConcept
         {
-            Id = "kubernetes", Type = "skill", Name = "Kubernetes"
+            Id = "kubernetes",
+            Type = "skill",
+            Name = "Kubernetes"
         });
         file.Data.Claims[0].Concepts.Skills.Add("kubernetes");
 

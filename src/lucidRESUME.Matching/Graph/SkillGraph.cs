@@ -35,8 +35,8 @@ public sealed class SkillGraph
         foreach (var (_, skills) in skillsByRole)
         {
             for (int i = 0; i < skills.Count; i++)
-            for (int j = i + 1; j < skills.Count; j++)
-                AddEdge(skills[i], skills[j], 1.0);
+                for (int j = i + 1; j < skills.Count; j++)
+                    AddEdge(skills[i], skills[j], 1.0);
         }
     }
 
@@ -49,13 +49,13 @@ public sealed class SkillGraph
 
         // All skills in a JD co-occur
         for (int i = 0; i < skills.Count; i++)
-        for (int j = i + 1; j < skills.Count; j++)
-        {
-            var weight = jdLedger.Requirements[i].Importance == SkillImportance.Required &&
-                         jdLedger.Requirements[j].Importance == SkillImportance.Required
-                ? 2.0 : 1.0;
-            AddEdge(skills[i], skills[j], weight);
-        }
+            for (int j = i + 1; j < skills.Count; j++)
+            {
+                var weight = jdLedger.Requirements[i].Importance == SkillImportance.Required &&
+                             jdLedger.Requirements[j].Importance == SkillImportance.Required
+                    ? 2.0 : 1.0;
+                AddEdge(skills[i], skills[j], weight);
+            }
     }
 
     /// <summary>Embed all nodes using the embedding service.</summary>

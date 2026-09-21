@@ -40,7 +40,7 @@ public sealed class UXPlayer
     public async Task<UXTestResult> RunScriptAsync(Window window, UXScript script)
     {
         _window = window;
-        
+
         var result = new UXTestResult
         {
             ScriptName = script.Name,
@@ -56,9 +56,9 @@ public sealed class UXPlayer
             {
                 var actionResult = await ExecuteActionAsync(action, script.DefaultDelay);
                 result.ActionResults.Add(actionResult);
-                
+
                 ActionCompleted?.Invoke(this, actionResult);
-                
+
                 if (!actionResult.Success)
                 {
                     result.Success = false;
@@ -66,7 +66,7 @@ public sealed class UXPlayer
                     break;
                 }
             }
-            
+
             result.Success = result.ActionResults.All(a => a.Success);
         }
         catch (Exception ex)
@@ -77,9 +77,9 @@ public sealed class UXPlayer
         }
 
         result.EndTime = DateTime.UtcNow;
-        
+
         Log?.Invoke(this, $"Completed: {result.Duration.TotalSeconds:F2}s");
-        
+
         return result;
     }
 
@@ -154,7 +154,7 @@ public sealed class UXPlayer
 
         sw.Stop();
         result.Duration = sw.Elapsed;
-        
+
         if (_captureScreenshots && action.Type != ActionType.Screenshot)
         {
             result.ScreenshotPath = await CaptureScreenshotAsync($"{action.Type}_{DateTime.UtcNow:HHmmss_fff}");
@@ -230,29 +230,29 @@ public sealed class UXPlayer
     private async Task ExecuteTypeTextAsync(UXAction action)
     {
         if (string.IsNullOrEmpty(action.Value)) return;
-        
+
         var control = FindControl(action.Target);
         if (control is TextBox textBox)
         {
             textBox.Text = action.Value;
         }
-        
+
         await Task.Delay(50);
     }
 
     private async Task ExecutePressKeyAsync(UXAction action)
     {
         if (string.IsNullOrEmpty(action.Value)) return;
-        
+
         var control = FindControl(action.Target) ?? _window;
         var key = Enum.Parse<Key>(action.Value, true);
-        
+
         control?.RaiseEvent(new KeyEventArgs
         {
             Key = key,
             RoutedEvent = InputElement.KeyDownEvent
         });
-        
+
         await Task.Delay(50);
     }
 
@@ -271,10 +271,10 @@ public sealed class UXPlayer
                 var value = action.Value?.ToLowerInvariant() ?? "down";
                 switch (value)
                 {
-                    case "top":    sv.ScrollToHome(); break;
+                    case "top": sv.ScrollToHome(); break;
                     case "bottom": sv.ScrollToEnd(); break;
-                    case "up":     sv.LineUp(); break;
-                    default:       sv.LineDown(); break;
+                    case "up": sv.LineUp(); break;
+                    default: sv.LineDown(); break;
                 }
             }
             tcs.SetResult();
@@ -336,7 +336,7 @@ public sealed class UXPlayer
                 throw new InvalidOperationException($"Assert failed: {action.Target}.Text != {expected}");
             }
         }
-        
+
         await Task.CompletedTask;
     }
 
@@ -398,40 +398,40 @@ public sealed class UXPlayer
     private Task<string> CaptureScreenshotAsync(string name)
     {
         if (_window == null) return Task.FromResult("");
-        
+
         var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
         var filePath = Path.Combine(_screenshotDir, $"{safeName}.png");
-        
+
         var width = Math.Max(100, (int)_window.Bounds.Width);
         var height = Math.Max(100, (int)_window.Bounds.Height);
-        
+
         Log?.Invoke(this, $"    Capturing {width}x{height}");
-        
+
         return CaptureAvaloniaScreenshotAsync(filePath, width, height);
     }
-    
+
     private async Task<string> CaptureAvaloniaScreenshotAsync(string filePath, int width, int height)
     {
         var tcs = new TaskCompletionSource<string>();
-        
+
         Dispatcher.UIThread.Post(() =>
         {
             try
             {
                 _window!.UpdateLayout();
-                
+
                 var size = new PixelSize(width, height);
                 var dpi = new Vector(96, 96);
-                
+
                 using var bitmap = new RenderTargetBitmap(size, dpi);
                 bitmap.Render(_window);
-                
+
                 using var stream = File.Create(filePath);
                 bitmap.Save(stream, PngBitmapEncoderOptions.Default);
-                
+
                 var fileInfo = new FileInfo(filePath);
                 Log?.Invoke(this, $"    Saved {fileInfo.Length / 1024}KB");
-                
+
                 tcs.SetResult(filePath);
             }
             catch (Exception ex)
@@ -440,7 +440,7 @@ public sealed class UXPlayer
                 tcs.SetException(ex);
             }
         }, DispatcherPriority.Render);
-        
+
         return await tcs.Task;
     }
 

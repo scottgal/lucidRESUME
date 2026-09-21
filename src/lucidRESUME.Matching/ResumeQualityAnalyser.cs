@@ -16,12 +16,12 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
     }
 
     // ── Scoring weights (must sum to 100) ─────────────────────────────────
-    private const int WeightBulletQuality  = 30;
-    private const int WeightCompleteness   = 22;
-    private const int WeightAlignment      = 18;
-    private const int WeightSpelling       = 12;
-    private const int WeightFormat         = 10;
-    private const int WeightPresentation   = 8;
+    private const int WeightBulletQuality = 30;
+    private const int WeightCompleteness = 22;
+    private const int WeightAlignment = 18;
+    private const int WeightSpelling = 12;
+    private const int WeightFormat = 10;
+    private const int WeightPresentation = 8;
 
     // ── Word lists loaded from Resources/*.txt ────────────────────────────
     private static readonly string[] StrongVerbFallback =
@@ -62,9 +62,9 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
     ];
 
     private static readonly Lazy<HashSet<string>> StrongVerbs = LoadWordList("strong-verbs.txt", StrongVerbFallback);
-    private static readonly Lazy<HashSet<string>> WeakVerbs   = LoadWordList("weak-verbs.txt", WeakVerbFallback);
-    private static readonly Lazy<HashSet<string>> Buzzwords   = LoadWordList("buzzwords.txt", BuzzwordFallback);
-    private static readonly Lazy<HashSet<string>> Fillers     = LoadWordList("fillers.txt", FillerFallback);
+    private static readonly Lazy<HashSet<string>> WeakVerbs = LoadWordList("weak-verbs.txt", WeakVerbFallback);
+    private static readonly Lazy<HashSet<string>> Buzzwords = LoadWordList("buzzwords.txt", BuzzwordFallback);
+    private static readonly Lazy<HashSet<string>> Fillers = LoadWordList("fillers.txt", FillerFallback);
 
     internal static Lazy<HashSet<string>> LoadWordList(string filename, IEnumerable<string> fallbackWords) => new(() =>
     {
@@ -97,8 +97,8 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
     private static partial Regex MyQuantRx();
 
     // ── Email / phone / LinkedIn ──────────────────────────────────────────
-    private static readonly Regex EmailRx    = MyEmailRx();
-    private static readonly Regex PhoneRx    = MyPhoneRx();
+    private static readonly Regex EmailRx = MyEmailRx();
+    private static readonly Regex PhoneRx = MyPhoneRx();
     private static readonly Regex LinkedInRx = MyLinkedInRx();
     [GeneratedRegex(@"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")]
     private static partial Regex MyEmailRx();
@@ -119,19 +119,19 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
     private static QualityReport BuildReport(ResumeDocument resume, JobDescription? job)
     {
-        var bulletFindings       = CheckBulletQuality(resume);
+        var bulletFindings = CheckBulletQuality(resume);
         var completenessFindings = CheckCompleteness(resume);
-        var formatFindings       = CheckFormat(resume);
+        var formatFindings = CheckFormat(resume);
         var presentationFindings = CheckPresentation(resume);
-        var spellingFindings     = SpellChecker.Check(resume);
-        var alignmentFindings    = job is null ? (IReadOnlyList<QualityFinding>)[] : CheckAlignment(resume, job);
+        var spellingFindings = SpellChecker.Check(resume);
+        var alignmentFindings = job is null ? (IReadOnlyList<QualityFinding>)[] : CheckAlignment(resume, job);
 
-        int bulletScore       = ScoreFromFindings(bulletFindings, resume.Experience.Sum(e => Math.Max(e.Achievements.Count, 1)));
+        int bulletScore = ScoreFromFindings(bulletFindings, resume.Experience.Sum(e => Math.Max(e.Achievements.Count, 1)));
         int completenessScore = ScoreFromFindings(completenessFindings, 8);
-        int formatScore       = ScoreFromFindings(formatFindings, 4);
+        int formatScore = ScoreFromFindings(formatFindings, 4);
         int presentationScore = ScoreFromFindings(presentationFindings, 5);
-        int spellingScore     = ScoreFromFindings(spellingFindings, Math.Max(resume.Experience.Sum(e => e.Achievements.Count), 1));
-        int alignmentScore    = job is null ? 100 : ScoreFromFindings(alignmentFindings, Math.Max(job.RequiredSkills.Count, 5));
+        int spellingScore = ScoreFromFindings(spellingFindings, Math.Max(resume.Experience.Sum(e => e.Achievements.Count), 1));
+        int alignmentScore = job is null ? 100 : ScoreFromFindings(alignmentFindings, Math.Max(job.RequiredSkills.Count, 5));
 
         var categories = new List<QualityCategory>
         {
@@ -194,7 +194,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
             for (int k = 0; k < exp.Achievements.Count; k++)
             {
-                string bullet  = exp.Achievements[k].Trim();
+                string bullet = exp.Achievements[k].Trim();
                 string section = $"Experience[{j}].Achievements[{k}]";
 
                 // Verb check
@@ -308,7 +308,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         if (!string.IsNullOrWhiteSpace(resume.PlainText))
         {
             int wordCount = resume.PlainText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
-            int yearsExp  = EstimateYearsExperience(resume);
+            int yearsExp = EstimateYearsExperience(resume);
 
             if (yearsExp < 10 && wordCount > 900)
                 findings.Add(new("Length", FindingSeverity.Warning, "TOO_LONG",
@@ -409,7 +409,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         if (!string.IsNullOrWhiteSpace(job.Title) && !string.IsNullOrWhiteSpace(resume.Personal.Summary))
         {
             string summaryLower = resume.Personal.Summary!.ToLowerInvariant();
-            string titleLower   = job.Title.ToLowerInvariant();
+            string titleLower = job.Title.ToLowerInvariant();
             // Check if any word from the job title appears in summary
             bool titleMentioned = titleLower
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
@@ -444,7 +444,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
     private static int ScoreFromFindings(IReadOnlyList<QualityFinding> findings, int opportunities)
     {
         if (opportunities <= 0) return 100;
-        int errorCount   = findings.Count(f => f.Severity == FindingSeverity.Error);
+        int errorCount = findings.Count(f => f.Severity == FindingSeverity.Error);
         int warningCount = findings.Count(f => f.Severity == FindingSeverity.Warning);
         // Errors cost 2x; infos don't affect score
         double penalty = (errorCount * 2.0 + warningCount) / (opportunities * 2.0);
@@ -460,9 +460,9 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         CancellationToken ct = default)
     {
         // Run all deterministic checks synchronously
-        var bulletFindings       = CheckBulletQuality(resume);
+        var bulletFindings = CheckBulletQuality(resume);
         var completenessFindings = CheckCompleteness(resume);
-        var formatFindings       = CheckFormat(resume);
+        var formatFindings = CheckFormat(resume);
         var presentationFindings = CheckPresentation(resume);
 
         // Alignment: semantic if embedder available, keyword fallback otherwise
@@ -476,11 +476,11 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
             alignmentFindings = CheckAlignment(resume, job);
         }
 
-        int bulletScore       = ScoreFromFindings(bulletFindings, resume.Experience.Sum(e => Math.Max(e.Achievements.Count, 1)));
+        int bulletScore = ScoreFromFindings(bulletFindings, resume.Experience.Sum(e => Math.Max(e.Achievements.Count, 1)));
         int completenessScore = ScoreFromFindings(completenessFindings, 8);
-        int formatScore       = ScoreFromFindings(formatFindings, 4);
+        int formatScore = ScoreFromFindings(formatFindings, 4);
         int presentationScore = ScoreFromFindings(presentationFindings, 5);
-        int alignmentScore    = ScoreFromFindings(alignmentFindings, Math.Max(job.RequiredSkills.Count, 5));
+        int alignmentScore = ScoreFromFindings(alignmentFindings, Math.Max(job.RequiredSkills.Count, 5));
 
         var categories = new List<QualityCategory>
         {
@@ -537,7 +537,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         float[][]? resumeVectors;
         try
         {
-            reqVectors    = await Task.WhenAll(requiredSkills.Select(s => embedder.EmbedAsync(s, ct)));
+            reqVectors = await Task.WhenAll(requiredSkills.Select(s => embedder.EmbedAsync(s, ct)));
             resumeVectors = await Task.WhenAll(resumeTerms.Select(s => embedder.EmbedAsync(s, ct)));
         }
         catch (Exception)
@@ -556,9 +556,9 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
             if (bestSim < SemanticThreshold)
             {
                 // Double-check with plain keyword search as safety net
-                string reqLower    = requiredSkills[i].ToLowerInvariant();
-                string resumeText  = (resume.PlainText ?? resume.RawMarkdown ?? "").ToLowerInvariant();
-                bool keywordFound  = resume.Skills.Any(s => s.Name.Contains(reqLower, StringComparison.OrdinalIgnoreCase))
+                string reqLower = requiredSkills[i].ToLowerInvariant();
+                string resumeText = (resume.PlainText ?? resume.RawMarkdown ?? "").ToLowerInvariant();
+                bool keywordFound = resume.Skills.Any(s => s.Name.Contains(reqLower, StringComparison.OrdinalIgnoreCase))
                                   || resumeText.Contains(reqLower);
 
                 if (!keywordFound)
@@ -595,7 +595,7 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         {
             try
             {
-                var titleVec   = await embedder.EmbedAsync(job.Title, ct);
+                var titleVec = await embedder.EmbedAsync(job.Title, ct);
                 var summaryVec = await embedder.EmbedAsync(resume.Personal.Summary!, ct);
                 float sim = embedder.CosineSimilarity(titleVec, summaryVec);
                 if (sim < 0.70f)

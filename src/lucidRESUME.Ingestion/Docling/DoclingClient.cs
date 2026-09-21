@@ -71,7 +71,8 @@ public sealed class DoclingClient : IDoclingClient
         content.Add(new StringContent("1.5"), "images_scale");
 
         using var request = new HttpRequestMessage(HttpMethod.Post,
-            new Uri(new Uri(_options.EffectiveBaseUrl), "/v1/convert/file/async")) { Content = content };
+            new Uri(new Uri(_options.EffectiveBaseUrl), "/v1/convert/file/async"))
+        { Content = content };
         if (_options.UseCloud && _options.CloudApiKey is not null)
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _options.CloudApiKey);
 

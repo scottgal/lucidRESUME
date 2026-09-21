@@ -45,7 +45,7 @@ public static partial class EvidenceLedgerBuilder
             claim.EvidenceIds = originals.Select(item => item.Id).ToList();
             if (originals.All(item => item.ExtractionMethod is "ner" or "llm" or "extracted"))
             {
-                claim.Origin = "extracted";
+                claim.Origin = "derived";
                 claim.Review = "required";
             }
             ledger.Evidence.Remove(aggregateEvidence);
@@ -171,7 +171,7 @@ public static partial class EvidenceLedgerBuilder
             EvidenceIds = [id],
             Concepts = concepts.Where(value => !string.IsNullOrWhiteSpace(value))
                 .Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
-            Origin = method is "ner" or "llm" ? "extracted" : "ingested",
+            Origin = method is "ner" or "llm" or "extracted" ? "derived" : "declared",
             Review = method == "deterministic" ? "accepted" : "required"
         });
     }

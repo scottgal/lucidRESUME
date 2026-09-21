@@ -90,8 +90,14 @@ public sealed class OllamaExtractionService : ILlmExtractionService
         {
             // stream=true avoids qwen3.x buffering all <think> tokens before returning
             // think=false disables chain-of-thought; num_ctx=4096 keeps VRAM usage low
-            var request = new { model = _options.ExtractionModel, prompt, stream = true, think = false,
-                options = new { num_ctx = 4096 } };
+            var request = new
+            {
+                model = _options.ExtractionModel,
+                prompt,
+                stream = true,
+                think = false,
+                options = new { num_ctx = 4096 }
+            };
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(TimeSpan.FromSeconds(55)); // Allow time for first-load warm-up
 

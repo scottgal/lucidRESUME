@@ -160,8 +160,8 @@ public sealed partial class SearchPageViewModel : ViewModelBase
     private static string SourceLabel(JobSource source) => source.Type switch
     {
         JobSourceType.PastedText => "Pasted",
-        JobSourceType.Url        => TruncateDomain(source.Url),
-        _                        => source.Type.ToString()
+        JobSourceType.Url => TruncateDomain(source.Url),
+        _ => source.Type.ToString()
     };
 
     private static string TruncateDomain(string? url)

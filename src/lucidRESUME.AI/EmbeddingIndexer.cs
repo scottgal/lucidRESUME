@@ -29,15 +29,13 @@ public sealed class EmbeddingIndexer
     public async Task IndexResumeAsync(ResumeDocument resume, VectorStore vectors, CancellationToken ct = default)
     {
         var indexed = 0;
-        var nextId = await vectors.NextRowIdAsync(ct);
-
         // Index skills
         foreach (var skill in resume.Skills)
         {
             try
             {
                 var emb = await _embedder.EmbedAsync(skill.Name, ct);
-                await vectors.UpsertAsync(nextId++, emb, "skill", skill.Name,
+                await vectors.AddAsync(emb, "skill", skill.Name,
                     $"{skill.Category}: {skill.Name}", ct);
                 indexed++;
             }
@@ -53,7 +51,7 @@ public sealed class EmbeddingIndexer
                 try
                 {
                     var emb = await _embedder.EmbedAsync(achievement, ct);
-                    await vectors.UpsertAsync(nextId++, emb, "achievement",
+                    await vectors.AddAsync(emb, "achievement",
                         exp.Id.ToString(),
                         achievement, ct);
                     indexed++;
@@ -70,7 +68,7 @@ public sealed class EmbeddingIndexer
             try
             {
                 var emb = await _embedder.EmbedAsync(title, ct);
-                await vectors.UpsertAsync(nextId++, emb, "jobtitle",
+                await vectors.AddAsync(emb, "jobtitle",
                     exp.Id.ToString(), title, ct);
                 indexed++;
             }

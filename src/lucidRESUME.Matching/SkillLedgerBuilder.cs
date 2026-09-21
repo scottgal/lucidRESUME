@@ -31,9 +31,11 @@ public sealed class SkillLedgerBuilder
 
         var ledger = new SkillLedger();
         var entries = new Dictionary<string, SkillLedgerEntry>(StringComparer.OrdinalIgnoreCase);
+        var evidenceLedger = Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
 
         // 1a. Collect skills from the Skills section
-        foreach (var skill in resume.Skills)
+        foreach (var skill in resume.Skills.Where(skill =>
+                     !skill.ImportSources.Contains("LLM extraction", StringComparer.OrdinalIgnoreCase)))
         {
             var entry = GetOrCreate(entries, skill.Name);
             entry.Category ??= skill.Category;
@@ -47,7 +49,11 @@ public sealed class SkillLedgerBuilder
 
         // 1b. Add NER-extracted skills BEFORE experience scanning
         // so experience evidence gets attached to NER-discovered skills too
-        foreach (var entity in resume.Entities.Where(e => e.Classification is "NerSkill" && e.Value.Length >= 2))
+        // NER observations remain review-required ledger material. Reviewed JobML takes
+        // the branch above; raw NER output must not become matching evidence by itself.
+        foreach (var entity in resume.Entities.Where(e =>
+                     e.Classification is "NerSkill" && e.Value.Length >= 2 &&
+                     IsAccepted(evidenceLedger, $"entity:{e.EntityId:N}")))
         {
             var entry = GetOrCreate(entries, entity.Value);
             if (!entry.Evidence.Any(e => e.Source == EvidenceSource.NerExtracted))
@@ -99,7 +105,8 @@ public sealed class SkillLedgerBuilder
         }
 
         // 2. Scan experience entries for skill mentions
-        foreach (var exp in resume.Experience)
+        foreach (var exp in resume.Experience.Where(exp =>
+                     !exp.ImportSources.Contains("LLM extraction", StringComparer.OrdinalIgnoreCase)))
         {
             // Technologies field - direct skill listing
             foreach (var tech in exp.Technologies)
@@ -370,6 +377,15 @@ public sealed class SkillLedgerBuilder
 
     private static Guid? ParseGuidSafe(string? s) =>
         s is not null && Guid.TryParse(s.AsSpan(), out var g) ? g : null;
+
+    private static bool IsAccepted(Core.Models.Evidence.EvidenceLedger ledger, string locator)
+    {
+        var evidence = ledger.Evidence.FirstOrDefault(item =>
+            string.Equals(item.Locator, locator, StringComparison.OrdinalIgnoreCase));
+        return evidence is not null && ledger.Claims.Any(claim =>
+            claim.EvidenceIds.Contains(evidence.Id, StringComparer.OrdinalIgnoreCase) &&
+            string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase));
+    }
 
     private static SkillLedgerEntry GetOrCreate(Dictionary<string, SkillLedgerEntry> entries, string skillName)
     {

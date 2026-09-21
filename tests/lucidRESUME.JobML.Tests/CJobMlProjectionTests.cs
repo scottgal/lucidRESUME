@@ -72,6 +72,20 @@ public sealed class CJobMlProjectionTests
     }
 
     [Fact]
+    public void Projection_RejectsAcceptedClaimWhoseProseHasDrifted()
+    {
+        var full = AcceptedFile() with
+        {
+            Markdown = AcceptedFile().Markdown.Replace("Built an evidence-linked retrieval platform.",
+                "Contributed to an evidence-linked retrieval platform.", StringComparison.Ordinal)
+        };
+
+        var error = Assert.Throws<JobMlProjectionException>(() => CJobMlProjector.Project(full));
+
+        Assert.Contains("changed", error.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Projection_PublishesCompleteLedgerEndpointWithoutExternalReferences()
     {
         var full = AcceptedFile();

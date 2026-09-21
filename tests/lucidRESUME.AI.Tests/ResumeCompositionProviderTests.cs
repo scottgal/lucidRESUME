@@ -15,7 +15,9 @@ public sealed class ResumeCompositionProviderTests
         var provider = new OpenAiResumeCompositionProvider(new HttpClient(handler),
             Options.Create(new OpenAiOptions
             {
-                ApiKey = "test-only", BaseUrl = "https://example.test/v1", Model = "test-model"
+                ApiKey = "test-only",
+                BaseUrl = "https://example.test/v1",
+                Model = "test-model"
             }));
         var block = new CompositionBlock("role", "Led an engineering team.", ["claim-1"], ["evidence-1"]);
         var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [], [], [], "lexical");

@@ -15,22 +15,22 @@ public sealed class Options
 {
     [Option('m', "mode", Default = "play", HelpText = "Mode: play, record, list")]
     public string Mode { get; set; } = "play";
-    
+
     [Option('s', "script", HelpText = "Script file or directory")]
     public string? Script { get; set; }
-    
+
     [Option('o', "output", Default = "ux-test-results", HelpText = "Output directory")]
     public string OutputDir { get; set; } = "ux-test-results";
-    
+
     [Option("screenshots", Default = true, HelpText = "Capture screenshots")]
     public bool Screenshots { get; set; } = true;
-    
+
     [Option("delay", Default = 200, HelpText = "Default delay between actions (ms)")]
     public int Delay { get; set; } = 200;
-    
+
     [Option("exe", HelpText = "Path to app executable")]
     public string? ExePath { get; set; }
-    
+
     [Option("headless", Default = false, HelpText = "Run in headless mode")]
     public bool Headless { get; set; }
 }
@@ -48,7 +48,7 @@ class Program
     static async Task<int> RunAsync(Options options)
     {
         Directory.CreateDirectory(options.OutputDir);
-        
+
         return options.Mode.ToLowerInvariant() switch
         {
             "play" => await PlayMode(options),
@@ -73,15 +73,15 @@ class Program
         Console.WriteLine();
 
         var scripts = new List<UXScript>();
-        
+
         if (Directory.Exists(options.Script))
         {
             scripts.AddRange(ScriptLoader.LoadFromDirectory(options.Script));
         }
         else if (File.Exists(options.Script))
         {
-            scripts.Add(options.Script.EndsWith(".json") 
-                ? ScriptLoader.LoadFromJson(options.Script) 
+            scripts.Add(options.Script.EndsWith(".json")
+                ? ScriptLoader.LoadFromJson(options.Script)
                 : ScriptLoader.LoadFromYaml(options.Script));
         }
         else
@@ -94,35 +94,35 @@ class Program
         Console.WriteLine();
 
         var results = new List<UXTestResult>();
-        
+
         foreach (var script in scripts)
         {
             Console.WriteLine($"=== {script.Name} ===");
-            
+
             var result = await RunScriptInAppAsync(script, options);
             results.Add(result);
-            
+
             Console.WriteLine();
         }
 
         var reportPath = Path.Combine(options.OutputDir, "report.json");
         await File.WriteAllTextAsync(reportPath, JsonConvert.SerializeObject(results, Formatting.Indented));
-        
+
         Console.WriteLine($"Report saved: {reportPath}");
-        
+
         var passed = results.Count(r => r.Success);
         var failed = results.Count - passed;
-        
+
         Console.WriteLine();
         Console.WriteLine($"Results: {passed} passed, {failed} failed");
-        
+
         return failed > 0 ? 1 : 0;
     }
 
     static async Task<UXTestResult> RunScriptInAppAsync(UXScript script, Options options)
     {
         var exePath = options.ExePath ?? FindAppExecutable();
-        
+
         if (!File.Exists(exePath))
         {
             return new UXTestResult
@@ -150,7 +150,7 @@ class Program
         };
 
         using var process = Process.Start(psi);
-        
+
         if (process == null)
         {
             return new UXTestResult
@@ -168,7 +168,7 @@ class Program
         if (File.Exists(resultPath))
         {
             var json = await File.ReadAllTextAsync(resultPath);
-            return JsonConvert.DeserializeObject<UXTestResult>(json) 
+            return JsonConvert.DeserializeObject<UXTestResult>(json)
                 ?? new UXTestResult { ScriptName = script.Name, Success = false };
         }
 
@@ -184,7 +184,7 @@ class Program
     static int RecordMode(Options options)
     {
         var exePath = options.ExePath ?? FindAppExecutable();
-        
+
         if (!File.Exists(exePath))
         {
             Console.WriteLine($"App not found: {exePath}");
@@ -204,14 +204,14 @@ class Program
 
         using var process = Process.Start(psi);
         process?.WaitForExit();
-        
+
         return 0;
     }
 
     static int ListMode(Options options)
     {
         var script = options.Script ?? "scripts";
-        
+
         if (!Directory.Exists(script))
         {
             Console.WriteLine($"Directory not found: {script}");
@@ -244,7 +244,7 @@ class Program
     {
         var name = options.Script ?? "new-script";
         var filePath = Path.Combine(options.OutputDir, $"{name}.ux.yaml");
-        
+
         var script = new UXScript
         {
             Name = name,
@@ -259,7 +259,7 @@ class Program
         };
 
         ScriptLoader.SaveAsYaml(script, filePath);
-        
+
         Console.WriteLine($"Created: {filePath}");
         Console.WriteLine();
         Console.WriteLine("Example script structure:");
@@ -283,7 +283,7 @@ actions:
     target: ResultsList
     value: visible:true
 ");
-        
+
         return 0;
     }
 

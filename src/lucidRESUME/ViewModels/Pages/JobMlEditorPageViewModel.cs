@@ -196,18 +196,18 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
 
         var accepted = 0;
         foreach (var claim in JobMlProcessor.Reconcile(file!))
-        foreach (var resolution in claim.Evidence.Where(e => e.State == EvidenceState.Changed && e.CurrentText is not null))
-        {
-            if (resolution.SuggestedReference is not null)
-                resolution.Evidence.Ref = resolution.SuggestedReference;
-            resolution.Evidence.Fingerprint = new JobMlFingerprint
+            foreach (var resolution in claim.Evidence.Where(e => e.State == EvidenceState.Changed && e.CurrentText is not null))
             {
-                Text = MarkdownEvidenceIndex.Fingerprint(resolution.CurrentText!)
-            };
-            resolution.Evidence.Selector = new JobMlTextSelector { Exact = resolution.CurrentText! };
-            resolution.Evidence.State = "valid";
-            accepted++;
-        }
+                if (resolution.SuggestedReference is not null)
+                    resolution.Evidence.Ref = resolution.SuggestedReference;
+                resolution.Evidence.Fingerprint = new JobMlFingerprint
+                {
+                    Text = MarkdownEvidenceIndex.Fingerprint(resolution.CurrentText!)
+                };
+                resolution.Evidence.Selector = new JobMlTextSelector { Exact = resolution.CurrentText! };
+                resolution.Evidence.State = "valid";
+                accepted++;
+            }
 
         SetDocument(_parser.Serialize(file!));
         StatusMessage = accepted == 0 ? "No uniquely resolvable evidence changes to accept." : $"Accepted {accepted} evidence change(s).";

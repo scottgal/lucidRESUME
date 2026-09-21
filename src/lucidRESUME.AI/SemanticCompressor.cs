@@ -59,6 +59,7 @@ public sealed class SemanticCompressor
     public async Task<CompressedResume> CompressAsync(
         ResumeDocument resume, JobDescription jd, CancellationToken ct = default)
     {
+        var sourceLedger = EvidenceLedgerBuilder.EnsureCurrent(resume);
         var resumeLedger = await _ledgerBuilder.BuildAsync(resume, ct);
         var jdLedger = await _jdLedgerBuilder.BuildAsync(jd, ct);
         var matchResult = await _matcher.MatchAsync(resumeLedger, jdLedger, ct);
@@ -123,11 +124,10 @@ public sealed class SemanticCompressor
             .Select(exp => exp.Id)
             .ToHashSet();
 
-        var sourceLedger = EvidenceLedgerBuilder.EnsureCurrent(resume);
         var projection = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
         projection.Personal = new PersonalInfo
         {
-            FullName = resume.Personal.FullName,
+            FullName = Accepted(sourceLedger, "personal:name") ? resume.Personal.FullName : null,
             Email = resume.Personal.Email,
             Phone = resume.Personal.Phone,
             Location = resume.Personal.Location,
@@ -351,10 +351,20 @@ public sealed class SemanticCompressor
     {
         if (experience.Achievements.Count == 0) return false;
         if (string.IsNullOrWhiteSpace(experience.Company) || string.IsNullOrWhiteSpace(experience.Title)) return false;
+        if (experience.ImportSources.Contains("LLM extraction", StringComparer.OrdinalIgnoreCase)) return false;
         // Common legacy-parser artefact: the date is mistaken for the company and
         // "Present" becomes part of the title. The real role is retained elsewhere.
         if (Regex.IsMatch(experience.Company, @"^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$")) return false;
         return !experience.Title.StartsWith("Present ", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool Accepted(EvidenceLedger ledger, string locator)
+    {
+        var evidence = ledger.Evidence.FirstOrDefault(item =>
+            string.Equals(item.Locator, locator, StringComparison.OrdinalIgnoreCase));
+        return evidence is not null && ledger.Claims.Any(claim =>
+            claim.EvidenceIds.Contains(evidence.Id, StringComparer.OrdinalIgnoreCase) &&
+            string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase));
     }
 
     private static string? ResolveRoleProfile(string? title)
@@ -391,11 +401,11 @@ public sealed class SemanticCompressor
             .ToList();
         var profileWords = Tokens(string.Join(' ', roleSkills));
         var ranked = sentences.Select((sentence, index) => new
-            {
-                Sentence = sentence,
-                Index = index,
-                Score = Tokens(sentence).Intersect(profileWords).Count() + (index == 0 ? .5 : 0)
-            })
+        {
+            Sentence = sentence,
+            Index = index,
+            Score = Tokens(sentence).Intersect(profileWords).Count() + (index == 0 ? .5 : 0)
+        })
             .OrderByDescending(x => x.Score).ThenBy(x => x.Index).Take(3)
             .OrderBy(x => x.Index).ToList();
         var selected = new List<string>();

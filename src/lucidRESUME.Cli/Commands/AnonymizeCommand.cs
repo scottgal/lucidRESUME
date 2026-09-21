@@ -21,7 +21,7 @@ public static class AnonymizeCommand
         var outputOpt = new Option<FileInfo?>("--output") { Description = "Output file" };
         outputOpt.Aliases.Add("-o");
         var formatOpt = new Option<string>("--format") { Description = "Output format: markdown (default), docx, pdf" };
-        
+
         var configOpt = new Option<FileInfo?>("--config") { Description = "Config file" };
 
         var cmd = new Command("anonymize", "Strip PII for bias-free sharing — names, locations, specific institutions abstracted")

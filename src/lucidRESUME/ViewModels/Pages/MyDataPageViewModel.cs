@@ -24,6 +24,7 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
     private ResumeDocument? _resume;
     private UserOverrides _overrides = new();
     private CancellationTokenSource? _saveCts;
+    private readonly SemaphoreSlim _saveGate = new(1, 1);
 
     // ── Personal Info ──────────────────────────────────────────────────────
     [ObservableProperty] private string _fullName = "";
@@ -296,10 +297,22 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
     private void ScheduleSave()
     {
         _saveCts?.Cancel();
+        _saveCts?.Dispose();
         _saveCts = new CancellationTokenSource();
-        var token = _saveCts.Token;
-        Task.Delay(800, token).ContinueWith(_ => SaveOverridesAsync(), token,
-            TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default);
+        _ = SaveOverridesAfterDelayAsync(_saveCts.Token);
+    }
+
+    private async Task SaveOverridesAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(800, cancellationToken);
+            await _saveGate.WaitAsync(cancellationToken);
+            try { await SaveOverridesAsync(); }
+            finally { _saveGate.Release(); }
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { StatusMessage = $"Autosave failed: {ex.Message}"; }
     }
 
     private async Task SaveOverridesAsync()

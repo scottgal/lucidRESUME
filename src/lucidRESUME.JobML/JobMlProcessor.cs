@@ -58,7 +58,7 @@ public sealed class JobMlProcessor
                 diagnostics.Add(Error("JML022", $"Claim references unknown concept '{concept}'.", $"{path}.concepts"));
             if (claim.Evidence.Count == 0)
                 diagnostics.Add(Error("JML023", "Every substantive claim requires evidence.", $"{path}.evidence"));
-            if (string.Equals(claim.Origin, "derived", StringComparison.OrdinalIgnoreCase) &&
+            if (IsMachineDerived(claim) &&
                 !string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase))
                 diagnostics.Add(Warning("JML024", "Machine-derived claim requires human review; it is not yet an accepted evidential fact.", path));
 
@@ -117,8 +117,7 @@ public sealed class JobMlProcessor
             var direct = matches.Where(claim =>
                 evidence[claim.Id].Evidence.Count > 0 &&
                 evidence[claim.Id].Evidence.All(e => e.State is EvidenceState.Valid or EvidenceState.External) &&
-                !(string.Equals(claim.Origin, "derived", StringComparison.OrdinalIgnoreCase) &&
-                  !string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase))).ToList();
+                string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase)).ToList();
             return direct.Count > 0
                 ? new JobMlCoverageEntry(requirement, CoverageState.Direct, direct)
                 : matches.Count > 0
@@ -126,6 +125,10 @@ public sealed class JobMlProcessor
                     : new JobMlCoverageEntry(requirement, CoverageState.None, []);
         }).ToList();
     }
+
+    private static bool IsMachineDerived(JobMlClaim claim) =>
+        string.Equals(claim.Origin, "derived", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(claim.Origin, "extracted", StringComparison.OrdinalIgnoreCase);
 
     private static EvidenceResolution Resolve(JobMlEvidence evidence, MarkdownEvidenceIndex index)
     {

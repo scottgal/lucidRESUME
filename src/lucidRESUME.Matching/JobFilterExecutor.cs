@@ -45,24 +45,24 @@ public sealed class JobFilterExecutor
     private static object? ResolveField(string field, JobDescription job) =>
         field.ToLowerInvariant() switch
         {
-            "skills"        => job.RequiredSkills.Concat(job.PreferredSkills),
-            "work_model"    => ResolveWorkModel(job),
-            "salary_min"    => job.Salary?.Min,
-            "salary_max"    => job.Salary?.Max,
-            "company"       => job.Company,
-            "company_type"  => ResolveCompanyType(job),
-            "location"      => job.Location,
-            "title"         => job.Title,
-            "industry"      => ResolveIndustries(job),   // returns IEnumerable<string>
-            "is_remote"     => job.IsRemote ?? false,
-            "is_hybrid"     => job.IsHybrid ?? false,
-            _               => null
+            "skills" => job.RequiredSkills.Concat(job.PreferredSkills),
+            "work_model" => ResolveWorkModel(job),
+            "salary_min" => job.Salary?.Min,
+            "salary_max" => job.Salary?.Max,
+            "company" => job.Company,
+            "company_type" => ResolveCompanyType(job),
+            "location" => job.Location,
+            "title" => job.Title,
+            "industry" => ResolveIndustries(job),   // returns IEnumerable<string>
+            "is_remote" => job.IsRemote ?? false,
+            "is_hybrid" => job.IsHybrid ?? false,
+            _ => null
         };
 
     private static string ResolveWorkModel(JobDescription job)
     {
-        if (job.IsRemote == true)  return "Remote";
-        if (job.IsHybrid == true)  return "Hybrid";
+        if (job.IsRemote == true) return "Remote";
+        if (job.IsHybrid == true) return "Hybrid";
         return "Onsite";
     }
 
@@ -70,9 +70,9 @@ public sealed class JobFilterExecutor
     {
         var text = (job.RawText ?? "").ToLowerInvariant();
         if (Contains(text, "startup", "start-up", "seed", "series a", "series b")) return "Startup";
-        if (Contains(text, "scale-up", "scaleup", "growth stage"))                 return "Scale-up";
-        if (Contains(text, "enterprise", "corporate", "ftse", "fortune"))          return "Enterprise";
-        if (Contains(text, "agency", "consultancy"))                               return "Agency";
+        if (Contains(text, "scale-up", "scaleup", "growth stage")) return "Scale-up";
+        if (Contains(text, "enterprise", "corporate", "ftse", "fortune")) return "Enterprise";
+        if (Contains(text, "agency", "consultancy")) return "Agency";
         return null;
     }
 
@@ -103,11 +103,11 @@ public sealed class JobFilterExecutor
             var items = stringList.ToList();
             return node.Op switch
             {
-                FilterOp.Equal    => MatchesStringList(items, node.Value),
+                FilterOp.Equal => MatchesStringList(items, node.Value),
                 FilterOp.NotEqual => !MatchesStringList(items, node.Value),
-                FilterOp.In       => MatchesStringList(items, node.Value),
-                FilterOp.NotIn    => !MatchesStringList(items, node.Value),
-                _                 => false
+                FilterOp.In => MatchesStringList(items, node.Value),
+                FilterOp.NotIn => !MatchesStringList(items, node.Value),
+                _ => false
             };
         }
 
@@ -116,28 +116,28 @@ public sealed class JobFilterExecutor
         {
             return node.Op switch
             {
-                FilterOp.NotIn    => true,
+                FilterOp.NotIn => true,
                 FilterOp.NotEqual => true,
-                _                 => false
+                _ => false
             };
         }
 
         return node.Op switch
         {
-            FilterOp.Equal              => StringEqual(resolved, node.Value),
-            FilterOp.NotEqual           => !StringEqual(resolved, node.Value),
-            FilterOp.Contains           => StringContains(resolved, node.Value),
-            FilterOp.In                 => StringIn(resolved, node.Value),
-            FilterOp.NotIn              => !StringIn(resolved, node.Value),
-            FilterOp.GreaterThan        => NumericCompare(resolved, node.Value) > 0,
+            FilterOp.Equal => StringEqual(resolved, node.Value),
+            FilterOp.NotEqual => !StringEqual(resolved, node.Value),
+            FilterOp.Contains => StringContains(resolved, node.Value),
+            FilterOp.In => StringIn(resolved, node.Value),
+            FilterOp.NotIn => !StringIn(resolved, node.Value),
+            FilterOp.GreaterThan => NumericCompare(resolved, node.Value) > 0,
             FilterOp.GreaterThanOrEqual => NumericCompare(resolved, node.Value) >= 0,
-            FilterOp.LessThan           => NumericCompare(resolved, node.Value) < 0,
-            FilterOp.LessThanOrEqual    => NumericCompare(resolved, node.Value) <= 0,
-            FilterOp.Between            => NumericCompare(resolved, node.Value) >= 0
+            FilterOp.LessThan => NumericCompare(resolved, node.Value) < 0,
+            FilterOp.LessThanOrEqual => NumericCompare(resolved, node.Value) <= 0,
+            FilterOp.Between => NumericCompare(resolved, node.Value) >= 0
                                            && NumericCompare(resolved, node.ValueTo) <= 0,
-            FilterOp.IsTrue             => ToDouble(resolved) != 0,
-            FilterOp.IsFalse            => ToDouble(resolved) == 0,
-            _                           => false
+            FilterOp.IsTrue => ToDouble(resolved) != 0,
+            FilterOp.IsFalse => ToDouble(resolved) == 0,
+            _ => false
         };
     }
 
@@ -147,10 +147,10 @@ public sealed class JobFilterExecutor
 
         IEnumerable<string> candidates = filterValue switch
         {
-            string[] arr            => arr,
+            string[] arr => arr,
             IEnumerable<string> seq => seq,
-            string s                => [s],
-            _                       => [filterValue.ToString() ?? ""]
+            string s => [s],
+            _ => [filterValue.ToString() ?? ""]
         };
 
         return candidates.Any(c => items.Any(s =>
@@ -177,10 +177,10 @@ public sealed class JobFilterExecutor
 
         IEnumerable<string> candidates = filterValue switch
         {
-            string[] arr            => arr,
+            string[] arr => arr,
             IEnumerable<string> seq => seq,
-            string s                => [s],
-            _                       => [filterValue.ToString() ?? ""]
+            string s => [s],
+            _ => [filterValue.ToString() ?? ""]
         };
 
         var resolvedStr = resolved.ToString() ?? "";
@@ -196,15 +196,15 @@ public sealed class JobFilterExecutor
 
     private static double ToDouble(object? value) => value switch
     {
-        double d   => d,
-        float f    => f,
-        int i      => i,
-        long l     => l,
-        bool b     => b ? 1 : 0,
+        double d => d,
+        float f => f,
+        int i => i,
+        long l => l,
+        bool b => b ? 1 : 0,
         decimal dc => (double)dc,
-        string s   => double.TryParse(s, System.Globalization.NumberStyles.Any,
+        string s => double.TryParse(s, System.Globalization.NumberStyles.Any,
                           System.Globalization.CultureInfo.InvariantCulture, out var p) ? p : 0,
-        _          => 0
+        _ => 0
     };
 
     // -------------------------------------------------------------------------

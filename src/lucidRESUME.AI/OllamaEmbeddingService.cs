@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Collections.Concurrent;
 using lucidRESUME.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,7 +9,7 @@ namespace lucidRESUME.AI;
 /// <summary>
 /// Calls Ollama's /api/embeddings endpoint to generate dense vectors for text.
 /// Uses nomic-embed-text by default (768 dimensions, runs on CPU fine).
-/// Includes a simple in-process LRU cache to avoid re-embedding the same strings.
+/// Includes a bounded concurrent cache to avoid re-embedding the same strings.
 /// </summary>
 public sealed class OllamaEmbeddingService : IEmbeddingService
 {
@@ -16,16 +17,15 @@ public sealed class OllamaEmbeddingService : IEmbeddingService
     private readonly OllamaOptions _options;
     private readonly ILogger<OllamaEmbeddingService> _logger;
 
-    // Simple concurrent LRU cache - keyed by (model, text)
-    private readonly Dictionary<(string model, string text), float[]> _cache = new();
+    private readonly ConcurrentDictionary<(string model, string text), float[]> _cache = new();
     private const int MaxCacheEntries = 500;
 
     public OllamaEmbeddingService(HttpClient http, IOptions<OllamaOptions> options,
         ILogger<OllamaEmbeddingService> logger)
     {
-        _http    = http;
+        _http = http;
         _options = options.Value;
-        _logger  = logger;
+        _logger = logger;
     }
 
     public async Task<float[]> EmbedAsync(string text, CancellationToken ct = default)
@@ -36,7 +36,7 @@ public sealed class OllamaEmbeddingService : IEmbeddingService
 
         _logger.LogDebug("Embedding text ({Length} chars) with {Model}", text.Length, _options.EmbeddingModel);
 
-        var request  = new { model = _options.EmbeddingModel, prompt = text };
+        var request = new { model = _options.EmbeddingModel, prompt = text };
         var response = await _http.PostAsJsonAsync($"{_options.BaseUrl}/api/embeddings", request, ct);
         response.EnsureSuccessStatusCode();
 
@@ -50,10 +50,9 @@ public sealed class OllamaEmbeddingService : IEmbeddingService
         if (_cache.Count >= MaxCacheEntries)
         {
             var first = _cache.Keys.First();
-            _cache.Remove(first);
+            _cache.TryRemove(first, out _);
         }
-        _cache[key] = vector;
-        return vector;
+        return _cache.GetOrAdd(key, vector);
     }
 
     public float CosineSimilarity(float[] a, float[] b)

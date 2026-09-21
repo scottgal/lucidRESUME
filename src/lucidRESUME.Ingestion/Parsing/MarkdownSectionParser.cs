@@ -901,7 +901,7 @@ public static partial class MarkdownSectionParser
             if (line.StartsWith('#') && line.Contains('|'))
             {
                 var content = line.TrimStart('#').Trim();
-                // Skip section headings like "Scott Galloway | .NET Developer | Remote"
+                // Skip pipe-delimited identity headings such as "Candidate | Role | Location".
                 if (!IsJobEntry(content)) continue;
 
                 if (current != null) resume.Experience.Add(current);

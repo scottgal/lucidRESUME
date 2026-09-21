@@ -13,12 +13,12 @@ public sealed class JobQualityAnalyser : IJobQualityAnalyser
 {
     public QualityReport Analyse(JobDescription job)
     {
-        var completeness   = CheckCompleteness(job);
-        var clarity        = CheckClarity(job);
-        var skillsQuality  = CheckSkills(job);
+        var completeness = CheckCompleteness(job);
+        var clarity = CheckClarity(job);
+        var skillsQuality = CheckSkills(job);
 
-        int compScore  = ScoreFromFindings(completeness, 7);
-        int clarScore  = ScoreFromFindings(clarity, 4);
+        int compScore = ScoreFromFindings(completeness, 7);
+        int clarScore = ScoreFromFindings(clarity, 4);
         int skillScore = ScoreFromFindings(skillsQuality, Math.Max(job.RequiredSkills.Count, 3));
 
         var categories = new List<QualityCategory>
@@ -133,9 +133,9 @@ public sealed class JobQualityAnalyser : IJobQualityAnalyser
     private static int ScoreFromFindings(IReadOnlyList<QualityFinding> findings, int opportunities)
     {
         if (opportunities <= 0) return 100;
-        int errorCount   = findings.Count(f => f.Severity == FindingSeverity.Error);
+        int errorCount = findings.Count(f => f.Severity == FindingSeverity.Error);
         int warningCount = findings.Count(f => f.Severity == FindingSeverity.Warning);
-        double penalty   = (errorCount * 2.0 + warningCount) / (opportunities * 2.0);
+        double penalty = (errorCount * 2.0 + warningCount) / (opportunities * 2.0);
         return Math.Clamp((int)((1.0 - penalty) * 100), 0, 100);
     }
 }

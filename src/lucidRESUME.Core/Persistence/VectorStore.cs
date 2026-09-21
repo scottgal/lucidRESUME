@@ -27,21 +27,23 @@ public sealed class VectorStore
         await _lock.WaitAsync(ct);
         try
         {
-            // Upsert into vec_embeddings
-            using var cmd = _conn.CreateCommand();
-            cmd.CommandText = "INSERT OR REPLACE INTO vec_embeddings(rowid, embedding) VALUES ($rowid, $embedding)";
-            cmd.Parameters.AddWithValue("$rowid", rowId);
-            cmd.Parameters.AddWithValue("$embedding", ToBlob(embedding));
-            cmd.ExecuteNonQuery();
+            UpsertCore(rowId, embedding, sourceType, sourceId, text);
+        }
+        finally { _lock.Release(); }
+    }
 
-            // Upsert metadata
-            using var metaCmd = _conn.CreateCommand();
-            metaCmd.CommandText = "INSERT OR REPLACE INTO vec_meta(rowid, source_type, source_id, text) VALUES ($rowid, $type, $id, $text)";
-            metaCmd.Parameters.AddWithValue("$rowid", rowId);
-            metaCmd.Parameters.AddWithValue("$type", sourceType);
-            metaCmd.Parameters.AddWithValue("$id", sourceId ?? (object)DBNull.Value);
-            metaCmd.Parameters.AddWithValue("$text", text);
-            metaCmd.ExecuteNonQuery();
+    /// <summary>Atomically allocate an identifier and store a vector with its metadata.</summary>
+    public async Task<long> AddAsync(float[] embedding, string sourceType,
+        string? sourceId, string text, CancellationToken ct = default)
+    {
+        await _lock.WaitAsync(ct);
+        try
+        {
+            using var idCommand = _conn.CreateCommand();
+            idCommand.CommandText = "SELECT COALESCE(MAX(rowid), 0) + 1 FROM vec_meta";
+            var rowId = (long)(idCommand.ExecuteScalar() ?? 1L);
+            UpsertCore(rowId, embedding, sourceType, sourceId, text);
+            return rowId;
         }
         finally { _lock.Release(); }
     }
@@ -56,19 +58,20 @@ public sealed class VectorStore
             var results = new List<VectorSearchResult>();
 
             using var cmd = _conn.CreateCommand();
+            var table = TableFor(queryEmbedding);
             cmd.CommandText = sourceTypeFilter != null
-                ? """
+                ? $"""
                   SELECT v.rowid, v.distance, m.source_type, m.source_id, m.text
-                  FROM vec_embeddings v
+                  FROM {table} v
                   JOIN vec_meta m ON m.rowid = v.rowid
                   WHERE v.embedding MATCH $query
                     AND k = $k
                     AND m.source_type = $filter
                   ORDER BY v.distance
                   """
-                : """
+                : $"""
                   SELECT v.rowid, v.distance, m.source_type, m.source_id, m.text
-                  FROM vec_embeddings v
+                  FROM {table} v
                   JOIN vec_meta m ON m.rowid = v.rowid
                   WHERE v.embedding MATCH $query
                     AND k = $k
@@ -98,19 +101,6 @@ public sealed class VectorStore
         finally { _lock.Release(); }
     }
 
-    /// <summary>Get the next available rowid.</summary>
-    public async Task<long> NextRowIdAsync(CancellationToken ct = default)
-    {
-        await _lock.WaitAsync(ct);
-        try
-        {
-            using var cmd = _conn.CreateCommand();
-            cmd.CommandText = "SELECT COALESCE(MAX(rowid), 0) + 1 FROM vec_meta";
-            return (long)(cmd.ExecuteScalar() ?? 1L);
-        }
-        finally { _lock.Release(); }
-    }
-
     /// <summary>Count stored vectors.</summary>
     public async Task<int> CountAsync(CancellationToken ct = default)
     {
@@ -131,6 +121,43 @@ public sealed class VectorStore
         Buffer.BlockCopy(vector, 0, bytes, 0, bytes.Length);
         return bytes;
     }
+
+    private void UpsertCore(long rowId, float[] embedding,
+        string sourceType, string? sourceId, string text)
+    {
+        var table = TableFor(embedding);
+        using var transaction = _conn.BeginTransaction();
+        using var staleCommand = _conn.CreateCommand();
+        staleCommand.Transaction = transaction;
+        staleCommand.CommandText = $"DELETE FROM {(table == "vec_embeddings" ? "vec_embeddings_768" : "vec_embeddings")} WHERE rowid = $rowid";
+        staleCommand.Parameters.AddWithValue("$rowid", rowId);
+        staleCommand.ExecuteNonQuery();
+
+        using var cmd = _conn.CreateCommand();
+        cmd.Transaction = transaction;
+        cmd.CommandText = $"INSERT OR REPLACE INTO {table}(rowid, embedding) VALUES ($rowid, $embedding)";
+        cmd.Parameters.AddWithValue("$rowid", rowId);
+        cmd.Parameters.AddWithValue("$embedding", ToBlob(embedding));
+        cmd.ExecuteNonQuery();
+
+        using var metaCmd = _conn.CreateCommand();
+        metaCmd.Transaction = transaction;
+        metaCmd.CommandText = "INSERT OR REPLACE INTO vec_meta(rowid, source_type, source_id, text) VALUES ($rowid, $type, $id, $text)";
+        metaCmd.Parameters.AddWithValue("$rowid", rowId);
+        metaCmd.Parameters.AddWithValue("$type", sourceType);
+        metaCmd.Parameters.AddWithValue("$id", sourceId ?? (object)DBNull.Value);
+        metaCmd.Parameters.AddWithValue("$text", text);
+        metaCmd.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    private static string TableFor(float[] embedding) => embedding.Length switch
+    {
+        384 => "vec_embeddings",
+        768 => "vec_embeddings_768",
+        _ => throw new ArgumentException(
+            $"Unsupported embedding dimension {embedding.Length}. Expected 384 or 768.", nameof(embedding))
+    };
 }
 
 public sealed class VectorSearchResult

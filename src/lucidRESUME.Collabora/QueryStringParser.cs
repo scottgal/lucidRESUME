@@ -5,13 +5,13 @@ public static class QueryStringParser
     public static Dictionary<string, string> Parse(string? query)
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        
+
         if (string.IsNullOrEmpty(query))
             return result;
-        
+
         if (query.StartsWith("?"))
             query = query[1..];
-        
+
         foreach (var pair in query.Split('&'))
         {
             var parts = pair.Split('=', 2);
@@ -24,7 +24,7 @@ public static class QueryStringParser
                 result[Uri.UnescapeDataString(parts[0])] = string.Empty;
             }
         }
-        
+
         return result;
     }
 }

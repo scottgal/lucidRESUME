@@ -21,12 +21,12 @@ public sealed class FileDocumentSource : IDocumentSource
     private static string GuessContentType(string path) =>
         Path.GetExtension(path).ToLowerInvariant() switch
         {
-            ".pdf"  => "application/pdf",
+            ".pdf" => "application/pdf",
             ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".doc"  => "application/msword",
-            ".txt"  => "text/plain",
+            ".doc" => "application/msword",
+            ".txt" => "text/plain",
             ".html" => "text/html",
-            ".htm"  => "text/html",
-            _       => "application/octet-stream"
+            ".htm" => "text/html",
+            _ => "application/octet-stream"
         };
 }

@@ -18,15 +18,15 @@ public sealed class ExtractedEntity
 
     public static ExtractedEntity Create(string value, string classification,
         DetectionSource source, double confidence, int pageNumber) => new()
-    {
-        EntityId = Guid.NewGuid(),
-        Value = value,
-        NormalizedValue = value.Trim().ToLowerInvariant(),
-        Classification = classification,
-        Source = source,
-        Confidence = confidence,
-        PageNumber = pageNumber
-    };
+        {
+            EntityId = Guid.NewGuid(),
+            Value = value,
+            NormalizedValue = value.Trim().ToLowerInvariant(),
+            Classification = classification,
+            Source = source,
+            Confidence = confidence,
+            PageNumber = pageNumber
+        };
 
     public void SetLabel(string label, string? section = null)
     {

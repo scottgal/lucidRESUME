@@ -21,7 +21,8 @@ public sealed class LlamaSharpIntegrationTests
         var provider = new LlamaSharpResumeCompositionProvider(runtime);
         var claim = new JobMlClaim
         {
-            Id = "claim-1", Subject = "role-1",
+            Id = "claim-1",
+            Subject = "role-1",
             Statement = "Led a 10-person engineering team through platform change."
         };
         const string prose = "Led a 10-person engineering team through platform change, while remaining hands-on with C#.";
@@ -101,8 +102,8 @@ public sealed class LlamaSharpIntegrationTests
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new ByteArrayContent(content)
-        });
+            {
+                Content = new ByteArrayContent(content)
+            });
     }
 }

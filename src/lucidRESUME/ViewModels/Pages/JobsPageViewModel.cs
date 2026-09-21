@@ -526,13 +526,13 @@ public sealed partial class JobsPageViewModel : ViewModelBase
 
     private static string AspectLabel(AspectType type) => type switch
     {
-        AspectType.Skill         => "Skill",
-        AspectType.WorkModel     => "Work Model",
-        AspectType.CompanyType   => "Company Type",
-        AspectType.Industry      => "Industry",
-        AspectType.SalaryBand    => "Salary",
+        AspectType.Skill => "Skill",
+        AspectType.WorkModel => "Work Model",
+        AspectType.CompanyType => "Company Type",
+        AspectType.Industry => "Industry",
+        AspectType.SalaryBand => "Salary",
         AspectType.CultureSignal => "Culture",
-        _                        => type.ToString()
+        _ => type.ToString()
     };
 
     // ── Hiring Mode ────────────────────────────────────────────────────────

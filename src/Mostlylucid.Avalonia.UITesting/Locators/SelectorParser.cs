@@ -126,43 +126,43 @@ public static class SelectorParser
             switch (functionName.ToLowerInvariant())
             {
                 case "first":
-                {
-                    var inner = ParseSelector();
-                    Expect(')');
-                    return inner.First();
-                }
+                    {
+                        var inner = ParseSelector();
+                        Expect(')');
+                        return inner.First();
+                    }
                 case "last":
-                {
-                    var inner = ParseSelector();
-                    Expect(')');
-                    return inner.Last();
-                }
+                    {
+                        var inner = ParseSelector();
+                        Expect(')');
+                        return inner.Last();
+                    }
                 case "nth":
-                {
-                    var nText = ReadUntil(',');
-                    if (!int.TryParse(nText.Trim(), out var n))
-                        throw new SelectorParseException(_src, Position, $"expected integer, got '{nText}'");
-                    Expect(',');
-                    var inner = ParseSelector();
-                    Expect(')');
-                    return inner.Nth(n);
-                }
+                    {
+                        var nText = ReadUntil(',');
+                        if (!int.TryParse(nText.Trim(), out var n))
+                            throw new SelectorParseException(_src, Position, $"expected integer, got '{nText}'");
+                        Expect(',');
+                        var inner = ParseSelector();
+                        Expect(')');
+                        return inner.Nth(n);
+                    }
                 case "inside":
-                {
-                    var container = ParseSelector();
-                    Expect(')');
-                    SkipWhitespace();
-                    var inner = ParseSelector();
-                    return inner.Inside(container);
-                }
+                    {
+                        var container = ParseSelector();
+                        Expect(')');
+                        SkipWhitespace();
+                        var inner = ParseSelector();
+                        return inner.Inside(container);
+                    }
                 case "near":
-                {
-                    var anchor = ParseSelector();
-                    Expect(')');
-                    SkipWhitespace();
-                    var inner = ParseSelector();
-                    return inner.Near(anchor);
-                }
+                    {
+                        var anchor = ParseSelector();
+                        Expect(')');
+                        SkipWhitespace();
+                        var inner = ParseSelector();
+                        return inner.Near(anchor);
+                    }
                 default:
                     throw new SelectorParseException(_src, Position, $"unknown function '{functionName}'");
             }

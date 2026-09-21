@@ -139,6 +139,26 @@ public class SqliteAppStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task VectorStore_supports_both_local_and_ollama_dimensions()
+    {
+        await _store.Vectors.AddAsync(new float[384], "skill", "csharp", "C#");
+        await _store.Vectors.AddAsync(new float[768], "skill", "typescript", "TypeScript");
+
+        Assert.Equal(2, await _store.Vectors.CountAsync());
+        Assert.Single(await _store.Vectors.SearchAsync(new float[384], 5));
+        Assert.Single(await _store.Vectors.SearchAsync(new float[768], 5));
+    }
+
+    [Fact]
+    public async Task VectorStore_allocates_unique_rows_for_concurrent_writers()
+    {
+        await Task.WhenAll(Enumerable.Range(0, 20).Select(index =>
+            _store.Vectors.AddAsync(new float[384], "skill", index.ToString(), $"skill-{index}")));
+
+        Assert.Equal(20, await _store.Vectors.CountAsync());
+    }
+
+    [Fact]
     public async Task ExportJsonAsync_ProducesValidJson()
     {
         var state = new AppState

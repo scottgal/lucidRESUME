@@ -14,7 +14,7 @@ public sealed class SkillMatchingService : IMatchingService
     public SkillMatchingService(AspectExtractor extractor, IEmbeddingService? embeddingService = null)
     {
         _extractor = extractor;
-        _embedder  = embeddingService;
+        _embedder = embeddingService;
     }
 
     public async Task<MatchResult> MatchAsync(ResumeDocument resume, JobDescription job,
@@ -28,9 +28,9 @@ public sealed class SkillMatchingService : IMatchingService
         }
 
         var resumeSkills = resume.Skills.Select(s => s.Name).ToList();
-        var avoidNames   = profile.SkillsToAvoid.Select(s => s.SkillName)
+        var avoidNames = profile.SkillsToAvoid.Select(s => s.SkillName)
                               .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var required     = job.RequiredSkills;
+        var required = job.RequiredSkills;
 
         List<string> matched;
         List<string> missing;
@@ -53,9 +53,9 @@ public sealed class SkillMatchingService : IMatchingService
         baseScore = Math.Clamp(baseScore, 0, 1);
 
         // ── Vote-weighted adjustment ─────────────────────────────────────────
-        var aspects        = _extractor.Extract(job);
-        double voteAdjust  = aspects.Sum(a => profile.GetVoteScore(a.Type, a.Value) * 0.05);
-        double finalScore  = Math.Clamp(baseScore + voteAdjust, 0.0, 1.0);
+        var aspects = _extractor.Extract(job);
+        double voteAdjust = aspects.Sum(a => profile.GetVoteScore(a.Type, a.Value) * 0.05);
+        double finalScore = Math.Clamp(baseScore + voteAdjust, 0.0, 1.0);
 
         var summary = $"{matched.Count}/{required.Count} required skills matched. Score: {finalScore:P0}.";
         if (avoidHits.Count > 0)
@@ -89,13 +89,13 @@ public sealed class SkillMatchingService : IMatchingService
 
         try
         {
-            reqVecs    = await Task.WhenAll(required.Select(s => embedder.EmbedAsync(s, ct)));
+            reqVecs = await Task.WhenAll(required.Select(s => embedder.EmbedAsync(s, ct)));
             resumeVecs = await Task.WhenAll(resumeSkills.Select(s => embedder.EmbedAsync(s, ct)));
         }
         catch
         {
             // Embedding failed - fall back to exact match
-            var set      = resumeSkills.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var set = resumeSkills.ToHashSet(StringComparer.OrdinalIgnoreCase);
             var matched2 = required.Where(s => set.Contains(s)).ToList();
             var missing2 = required.Where(s => !set.Contains(s)).ToList();
             return (matched2, missing2);

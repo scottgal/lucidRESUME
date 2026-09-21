@@ -26,7 +26,7 @@ public static class ScriptLoader
     public static UXScript LoadFromJson(string path)
     {
         var json = File.ReadAllText(path);
-        return JsonConvert.DeserializeObject<UXScript>(json) 
+        return JsonConvert.DeserializeObject<UXScript>(json)
             ?? throw new InvalidDataException($"Failed to parse {path}");
     }
 

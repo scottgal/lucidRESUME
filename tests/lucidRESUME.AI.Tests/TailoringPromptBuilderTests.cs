@@ -26,7 +26,7 @@ public class TailoringPromptBuilderTests
         resume.RawMarkdown = "# Jane Smith\n## Skills\n- C#";
         var job = JobDescription.Create("role", new JobSource { Type = JobSourceType.PastedText });
         var coverage = MakeCoverage(CompanyType.Unknown,
-            ("C#",         RequirementPriority.Required, "C#"),
+            ("C#", RequirementPriority.Required, "C#"),
             ("Kubernetes", RequirementPriority.Required, null));
 
         var prompt = TailoringPromptBuilder.Build(resume, job, new UserProfile(), coverage: coverage);
@@ -68,13 +68,13 @@ public class TailoringPromptBuilderTests
         resume.RawMarkdown = "# Jane";
         var job = JobDescription.Create("role", new JobSource { Type = JobSourceType.PastedText });
         var coverage = MakeCoverage(CompanyType.Unknown,
-            ("C#",         RequirementPriority.Required, "C#"),
+            ("C#", RequirementPriority.Required, "C#"),
             ("Kubernetes", RequirementPriority.Required, null));
 
         var prompt = TailoringPromptBuilder.Build(resume, job, new UserProfile(), coverage: coverage);
 
         int coveredIdx = prompt.IndexOf("C#", StringComparison.Ordinal);
-        int gapIdx     = prompt.IndexOf("Kubernetes", StringComparison.Ordinal);
+        int gapIdx = prompt.IndexOf("Kubernetes", StringComparison.Ordinal);
         Assert.True(coveredIdx < gapIdx, "Covered requirements should appear before gaps");
     }
 

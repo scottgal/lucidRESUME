@@ -56,6 +56,28 @@ public sealed class EvidenceLedgerBuilderTests
     }
 
     [Fact]
+    public void Rebuild_KeepsMachineExtractionDerivedUntilReview()
+    {
+        var resume = ResumeDocument.Create("resume.docx", "application/docx", 100);
+        resume.Skills.Add(new Skill { Name = "Kubernetes", ImportSources = ["LLM extraction"] });
+        resume.Entities.Add(new ExtractedEntity
+        {
+            Value = "Terraform",
+            Classification = "NerSkill",
+            Source = DetectionSource.Ner,
+            Confidence = 0.9
+        });
+
+        var ledger = EvidenceLedgerBuilder.Rebuild(resume);
+        var machineClaims = ledger.Claims.Where(claim =>
+            claim.Statement is "Kubernetes" or "Terraform").ToList();
+
+        Assert.Equal(2, machineClaims.Count);
+        Assert.All(machineClaims, claim => Assert.Equal("derived", claim.Origin));
+        Assert.All(machineClaims, claim => Assert.Equal("required", claim.Review));
+    }
+
+    [Fact]
     public void RebuildFromSources_PreservesOriginalDocumentEvidenceIds()
     {
         var first = ResumeDocument.Create("first.docx", "application/docx", 10);

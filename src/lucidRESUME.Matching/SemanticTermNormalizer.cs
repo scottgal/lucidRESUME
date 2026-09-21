@@ -32,8 +32,8 @@ public sealed class SemanticTermNormalizer : ITermNormalizer
 
         for (int i = 0; i < targetTerms.Count; i++)
         {
-            float bestSim  = -1f;
-            int   bestIdx  = -1;
+            float bestSim = -1f;
+            int bestIdx = -1;
 
             for (int j = 0; j < sourceTerms.Count; j++)
             {

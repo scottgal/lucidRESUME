@@ -46,9 +46,9 @@ public sealed class AspectExtractor
 
         // WorkModel
         string workModel;
-        if (job.IsRemote == true)      workModel = "Remote";
+        if (job.IsRemote == true) workModel = "Remote";
         else if (job.IsHybrid == true) workModel = "Hybrid";
-        else                           workModel = "Onsite";
+        else workModel = "Onsite";
         Add(AspectType.WorkModel, workModel, "IsRemote/IsHybrid");
 
         // SalaryBand
@@ -84,10 +84,10 @@ public sealed class AspectExtractor
 
     private static string BucketSalary(decimal min) => min switch
     {
-        < 40_000m  => "Under £40k",
-        < 60_000m  => "£40-60k",
-        < 80_000m  => "£60-80k",
+        < 40_000m => "Under £40k",
+        < 60_000m => "£40-60k",
+        < 80_000m => "£60-80k",
         < 100_000m => "£80-100k",
-        _          => "£100k+"
+        _ => "£100k+"
     };
 }

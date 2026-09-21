@@ -19,7 +19,7 @@ public sealed class CollaboraEditorControl : UserControl
     public CollaboraEditorControl(CollaboraService collaboraService)
     {
         _collaboraService = collaboraService;
-        
+
         _statusText = new TextBlock
         {
             Text = "No document loaded",
@@ -30,7 +30,7 @@ public sealed class CollaboraEditorControl : UserControl
             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
             TextAlignment = Avalonia.Media.TextAlignment.Center
         };
-        
+
         _openButton = new Button
         {
             Content = "Open in Editor",
@@ -39,9 +39,9 @@ public sealed class CollaboraEditorControl : UserControl
             Margin = new Avalonia.Thickness(0, 12, 0, 0),
             Padding = new Avalonia.Thickness(16, 8)
         };
-        
+
         _openButton.Click += async (_, _) => await OpenInEditorAsync();
-        
+
         Content = new StackPanel
         {
             Orientation = Orientation.Vertical,
@@ -63,7 +63,7 @@ public sealed class CollaboraEditorControl : UserControl
 
         var extension = Path.GetExtension(filePath).ToLowerInvariant();
         var supportedExtensions = new[] { ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".pdf", ".odt", ".ods", ".odp" };
-        
+
         if (!supportedExtensions.Contains(extension))
         {
             _statusText.Text = $"Unsupported format: {extension}\nSupported: .docx, .xlsx, .pptx, .pdf";
@@ -74,7 +74,7 @@ public sealed class CollaboraEditorControl : UserControl
         try
         {
             _statusText.Text = "Starting Collabora...";
-            
+
             var started = await _collaboraService.EnsureStartedAsync();
             if (!started)
             {
@@ -82,13 +82,13 @@ public sealed class CollaboraEditorControl : UserControl
                 _openButton.IsVisible = false;
                 return false;
             }
-            
+
             _currentFilePath = filePath;
             _currentFileId = _collaboraService.RegisterFile(filePath);
-            
+
             _statusText.Text = $"Ready: {Path.GetFileName(filePath)}\n\nClick below to open in Collabora editor";
             _openButton.IsVisible = true;
-            
+
             _ = OpenInEditorAsync();
             return true;
         }
@@ -103,9 +103,9 @@ public sealed class CollaboraEditorControl : UserControl
     private async Task OpenInEditorAsync()
     {
         if (_currentFileId == null) return;
-        
+
         var editorUrl = _collaboraService.GetEditorUrl(_currentFileId);
-        
+
         try
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -129,7 +129,7 @@ public sealed class CollaboraEditorControl : UserControl
         {
             _statusText.Text = $"Failed to open browser: {ex.Message}";
         }
-        
+
         await Task.CompletedTask;
     }
 
@@ -140,7 +140,7 @@ public sealed class CollaboraEditorControl : UserControl
             _collaboraService.UnregisterFile(_currentFileId);
             _currentFileId = null;
         }
-        
+
         _currentFilePath = null;
         _statusText.Text = "No document loaded";
         _openButton.IsVisible = false;

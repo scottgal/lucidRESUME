@@ -167,8 +167,11 @@ public sealed class OpenAiTailoringService : IAiTailoringService
 
         if (resumeTerms.Count > 0 && jdTerms.Count > 0)
         {
-            try { termMappings = await _termNormalizer.FindMatchesAsync(jdTerms, resumeTerms,
-                _tailoringOptions.TermNormalizationMinSimilarity, ct); }
+            try
+            {
+                termMappings = await _termNormalizer.FindMatchesAsync(jdTerms, resumeTerms,
+                _tailoringOptions.TermNormalizationMinSimilarity, ct);
+            }
             catch (Exception ex) { _logger.LogWarning(ex, "Term normalization failed"); }
         }
 

@@ -90,7 +90,7 @@ All imports merge into a **single candidate document**. Whether you import a DOC
 - **Education**: matched by institution
 - **Projects**: matched by name
 
-Each element tracks which imports contributed to it (e.g. "LinkedIn + Scott_Galloway_CTO.docx").
+Each element tracks which imports contributed to it (e.g. "LinkedIn + executive-resume.docx").
 
 ### Import Review
 

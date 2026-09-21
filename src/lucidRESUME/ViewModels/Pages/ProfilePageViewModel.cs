@@ -18,6 +18,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     private readonly GitHubSkillImporter _gitHubImporter;
     private readonly LlamaSharpModelManager _llamaSharpModels;
     private CancellationTokenSource? _saveCts;
+    private readonly SemaphoreSlim _saveGate = new(1, 1);
     private bool _isLoading;
 
     // ── Who they are ─────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
 
     // ── Toast ─────────────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isSaved;
+    [ObservableProperty] private string? _saveError;
 
     // ── AI Provider Settings ────────────────────────────────────────────────
     public IReadOnlyList<string> AiProviders { get; } = ["llamasharp", "ollama", "anthropic", "openai"];
@@ -135,14 +137,21 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         if (_isLoading) return;
 
         _saveCts?.Cancel();
+        _saveCts?.Dispose();
         _saveCts = new CancellationTokenSource();
-        var token = _saveCts.Token;
+        _ = SaveAfterDelayAsync(_saveCts.Token);
+    }
 
-        Task.Delay(800, token).ContinueWith(
-            _ => SaveAsync(),
-            token,
-            TaskContinuationOptions.OnlyOnRanToCompletion,
-            TaskScheduler.Default);
+    private async Task SaveAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(800, cancellationToken);
+            await _saveGate.WaitAsync(cancellationToken);
+            try { await SaveAsync(); }
+            finally { _saveGate.Release(); }
+        }
+        catch (OperationCanceledException) { }
     }
 
     // ── Load ──────────────────────────────────────────────────────────────────
@@ -152,6 +161,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         _isLoading = true;
         try
         {
+            SaveError = null;
             var state = await _store.LoadAsync();
             var profile = state.Profile;
 
@@ -222,9 +232,9 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             await Task.Delay(2000);
             IsSaved = false;
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently ignore save errors for now
+            SaveError = $"Autosave failed: {ex.Message}";
         }
     }
 

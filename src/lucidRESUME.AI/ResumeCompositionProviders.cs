@@ -48,7 +48,9 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
             {
                 format = new
                 {
-                    type = "json_schema", name = "bounded_resume_edit", strict = true,
+                    type = "json_schema",
+                    name = "bounded_resume_edit",
+                    strict = true,
                     schema = Schema()
                 }
             }
@@ -74,7 +76,8 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
                     type = "object",
                     properties = new
                     {
-                        sectionId = new { type = "string" }, text = new { type = "string" },
+                        sectionId = new { type = "string" },
+                        text = new { type = "string" },
                         claimIds = new { type = "array", items = new { type = "string" } },
                         evidenceIds = new { type = "array", items = new { type = "string" } }
                     },
@@ -84,7 +87,8 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
             },
             warnings = new { type = "array", items = new { type = "string" } }
         },
-        required = new[] { "blocks", "warnings" }, additionalProperties = false
+        required = new[] { "blocks", "warnings" },
+        additionalProperties = false
     };
 
     private static string SystemInstructions(CompositionPass pass) => $"""

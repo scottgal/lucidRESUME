@@ -48,7 +48,7 @@ public sealed class TemplateFingerprint
     public string PageMargins { get; init; } = string.Empty;
 
     /// <summary>
-    /// Template file name from app.xml &lt;Template&gt; (e.g. "ScottCV.dotx", "Normal.dotm").
+    /// Template file name from app.xml &lt;Template&gt; (e.g. "ExecutiveCV.dotx", "Normal.dotm").
     /// Empty string when not set.
     /// </summary>
     [JsonPropertyName("attachedTemplate")]
