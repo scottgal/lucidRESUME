@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using lucidRESUME.AI;
@@ -15,6 +16,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     private readonly IAppStore _store;
     private readonly ModelDiscoveryService _modelDiscovery;
     private readonly AiSettingsPath _aiSettingsPath;
+    private readonly ISecretStore _secretStore;
     private readonly GitHubSkillImporter _gitHubImporter;
     private readonly LlamaSharpModelManager _llamaSharpModels;
     private CancellationTokenSource? _saveCts;
@@ -67,16 +69,18 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     [ObservableProperty] private string? _saveError;
 
     // ── AI Provider Settings ────────────────────────────────────────────────
-    public IReadOnlyList<string> AiProviders { get; } = ["llamasharp", "ollama", "anthropic", "openai"];
-    [ObservableProperty] private string _aiProvider = "llamasharp";
+    public IReadOnlyList<string> AiProviders { get; } = ["openai", "anthropic", "ollama", "llamasharp"];
+    [ObservableProperty] private string _aiProvider = "openai";
     [ObservableProperty] private string _anthropicApiKey = "";
     [ObservableProperty] private string _openAiApiKey = "";
+    [ObservableProperty] private bool _jevEnabled;
+    [ObservableProperty] private string _jevApiKey = "";
     [ObservableProperty] private string _selectedModel = "";
     [ObservableProperty] private ObservableCollection<string> _availableModelIds = [];
     [ObservableProperty] private ObservableCollection<ModelInfo> _availableModels = [];
     [ObservableProperty] private bool _isLoadingModels;
     [ObservableProperty] private string? _aiSettingsStatus;
-    [ObservableProperty] private bool _isLlamaSharp = true;
+    [ObservableProperty] private bool _isLlamaSharp;
     [ObservableProperty] private bool _isDownloadingLlamaSharp;
     [ObservableProperty] private double _llamaSharpDownloadProgress;
 
@@ -89,12 +93,14 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         IAppStore store,
         ModelDiscoveryService modelDiscovery,
         AiSettingsPath aiSettingsPath,
+        ISecretStore secretStore,
         GitHubSkillImporter gitHubImporter,
         LlamaSharpModelManager llamaSharpModels)
     {
         _store = store;
         _modelDiscovery = modelDiscovery;
         _aiSettingsPath = aiSettingsPath;
+        _secretStore = secretStore;
         _gitHubImporter = gitHubImporter;
         _llamaSharpModels = llamaSharpModels;
 
@@ -298,6 +304,9 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
 
     private async Task LoadAiSettingsAsync()
     {
+        var legacyAnthropicKey = "";
+        var legacyOpenAiKey = "";
+        var legacyJevKey = "";
         try
         {
             if (File.Exists(_aiSettingsPath.Path))
@@ -306,13 +315,18 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                 var doc = JsonDocument.Parse(json);
                 if (doc.RootElement.TryGetProperty("Tailoring", out var tailoring) &&
                     tailoring.TryGetProperty("Provider", out var provider))
-                    AiProvider = provider.GetString() ?? "llamasharp";
+                    AiProvider = provider.GetString() ?? "openai";
                 if (doc.RootElement.TryGetProperty("Anthropic", out var anthropic) &&
                     anthropic.TryGetProperty("ApiKey", out var aKey))
-                    AnthropicApiKey = aKey.GetString() ?? "";
+                    legacyAnthropicKey = aKey.GetString() ?? "";
                 if (doc.RootElement.TryGetProperty("OpenAi", out var openai) &&
                     openai.TryGetProperty("ApiKey", out var oKey))
-                    OpenAiApiKey = oKey.GetString() ?? "";
+                    legacyOpenAiKey = oKey.GetString() ?? "";
+                if (doc.RootElement.TryGetProperty("Jev", out var jev))
+                {
+                    if (jev.TryGetProperty("Enabled", out var enabled)) JevEnabled = enabled.GetBoolean();
+                    if (jev.TryGetProperty("ApiKey", out var jKey)) legacyJevKey = jKey.GetString() ?? "";
+                }
                 if (doc.RootElement.TryGetProperty("Anthropic", out var a2) &&
                     a2.TryGetProperty("Model", out var model))
                     SelectedModel = model.GetString() ?? "";
@@ -320,8 +334,28 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                          o2.TryGetProperty("Model", out var oModel))
                     SelectedModel = oModel.GetString() ?? "";
             }
+
+            if (_secretStore.IsAvailable)
+            {
+                AnthropicApiKey = await LoadOrMigrateSecretAsync(AiSecretNames.AnthropicApiKey, legacyAnthropicKey);
+                OpenAiApiKey = await LoadOrMigrateSecretAsync(AiSecretNames.OpenAiApiKey, legacyOpenAiKey);
+                JevApiKey = await LoadOrMigrateSecretAsync(AiSecretNames.JevApiKey, legacyJevKey);
+                if (legacyAnthropicKey.Length > 0 || legacyOpenAiKey.Length > 0 || legacyJevKey.Length > 0)
+                    await RemoveLegacySecretsAsync();
+            }
+            else
+            {
+                // Retain legacy values in memory so the user can migrate them after
+                // installing a supported keyring. Never write them back to JSON.
+                AnthropicApiKey = legacyAnthropicKey;
+                OpenAiApiKey = legacyOpenAiKey;
+                JevApiKey = legacyJevKey;
+            }
         }
-        catch { /* use defaults */ }
+        catch (Exception ex)
+        {
+            AiSettingsStatus = $"Could not load or migrate AI settings: {ex.Message}";
+        }
 
         await RefreshModelsAsync();
     }
@@ -359,20 +393,37 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     {
         try
         {
+            if (!_secretStore.IsAvailable)
+                throw new InvalidOperationException(
+                    "No OS credential store is available. Install secret-tool/libsecret on Linux before saving API keys.");
+            if (JevEnabled && string.IsNullOrWhiteSpace(JevApiKey))
+                throw new InvalidOperationException("Enter a Jev API key before enabling Jev-assisted ingestion.");
+
+            await SaveSecretAsync(AiSecretNames.AnthropicApiKey, AnthropicApiKey);
+            await SaveSecretAsync(AiSecretNames.OpenAiApiKey, OpenAiApiKey);
+            await SaveSecretAsync(AiSecretNames.JevApiKey, JevApiKey);
+
             var settings = new Dictionary<string, object>
             {
-                ["Tailoring"] = new Dictionary<string, string> { ["Provider"] = AiProvider },
+                ["Tailoring"] = new Dictionary<string, string>
+                {
+                    ["Provider"] = AiProvider,
+                    ["ExtractionProvider"] = AiProvider
+                },
                 ["Anthropic"] = new Dictionary<string, string>
                 {
-                    ["ApiKey"] = AnthropicApiKey,
                     ["Model"] = AiProvider == "anthropic" ? SelectedModel : "",
                     ["ExtractionModel"] = AiProvider == "anthropic" ? SelectedModel : ""
                 },
                 ["OpenAi"] = new Dictionary<string, string>
                 {
-                    ["ApiKey"] = OpenAiApiKey,
                     ["Model"] = AiProvider == "openai" ? SelectedModel : "",
                     ["ExtractionModel"] = AiProvider == "openai" ? SelectedModel : ""
+                },
+                ["Jev"] = new Dictionary<string, object>
+                {
+                    ["Enabled"] = JevEnabled,
+                    ["Model"] = "jev-1.13.0"
                 },
                 ["Ollama"] = new Dictionary<string, string>
                 {
@@ -387,26 +438,57 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             };
 
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            var directory = Path.GetDirectoryName(_aiSettingsPath.Path)
-                            ?? throw new InvalidOperationException("AI settings path has no parent directory.");
-            Directory.CreateDirectory(directory);
-            var temporaryPath = Path.Combine(directory, $".ai-settings-{Guid.NewGuid():N}.tmp");
-            try
-            {
-                await File.WriteAllTextAsync(temporaryPath, json);
-                if (!OperatingSystem.IsWindows())
-                    File.SetUnixFileMode(temporaryPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
-                File.Move(temporaryPath, _aiSettingsPath.Path, true);
-            }
-            finally
-            {
-                if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
-            }
-            AiSettingsStatus = $"Saved. Restart app to apply {AiProvider}/{SelectedModel}.";
+            await WriteSettingsAtomicallyAsync(json);
+            AiSettingsStatus = $"Saved. API keys are in {_secretStore.BackendName}. Restart to apply settings.";
         }
         catch (Exception ex)
         {
             AiSettingsStatus = $"Save failed: {ex.Message}";
+        }
+    }
+
+    private async Task<string> LoadOrMigrateSecretAsync(string name, string legacyValue)
+    {
+        var stored = await _secretStore.GetAsync(name);
+        if (!string.IsNullOrWhiteSpace(stored)) return stored;
+        if (string.IsNullOrWhiteSpace(legacyValue)) return "";
+        await _secretStore.SetAsync(name, legacyValue);
+        return legacyValue;
+    }
+
+    private async Task SaveSecretAsync(string name, string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) await _secretStore.DeleteAsync(name);
+        else await _secretStore.SetAsync(name, value.Trim());
+    }
+
+    private async Task RemoveLegacySecretsAsync()
+    {
+        var json = await File.ReadAllTextAsync(_aiSettingsPath.Path);
+        var root = JsonNode.Parse(json)?.AsObject()
+                   ?? throw new InvalidDataException("AI settings are not a JSON object.");
+        foreach (var sectionName in new[] { "Anthropic", "OpenAi", "Jev" })
+            if (root[sectionName] is JsonObject section)
+                section.Remove("ApiKey");
+        await WriteSettingsAtomicallyAsync(root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private async Task WriteSettingsAtomicallyAsync(string json)
+    {
+        var directory = Path.GetDirectoryName(_aiSettingsPath.Path)
+                        ?? throw new InvalidOperationException("AI settings path has no parent directory.");
+        Directory.CreateDirectory(directory);
+        var temporaryPath = Path.Combine(directory, $".ai-settings-{Guid.NewGuid():N}.tmp");
+        try
+        {
+            await File.WriteAllTextAsync(temporaryPath, json);
+            if (!OperatingSystem.IsWindows())
+                File.SetUnixFileMode(temporaryPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            File.Move(temporaryPath, _aiSettingsPath.Path, true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
         }
     }
 

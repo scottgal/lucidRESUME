@@ -59,6 +59,12 @@ public sealed class ResumeDocument
     // Extraction metadata
     public List<ExtractedEntity> Entities { get; set; } = [];
 
+    /// <summary>
+    /// Auditable, ingestion-time decisions made after deterministic extraction. These
+    /// records are advisory provenance; output rendering never re-runs them.
+    /// </summary>
+    public List<IngestionDecision> IngestionDecisions { get; set; } = [];
+
     /// <summary>Persisted ingestion-time claims and evidence. All output is projected from this ledger.</summary>
     public EvidenceLedger EvidenceLedger { get; set; } = new();
 

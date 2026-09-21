@@ -16,9 +16,17 @@ public static class ServiceCollectionExtensions
         services.Configure<LlamaSharpOptions>(config.GetSection("LlamaSharp"));
         services.Configure<TailoringOptions>(config.GetSection("Tailoring"));
         services.Configure<EmbeddingOptions>(config.GetSection("Embedding"));
+        services.Configure<JevOptions>(config.GetSection("Jev"));
 
-        // Provider selection: local, in-process LLamaSharp is the default.
-        var tailoringProvider = config.GetSection("Tailoring").GetValue<string>("Provider") ?? "llamasharp";
+        if (config.GetSection("Jev").GetValue<bool>("Enabled"))
+        {
+            services.AddHttpClient<IResumeDecisionProvider, JevResumeDecisionProvider>(client =>
+                client.Timeout = TimeSpan.FromSeconds(30));
+        }
+
+        // Full-strength OpenAI is the primary configured provider. Local LLamaSharp
+        // remains available as an explicitly selected experimental/offline path.
+        var tailoringProvider = config.GetSection("Tailoring").GetValue<string>("Provider") ?? "openai";
         var extractionProvider = config.GetSection("Tailoring").GetValue<string>("ExtractionProvider")
                                  ?? tailoringProvider;
 

@@ -19,6 +19,7 @@ public sealed class ResumeParser : IResumeParser
     private readonly TemplateRegistry _templateRegistry;
     private readonly Layout.DocumentLayoutDetector? _layoutDetector;
     private readonly ILlmExtractionService? _llm;
+    private readonly ResumeDecisionResolver? _decisionResolver;
     private readonly ILogger<ResumeParser> _logger;
 
     public ResumeParser(
@@ -29,7 +30,8 @@ public sealed class ResumeParser : IResumeParser
         ILogger<ResumeParser> logger,
         IDoclingClient? docling = null,
         Layout.DocumentLayoutDetector? layoutDetector = null,
-        ILlmExtractionService? llm = null)
+        ILlmExtractionService? llm = null,
+        ResumeDecisionResolver? decisionResolver = null)
     {
         _docling = docling;
         _extraction = extraction;
@@ -38,6 +40,7 @@ public sealed class ResumeParser : IResumeParser
         _templateRegistry = templateRegistry;
         _layoutDetector = layoutDetector;
         _llm = llm;
+        _decisionResolver = decisionResolver;
         _logger = logger;
     }
 
@@ -132,9 +135,15 @@ public sealed class ResumeParser : IResumeParser
 
         MapEntitiesToSchema(resume, entities);
         InferName(resume, markdown);
+        if (_decisionResolver is not null && mode != ParseMode.Fast && _nameConfidence < 0.80)
+            await _decisionResolver.ResolveNameAsync(resume, plainText ?? markdown, ct);
 
         // ── 4. Section parsing ────────────────────────────────────────────
+        if (structuredSections is { Count: > 0 } && _decisionResolver is not null && mode != ParseMode.Fast)
+            structuredSections = await _decisionResolver.ResolveSectionsAsync(resume, structuredSections, ct);
         MarkdownSectionParser.PopulateSections(resume, markdown, structuredSections);
+        if (_decisionResolver is not null && mode != ParseMode.Fast)
+            await _decisionResolver.ResolveMissingCompaniesAsync(resume, ct);
         foreach (var experience in resume.Experience) AddSource(experience.ImportSources, fileInfo.Name);
         foreach (var skill in resume.Skills) AddSource(skill.ImportSources, fileInfo.Name);
         foreach (var education in resume.Education) AddSource(education.ImportSources, fileInfo.Name);

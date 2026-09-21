@@ -55,6 +55,9 @@ public sealed class OpenAiExtractionService : ILlmExtractionService
         return result.Trim('"', '\'', '.', ' ', '\n', '\r');
     }
 
+    public Task<string?> ExtractJsonAsync(string prompt, CancellationToken ct = default) =>
+        CallAsync(prompt, ct);
+
     private async Task<string?> CallAsync(string prompt, CancellationToken ct)
     {
         try

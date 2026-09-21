@@ -548,7 +548,13 @@ Auto-detected events are flagged so you can verify them.
 <!-- help:ai-provider-setup -->
 ## AI Provider Setup
 
-### LLamaSharp with grug 9B (Default - Local)
+### OpenAI (Primary Full-Strength Provider)
+
+1. Get an API key from [platform.openai.com](https://platform.openai.com)
+2. On the Profile page, enter your API key in the OpenAI field
+3. Select the available model you want to use
+
+### LLamaSharp with grug 9B (Experimental - Local)
 
 Download the optional GGUF model from Profile. It runs in-process and is used for
 ingestion assistance, optional authoring drafts, and explicitly enabled bounded
@@ -571,22 +577,38 @@ The app connects to `http://localhost:11434` by default. Change this on the Prof
 2. On the Profile page, enter your API key in the Anthropic field
 3. Select a model (Claude Haiku is cheapest, Sonnet is best value)
 
-### OpenAI (Cloud)
+### Jev (Bounded Cloud Decision Layer)
 
-1. Get an API key from [platform.openai.com](https://platform.openai.com)
-2. On the Profile page, enter your API key in the OpenAI field
-3. Select a model (GPT-4o-mini is cheapest)
+Jev is separate from the prose provider. When enabled, it can resolve a small
+number of ingestion ambiguities after local parsing and NER have produced a
+closed candidate set. Current tasks are unknown section classification, choosing
+between competing name candidates, and selecting an employer for an experience
+entry whose company is missing.
+
+Jev cannot generate a new name, company, claim, or evidence passage. Low
+probability or low-margin decisions remain unresolved for review. Candidate text
+is sent to TypeSafe only after you enable Jev and provide your own API key.
+
+### API Key Storage
+
+Cloud API keys entered on the Profile page are stored in macOS Keychain, Windows
+Credential Manager, or the Linux Secret Service. They are not written to
+`ai-settings.json`. Existing plaintext OpenAI or Anthropic keys are migrated to
+the OS credential store and removed from that file when the settings page loads.
+Linux users need `secret-tool` and a working Secret Service provider.
 
 ### Which to Choose?
 
 | Provider | Cost | Speed | Quality | Privacy |
 |----------|------|-------|---------|---------|
+| LLamaSharp/grug (experimental local) | Free | Hardware-dependent | Under benchmark | Full - nothing leaves your machine |
 | Ollama (local) | Free | Depends on hardware | Good with 4B+ models | Full - nothing leaves your machine |
 | Anthropic Haiku | ~$0.001/resume | Fast | Very good | Data sent to Anthropic |
 | Anthropic Sonnet | ~$0.01/resume | Medium | Excellent | Data sent to Anthropic |
-| OpenAI GPT-4o-mini | ~$0.002/resume | Fast | Very good | Data sent to OpenAI |
+| OpenAI | Model-dependent | Model-dependent | Excellent with full-strength models | Data sent to OpenAI |
+| Jev decision layer | Usage-based | Fast | Bounded choices only | Candidate passages sent to TypeSafe |
 
-> **Recommendation:** Use deterministic extraction and NER first. Enable a language model only when source documents need additional ingestion help.
+> **Recommendation:** Use deterministic extraction and NER first. Use full-strength OpenAI when source documents need model assistance. Jev is the bounded decision layer for closed candidate sets. Keep the local grug path experimental until larger held-out benchmarks justify promotion.
 
 ---
 

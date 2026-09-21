@@ -23,8 +23,10 @@ The ledger and deterministic extraction pipeline run locally on your machine. No
 account is required. Data leaves your machine only when you explicitly configure
 a cloud AI provider, import a remote source, or use an online job-search service.
 
-OpenAI, grug 9B through LLamaSharp, Ollama, or Anthropic can assist ingestion and
-can offer an explicitly labelled prose draft or sample. A draft is not accepted
+OpenAI is the primary full-strength provider for assisted ingestion and optional
+drafting. Anthropic and Ollama are also supported. grug 9B through LLamaSharp is
+an experimental offline path. These providers can offer an explicitly labelled
+prose draft or sample. A draft is not accepted
 prose, evidence, or a published claim. The person remains the author and decides
 what to edit, accept, and publish.
 
@@ -57,6 +59,15 @@ template rationale, and configuration.
 
 No invented skills. No output-time guessing. Extraction is recorded once with its
 method, confidence, source, and review state.
+
+An optional Jev decision layer can resolve bounded ingestion ambiguities after local
+rules and NER have proposed candidates. It can classify an unknown section or
+select an already-extracted person or employer span. It cannot generate a new
+name, company, claim, or evidence value. Every decision is probability-gated,
+source-hashed, and recorded for review. Jev is disabled by default because the
+current service is hosted. See the [experiment and benchmark guide](docs/jev-parsing-experiment.md).
+Cloud API keys entered in Profile are held by the operating system credential
+store, never in the JSON settings file.
 
 This is the foundation everything else builds on - matching, projection, gap analysis, and career direction.
 
@@ -98,7 +109,7 @@ Every major job site wants your email, your browsing history, and permission to 
 
 ***lucid*RESUME** does things differently:
 
-- **Local-first AI** - the default is [grug 9B Q4_K_M](https://huggingface.co/ProCreations/grug-9b-gguf) running in-process through LLamaSharp. Ollama, Anthropic, and OpenAI remain optional providers.
+- **Evidence-first AI** - full-strength OpenAI is the primary assisted path; [grug 9B Q4_K_M](https://huggingface.co/ProCreations/grug-9b-gguf) through LLamaSharp remains an experimental offline option. Neither path runs during deterministic projection.
 - **No account required** - data stored in a local SQLite database. You own it.
 - **Evidence-led projection** - Project only renders claims already present in the ledger.
 - **Career direction (based on your actual skill graph)** - not just "match this job" but "what to do next to reach your target cluster".
@@ -205,6 +216,7 @@ JSON Resume (standard schema), Markdown, **DOCX** (Word via OpenXml), and **PDF*
 - [Release & Archive Guide](docs/release.md) - release workflow, platform archives, and single-page docs archive.
 - [Technical Architecture](docs/architecture.md) - modules, data flow, persistence, and extraction pipeline.
 - [Document Layout Detection](docs/layout-detection.md) - DocLayNet YOLO model, structural hashing, template communities.
+- [Jev-assisted Parsing and Benchmarking](docs/jev-parsing-experiment.md) - bounded NER decisions, privacy, drift records, and reproducible benchmarks.
 - [JobML 0.1 Specification](docs/jobml-0.1-specification.md) - normative document model, evidence reconciliation, review states, and extensions.
 - [cJobML 0.1 Publication Projection](docs/cjobml-0.1-specification.md) - compact numbered citations, references, full-ledger endpoints, and one-pass parsing.
 - [JobML Web Compiler](docs/jobml-web-compiler.md) - complete master publication, deterministic role projection, bounded prose editing, and ASP.NET Core integration.
@@ -277,20 +289,25 @@ record is stored with provenance and requires review. Draft prose remains
 unaccepted until a person edits and approves it. Resume projection and export
 work without a language model.
 
-**Option 1: Local AI with LLamaSharp (recommended)**
+**Option 1: OpenAI (primary full-strength provider)**
 1. Open **Profile → AI Provider**
-2. Keep `llamasharp` selected and click **Download local model**
+2. Enter your OpenAI API key and select `openai`
+3. Select the model and save. The key is stored in the operating system credential store.
+
+**Option 2: Local AI with LLamaSharp (experimental)**
+1. Open **Profile → AI Provider**
+2. Select `llamasharp` and click **Download local model**
 3. Restart the app after the 5.63 GB Q4_K_M download completes
 
 The model is loaded lazily and uses its embedded chat template. Apple Silicon uses the Metal support included in the LLamaSharp CPU backend; other platforms have a portable CPU fallback. Set `LlamaSharp:ModelPath`, `ContextSize`, or `GpuLayerCount` in `lucidresume.json` to override the defaults. Relative model paths resolve under the user data directory, outside the signed application bundle.
 
-**Option 2: Local AI with [Ollama](https://ollama.ai)**
+**Option 3: Local AI with [Ollama](https://ollama.ai)**
 1. Install Ollama and run `ollama pull qwen3.5:4b`
 2. Select `ollama` under **Profile → AI Provider**
 
-**Option 3: Cloud AI (Anthropic or OpenAI)**
+**Option 4: Anthropic**
 1. Open the **Profile** page in the app
-2. Enter your API key and select the provider
+2. Enter your Anthropic API key and select `anthropic`
 
 ### Build from Source
 
@@ -362,21 +379,22 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test lucidRESUME.sln    # 371 tests across 11 projects
+dotnet test lucidRESUME.sln    # 388 tests across 12 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 74 | Persistence, models, multi-resume, export, linked posts |
+| Core.Tests | 77 | Persistence, models, multi-resume, export, linked posts |
 | Extraction.Tests | 24 | NER, recognizers, RRF fusion pipeline |
-| AI.Tests | 27 | Providers, embeddings, deterministic projection, gated live OpenAI checks |
-| Matching.Tests | 57 | Skill scoring, filters, voting, projection quality |
+| AI.Tests | 34 | Providers, embeddings, bounded decisions, deterministic projection, gated live OpenAI checks |
+| Matching.Tests | 58 | Skill scoring, filters, voting, projection quality |
 | JobSpec.Tests | 8 | JD parsing, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
 | GitHub.Tests | 26 | Language map, LinkedIn parser, document merger |
-| JobML.Tests | 26 | Parsing, validation, drift, reversible links, cJobML projection |
-| Compiler.Tests | 4 | Deterministic evidence selection and projection orchestration |
-| Web.Tests | 2 | ASP.NET Core endpoint and projection control |
+| JobML.Tests | 27 | Parsing, validation, drift, reversible links, cJobML projection |
+| Compiler.Tests | 6 | Deterministic evidence selection and projection orchestration |
+| Web.Tests | 3 | ASP.NET Core endpoint and projection control |
+| App.Tests | 2 | Native operating-system credential storage |
 | Avalonia.UITesting.Tests | 98 | Input, scripts, locators, screenshots, REPL |
 
 ---

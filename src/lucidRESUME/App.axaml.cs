@@ -13,6 +13,7 @@ using lucidRESUME.JobSpec;
 using lucidRESUME.EmailTracker;
 using lucidRESUME.GitHub;
 using lucidRESUME.Matching;
+using lucidRESUME.Services;
 using lucidRESUME.ViewModels;
 using lucidRESUME.ViewModels.Pages;
 using Microsoft.Extensions.Configuration;
@@ -66,15 +67,19 @@ public partial class App : Application
         var appDataDir = AppDataPaths.Root;
         Directory.CreateDirectory(appDataDir);
         var aiSettingsPath = Path.Combine(appDataDir, "ai-settings.json");
+        var secretStore = new PlatformSecretStore();
+        var storedSecrets = LoadStoredSecrets(secretStore);
 
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: true)
             .AddJsonFile(aiSettingsPath, optional: true, reloadOnChange: true)
+            .AddInMemoryCollection(storedSecrets)
             .AddUserSecrets(typeof(App).Assembly, optional: true)
             .AddEnvironmentVariables("LUCIDRESUME_")
             .Build();
 
         services.AddSingleton<IConfiguration>(config);
+        services.AddSingleton<ISecretStore>(secretStore);
         services.AddLogging();
         services.AddIngestion(config);
         services.AddExtraction(config);
@@ -110,5 +115,26 @@ public partial class App : Application
         services.AddSingleton<HelpPageViewModel>();
 
         services.AddTransient<MainWindow>();
+    }
+
+    private static Dictionary<string, string?> LoadStoredSecrets(ISecretStore store)
+    {
+        if (!store.IsAvailable) return [];
+        try
+        {
+            return new Dictionary<string, string?>
+            {
+                ["OpenAi:ApiKey"] = store.GetAsync(AiSecretNames.OpenAiApiKey).GetAwaiter().GetResult(),
+                ["Anthropic:ApiKey"] = store.GetAsync(AiSecretNames.AnthropicApiKey).GetAwaiter().GetResult(),
+                ["Jev:ApiKey"] = store.GetAsync(AiSecretNames.JevApiKey).GetAwaiter().GetResult()
+            }.Where(pair => !string.IsNullOrWhiteSpace(pair.Value))
+                .ToDictionary(pair => pair.Key, pair => pair.Value);
+        }
+        catch
+        {
+            // A locked or unavailable keyring must not prevent the local-only app
+            // from starting. The settings page reports the backend on save.
+            return [];
+        }
     }
 }

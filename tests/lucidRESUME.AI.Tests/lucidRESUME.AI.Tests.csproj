@@ -30,6 +30,8 @@
     <ProjectReference Include="..\..\src\lucidRESUME.Core\lucidRESUME.Core.csproj" />
     <ProjectReference Include="..\..\src\lucidRESUME.Matching\lucidRESUME.Matching.csproj" />
     <ProjectReference Include="..\..\src\lucidRESUME.JobML\lucidRESUME.JobML.csproj" />
+    <ProjectReference Include="..\..\src\lucidRESUME.Ingestion\lucidRESUME.Ingestion.csproj" />
+    <ProjectReference Include="..\..\src\lucidRESUME.Parsing\lucidRESUME.Parsing.csproj" />
   </ItemGroup>
 
 </Project>
