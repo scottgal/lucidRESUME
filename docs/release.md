@@ -50,12 +50,12 @@ matching macOS runner before upload.
 
 1. Ensure CI is green on `main`.
 2. Choose a semantic version in the current `2.x` release line, for example
-   `2.1.0`.
+   `2.2.0`.
 3. Create and push the tag:
 
 ```bash
-git tag v2.1.0
-git push origin v2.1.0
+git tag v2.2.0
+git push origin v2.2.0
 ```
 
 The `Release - App Archives` workflow will build, archive, checksum, and attach the files to a GitHub release.
