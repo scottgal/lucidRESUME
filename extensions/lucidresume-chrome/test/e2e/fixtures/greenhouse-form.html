@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Greenhouse-style application fixture</title>
+  <link rel="stylesheet" href="forms.css">
+</head>
+<body>
+  <!-- Shape based on https://docs.greenhouse.io/job-board.html. Local fixture only; never submitted. -->
+  <main>
+    <h1>Principal Engineer</h1>
+    <p class="source">Greenhouse-style dynamic questions and compliance controls</p>
+    <form id="application_form">
+      <label for="first_name">First name</label>
+      <input id="first_name" name="first_name" autocomplete="given-name" required>
+
+      <label for="last_name">Last name</label>
+      <input id="last_name" name="last_name" autocomplete="family-name" required>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+
+      <label for="phone">Phone</label>
+      <input id="phone" name="phone" type="tel" autocomplete="tel">
+
+      <label for="question_1001">Current company</label>
+      <input id="question_1001" name="question_1001">
+
+      <label for="question_1002">Describe a time you led an engineering team through change</label>
+      <textarea id="question_1002" name="question_1002" maxlength="1200"></textarea>
+
+      <fieldset>
+        <legend>Are you legally authorised to work in the United Kingdom?</legend>
+        <label><input type="radio" name="question_1003" value="yes"> Yes</label>
+        <label><input type="radio" name="question_1003" value="no"> No</label>
+      </fieldset>
+
+      <label for="question_1004">Will you require visa sponsorship?</label>
+      <select id="question_1004" name="question_1004">
+        <option value="select">Select an option</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+
+      <fieldset>
+        <legend>Voluntary demographic information</legend>
+        <label><input type="checkbox" name="demographic_answers[]" value="prefer_not"> Prefer not to say</label>
+      </fieldset>
+
+      <label for="resume">Résumé</label>
+      <input id="resume" name="resume" type="file">
+      <input name="mapped_url_token" type="hidden" value="fixture">
+      <label for="source">Source</label>
+      <input id="source" name="source" value="Already supplied">
+      <button type="submit">Submit application</button>
+    </form>
+  </main>
+</body>
+</html>

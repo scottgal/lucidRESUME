@@ -72,7 +72,13 @@ function hasUserValue(element: HTMLElement): boolean {
     if (["checkbox", "radio"].includes(element.type)) return element.checked;
     return element.value.trim().length > 0;
   }
-  if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) return element.value.trim().length > 0;
+  if (element instanceof HTMLSelectElement) {
+    const selected = element.selectedOptions[0];
+    if (!selected) return false;
+    const placeholder = isPlaceholderOption(selected, element.selectedIndex);
+    return !selected.disabled && !selected.hidden && !placeholder && element.value.trim().length > 0;
+  }
+  if (element instanceof HTMLTextAreaElement) return element.value.trim().length > 0;
   return (element.textContent ?? "").trim().length > 0;
 }
 
@@ -101,9 +107,15 @@ function describe(element: HTMLElement, id: string): FormField {
     required: "required" in element ? Boolean(element.required) : element.getAttribute("aria-required") === "true",
     maxLength,
     options: select
-      ? [...select.options].filter(option => !option.disabled && option.value).map(option => ({ value: option.value, label: clean(option.textContent ?? option.label) }))
+      ? [...select.options]
+        .filter((option, optionIndex) => !option.disabled && option.value && !isPlaceholderOption(option, optionIndex))
+        .map(option => ({ value: option.value, label: clean(option.textContent ?? option.label) }))
       : input?.type === "radio" ? radioOptions(input) : []
   };
+}
+
+function isPlaceholderOption(option: HTMLOptionElement, index: number): boolean {
+  return index === 0 && /^(?:choose|select|please select|pick)(?:\s|\.|…|$)/i.test(clean(option.textContent ?? option.label));
 }
 
 function fieldLabel(element: HTMLElement): string {
@@ -114,7 +126,10 @@ function fieldLabel(element: HTMLElement): string {
   const enclosingLabel = element.closest("label");
   const enclosing = enclosingLabel ? labelText(enclosingLabel) : "";
   const legend = element.closest("fieldset")?.querySelector("legend")?.textContent ?? "";
-  return clean(labels || labelledBy || element.getAttribute("aria-label") || enclosing || legend || input.placeholder || input.name || "Unlabelled field").slice(0, 500);
+  const direct = clean(labels || labelledBy || element.getAttribute("aria-label") || enclosing || input.placeholder || input.name || "");
+  if (input.type === "radio" && clean(legend)) return clean(legend).slice(0, 500);
+  if (input.type === "checkbox" && clean(legend)) return clean(`${legend} ${direct}`).slice(0, 500);
+  return clean(direct || legend || "Unlabelled field").slice(0, 500);
 }
 
 function labelText(label: HTMLLabelElement): string {
@@ -126,7 +141,13 @@ function labelText(label: HTMLLabelElement): string {
 function radioOptions(input: HTMLInputElement): Array<{ value: string; label: string }> {
   if (!input.name) return [{ value: input.value, label: fieldLabel(input) }];
   return queryRadioGroup(input)
-    .map(item => ({ value: item.value, label: fieldLabel(item) }));
+    .map(item => ({ value: item.value, label: radioOptionLabel(item) }));
+}
+
+function radioOptionLabel(input: HTMLInputElement): string {
+  const labels = input.labels ? [...input.labels].map(labelText).join(" ") : "";
+  const aria = input.getAttribute("aria-label") ?? "";
+  return clean(labels || aria || input.value);
 }
 
 function clean(value: string): string { return value.replace(/\s+/g, " ").trim(); }

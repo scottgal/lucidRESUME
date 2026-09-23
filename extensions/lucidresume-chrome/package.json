@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "tsc --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "test:e2e:forms": "python3 test/e2e/form_matrix.py"
   },
   "dependencies": {
     "yaml": "^2.8.1"

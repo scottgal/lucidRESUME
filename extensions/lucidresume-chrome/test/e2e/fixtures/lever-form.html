@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lever-style application fixture</title>
+  <link rel="stylesheet" href="forms.css">
+</head>
+<body>
+  <!-- Shape based on https://github.com/lever/postings-api. Local fixture only; never submitted. -->
+  <main>
+    <h1>VP Engineering</h1>
+    <p class="source">Lever-style full name, profile URLs and additional information</p>
+    <form>
+      <label>Full name <input name="name" autocomplete="name" required></label>
+      <label>Email address <input name="email" type="email" autocomplete="email" required></label>
+      <label>Phone number <input name="phone" type="tel" autocomplete="tel"></label>
+      <label>Current company <input name="org"></label>
+      <label>LinkedIn URL <input name="urls[LinkedIn]" type="url"></label>
+      <label>GitHub URL <input name="urls[GitHub]" type="url"></label>
+      <label>Additional information <textarea name="comments"></textarea></label>
+      <label>Résumé <input name="resume" type="file"></label>
+      <input name="posting" type="hidden" value="fixture-posting">
+      <button type="submit">Submit application</button>
+    </form>
+  </main>
+</body>
+</html>

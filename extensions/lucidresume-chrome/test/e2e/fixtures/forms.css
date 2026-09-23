@@ -1,0 +1,29 @@
+body {
+  background: #f7f8fa;
+  color: #182028;
+  font: 16px/1.45 system-ui, sans-serif;
+  margin: 0;
+}
+
+main {
+  background: white;
+  border: 1px solid #d9dee5;
+  border-radius: 10px;
+  margin: 32px auto;
+  max-width: 760px;
+  padding: 28px 36px 40px;
+}
+
+.source { color: #52606d; }
+label, fieldset { display: block; margin-top: 18px; }
+fieldset label { display: inline-block; margin: 8px 20px 0 0; }
+input:not([type="radio"]):not([type="checkbox"]), textarea, select {
+  box-sizing: border-box;
+  display: block;
+  margin-top: 6px;
+  min-height: 42px;
+  padding: 8px;
+  width: 100%;
+}
+textarea { min-height: 120px; }
+button { margin-top: 24px; padding: 10px 18px; }

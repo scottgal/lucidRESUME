@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Workable-style application fixture</title>
+  <link rel="stylesheet" href="forms.css">
+</head>
+<body>
+  <!-- Shape based on https://workable.readme.io/reference/jobsshortcodeapplication_form. Local fixture only; never submitted. -->
+  <main>
+    <h1>Head of Engineering</h1>
+    <p class="source">Workable-style free text, dropdown, boolean, numeric and date questions</p>
+    <form>
+      <p id="candidate-name-label">Candidate name</p>
+      <input name="candidate[name]" autocomplete="name" aria-labelledby="candidate-name-label" required>
+
+      <label>Email <input name="candidate[email]" type="email" autocomplete="email" required></label>
+      <label>Portfolio website <input name="candidate[website]" type="url"></label>
+      <label>Describe your engineering leadership <textarea name="answers[leadership]" maxlength="1000"></textarea></label>
+
+      <label>Years of commercial TypeScript experience
+        <select name="answers[typescript_years]">
+          <option value="choose">Choose...</option>
+          <option value="0-2">0-2 years</option>
+          <option value="3-5">3-5 years</option>
+          <option value="6+">6+ years</option>
+        </select>
+      </label>
+
+      <label>Desired annual salary <input name="answers[salary]" type="number"></label>
+      <label>Available start date <input name="answers[start_date]" type="date"></label>
+
+      <fieldset>
+        <legend>Do you require visa sponsorship?</legend>
+        <label><input type="radio" name="answers[sponsorship]" value="yes"> Yes</label>
+        <label><input type="radio" name="answers[sponsorship]" value="no"> No</label>
+      </fieldset>
+
+      <label><input name="candidate[consent]" type="checkbox"> I agree to the applicant privacy notice</label>
+      <button type="submit">Apply</button>
+    </form>
+  </main>
+</body>
+</html>

@@ -78,6 +78,35 @@ The test ingests JobML, scans a nine-field form, runs the real Prompt API,
 reviews the human-prose proposal, fills approved values, preserves unsupported
 sponsorship and salary gaps, and verifies that the form was not submitted.
 
+## ATS form-shape matrix
+
+The local browser matrix exercises representative Greenhouse, Lever, and
+Workable form structures derived from their public API documentation. It covers
+separate and combined names, standard contact tokens, custom text areas,
+profile URLs, radio groups, checkbox questions, dropdowns whose placeholder has
+a non-empty value, numeric/date controls, hidden values, file uploads, and
+already populated fields.
+
+The fixtures are local and have no action URL. The runner installs the unpacked
+extension with WebDriver BiDi, scans each page in a real branded Chrome process,
+fills two harmless identity values, and asserts that nothing was submitted.
+
+```bash
+npm run build
+python3 -m venv /tmp/lucidresume-e2e
+/tmp/lucidresume-e2e/bin/pip install -r test/e2e/requirements.txt
+/tmp/lucidresume-e2e/bin/python test/e2e/form_matrix.py
+```
+
+Source form contracts:
+
+- [Greenhouse Job Board API](https://docs.greenhouse.io/job-board.html)
+- [Lever Postings API](https://github.com/lever/postings-api)
+- [Workable application-form endpoint](https://workable.readme.io/reference/jobsshortcodeapplication_form)
+
+These fixtures test documented field families, not private production markup,
+and do not claim universal ATS compatibility.
+
 See the extension's [privacy notice](PRIVACY.md) and the full
 [design and research note](../../docs/chrome-evidence-filler.md).
 

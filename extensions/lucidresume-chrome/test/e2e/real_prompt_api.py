@@ -12,6 +12,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -112,10 +113,20 @@ def main() -> None:
             "document.querySelector('#analyse').click();done(true);});});",
             form_url,
         )
-        WebDriverWait(driver, 240).until(
-            lambda current: "evidence-backed proposal" in current.find_element(By.ID, "form-status").text
-            or current.find_element(By.ID, "form-status").text == "Analysis stopped."
-        )
+        try:
+            WebDriverWait(driver, 240).until(
+                lambda current: "evidence-backed proposal" in current.find_element(By.ID, "form-status").text
+                or current.find_element(By.ID, "form-status").text == "Analysis stopped."
+            )
+        except TimeoutException as error:
+            state = driver.execute_script(
+                "return {ledger:document.querySelector('#ledger-status').textContent,"
+                "model:document.querySelector('#model-status').textContent,"
+                "form:document.querySelector('#form-status').textContent,"
+                "error:document.querySelector('#error').textContent};"
+            )
+            driver.save_screenshot(str(args.output / "real-bidi-timeout.png"))
+            raise RuntimeError(f"Prompt API smoke test timed out: {json.dumps(state)}") from error
 
         report = driver.execute_script(
             "return {ledger:document.querySelector('#ledger-status').textContent,"

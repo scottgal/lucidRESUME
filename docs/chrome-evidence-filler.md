@@ -127,3 +127,17 @@ opt-in runner at `extensions/lucidresume-chrome/test/e2e/real_prompt_api.py`
 therefore uses WebDriver BiDi's extension-install command. It refuses the live
 macOS Chrome profile and enables Chrome's mock keychain for its dedicated test
 profile.
+
+A second real-browser matrix uses local fixtures shaped from the documented
+Greenhouse, Lever, and Workable form contracts. Across 25 visible empty fields,
+it verifies accessible label recovery, a single record per radio group, distinct
+radio option labels, non-empty dropdown placeholders, combined and split names,
+contact and profile fields, textarea, numeric/date and checkbox controls. File,
+hidden, and already populated inputs are excluded. Six harmless values are
+inserted across the three forms and all submission counters remain zero.
+
+That matrix found two scanner defects. Radio fields originally inherited the
+first option label (`Yes`) rather than their fieldset question. Selects with a
+first placeholder such as `<option value="choose">Choose...</option>` were
+mistaken for completed fields. Both cases now have explicit browser-level
+regressions in `test/e2e/form_matrix.py`.
