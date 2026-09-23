@@ -10,6 +10,16 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
+## Node / browser-extension outputs
+node_modules/
+extensions/lucidresume-chrome/dist/
+.playwright-cli/
+output/playwright/
+
+## Python test caches
+__pycache__/
+*.py[cod]
+
 ## User-specific files
 *.user
 *.suo

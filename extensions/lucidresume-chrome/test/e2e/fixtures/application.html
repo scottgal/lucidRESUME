@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Example Application</title>
+  <style>
+    body { font: 16px system-ui; max-width: 720px; margin: 30px auto; }
+    label { display: block; font-weight: 600; margin-top: 16px; }
+    input, textarea, select { display: block; width: 100%; padding: 8px; margin-top: 4px; }
+    textarea { height: 120px; }
+    button { margin-top: 20px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>VP Engineering application</h1>
+  <form>
+    <label>First name<input name="firstName" autocomplete="given-name"></label>
+    <label>Last name<input name="lastName" autocomplete="family-name"></label>
+    <label>Email address<input name="email" type="email" autocomplete="email"></label>
+    <label>Phone number<input name="phone" type="tel" autocomplete="tel"></label>
+    <label>GitHub profile<input name="github" type="url"></label>
+    <label>Current employer<input name="employer"></label>
+    <label>Describe your engineering leadership<textarea name="leadership"></textarea></label>
+    <label>Will you now or in future require visa sponsorship?
+      <select name="sponsorship">
+        <option value="">Choose</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </label>
+    <label>Salary expectation<input name="salary"></label>
+    <button type="submit">Submit application</button>
+  </form>
+</body>
+</html>

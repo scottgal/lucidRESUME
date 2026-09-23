@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>lucidRESUME Evidence Filler</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><i>lucid</i>RESUME</div>
+    <h1>Evidence Filler</h1>
+    <p>Fill from your published JobML. Never invent the missing bits.</p>
+  </header>
+  <main>
+    <section class="card">
+      <label for="endpoint">Full JobML endpoint</label>
+      <input id="endpoint" type="url" spellcheck="false" placeholder="https://example.com/lucidresume/api/jobml">
+      <div class="row">
+        <button id="load">Load ledger</button>
+        <span id="ledger-status" class="muted">Not loaded</span>
+      </div>
+      <p class="note">Loading reads personal résumé data from this endpoint. Analysis reads visible empty field labels on the active form. Both stay on this device and are not sent to lucidRESUME or a cloud model. Chrome requests access only to this endpoint host.</p>
+    </section>
+
+    <section class="card">
+      <div class="row between">
+        <div>
+          <h2>Current form</h2>
+          <p id="form-status" class="muted">Open a job application form.</p>
+        </div>
+        <button id="analyse" disabled>Analyse</button>
+      </div>
+      <div id="model-status" class="model-status">Checking Chrome Prompt API…</div>
+    </section>
+
+    <section id="results" class="card hidden">
+      <div class="row between">
+        <h2>Review proposals</h2>
+        <button id="fill" disabled>Fill reviewed</button>
+      </div>
+      <p class="note">Nothing is submitted. Review every selected value before continuing.</p>
+      <div id="proposal-list"></div>
+    </section>
+
+    <div id="error" role="alert" class="error hidden"></div>
+  </main>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

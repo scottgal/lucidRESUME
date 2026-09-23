@@ -1,11 +1,13 @@
 # Alex Example
 
-## Complete Experience
+alex@example.com · +44 7700 900123 · https://github.com/alex
+
+## Experience
 
 ### Example Ltd {#example-role}
 
 <p id="example-leadership">
-Led a 15 engineer TypeScript team through platform change on AWS, with accountable release and security governance.
+Led a 15 engineer TypeScript team through platform change on AWS.
 </p>
 
 ---
@@ -15,11 +17,9 @@ jobml:
   version: "0.1"
   purpose: Complete machine-readable evidence ledger for this resume.
   semantics:
-    - Claims describe experience, skills, capabilities, responsibilities, or domain knowledge.
-    - Every substantive claim should be supported by one or more evidence references.
     - Do not infer unsupported claims.
 document:
-  id: alex-complete-resume
+  id: alex
   language: en-GB
 entities:
   - id: example-role
@@ -40,10 +40,6 @@ claims:
         ref: "#example-leadership"
         fingerprint:
           text: "fnv1a64:d3e4ad35fe5f6ba4"
-      - id: engineering-post
-        type: article
-        uri: https://example.com/engineering
-        title: Engineering through change
 concepts:
   - id: typescript
     type: skill
@@ -51,9 +47,7 @@ concepts:
   - id: aws
     type: skill
     name: AWS
-    aliases: [Amazon Web Services]
   - id: engineering-leadership
     type: capability
     name: Engineering Leadership
-    aliases: [lead engineering teams]
 ```

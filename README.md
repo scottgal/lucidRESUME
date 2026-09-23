@@ -222,6 +222,8 @@ JSON Resume (standard schema), Markdown, **DOCX** (Word via OpenXml), and **PDF*
 - [JobML 0.1 Specification](docs/jobml-0.1-specification.md) - normative document model, evidence reconciliation, review states, and extensions.
 - [cJobML 0.1 Publication Projection](docs/cjobml-0.1-specification.md) - compact numbered citations, references, full-ledger endpoints, and one-pass parsing.
 - [JobML Web Compiler](docs/jobml-web-compiler.md) - complete master publication, deterministic role projection, bounded prose editing, and ASP.NET Core integration.
+- [Chrome Evidence Filler](extensions/lucidresume-chrome/README.md) - local Prompt API field mapping from a published full JobML endpoint, with review and honest gaps.
+- [Chrome Evidence Filler Design](docs/chrome-evidence-filler.md) - researched browser APIs, deterministic projection rules, privacy, threat model, and verification.
 - [JobML GitHub Extension](docs/jobml-github-extension-0.1.md) - repository quality, attribution, and skill-observation model.
 - [In-App User Manual](src/lucidRESUME/Resources/user-manual.md) - the same help content embedded in the desktop app.
 
@@ -398,6 +400,13 @@ dotnet test lucidRESUME.sln    # 388 tests across 12 projects
 | Web.Tests | 3 | ASP.NET Core endpoint and projection control |
 | App.Tests | 2 | Native operating-system credential storage |
 | Avalonia.UITesting.Tests | 98 | Input, scripts, locators, screenshots, REPL |
+
+The Chrome evidence filler has a separate TypeScript suite:
+
+```bash
+cd extensions/lucidresume-chrome
+npm ci && npm run check && npm test && npm run build
+```
 
 ---
 
