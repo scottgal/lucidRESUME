@@ -81,7 +81,7 @@ record URL from the compact document alone.
 Use these commands to produce the compact document or add an article to a claim:
 
 ```bash
-lucidresume jobml compact --file resume.jobml.md --complete-ledger https://example.net/jane.jobml --output resume.md
+lucidresume jobml compact --file resume.jobml.md --full-jobml https://example.net/jane.jobml --output resume.md
 lucidresume jobml link-post --file resume.jobml.md --claim retrieval-platform --url https://example.net/reduced-rag --output resume-linked.jobml.md
 ```
 

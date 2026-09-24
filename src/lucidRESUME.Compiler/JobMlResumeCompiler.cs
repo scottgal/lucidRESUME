@@ -33,18 +33,34 @@ public sealed class JobMlResumeCompiler(
         var concepts = BuildConceptTerms(completeResume.File.Data.Concepts);
         var entities = completeResume.File.Data.Entities.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
         var index = MarkdownEvidenceIndex.Create(completeResume.File.Markdown);
+        var subjectAffinities = await BuildSubjectAffinitiesAsync(
+            job.Title ?? jobDescription, completeResume.File.Data.RoleCentroids, entities, cancellationToken);
 
-        var candidates = completeResume.File.Data.Claims
+        var accepted = completeResume.File.Data.Claims
             .Where(IsAccepted)
             .Where(c => reconciled.TryGetValue(c.Id, out var resolution) && resolution.Evidence.Count > 0 &&
                         resolution.Evidence.All(e => e.State is EvidenceState.Valid or EvidenceState.External))
+            .ToList();
+        var subjectsWithNarrative = accepted
+            .Where(claim => claim.Type is "achievement" or "project" or "summary")
+            .Select(claim => claim.Subject)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var candidates = accepted
+            .Where(IsResumeNarrative)
+            .Where(claim => claim.Type != "experience" || !subjectsWithNarrative.Contains(claim.Subject))
             .ToList();
 
         var matches = new List<ClaimMatch>();
         foreach (var requirement in requirements)
             foreach (var claim in candidates)
             {
-                var (score, reason, direct) = await ScoreAsync(requirement, claim, concepts, cancellationToken);
+                var subjectName = entities.GetValueOrDefault(claim.Subject)?.Name ?? claim.Subject;
+                var (score, reason, direct) = await ScoreAsync(requirement, claim, subjectName, concepts, cancellationToken);
+                if (subjectAffinities.TryGetValue(claim.Subject, out var roleAffinity))
+                {
+                    score = score * .75 + roleAffinity * .25;
+                    reason += $"; role affinity {roleAffinity:F2}";
+                }
                 if (score >= options.RelatedThreshold)
                     matches.Add(new ClaimMatch(requirement.Id, claim.Id,
                         direct ? MatchKind.Direct : MatchKind.Related, score, reason));
@@ -52,9 +68,11 @@ public sealed class JobMlResumeCompiler(
 
         var selected = SelectClaims(candidates, matches, reconciled, entities, index, options);
         var sections = selected.GroupBy(x => x.Claim.Subject, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(group => group.Any(item => item.Claim.Type == "summary"))
+            .ThenByDescending(group => group.Max(item => item.Score))
             .Select((group, number) => new EvidencePacket(
                 $"section-{number + 1}-{Slug(group.Key)}",
-                group.First().SubjectName,
+                group.Any(item => item.Claim.Type == "summary") ? "Professional Summary" : group.First().SubjectName,
                 "Preserve the candidate's human voice while emphasizing evidenced relevance to the target role.",
                 Math.Max(70, Math.Min(220, group.Sum(x => WordCount(x.Prose)))),
                 group.OrderByDescending(x => x.Score).ToList(),
@@ -75,7 +93,7 @@ public sealed class JobMlResumeCompiler(
         var composed = await composition.ComposeAsync(manifest, jobDescription, options, cancellationToken);
         var human = RenderHumanMarkdown(completeResume.File.Markdown, composed.Blocks, sections);
         var projected = BuildProjection(completeResume.File, human, composed.Blocks, selected,
-            options.CompleteLedgerUri);
+            options.FullJobMlUri);
         var full = JobMlArtifactComposer.Compose(projected);
         var published = CJobMlProjector.Project(projected).Markdown;
         return new CompilationResult(Guid.NewGuid().ToString("N"), manifest, human, published, full,
@@ -83,12 +101,12 @@ public sealed class JobMlResumeCompiler(
     }
 
     private async Task<(double Score, string Reason, bool Direct)> ScoreAsync(
-        CompilerRequirement requirement, JobMlClaim claim,
+        CompilerRequirement requirement, JobMlClaim claim, string subjectName,
         IReadOnlyDictionary<string, HashSet<string>> conceptTerms, CancellationToken cancellationToken)
     {
         var requirementTokens = Tokens(requirement.Text);
         var claimTerms = claim.Concepts.All.SelectMany(id => conceptTerms.GetValueOrDefault(id, [id]))
-            .Append(claim.Statement).ToList();
+            .Append(subjectName).Append(claim.Statement).ToList();
         var claimTokens = Tokens(string.Join(' ', claimTerms));
         var intersection = requirementTokens.Intersect(claimTokens).Count();
         var lexical = intersection == 0 ? 0 : intersection / (double)Math.Max(1, requirementTokens.Count);
@@ -101,6 +119,52 @@ public sealed class JobMlResumeCompiler(
         var b = await embeddings.EmbedAsync(claim.Statement + " " + string.Join(' ', claimTerms), cancellationToken);
         var semantic = embeddings.CosineSimilarity(a, b);
         return (semantic, "embedding similarity", false);
+    }
+
+    private async Task<IReadOnlyDictionary<string, double>> BuildSubjectAffinitiesAsync(
+        string targetText, IReadOnlyList<JobMlRoleCentroid> centroids,
+        IReadOnlyDictionary<string, JobMlEntity> entities, CancellationToken cancellationToken)
+    {
+        if (embeddings is null || centroids.Count == 0) return new Dictionary<string, double>();
+        var target = centroids
+            .Where(centroid => targetText.Contains(centroid.Name, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(centroid => centroid.Name.Length)
+            .FirstOrDefault();
+        if (target is null)
+        {
+            var targetVector = await embeddings.EmbedAsync(targetText, cancellationToken);
+            target = centroids.Where(centroid => centroid.Vector.Count == targetVector.Length)
+                .OrderByDescending(centroid => embeddings.CosineSimilarity(targetVector, [.. centroid.Vector]))
+                .FirstOrDefault();
+        }
+        if (target is null || target.Vector.Count == 0) return new Dictionary<string, double>();
+
+        var targetCentroid = target.Vector.ToArray();
+        var result = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entity in entities.Values.Where(entity => entity.Type == "experience"))
+        {
+            var roleVector = await embeddings.EmbedAsync(entity.Name, cancellationToken);
+            if (roleVector.Length == targetCentroid.Length)
+            {
+                var semantic = Math.Clamp(embeddings.CosineSimilarity(roleVector, targetCentroid), 0, 1);
+                result[entity.Id] = Math.Max(semantic, TitleAffinity(target.Name, entity.Name));
+            }
+        }
+        return result;
+    }
+
+    private static double TitleAffinity(string targetRole, string candidateRole)
+    {
+        if (candidateRole.Contains(targetRole, StringComparison.OrdinalIgnoreCase)) return 1;
+        var executiveTarget = targetRole.Contains("VP", StringComparison.OrdinalIgnoreCase) ||
+                              targetRole.Contains("Head", StringComparison.OrdinalIgnoreCase) ||
+                              targetRole.Contains("CTO", StringComparison.OrdinalIgnoreCase);
+        if (!executiveTarget) return 0;
+        string[] executiveTitles = ["VP", "Head of Engineering", "CTO", "Director of Engineering", "Engineering Director"];
+        if (executiveTitles.Any(title => candidateRole.Contains(title, StringComparison.OrdinalIgnoreCase))) return .92;
+        if (candidateRole.Contains("Lead", StringComparison.OrdinalIgnoreCase) ||
+            candidateRole.Contains("Manager", StringComparison.OrdinalIgnoreCase)) return .72;
+        return 0;
     }
 
     private static List<SelectedClaim> SelectClaims(
@@ -124,6 +188,11 @@ public sealed class JobMlResumeCompiler(
                 return x.Matches.Max(m => m.Score) + uncoveredBonus - subjectPenalty - conceptOverlap;
             }).First();
             pending.Remove(claim);
+            var isNewSubject = result.All(existing =>
+                !existing.Claim.Subject.Equals(claim.Claim.Subject, StringComparison.OrdinalIgnoreCase));
+            if (isNewSubject && result.Select(existing => existing.Claim.Subject)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).Count() >= options.MaximumSections)
+                continue;
             if (result.Count(x => x.Claim.Subject.Equals(claim.Claim.Subject, StringComparison.OrdinalIgnoreCase)) >=
                 options.MaximumClaimsPerSubject) continue;
             var prose = reconciled[claim.Claim.Id].Evidence
@@ -132,6 +201,13 @@ public sealed class JobMlResumeCompiler(
                 .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
             // A role-specific resume is never bootstrapped from an LLM or the advert.
             if (string.IsNullOrWhiteSpace(prose)) continue;
+            // Imports commonly contain lightly rewritten copies of the same bullet.
+            // Keep their separate evidence in the career record, but do not print both
+            // in one role section of the projection.
+            if (result.Any(existing =>
+                    existing.Claim.Subject.Equals(claim.Claim.Subject, StringComparison.OrdinalIgnoreCase) &&
+                    TextOverlap(existing.Prose, prose) >= .48))
+                continue;
             result.Add(new SelectedClaim(claim.Claim,
                 entities.GetValueOrDefault(claim.Claim.Subject)?.Name ?? claim.Claim.Subject,
                 prose,
@@ -143,7 +219,7 @@ public sealed class JobMlResumeCompiler(
     }
 
     private static JobMlFile BuildProjection(JobMlFile source, string human,
-        IReadOnlyList<CompositionBlock> blocks, IReadOnlyList<SelectedClaim> selected, string? ledgerUri)
+        IReadOnlyList<CompositionBlock> blocks, IReadOnlyList<SelectedClaim> selected, string? fullJobMlUri)
     {
         var selectedById = selected.ToDictionary(x => x.Claim.Id, StringComparer.OrdinalIgnoreCase);
         var claims = new List<JobMlClaim>();
@@ -167,6 +243,7 @@ public sealed class JobMlResumeCompiler(
                 {
                     Id = original.Id,
                     Subject = original.Subject,
+                    Type = original.Type,
                     Statement = original.Statement,
                     Concepts = new JobMlClaimConcepts
                     {
@@ -182,19 +259,36 @@ public sealed class JobMlResumeCompiler(
         claims = claims.DistinctBy(x => x.Id, StringComparer.OrdinalIgnoreCase).ToList();
         var entityIds = claims.Select(x => x.Subject).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var conceptIds = claims.SelectMany(x => x.Concepts.All).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sourceIds = claims.SelectMany(claim => claim.Evidence)
+            .Select(evidence => evidence.SourceId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var root = new JobMlRoot
         {
-            Header = source.Data.Header,
+            Header = new JobMlHeader
+            {
+                Version = source.Data.Header.Version,
+                Profile = "resume",
+                Purpose = "Machine-readable projection of claims selected for this role-specific resume.",
+                Semantics = [.. source.Data.Header.Semantics]
+            },
             Document = new JobMlDocumentMetadata
             {
                 Id = source.Data.Document.Id + "-projection",
                 Language = source.Data.Document.Language,
-                CompleteLedger = ledgerUri ?? source.Data.Document.CompleteLedger
+                FullJobMl = fullJobMlUri ?? source.Data.Document.EffectiveFullJobMl
             },
             Entities = source.Data.Entities.Where(x => entityIds.Contains(x.Id)).Select(x => new JobMlEntity
             { Id = x.Id, Name = x.Name, Type = x.Type, Source = $"#{blocks.First(b => b.ClaimIds.Any(id => selectedById.GetValueOrDefault(id)?.Claim.Subject.Equals(x.Id, StringComparison.OrdinalIgnoreCase) == true)).SectionId}" }).ToList(),
             Claims = claims,
-            Concepts = source.Data.Concepts.Where(x => conceptIds.Contains(x.Id)).ToList()
+            Concepts = source.Data.Concepts.Where(x => conceptIds.Contains(x.Id)).Select(x => new JobMlConcept
+            {
+                Id = x.Id,
+                Type = x.Type,
+                Name = x.Name,
+                Aliases = [.. x.Aliases]
+            }).ToList(),
+            Sources = source.Data.Sources.Where(x => sourceIds.Contains(x.Id)).ToList()
         };
         return new JobMlFile(human, root);
     }
@@ -237,6 +331,8 @@ public sealed class JobMlResumeCompiler(
 
     private static bool IsAccepted(JobMlClaim claim) =>
         string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase);
+    private static bool IsResumeNarrative(JobMlClaim claim) => claim.Type is null or
+        "summary" or "achievement" or "project" or "education" or "experience";
     private static bool IsProse(JobMlEvidence evidence) =>
         evidence.Type.Equals("prose", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(evidence.Uri);
     private static JobMlEvidence CloneEvidence(JobMlEvidence e) => new()
@@ -245,6 +341,7 @@ public sealed class JobMlResumeCompiler(
         Type = e.Type,
         Ref = e.Ref,
         Uri = e.Uri,
+        SourceId = e.SourceId,
         Issuer = e.Issuer,
         Qualification = e.Qualification,
         Title = e.Title,
@@ -264,6 +361,13 @@ public sealed class JobMlResumeCompiler(
         var b = right.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var union = a.Union(b, StringComparer.OrdinalIgnoreCase).Count();
         return union == 0 ? 0 : a.Intersect(b, StringComparer.OrdinalIgnoreCase).Count() / (double)union;
+    }
+    private static double TextOverlap(string left, string right)
+    {
+        var a = Tokens(left);
+        var b = Tokens(right);
+        var smaller = Math.Min(a.Count, b.Count);
+        return smaller == 0 ? 0 : a.Intersect(b, StringComparer.OrdinalIgnoreCase).Count() / (double)smaller;
     }
     private static string Slug(string value) => Regex.Replace(value.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
     private static string Hash(string value) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)))[..16];

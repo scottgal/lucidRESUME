@@ -12,6 +12,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IResumeExporter, DocxExporter>();
         services.AddSingleton<IResumeExporter, PdfExporter>();
         services.AddSingleton<ResumeArtifactBuilder>();
+        services.AddSingleton<CareerRecordJobMlBuilder>();
         return services;
     }
 }

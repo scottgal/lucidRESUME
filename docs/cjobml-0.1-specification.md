@@ -4,14 +4,14 @@ Status: Experimental Draft
 
 Version: 0.1
 
-Last updated: 2026-09-19
+Last updated: 2026-09-24
 
 ## Abstract
 
 cJobML is the compact publication projection of a reviewed
 [JobML 0.1](jobml-0.1-specification.md) document. It gives a résumé the citation
 shape of a scientific paper: numbered cross-references beside human prose, a
-short reference list, and an optional link to the complete evidence ledger.
+short reference list, and an optional link to the full JobML career record.
 
 cJobML is not an authoring format and not a second evidence ledger. A conforming
 publisher derives it from full JobML without extraction, semantic inference, or
@@ -26,7 +26,7 @@ cJobML is designed to be:
 2. readable as a conventional reference list;
 3. deterministically parseable in one pass;
 4. understandable by an unfamiliar general-purpose language model;
-5. traceable to full JobML when a complete ledger is published;
+5. traceable to full JobML when a career record is published;
 6. harmless to conventional résumé parsers which do not understand cJobML.
 
 The controlling invariant is inherited from JobML:
@@ -60,9 +60,10 @@ The inputs to a projection are:
 - external, qualification, or imported résumé-source evidence already linked to
   those claims.
 
-The human prose remains authoritative about what the published résumé says. Full
-JobML remains authoritative about claim identity, evidence identity, review state,
-drift, provenance, and concepts. cJobML is disposable and reproducible.
+The human prose remains authoritative about what the published résumé says. The
+application's career ledger remains canonical. Its full `career_record` JobML
+export carries claim identity, evidence identity, review state, drift, provenance,
+and concepts between systems. cJobML is disposable and reproducible.
 
 ## 4. Document form
 
@@ -85,7 +86,7 @@ The exact semantic sentence is REQUIRED:
 cJobML 0.1: xref [n] in prose resolves to ref [n].
 ```
 
-The optional complete-ledger sentence is:
+The optional full-record sentence is:
 
 ```text
 Full JobML: <absolute-URI>.
@@ -138,13 +139,13 @@ Linked posts are evidence sources. A post can support authorship, demonstrated
 knowledge, or the reasoning it contains. Its presence MUST NOT silently establish
 production usage, employment, proficiency, or responsibility.
 
-## 7. Complete ledger endpoint
+## 7. Full JobML endpoint
 
 Full JobML MAY declare:
 
 ```yaml
 document:
-  complete_ledger: https://example.net/jane.jobml
+  full_jobml: https://example.net/jane.jobml
 ```
 
 The URI MUST be absolute. A publisher copies it into the compact preamble without
@@ -152,7 +153,7 @@ fetching or interpreting it. The endpoint SHOULD return the full JobML artifact
 or a content-negotiated equivalent which preserves all claim and evidence IDs.
 
 The endpoint is optional. A cJobML document remains parseable without network
-access or a complete ledger.
+access or a full career record.
 
 ## 8. Deliberate omissions
 
@@ -167,7 +168,7 @@ cJobML MUST NOT reproduce these full-resolution editing fields:
 - concept graphs, aliases, and semantic vectors.
 
 Their omission is the compression mechanism. Consumers needing those details
-follow the complete-ledger link when one is available.
+follow the full-JobML link when one is available.
 
 ## 9. Projection algorithm
 
@@ -180,7 +181,7 @@ A conforming publisher performs these deterministic steps:
 4. deduplicate sources by stable evidence identity, then normalised URI;
 5. assign numbers in first-prose-appearance order;
 6. append linked markers to the resolved prose spans;
-7. render the semantic preamble, optional complete-ledger URI, and references.
+7. render the semantic preamble, optional full-JobML URI, and references.
 
 A publisher MUST NOT run NER, an LLM, embedding search, concept matching, or claim
 extraction during these steps. If an accepted prose reference cannot be resolved,
@@ -196,7 +197,7 @@ A conforming cJobML parser MUST:
 - reject duplicate reference numbers;
 - reject a cross-reference without a matching reference;
 - expose each reference's number, citation text, evidence type, and URI when present;
-- expose the optional complete-ledger URI.
+- expose the optional full-JobML URI.
 
 A parser SHOULD complete those operations in one forward pass after locating the
 References section. It does not need the full JobML schema.
@@ -204,7 +205,7 @@ References section. It does not need the full JobML schema.
 An endpoint-only projection with no numbered references is valid when it contains
 an absolute `Full JobML` URI. This is useful when the selected résumé has accepted
 ledger-backed claims but no public external evidence. A References section with
-neither numbered references nor a complete-ledger URI is invalid.
+neither numbered references nor a full-JobML URI is invalid.
 
 ## 11. Semantic obviousness
 
@@ -214,7 +215,7 @@ system prompt, a capable general-purpose language model SHOULD recover:
 - the prose claim carrying a citation;
 - the reference number which supports it;
 - the evidence source and URI;
-- the complete-ledger URI when present.
+- the full-JobML URI when present.
 
 This cold-parser test supplements deterministic parsing. It does not replace it.
 

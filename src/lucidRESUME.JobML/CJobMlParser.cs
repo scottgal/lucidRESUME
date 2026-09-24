@@ -28,11 +28,11 @@ public static partial class CJobMlParser
             .Select(match => ParseReference(match))
             .ToList();
         var fullMatch = FullJobMlPattern().Match(referenceSection);
-        Uri? completeLedger = null;
+        Uri? fullJobMl = null;
         if (fullMatch.Success &&
-            !Uri.TryCreate(fullMatch.Groups["uri"].Value, UriKind.Absolute, out completeLedger))
+            !Uri.TryCreate(fullMatch.Groups["uri"].Value, UriKind.Absolute, out fullJobMl))
             throw new CJobMlParseException("The Full JobML endpoint is not a valid absolute URI.");
-        if (references.Count == 0 && completeLedger is null)
+        if (references.Count == 0 && fullJobMl is null)
             throw new CJobMlParseException("The cJobML References section contains neither numbered references nor a Full JobML endpoint.");
         if (references.Select(reference => reference.Number).Distinct().Count() != references.Count)
             throw new CJobMlParseException("The cJobML References section contains duplicate reference numbers.");
@@ -55,7 +55,7 @@ public static partial class CJobMlParser
         if (!firstAppearances.SequenceEqual(expectedNumbers))
             throw new CJobMlParseException("cJobML xrefs must assign reference numbers in order of first appearance.");
 
-        return new CJobMlDocument(prose, xrefs, references, completeLedger);
+        return new CJobMlDocument(prose, xrefs, references, fullJobMl);
     }
 
     public static bool TryParse(string source, out CJobMlDocument? document, out string? error)
@@ -117,7 +117,7 @@ public sealed record CJobMlDocument(
     string Prose,
     IReadOnlyList<int> Xrefs,
     IReadOnlyList<CJobMlParsedReference> References,
-    Uri? CompleteLedger);
+    Uri? FullJobMl);
 
 public sealed record CJobMlParsedReference(
     int Number,

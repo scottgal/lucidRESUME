@@ -276,7 +276,7 @@ public sealed class DocxExporter : IResumeExporter
         body.Append(CreateParagraph(CJobMlProjector.SemanticPreamble,
             fontSize: 16, color: "666666", fontFamily: template.FontFamily));
 
-        if (Uri.TryCreate(compact.CompleteLedger, UriKind.Absolute, out var completeLedger))
+        if (Uri.TryCreate(compact.FullJobMl, UriKind.Absolute, out var completeLedger))
         {
             var relationship = mainPart.AddHyperlinkRelationship(completeLedger, true);
             var paragraph = CreateParagraph("Full JobML: ", fontSize: 16, color: "666666", fontFamily: template.FontFamily);

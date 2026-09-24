@@ -11,6 +11,7 @@
       "required": ["version", "purpose", "semantics"],
       "properties": {
         "version": { "const": "0.1" },
+        "profile": { "enum": ["resume", "career_record"], "default": "resume" },
         "purpose": { "type": "string", "minLength": 1 },
         "semantics": {
           "type": "array",
@@ -25,10 +26,16 @@
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "language": { "type": "string", "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$" },
+        "full_jobml": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional endpoint serving the full-resolution JobML projection represented compactly by cJobML."
+        },
         "complete_ledger": {
           "type": "string",
           "format": "uri",
-          "description": "Optional endpoint serving the complete full-resolution JobML ledger represented compactly by cJobML."
+          "deprecated": true,
+          "description": "Legacy alias for full_jobml."
         }
       }
     },
@@ -43,6 +50,18 @@
     "concepts": {
       "type": "array",
       "items": { "$ref": "#/$defs/concept" }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "semantic_spaces": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/semanticSpace" }
+    },
+    "role_centroids": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/roleCentroid" }
     },
     "job": {
       "type": "object",
@@ -95,6 +114,7 @@
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "subject": { "$ref": "#/$defs/id" },
+        "type": { "type": "string", "minLength": 1 },
         "statement": { "type": "string", "minLength": 1 },
         "concepts": {
           "type": "object",
@@ -125,6 +145,7 @@
         "type": { "type": "string", "minLength": 1 },
         "ref": { "type": "string", "pattern": "^(#|ledger://)" },
         "uri": { "type": "string", "format": "uri" },
+        "source_id": { "$ref": "#/$defs/id" },
         "issuer": { "type": "string" },
         "qualification": { "type": "string" },
         "title": { "type": "string", "minLength": 1 },
@@ -170,6 +191,58 @@
         "aliases": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
+        },
+        "embedding": { "$ref": "#/$defs/embedding" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["id", "type", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "uri": { "type": "string", "format": "uri" },
+        "summary": { "type": "string" },
+        "fingerprint": { "type": "string" },
+        "observed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "semanticSpace": {
+      "type": "object",
+      "required": ["id", "model", "dimensions", "normalization"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "model": { "type": "string", "minLength": 1 },
+        "dimensions": { "type": "integer", "minimum": 1 },
+        "normalization": { "enum": ["l2", "none"] },
+        "model_digest": { "type": "string" }
+      }
+    },
+    "embedding": {
+      "type": "object",
+      "required": ["space", "vector"],
+      "properties": {
+        "space": { "$ref": "#/$defs/id" },
+        "vector": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "number" }
+        }
+      }
+    },
+    "roleCentroid": {
+      "type": "object",
+      "required": ["id", "name", "space", "derived_from", "vector"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "space": { "$ref": "#/$defs/id" },
+        "derived_from": { "$ref": "#/$defs/idList" },
+        "vector": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "number" }
         }
       }
     },

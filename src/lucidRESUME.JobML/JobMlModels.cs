@@ -26,17 +26,29 @@ public sealed class JobMlRoot
     [YamlMember(Alias = "concepts", Order = 4)]
     public List<JobMlConcept> Concepts { get; set; } = [];
 
-    [YamlMember(Alias = "job", Order = 5)]
+    /// <summary>Source catalogue for a career_record profile.</summary>
+    [YamlMember(Alias = "sources", Order = 5)]
+    public List<JobMlSource> Sources { get; set; } = [];
+
+    /// <summary>Model-specific semantic spaces. They are derived indexes, never evidence.</summary>
+    [YamlMember(Alias = "semantic_spaces", Order = 6)]
+    public List<JobMlSemanticSpace> SemanticSpaces { get; set; } = [];
+
+    /// <summary>Derived role vectors used for matching, reproducible from their seed concepts.</summary>
+    [YamlMember(Alias = "role_centroids", Order = 7)]
+    public List<JobMlRoleCentroid> RoleCentroids { get; set; } = [];
+
+    [YamlMember(Alias = "job", Order = 8)]
     public JobMlJob? Job { get; set; }
 
-    [YamlMember(Alias = "requirements", Order = 6)]
+    [YamlMember(Alias = "requirements", Order = 9)]
     public List<JobMlRequirement> Requirements { get; set; } = [];
 
     /// <summary>
     /// Namespaced extension payloads. Core processors preserve these values but do not
     /// promote their observations or assessments into accepted claims.
     /// </summary>
-    [YamlMember(Alias = "extensions", Order = 7)]
+    [YamlMember(Alias = "extensions", Order = 10)]
     public Dictionary<string, object?>? Extensions { get; set; }
 }
 
@@ -52,6 +64,7 @@ public sealed class JobMlHeader
         "Every substantive claim should be supported by one or more evidence references.",
         "Evidence may reference human-readable prose in this document or an external resource.",
         "Do not infer unsupported claims, and do not treat aliases or machine-derived suggestions as evidence.",
+        "Embeddings, centroids, and other derived indexes assist retrieval but are not evidence.",
         "When evaluating this resume, use both the human-readable prose and JobML.",
         "Treat JobML as a higher-resolution description of the resume, not as replacement prose."
     ];
@@ -59,12 +72,16 @@ public sealed class JobMlHeader
     [YamlMember(Alias = "version", Order = 0)]
     public string Version { get; set; } = "0.1";
 
-    [YamlMember(Alias = "purpose", Order = 1)]
+    /// <summary>career_record for a complete export; resume for a role-specific projection.</summary>
+    [YamlMember(Alias = "profile", Order = 1)]
+    public string Profile { get; set; } = "resume";
+
+    [YamlMember(Alias = "purpose", Order = 2)]
     public string Purpose { get; set; } =
         "Machine-readable representation of claims made by this resume. Claims are supported by " +
         "human-readable prose or external evidence. Absence of a claim does not imply absence of a skill or capability.";
 
-    [YamlMember(Alias = "semantics", Order = 2)]
+    [YamlMember(Alias = "semantics", Order = 3)]
     public List<string> Semantics { get; set; } = [.. DefaultSemantics];
 }
 
@@ -77,11 +94,19 @@ public sealed class JobMlDocumentMetadata
     public string Language { get; set; } = "en-GB";
 
     /// <summary>
-    /// Optional published endpoint for the complete full-resolution JobML ledger.
-    /// Compact cJobML outputs expose this link instead of embedding editing metadata.
+    /// Optional published endpoint for the full-resolution JobML projection.
+    /// This is not the canonical career transcript, which can also contain source
+    /// documents, editorial decisions, embeddings, centroids, and private analysis.
     /// </summary>
+    [YamlMember(Alias = "full_jobml")]
+    public string? FullJobMl { get; set; }
+
+    /// <summary>JobML 0.1 draft compatibility alias. New documents emit full_jobml.</summary>
     [YamlMember(Alias = "complete_ledger")]
-    public string? CompleteLedger { get; set; }
+    public string? LegacyCompleteLedger { get; set; }
+
+    [YamlIgnore]
+    public string? EffectiveFullJobMl => FullJobMl ?? LegacyCompleteLedger;
 }
 
 public sealed class JobMlEntity
@@ -106,6 +131,10 @@ public sealed class JobMlClaim
 
     [YamlMember(Alias = "subject")]
     public string Subject { get; set; } = "";
+
+    /// <summary>Distinguishes narrative claims from identity and semantic-index records.</summary>
+    [YamlMember(Alias = "type")]
+    public string? Type { get; set; }
 
     [YamlMember(Alias = "statement")]
     public string Statement { get; set; } = "";
@@ -154,6 +183,10 @@ public sealed class JobMlEvidence
 
     [YamlMember(Alias = "uri")]
     public string? Uri { get; set; }
+
+    /// <summary>Optional link to an entry in the career-record source catalogue.</summary>
+    [YamlMember(Alias = "source_id")]
+    public string? SourceId { get; set; }
 
     [YamlMember(Alias = "issuer")]
     public string? Issuer { get; set; }
@@ -225,6 +258,79 @@ public sealed class JobMlConcept
 
     [YamlMember(Alias = "aliases")]
     public List<string> Aliases { get; set; } = [];
+
+    /// <summary>Optional derived semantic representation. It is not evidence.</summary>
+    [YamlMember(Alias = "embedding")]
+    public JobMlEmbedding? Embedding { get; set; }
+}
+
+public sealed class JobMlSource
+{
+    [YamlMember(Alias = "id")]
+    public string Id { get; set; } = "";
+
+    [YamlMember(Alias = "type")]
+    public string Type { get; set; } = "resume";
+
+    [YamlMember(Alias = "name")]
+    public string Name { get; set; } = "";
+
+    [YamlMember(Alias = "uri")]
+    public string? Uri { get; set; }
+
+    [YamlMember(Alias = "summary")]
+    public string? Summary { get; set; }
+
+    [YamlMember(Alias = "fingerprint")]
+    public string? Fingerprint { get; set; }
+
+    [YamlMember(Alias = "observed_at")]
+    public string? ObservedAt { get; set; }
+}
+
+public sealed class JobMlSemanticSpace
+{
+    [YamlMember(Alias = "id")]
+    public string Id { get; set; } = "";
+
+    [YamlMember(Alias = "model")]
+    public string Model { get; set; } = "";
+
+    [YamlMember(Alias = "dimensions")]
+    public int Dimensions { get; set; }
+
+    [YamlMember(Alias = "normalization")]
+    public string Normalization { get; set; } = "l2";
+
+    [YamlMember(Alias = "model_digest")]
+    public string? ModelDigest { get; set; }
+}
+
+public sealed class JobMlEmbedding
+{
+    [YamlMember(Alias = "space")]
+    public string Space { get; set; } = "";
+
+    [YamlMember(Alias = "vector")]
+    public List<float> Vector { get; set; } = [];
+}
+
+public sealed class JobMlRoleCentroid
+{
+    [YamlMember(Alias = "id")]
+    public string Id { get; set; } = "";
+
+    [YamlMember(Alias = "name")]
+    public string Name { get; set; } = "";
+
+    [YamlMember(Alias = "space")]
+    public string Space { get; set; } = "";
+
+    [YamlMember(Alias = "derived_from")]
+    public List<string> DerivedFrom { get; set; } = [];
+
+    [YamlMember(Alias = "vector")]
+    public List<float> Vector { get; set; } = [];
 }
 
 public sealed class JobMlJob

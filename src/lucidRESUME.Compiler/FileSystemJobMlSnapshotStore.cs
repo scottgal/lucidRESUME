@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace lucidRESUME.Compiler;
 
 /// <summary>
-/// Publishes immutable, validated snapshots of the complete human resume and JobML ledger.
+/// Publishes immutable, validated snapshots of a JobML career-record projection.
 /// Reads never run extraction or an LLM.
 /// </summary>
 public sealed class FileSystemJobMlSnapshotStore(IOptions<JobMlCompilerOptions> options) : IJobMlSnapshotStore

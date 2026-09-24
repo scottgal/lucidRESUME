@@ -77,13 +77,15 @@ public interface IResumeCompositionProvider
 
 public sealed class CompilationOptions
 {
-    public int MaximumClaims { get; set; } = 18;
+    public int MaximumClaims { get; set; } = 12;
     public int MaximumClaimsPerSubject { get; set; } = 5;
+    public int MaximumSections { get; set; } = 6;
     public double RelatedThreshold { get; set; } = 0.56;
     public double DiversityPenalty { get; set; } = 0.18;
     public bool ComposeProse { get; set; }
     public string? CompositionProvider { get; set; }
-    public string? CompleteLedgerUri { get; set; }
+    /// <summary>Published endpoint for the full JobML career-record projection.</summary>
+    public string? FullJobMlUri { get; set; }
 }
 
 public sealed record CompilationResult(

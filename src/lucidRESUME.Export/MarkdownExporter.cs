@@ -18,10 +18,10 @@ public sealed class MarkdownExporter : IResumeExporter
             {
                 var compact = CJobMlProjector.Project(full!);
                 // cJobML is only valid when it can publish at least one compact
-                // reference or a route to the complete ledger. A self-contained
+                // reference or a route to the full JobML career record. A self-contained
                 // projection with ledger-only evidence must retain full JobML.
                 if (compact.References.Count > 0 ||
-                    Uri.TryCreate(compact.CompleteLedger, UriKind.Absolute, out _))
+                    Uri.TryCreate(compact.FullJobMl, UriKind.Absolute, out _))
                     return Task.FromResult(Encoding.UTF8.GetBytes(compact.Markdown));
                 return Task.FromResult(Encoding.UTF8.GetBytes(resume.JobMlSource));
             }

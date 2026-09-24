@@ -21,18 +21,18 @@ public sealed class ResumeDocument
     /// <summary>Human-authoritative Markdown explicitly published from the JobML editor.</summary>
     public string? CanonicalMarkdown { get; set; }
 
-    /// <summary>The complete Markdown + embedded JobML snapshot used for reviewed matching.</summary>
+    /// <summary>A full JobML projection used for reviewed matching. The canonical career ledger may remain richer.</summary>
     public string? JobMlSource { get; set; }
 
     /// <summary>Fast revision fingerprint for detecting stale downstream projections.</summary>
     public string? JobMlRevision { get; set; }
 
-    /// <summary>Optional public endpoint serving the complete full-resolution JobML ledger.</summary>
+    /// <summary>Optional public endpoint serving a full-resolution JobML projection.</summary>
     public string? CompleteJobMlUri { get; set; }
 
     /// <summary>
     /// Include the compact, publication-safe cJobML citation projection in exported
-    /// Markdown, Word, and PDF files. Full JobML remains the internal source snapshot.
+    /// Markdown, Word, and PDF files. Full JobML remains the linked publication projection.
     /// </summary>
     public bool IncludeCompactJobMl { get; set; } = true;
 

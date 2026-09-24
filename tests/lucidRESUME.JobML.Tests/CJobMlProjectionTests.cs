@@ -26,7 +26,7 @@ public sealed class CJobMlProjectionTests
         Assert.Equal("Reduced RAG", reference.Title);
         Assert.Equal("Article", reference.Type);
         Assert.Equal("https://mostlylucid.net/reduced-rag", reference.Uri!.ToString().TrimEnd('/'));
-        Assert.Equal("https://example.com/jane.jobml", parsed.CompleteLedger!.ToString().TrimEnd('/'));
+        Assert.Equal("https://example.com/jane.jobml", parsed.FullJobMl!.ToString().TrimEnd('/'));
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class CJobMlProjectionTests
     }
 
     [Fact]
-    public void Projection_PublishesCompleteLedgerEndpointWithoutExternalReferences()
+    public void Projection_PublishesFullJobMlEndpointWithoutExternalReferences()
     {
         var full = AcceptedFile();
         full.Data.Claims.Single().Evidence.RemoveAll(evidence =>
@@ -99,14 +99,14 @@ public sealed class CJobMlProjectionTests
         Assert.Contains("Full JobML: <https://example.com/jane.jobml>", compact.Markdown);
         var parsed = CJobMlParser.Parse(compact.Markdown);
         Assert.Empty(parsed.References);
-        Assert.Equal("https://example.com/jane.jobml", parsed.CompleteLedger?.ToString());
+        Assert.Equal("https://example.com/jane.jobml", parsed.FullJobMl?.ToString());
     }
 
     [Fact]
     public void Projection_CitesImportedResumeSourceWithoutPublishingEditingMetadata()
     {
         var full = AcceptedFile();
-        full.Data.Document.CompleteLedger = null;
+        full.Data.Document.FullJobMl = null;
         var claim = full.Data.Claims.Single();
         claim.Evidence.RemoveAll(evidence =>
             !string.Equals(evidence.Type, "prose", StringComparison.OrdinalIgnoreCase));
@@ -172,7 +172,7 @@ public sealed class CJobMlProjectionTests
     {
         var file = JobMlDraftGenerator.Generate(
             "# Jane\n\n## Experience\n\nBuilt an evidence-linked retrieval platform.");
-        file.Data.Document.CompleteLedger = "https://example.com/jane.jobml";
+        file.Data.Document.FullJobMl = "https://example.com/jane.jobml";
         var claim = Assert.Single(file.Data.Claims);
         claim.Review = "accepted";
         claim.Evidence.Add(new JobMlEvidence

@@ -11,7 +11,7 @@ namespace lucidRESUME.AI;
 /// Uses nomic-embed-text by default (768 dimensions, runs on CPU fine).
 /// Includes a bounded concurrent cache to avoid re-embedding the same strings.
 /// </summary>
-public sealed class OllamaEmbeddingService : IEmbeddingService
+public sealed class OllamaEmbeddingService : IEmbeddingService, IEmbeddingSpaceDescriptor
 {
     private readonly HttpClient _http;
     private readonly OllamaOptions _options;
@@ -19,6 +19,10 @@ public sealed class OllamaEmbeddingService : IEmbeddingService
 
     private readonly ConcurrentDictionary<(string model, string text), float[]> _cache = new();
     private const int MaxCacheEntries = 500;
+
+    public string ModelId => $"ollama/{_options.EmbeddingModel}";
+    public string Normalization => "l2";
+    public string? ModelDigest => null;
 
     public OllamaEmbeddingService(HttpClient http, IOptions<OllamaOptions> options,
         ILogger<OllamaEmbeddingService> logger)

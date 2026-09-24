@@ -9,7 +9,9 @@ LinkedIn + repositories + historical CVs
                     |
           upstream ingestion and review
                     |
-      complete human résumé + full JobML
+      canonical career ledger
+                    |
+          JobML career record
                     |
             immutable publication
                     |
@@ -22,11 +24,12 @@ LinkedIn + repositories + historical CVs
 
 ## Source contract
 
-The input is a complete Markdown résumé with an embedded full JobML block. In
-practice it may be ten or more pages because it records all useful role detail,
+The input is a complete Markdown career transcript with an embedded
+`career_record` JobML block. In practice it may be ten or more pages because it
+records all useful role detail,
 responsibilities, projects, linked posts and external sources. That completeness
-is a feature. It is the canonical source from which shorter documents are
-compiled.
+is a feature. It is a portable projection of the canonical application ledger,
+which may additionally retain private inputs, review decisions, and indexes.
 
 Publishing validates JobML and reconciles every accepted claim. Changed,
 missing, or ambiguous accepted evidence blocks publication. A successful publish
@@ -35,7 +38,7 @@ creates a content-addressed immutable revision and atomically advances the
 
 ## Compilation invariant
 
-> Every output passage starts as human prose selected from the complete résumé.
+> Every output passage starts as human prose selected from the complete career transcript.
 
 The target job controls selection, order and emphasis. It cannot supply candidate
 facts. The deterministic planner parses required skills, preferred skills and
@@ -82,7 +85,7 @@ Minimal configuration:
 {
   "LucidResumeCompiler": {
     "SnapshotDirectory": "App_Data/jobml",
-    "MaximumUploadBytes": 4194304,
+    "MaximumUploadBytes": 16777216,
     "MaximumJobDescriptionBytes": 262144,
     "CompilationCacheMinutes": 30,
     "RequireAuthenticatedWriter": true
@@ -104,10 +107,11 @@ provider uses the Responses API with strict structured output and `store: false`
 |---|---|---|
 | `GET` | `/lucidresume/` | Upload, paste, preview and download control |
 | `GET` | `/lucidresume/api/status` | Current master revision |
-| `POST` | `/lucidresume/api/ledger` | Validate and publish complete Markdown + JobML |
+| `POST` | `/lucidresume/api/career-record` | Validate and publish complete Markdown + JobML |
+| `POST` | `/lucidresume/api/ledger` | Compatibility alias for career-record publication |
 | `POST` | `/lucidresume/api/compile` | Compile a job-specific projection |
-| `GET/HEAD` | `/lucidresume/api/jobml` | Current complete ledger |
-| `GET` | `/lucidresume/api/jobml/{revision}` | Immutable complete ledger revision |
+| `GET/HEAD` | `/lucidresume/api/jobml` | Current full JobML career record |
+| `GET` | `/lucidresume/api/jobml/{revision}` | Immutable career-record revision |
 | `GET` | `/lucidresume/api/export/{id}/{format}` | `markdown`, `docx`, or `pdf` |
 
 Mutation endpoints require an authenticated identity by default and always require

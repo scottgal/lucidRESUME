@@ -66,9 +66,9 @@ public sealed class ResumeArtifactBuilder
             {
                 Id = EvidenceLedgerBuilder.Slug(source.Personal.FullName ?? "resume"),
                 Language = "en-GB",
-                CompleteLedger = Uri.TryCreate(source.CompleteJobMlUri, UriKind.Absolute, out _)
+                FullJobMl = Uri.TryCreate(source.CompleteJobMlUri, UriKind.Absolute, out _)
                     ? source.CompleteJobMlUri
-                    : TryReadCompleteLedger(source.JobMlSource)
+                    : TryReadFullJobMl(source.JobMlSource)
             },
             Job = new JobMlJob { Id = EvidenceLedgerBuilder.Slug(job.Title ?? "target-role") }
         };
@@ -203,11 +203,11 @@ public sealed class ResumeArtifactBuilder
         return new JobMlFile(markdown, root);
     }
 
-    private static string? TryReadCompleteLedger(string? source)
+    private static string? TryReadFullJobMl(string? source)
     {
         if (string.IsNullOrWhiteSpace(source)) return null;
         return new JobMlParser().TryParse(source, out var file, out _)
-            ? file!.Data.Document.CompleteLedger
+            ? file!.Data.Document.EffectiveFullJobMl
             : null;
     }
 

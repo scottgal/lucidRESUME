@@ -1179,7 +1179,13 @@ public static partial class MarkdownSectionParser
         // Normalise compact "Company- Role" boundaries without touching hyphens
         // inside ordinary words.
         identity = CompactRoleSeparator().Replace(identity, " - ");
-        job = ParseJobHeading(identity);
+        var hasIdentitySeparator = identity.Contains('|') ||
+                                   new[] { " — ", " – ", " - " }.Any(identity.Contains);
+        job = hasIdentitySeparator
+            ? ParseJobHeading(identity)
+            : LooksLikeJobTitle(identity)
+                ? new WorkExperience { Title = identity }
+                : new WorkExperience { Company = identity };
         ApplyDateRange(job, range);
         if (PresentTail().IsMatch(content))
         {

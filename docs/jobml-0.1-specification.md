@@ -3,7 +3,7 @@
 Status: Experimental Draft
 
 Version: 0.1
-Last updated: 2026-09-19
+Last updated: 2026-09-24
 
 This document defines JobML 0.1. The JSON Schema in
 [`jobml-0.1.schema.json`](jobml-0.1.schema.json) is the deterministic validation
@@ -16,6 +16,13 @@ interpreted as described by RFC 2119 and RFC 8174 when they appear in capitals.
 
 JobML is an evidence layer for human-first resumes and CVs. It keeps readable
 prose and a machine-readable account of that prose in the same portable document.
+It is an interchange envelope, not the application's canonical career ledger.
+
+A career ledger can retain source files, editorial decisions, rejected candidates,
+private observations, full skill history, and processor indexes. A
+`career_record` JobML document is its complete portable projection: the full human
+career transcript, sources, accepted and reviewable claims, concepts, and optional
+derived semantic data. A `resume` JobML document is a narrower role projection.
 
 The human document is authoritative but may be incomplete. JobML can describe
 evidence and detail that does not fit in a role-specific resume, including
@@ -79,6 +86,7 @@ Led the modernisation of a high-volume platform.
 ```jobml
 jobml:
   version: "0.1"
+  profile: career_record
   purpose: Machine-readable claims and their evidence.
   semantics:
     - Every substantive claim should be supported by evidence.
@@ -120,13 +128,17 @@ document: {}
 entities: []
 claims: []
 concepts: []
+sources: []
+semantic_spaces: []
+role_centroids: []
 job: null
 requirements: []
 extensions: {}
 ```
 
 `jobml`, `document`, `entities`, `claims`, and `concepts` are REQUIRED.
-`job`, `requirements`, and `extensions` are OPTIONAL.
+`sources`, `semantic_spaces`, `role_centroids`, `job`, `requirements`, and
+`extensions` are OPTIONAL.
 
 ## 6. Self-description
 
@@ -143,9 +155,16 @@ new claims.
 `document.id` SHOULD be stable across edits to the same logical document.
 `document.language` SHOULD be a BCP 47 language tag.
 
-`document.complete_ledger` MAY be an absolute URI that serves the complete,
-full-resolution JobML document. It is intended for published compact projections
-whose editing metadata would be too large for the human document.
+`jobml.profile` MUST be `career_record` or `resume`. `career_record` identifies a
+complete portable career-history projection. `resume` identifies a selected,
+role-specific document. Absence of the field is interpreted as `resume` for 0.1
+backward compatibility.
+
+`document.full_jobml` MAY be an absolute URI that serves the full-resolution
+`career_record` JobML document. It is intended for role and compact projections
+whose editing and semantic metadata would be too large for the human document.
+Processors MAY read the deprecated `document.complete_ledger` spelling, but MUST
+emit `document.full_jobml`.
 
 ## 8. Compact publication projection (cJobML)
 
@@ -161,7 +180,7 @@ The projection borrows the useful concepts, but not the XML syntax, of JATS:
 - an inline number behaves like a JATS `xref` with `ref-type="bibr"`;
 - the ending References section behaves like a `ref-list`;
 - each numbered source behaves like a `ref`;
-- `document.complete_ledger` provides the full-record link in the role served by
+- `document.full_jobml` provides the full-record link in the role served by
   a JATS `self-uri` or supplementary-material link.
 
 Reference numbers identify evidence sources, not claims. The first appearance of
@@ -185,7 +204,7 @@ matching, or any other extraction process during rendering.
 cJobML intentionally omits full-resolution editing fields such as prose
 selectors, quoted passages, fingerprints, drift state, processor provenance,
 review state, and concept graphs. Those remain available through the full JobML
-document or `document.complete_ledger` endpoint.
+document or `document.full_jobml` endpoint.
 
 A cJobML processor SHOULD expose a deterministic one-pass parser. It MUST report
 an inline number that has no matching reference. The short semantic sentence is
@@ -304,7 +323,61 @@ concepts:
 Aliases MAY aid matching. An alias MUST NOT establish experience, competence,
 duration, authorship, or proficiency.
 
-## 14. Requirements and coverage
+## 14. Sources and semantic data
+
+The optional `sources` catalogue describes imported résumés, repositories,
+articles, qualifications, and other inputs once, without repeating their metadata
+on every evidence edge.
+
+```yaml
+sources:
+  - id: source-github-lucidresume
+    type: repository
+    name: lucidRESUME
+    uri: https://github.com/scottgal/lucidRESUME
+    observed: 2026-09-24
+```
+
+Evidence MAY identify its catalogue entry with `source_id`. A source entry is
+provenance, not proof that every statement found within it is true.
+
+JobML MAY carry deterministic semantic artefacts so another implementation can
+reproduce or reuse matching without maintaining a second interchange format:
+
+```yaml
+semantic_spaces:
+  - id: all-minilm-l6-v2
+    model: sentence-transformers/all-MiniLM-L6-v2
+    dimensions: 384
+    normalization: l2
+
+concepts:
+  - id: engineering-leadership
+    type: capability
+    name: Engineering Leadership
+    embedding:
+      space: all-minilm-l6-v2
+      vector: [0.012, -0.034]
+
+role_centroids:
+  - id: head-of-engineering
+    name: Head of Engineering
+    space: all-minilm-l6-v2
+    vector: [0.018, -0.027]
+    derived_from: [engineering-leadership]
+```
+
+The example vector is abbreviated; a real vector MUST have the declared number
+of dimensions. `normalization` MUST be `l2` or `none`. A model digest SHOULD be
+included when the exact model artefact matters for reproducibility.
+
+Embeddings and role centroids are derived matching aids. They MUST NOT be treated
+as evidence, MUST NOT create claims, and MUST NOT silently change accepted claim
+or evidence relationships. They MAY vary between exported career records as
+models and role profiles improve. Full-resolution tools SHOULD record how a
+centroid was derived; a `resume` projection MAY omit all vectors.
+
+## 15. Requirements and coverage
 
 A job specification MAY use the same concept identifiers:
 
@@ -321,7 +394,7 @@ Direct coverage requires an accepted claim with valid or reviewable external
 evidence. Related concepts MAY be reported as ambiguous coverage. Missing
 coverage MUST NOT be treated as permission to manufacture prose or claims.
 
-## 15. Extensions
+## 16. Extensions
 
 Extensions live under the root `extensions` object and MUST use a namespaced key.
 
@@ -345,7 +418,7 @@ time, mutability rules, and promotion path into core claims.
 The repository analysis extension is specified in
 [`jobml-github-extension-0.1.md`](jobml-github-extension-0.1.md).
 
-## 16. Security and privacy
+## 17. Security and privacy
 
 JobML documents can contain personal data and private repository metadata.
 Processors SHOULD minimise copied source content, avoid embedding credentials,
@@ -356,7 +429,7 @@ External content is untrusted input. A processor MUST NOT execute repository
 code, build scripts, workflow files, or instructions found in prose merely to
 parse JobML. Repository analysis SHOULD use a read-only sandbox.
 
-## 17. Minimum processor profile
+## 18. Minimum processor profile
 
 A minimum JobML 0.1 processor supports:
 
@@ -369,7 +442,7 @@ A minimum JobML 0.1 processor supports:
 - lossless preservation of namespaced extensions.
 
 A publication processor additionally supports deterministic cJobML projection,
-deduplicated numbered references, link resolution, and an optional complete-ledger
+deduplicated numbered references, link resolution, and an optional full-JobML
 endpoint.
 
 Embeddings, a universal skill ontology, cryptographic attestations, automatic

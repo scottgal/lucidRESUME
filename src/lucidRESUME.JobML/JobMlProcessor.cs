@@ -14,6 +14,8 @@ public sealed class JobMlProcessor
 
         if (root.Version != "0.1")
             diagnostics.Add(Error("JML001", $"Unsupported JobML version '{root.Version}'. Expected 0.1.", "jobml"));
+        if (root.Header.Profile is not ("resume" or "career_record"))
+            diagnostics.Add(Error("JML040", "jobml.profile must be resume or career_record.", "jobml.profile"));
         if (string.IsNullOrWhiteSpace(root.Header.Purpose))
             diagnostics.Add(Warning("JML005", "jobml.purpose should explain this document to an unfamiliar parser.", "jobml.purpose"));
         if (root.Header.Semantics.Count == 0)
@@ -25,16 +27,55 @@ public sealed class JobMlProcessor
             diagnostics.Add(Error("JML002", "document.id is required.", "document.id"));
         if (string.IsNullOrWhiteSpace(root.Document.Language) || !LanguageTag.IsMatch(root.Document.Language))
             diagnostics.Add(Error("JML003", "document.language must be a language tag such as en-GB.", "document.language"));
-        if (!string.IsNullOrWhiteSpace(root.Document.CompleteLedger) &&
-            !Uri.TryCreate(root.Document.CompleteLedger, UriKind.Absolute, out _))
-            diagnostics.Add(Error("JML008", "document.complete_ledger must be an absolute URI.", "document.complete_ledger"));
+        if (!string.IsNullOrWhiteSpace(root.Document.EffectiveFullJobMl) &&
+            !Uri.TryCreate(root.Document.EffectiveFullJobMl, UriKind.Absolute, out _))
+            diagnostics.Add(Error("JML008", "document.full_jobml must be an absolute URI.", "document.full_jobml"));
+        if (!string.IsNullOrWhiteSpace(root.Document.FullJobMl) &&
+            !string.IsNullOrWhiteSpace(root.Document.LegacyCompleteLedger) &&
+            !string.Equals(root.Document.FullJobMl, root.Document.LegacyCompleteLedger, StringComparison.Ordinal))
+            diagnostics.Add(Error("JML009", "document.full_jobml and legacy document.complete_ledger disagree.", "document.full_jobml"));
 
         CheckUniqueIds(root.Entities.Select(e => e.Id), "entity", "entities", diagnostics);
         CheckUniqueIds(root.Claims.Select(c => c.Id), "claim", "claims", diagnostics);
         CheckUniqueIds(root.Concepts.Select(c => c.Id), "concept", "concepts", diagnostics);
+        CheckUniqueIds(root.Sources.Select(source => source.Id), "source", "sources", diagnostics);
+        CheckUniqueIds(root.SemanticSpaces.Select(space => space.Id), "semantic space", "semantic_spaces", diagnostics);
+        CheckUniqueIds(root.RoleCentroids.Select(centroid => centroid.Id), "role centroid", "role_centroids", diagnostics);
 
         var entityIds = root.Entities.Select(e => e.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var conceptIds = root.Concepts.Select(c => c.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sourceIds = root.Sources.Select(source => source.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var spaces = root.SemanticSpaces.ToDictionary(space => space.Id, StringComparer.OrdinalIgnoreCase);
+
+        for (var i = 0; i < root.Sources.Count; i++)
+        {
+            var source = root.Sources[i];
+            if (string.IsNullOrWhiteSpace(source.Id) || string.IsNullOrWhiteSpace(source.Type) ||
+                string.IsNullOrWhiteSpace(source.Name))
+                diagnostics.Add(Error("JML012", "A source requires id, type, and name.", $"sources[{i}]"));
+            if (!string.IsNullOrWhiteSpace(source.Uri) && !Uri.TryCreate(source.Uri, UriKind.Absolute, out _))
+                diagnostics.Add(Error("JML013", "A source URI must be absolute.", $"sources[{i}].uri"));
+        }
+
+        for (var i = 0; i < root.SemanticSpaces.Count; i++)
+        {
+            var space = root.SemanticSpaces[i];
+            if (string.IsNullOrWhiteSpace(space.Id) || string.IsNullOrWhiteSpace(space.Model) || space.Dimensions <= 0)
+                diagnostics.Add(Error("JML014", "A semantic space requires id, model, and positive dimensions.", $"semantic_spaces[{i}]"));
+            if (space.Normalization is not ("l2" or "none"))
+                diagnostics.Add(Error("JML015", "Semantic-space normalization must be l2 or none.", $"semantic_spaces[{i}].normalization"));
+        }
+
+        for (var i = 0; i < root.Concepts.Count; i++)
+            ValidateEmbedding(root.Concepts[i].Embedding, $"concepts[{i}].embedding", spaces, diagnostics);
+        for (var i = 0; i < root.RoleCentroids.Count; i++)
+        {
+            var centroid = root.RoleCentroids[i];
+            ValidateEmbedding(new JobMlEmbedding { Space = centroid.Space, Vector = centroid.Vector },
+                $"role_centroids[{i}]", spaces, diagnostics);
+            foreach (var concept in centroid.DerivedFrom.Where(concept => !conceptIds.Contains(concept)))
+                diagnostics.Add(Error("JML016", $"Role centroid references unknown concept '{concept}'.", $"role_centroids[{i}].derived_from"));
+        }
 
         for (var i = 0; i < root.Entities.Count; i++)
         {
@@ -73,6 +114,9 @@ public sealed class JobMlProcessor
                     diagnostics.Add(Error("JML025", $"Evidence '{resolution.Evidence.Ref}' is {resolution.State.ToString().ToLowerInvariant()}.", $"{path}.evidence"));
                 else if (resolution.State == EvidenceState.Changed)
                     diagnostics.Add(Warning("JML026", $"Evidence '{resolution.Evidence.Ref}' has changed and requires review.", $"{path}.evidence"));
+                if (!string.IsNullOrWhiteSpace(resolution.Evidence.SourceId) &&
+                    !sourceIds.Contains(resolution.Evidence.SourceId))
+                    diagnostics.Add(Error("JML028", $"Evidence references unknown source '{resolution.Evidence.SourceId}'.", $"{path}.evidence"));
             }
         }
 
@@ -84,6 +128,21 @@ public sealed class JobMlProcessor
         }
 
         return diagnostics;
+    }
+
+    private static void ValidateEmbedding(JobMlEmbedding? embedding, string path,
+        IReadOnlyDictionary<string, JobMlSemanticSpace> spaces, ICollection<JobMlDiagnostic> diagnostics)
+    {
+        if (embedding is null) return;
+        if (!spaces.TryGetValue(embedding.Space, out var space))
+        {
+            diagnostics.Add(Error("JML017", $"Embedding references unknown semantic space '{embedding.Space}'.", path));
+            return;
+        }
+        if (embedding.Vector.Count != space.Dimensions)
+            diagnostics.Add(Error("JML018", $"Embedding has {embedding.Vector.Count} values; semantic space '{space.Id}' requires {space.Dimensions}.", path));
+        if (embedding.Vector.Any(value => !float.IsFinite(value)))
+            diagnostics.Add(Error("JML019", "Embedding values must be finite.", path));
     }
 
     public static IReadOnlyList<ClaimEvidenceResolution> Reconcile(JobMlFile file)

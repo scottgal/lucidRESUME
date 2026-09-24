@@ -81,6 +81,19 @@ public class ResumeDateParserTests
     }
 
     [Fact]
+    public void ExtractFirstDateRange_UkNumericDateToPresent_CoversWholeRange()
+    {
+        const string text = "20/01/2012 – Present Freelance Developer";
+
+        var result = ResumeDateParser.ExtractFirstDateRange(text);
+
+        Assert.NotNull(result);
+        Assert.Equal(new DateOnly(2012, 1, 20), result.Start);
+        Assert.True(result.IsCurrent);
+        Assert.Equal("20/01/2012 – Present", text[result.MatchStart..(result.MatchEnd + 1)]);
+    }
+
+    [Fact]
     public void ExtractFirstDateRange_NoDate_ReturnsNull()
     {
         var result = ResumeDateParser.ExtractFirstDateRange("C# Python JavaScript SQL");

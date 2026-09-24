@@ -99,7 +99,7 @@ public sealed class OpenAiLiveIntegrationTests
 
         var full = JobMlDraftGenerator.Generate(
             "# Jane Smith\n\n## Experience\n\nBuilt an evidence-linked retrieval platform.");
-        full.Data.Document.CompleteLedger = "https://example.com/jane.jobml";
+        full.Data.Document.FullJobMl = "https://example.com/jane.jobml";
         var claim = Assert.Single(full.Data.Claims);
         claim.Review = "accepted";
         claim.Evidence.Add(new JobMlEvidence

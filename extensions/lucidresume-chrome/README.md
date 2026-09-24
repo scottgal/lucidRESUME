@@ -1,7 +1,7 @@
 # lucidRESUME Evidence Filler for Chrome
 
 This experimental Manifest V3 extension fills job application forms from a
-published full JobML endpoint. It is not an application bot and never submits a
+published JobML `career_record` endpoint. It is not an application bot and never submits a
 form.
 
 The extension follows the same invariant as lucidRESUME:
@@ -41,8 +41,8 @@ npm run build
 Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**,
 and select `extensions/lucidresume-chrome/dist`.
 
-Open a job application form, click the extension, enter the complete endpoint
-such as `https://example.com/lucidresume/api/jobml`, and choose **Load ledger**.
+Open a job application form, click the extension, enter the full JobML endpoint
+such as `https://example.com/lucidresume/api/jobml`, and choose **Load career record**.
 The endpoint must return Markdown containing exactly one fenced `jobml` block.
 HTTPS is required except for `localhost` development.
 

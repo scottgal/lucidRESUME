@@ -140,7 +140,7 @@ test("bounds the HTTP response before parsing it", async () => {
   const oversized = new Response("not buffered", {
     headers: { "content-length": String(MAX_LEDGER_BYTES + 1) }
   });
-  await assert.rejects(() => readJobMlResponse(oversized), /4 MB/);
+  await assert.rejects(() => readJobMlResponse(oversized), /16 MB/);
 
   const streamed = new Response(new ReadableStream({
     start(controller) {
@@ -148,5 +148,5 @@ test("bounds the HTTP response before parsing it", async () => {
       controller.close();
     }
   }));
-  await assert.rejects(() => readJobMlResponse(streamed), /4 MB/);
+  await assert.rejects(() => readJobMlResponse(streamed), /16 MB/);
 });

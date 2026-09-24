@@ -14,7 +14,7 @@ namespace lucidRESUME.AI;
 /// Fully local embedding service using all-MiniLM-L6-v2 ONNX model (384 dimensions).
 /// No external services required - runs on CPU via ONNX Runtime.
 /// </summary>
-public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
+public sealed class OnnxEmbeddingService : IEmbeddingService, IEmbeddingSpaceDescriptor, IDisposable
 {
     private InferenceSession? _session;
     private BertTokenizer? _tokenizer;
@@ -26,6 +26,12 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
     private static readonly object LoadLock = new();
     private const int MaxCacheEntries = 500;
     private const int MaxSequenceLength = 256;
+
+    public string ModelId => _session is null
+        ? "lucidresume/lexical-fnv1a-384-v1"
+        : "sentence-transformers/all-MiniLM-L6-v2";
+    public string Normalization => "l2";
+    public string? ModelDigest => null;
 
     public OnnxEmbeddingService(IOptions<EmbeddingOptions> options, ILogger<OnnxEmbeddingService> logger)
     {

@@ -34,7 +34,7 @@ centroids are built locally from those inspectable seeds. Large public ONNX and
 GGUF weights are downloaded into your application-data directory; interrupted or
 invalid ONNX files are detected and replaced atomically.
 
-Release archives never include a user's `data.db`, resumes, JobML ledger snapshots,
+Release archives never include a user's `data.db`, resumes, JobML career-record snapshots,
 generated projections, or provider credentials. Maintainers can verify an extracted
 installation with `lucidRESUME --asset-audit`.
 
@@ -447,16 +447,17 @@ renders a role-specific document.
 
 ### Complete resume and web compiler
 
-Your canonical source can be deliberately long. Include all useful human-written
-job detail, responsibilities, projects, posts, repositories, and the full JobML
-ledger. Think of it as the complete career record, not the two-page document sent
-to an employer.
+Your canonical career ledger can be deliberately long. Include all useful
+human-written job detail, responsibilities, projects, posts, repositories, source
+files, review decisions and semantic indexes. Think of it as the complete career
+record, not the two-page document sent to an employer. A JobML `career_record` is
+the portable projection of that ledger; it is not a second source of truth.
 
 The optional ASP.NET Core web compiler accepts that already-built complete source
 and a pasted job description. It detects requirements, selects accepted claims
 and their human passages, reports unsupported requirements as honest gaps, then
 exports a shorter Markdown, Word, or PDF projection. It also publishes the full
-JobML ledger at stable current and immutable revision endpoints.
+JobML career record at stable current and immutable revision endpoints.
 
 The compiler can return the selected prose unchanged. If you explicitly enable
 polishing, local grug 9B or OpenAI runs tightening and human-voice editing passes.

@@ -1,4 +1,5 @@
 using Microsoft.Recognizers.Text.DateTime;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace lucidRESUME.Extraction.Recognizers;
@@ -20,6 +21,18 @@ public static class ResumeDateParser
     public static DateRangeResult? ExtractFirstDateRange(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
+
+        // Recognizers.Text treats a UK numeric date followed by "Present" as one
+        // date rather than an open range. Handle that common CV heading explicitly
+        // and preserve exact source offsets for the structural parser.
+        var numericOpen = Regex.Match(text,
+            @"(?<date>\b\d{1,2}/\d{1,2}/\d{4})\s*(?:[-–—]|to)\s*(?:present|current|now|to date)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (numericOpen.Success && DateOnly.TryParseExact(numericOpen.Groups["date"].Value,
+                ["d/M/yyyy", "dd/MM/yyyy", "M/d/yyyy", "MM/dd/yyyy"],
+                CultureInfo.GetCultureInfo("en-GB"), DateTimeStyles.None, out var numericStart))
+            return new DateRangeResult(numericStart, null, true,
+                numericOpen.Index, numericOpen.Index + numericOpen.Length - 1);
 
         // Labels such as "Start Date:" and "End Date:" confuse the generic recognizer
         // ("End Date" has been observed resolving to October). Blank the labels while

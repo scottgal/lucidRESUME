@@ -8,6 +8,21 @@ systems explicit claims with traceable evidence. The app ingests resumes, job
 descriptions, LinkedIn data, and repository observations into a reviewed ledger,
 then projects both representations from that ledger.
 
+The canonical career ledger is the application's working record. It contains the
+complete human career transcript, source catalogue, evidence and skill ledgers,
+review decisions, and derived indexes such as embeddings and role centroids.
+JobML is its portable interchange envelope, not a synonym for the ledger:
+
+```text
+canonical career ledger
+    ├── JobML career_record (complete portable projection)
+    ├── JobML resume (role-specific projection)
+    └── cJobML (compact citation projection)
+```
+
+Semantic artefacts can travel in the `career_record` export so consumers do not
+need a second exchange format. They remain derived matching aids, never evidence.
+
 The core insight is that **skills are not flat keywords**. They have evidence
 (which job, which passage, what dates), strength (years, recency, depth), and
 relationships. Matching is useful, but the central invariant is provenance: a

@@ -12,3 +12,11 @@ public interface IEmbeddingService
     /// <summary>Cosine similarity between two normalised vectors.</summary>
     float CosineSimilarity(float[] a, float[] b);
 }
+
+/// <summary>Describes the vector space emitted by an embedding service.</summary>
+public interface IEmbeddingSpaceDescriptor
+{
+    string ModelId { get; }
+    string Normalization { get; }
+    string? ModelDigest { get; }
+}

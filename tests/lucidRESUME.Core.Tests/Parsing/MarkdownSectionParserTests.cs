@@ -7,6 +7,27 @@ namespace lucidRESUME.Core.Tests.Parsing;
 public class MarkdownSectionParserTests
 {
     [Fact]
+    public void Numeric_date_to_present_role_is_not_split_into_company_and_title()
+    {
+        var resume = ResumeDocument.Create("numeric-date.md", "text/markdown", 100);
+
+        MarkdownSectionParser.PopulateSections(resume, """
+            # Alex Example
+
+            ## Work History
+
+            20/01/2012 – Present Freelance Developer
+            Built customer applications on AWS.
+            """);
+
+        var role = Assert.Single(resume.Experience);
+        Assert.Equal("Freelance Developer", role.Title);
+        Assert.Null(role.Company);
+        Assert.Equal(new DateOnly(2012, 1, 20), role.StartDate);
+        Assert.True(role.IsCurrent);
+    }
+
+    [Fact]
     public void PopulateSections_StripsStableAnchorFromCandidateName()
     {
         var resume = ResumeDocument.Create("resume.md", "text/markdown", 0);

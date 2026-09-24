@@ -18,10 +18,10 @@ Role centroids are materialised locally from the shipped role seeds with the con
 
 - `data.db` or any other user store
 - imported resumes, LinkedIn exports or GitHub account data
-- complete JobML ledgers or generated role projections
+- full JobML career-record exports or generated role projections
 - API keys, user secrets or provider credentials
 
-`lucidRESUME --asset-audit` verifies the immutable product assets in an installed build. The release workflow runs it for every target and fails if a user database, JobML ledger snapshot or credential-like file appears in the publish directory.
+`lucidRESUME --asset-audit` verifies the immutable product assets in an installed build. The release workflow runs it for every target and fails if a user database, JobML career-record snapshot or credential-like file appears in the publish directory.
 
 ## Dataset provenance
 

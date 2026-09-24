@@ -235,7 +235,7 @@ public sealed class ResumeOutputExporterTests
     {
         const string markdown = "# Jane Smith\n\n## Experience\n\n### Engineer at Example Corp\n\nBuilt a reliable platform for customers.";
         var file = JobMlDraftGenerator.Generate(markdown);
-        file.Data.Document.CompleteLedger = "https://example.com/jane.jobml";
+        file.Data.Document.FullJobMl = "https://example.com/jane.jobml";
         var claim = Assert.Single(file.Data.Claims);
         claim.Review = "accepted";
         claim.Evidence.Add(new JobMlEvidence

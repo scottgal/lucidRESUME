@@ -20,11 +20,12 @@ public static class EndpointRouteBuilderExtensions
         var group = endpoints.MapGroup(prefix);
         group.MapGet("/", Page);
         group.MapGet("/api/status", Status);
-        group.MapPost("/api/ledger", Publish);
+        group.MapPost("/api/career-record", Publish);
+        group.MapPost("/api/ledger", Publish); // JobML 0.1 draft compatibility route.
         group.MapPost("/api/compile", Compile);
-        group.MapGet("/api/jobml", CurrentLedger);
-        group.MapMethods("/api/jobml", ["HEAD"], CurrentLedger);
-        group.MapGet("/api/jobml/{revision}", VersionedLedger);
+        group.MapGet("/api/jobml", CurrentJobMl);
+        group.MapMethods("/api/jobml", ["HEAD"], CurrentJobMl);
+        group.MapGet("/api/jobml/{revision}", VersionedJobMl);
         group.MapGet("/api/export/{id}/{format}", Export);
         return endpoints;
     }
@@ -56,12 +57,21 @@ public static class EndpointRouteBuilderExtensions
             return Results.Problem("The complete resume exceeds the configured upload limit.", statusCode: 413);
         try
         {
+            if (context.Request.Path.Value?.EndsWith("/api/career-record", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var parsed = new lucidRESUME.JobML.JobMlParser().Parse(source);
+                if (!string.Equals(parsed.Data.Header.Profile, "career_record", StringComparison.Ordinal))
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["careerRecord"] = ["The career-record endpoint requires jobml.profile: career_record."]
+                    });
+            }
             var snapshot = await store.PublishAsync(source, ct);
             return Results.Ok(new { snapshot.Revision, snapshot.PublishedAt, warnings = snapshot.Diagnostics });
         }
         catch (Exception ex) when (ex is JobMlPublicationException or lucidRESUME.JobML.JobMlParseException)
         {
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["ledger"] = [ex.Message] });
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["careerRecord"] = [ex.Message] });
         }
     }
 
@@ -80,7 +90,7 @@ public static class EndpointRouteBuilderExtensions
         var snapshot = string.IsNullOrWhiteSpace(request.SourceRevision)
             ? await store.GetCurrentAsync(ct)
             : await store.GetAsync(request.SourceRevision, ct);
-        if (snapshot is null) return Results.NotFound(new { error = "Publish a complete Markdown + JobML resume first." });
+        if (snapshot is null) return Results.NotFound(new { error = "Publish a JobML career record first." });
         const string compileSuffix = "/api/compile";
         var requestPath = context.Request.Path.Value ?? "/lucidresume/api/compile";
         var routeBase = requestPath.EndsWith(compileSuffix, StringComparison.OrdinalIgnoreCase)
@@ -91,7 +101,7 @@ public static class EndpointRouteBuilderExtensions
             {
                 ComposeProse = request.Polish,
                 CompositionProvider = request.Provider,
-                CompleteLedgerUri = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.PathBase}{routeBase}/api/jobml/{snapshot.Revision}"
+                FullJobMlUri = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.PathBase}{routeBase}/api/jobml/{snapshot.Revision}"
             }, ct);
         sessions.Put(result, TimeSpan.FromMinutes(configured.Value.CompilationCacheMinutes));
         var markdownPipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().DisableHtml().Build();
@@ -116,20 +126,20 @@ public static class EndpointRouteBuilderExtensions
         });
     }
 
-    private static async Task<IResult> CurrentLedger(HttpContext context, IJobMlSnapshotStore store, CancellationToken ct)
+    private static async Task<IResult> CurrentJobMl(HttpContext context, IJobMlSnapshotStore store, CancellationToken ct)
     {
         var snapshot = await store.GetCurrentAsync(ct);
-        return snapshot is null ? Results.NotFound() : Ledger(context, snapshot, false);
+        return snapshot is null ? Results.NotFound() : JobMl(context, snapshot, false);
     }
 
-    private static async Task<IResult> VersionedLedger(string revision, HttpContext context,
+    private static async Task<IResult> VersionedJobMl(string revision, HttpContext context,
         IJobMlSnapshotStore store, CancellationToken ct)
     {
         var snapshot = await store.GetAsync(revision, ct);
-        return snapshot is null ? Results.NotFound() : Ledger(context, snapshot, true);
+        return snapshot is null ? Results.NotFound() : JobMl(context, snapshot, true);
     }
 
-    private static IResult Ledger(HttpContext context, JobMlSnapshot snapshot, bool immutable)
+    private static IResult JobMl(HttpContext context, JobMlSnapshot snapshot, bool immutable)
     {
         context.Response.Headers.ETag = $"\"{snapshot.Revision}\"";
         context.Response.Headers.LastModified = snapshot.PublishedAt.ToString("R");
@@ -155,6 +165,7 @@ public static class EndpointRouteBuilderExtensions
         resume.JobMlSource = result.FullJobMlMarkdown;
         resume.JobMlRevision = result.Manifest.SourceRevision;
         MarkdownSectionParser.PopulateSections(resume, result.HumanMarkdown);
+        PopulateProjectionSections(resume, result.ProjectedJobMl);
         var exporter = exporters.Single(x => x.Format == parsedFormat);
         var bytes = await exporter.ExportAsync(resume, ct);
         var metadata = parsedFormat switch
@@ -166,6 +177,65 @@ public static class EndpointRouteBuilderExtensions
         return Results.File(bytes, metadata.Item1, metadata.Item2);
     }
 
+    private static void PopulateProjectionSections(ResumeDocument resume, lucidRESUME.JobML.JobMlFile projection)
+    {
+        // The generic Markdown parser recognises conventional "Experience" sections,
+        // not the compiler's evidence-packet headings. Rebuild the export model from
+        // the already-projected JobML bindings; never infer it again from rendered text.
+        resume.Personal.Summary = null;
+        resume.Experience.Clear();
+        resume.Projects.Clear();
+        resume.Education.Clear();
+
+        var index = lucidRESUME.JobML.MarkdownEvidenceIndex.Create(projection.Markdown);
+        var claimsBySubject = projection.Data.Claims
+            .GroupBy(claim => claim.Subject, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
+        var ordered = projection.Data.Entities.Select(entity =>
+        {
+            var claims = claimsBySubject.GetValueOrDefault(entity.Id) ?? [];
+            var passages = claims.SelectMany(claim => claim.Evidence)
+                .Where(evidence => evidence.Type == "prose" && !string.IsNullOrWhiteSpace(evidence.Ref))
+                .Select(evidence => index.TryGet(evidence.Ref!, out var passage) ? passage : null)
+                .Where(passage => passage is not null)
+                .Cast<lucidRESUME.JobML.ProsePassage>()
+                .DistinctBy(passage => (passage.SourceStart, passage.SourceLength))
+                .OrderBy(passage => passage.SourceStart)
+                .ToList();
+            return new { Entity = entity, Claims = claims, Passages = passages,
+                Start = passages.FirstOrDefault()?.SourceStart ?? int.MaxValue };
+        }).OrderBy(item => item.Start);
+
+        foreach (var item in ordered)
+        {
+            var prose = string.Join(" ", item.Passages.Select(passage => passage.Text));
+            if (string.IsNullOrWhiteSpace(prose)) continue;
+            if (item.Claims.Any(claim => claim.Type == "summary"))
+            {
+                resume.Personal.Summary = prose;
+                continue;
+            }
+            if (item.Entity.Type == "project")
+            {
+                resume.Projects.Add(new Project { Name = item.Entity.Name, Description = prose });
+                continue;
+            }
+            if (item.Entity.Type == "education")
+            {
+                resume.Education.Add(new Education { Institution = item.Entity.Name, Highlights = [prose] });
+                continue;
+            }
+            if (item.Entity.Type != "experience") continue;
+            var role = item.Entity.Name.Split(" · ", 2, StringSplitOptions.TrimEntries);
+            resume.Experience.Add(new WorkExperience
+            {
+                Title = role[0],
+                Company = role.Length > 1 ? role[1] : null,
+                Achievements = [prose]
+            });
+        }
+    }
+
     public sealed record CompileRequest(string JobDescription, string? SourceRevision = null,
         bool Polish = false, string? Provider = null);
 
@@ -173,11 +243,11 @@ public static class EndpointRouteBuilderExtensions
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="icon" href="data:,">
 <title>lucidRESUME compiler</title><style>
 :root{font-family:Inter,system-ui,sans-serif;color:#172026;background:#f5f7f7}body{margin:0}.shell{max-width:1180px;margin:auto;padding:32px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:#fff;border:1px solid #ccd6d5;border-radius:12px;padding:20px}textarea{box-sizing:border-box;width:100%;min-height:330px;border:1px solid #9dafac;border-radius:8px;padding:12px;font:14px ui-monospace,monospace}button,a.button{border:1px solid #176b61;background:#176b61;color:#fff;padding:10px 14px;border-radius:7px;text-decoration:none;cursor:pointer}.muted{color:#596b69}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}.preview{margin-top:18px;padding:30px 34px;min-height:500px;background:#fff;border:1px solid #d9dfde;box-shadow:0 8px 22px #243b3720;font-family:Georgia,serif;line-height:1.48}.preview h1{font:700 30px Inter,system-ui;border-bottom:2px solid #176b61;padding-bottom:10px}.preview h2{font:700 19px Inter,system-ui;margin-top:28px}.preview a{color:#176b61}.hidden{display:none}@media(max-width:800px){.grid{grid-template-columns:1fr}.shell{padding:16px}.preview{padding:22px}}
-</style></head><body><main class="shell"><h1>Paste the job. Get the right version of you.</h1><p class="muted">Compile a short, evidence-linked résumé from your complete human-written résumé and JobML ledger.</p><div class="grid"><section class="card"><h2>1. Complete résumé</h2><p class="muted">Upload the long-form Markdown document containing all roles, responsibilities and its full JobML block.</p><input id="ledger" type="file" accept=".md,text/markdown,text/plain"><div class="actions"><button id="publish">Publish master snapshot</button><span id="status"></span></div><h2>2. Target role</h2><textarea id="job" placeholder="Paste the complete job description"></textarea><div class="actions"><label><input id="polish" type="checkbox"> Tighten selected human prose</label><select id="provider"><option value="llamasharp">Local LLamaSharp</option><option value="openai">OpenAI</option></select><button id="compile">Compile résumé</button></div></section><section class="card"><h2>Projection</h2><div id="summary" class="muted">Nothing compiled yet.</div><article id="output" class="preview"></article><div id="downloads" class="actions hidden"><a class="button" id="md">Markdown</a><a class="button" id="docx">Word</a><a class="button" id="pdf">PDF</a></div></section></div></main><script>
+</style></head><body><main class="shell"><h1>Paste the job. Get the right version of you.</h1><p class="muted">Compile a short, evidence-linked résumé from a published JobML career record.</p><div class="grid"><section class="card"><h2>1. Career record</h2><p class="muted">Upload the complete human career transcript and its JobML career_record projection. The source may include every role, project, repository and linked article.</p><input id="careerRecord" type="file" accept=".md,text/markdown,text/plain"><div class="actions"><button id="publish">Publish career record</button><span id="status"></span></div><h2>2. Target role</h2><textarea id="job" placeholder="Paste the complete job description"></textarea><div class="actions"><label><input id="polish" type="checkbox"> Tighten selected human prose</label><select id="provider"><option value="llamasharp">Local LLamaSharp</option><option value="openai">OpenAI</option></select><button id="compile">Compile résumé</button></div></section><section class="card"><h2>Résumé projection</h2><div id="summary" class="muted">Nothing compiled yet.</div><article id="output" class="preview"></article><div id="downloads" class="actions hidden"><a class="button" id="md">Markdown</a><a class="button" id="docx">Word</a><a class="button" id="pdf">PDF</a></div></section></div></main><script>
 const token='__TOKEN__';const headers={'X-CSRF-TOKEN':token};
-async function json(r){const t=await r.text();if(!r.ok)throw new Error(t);return JSON.parse(t)}
-document.querySelector('#publish').onclick=async()=>{try{const f=document.querySelector('#ledger').files[0];if(!f)throw new Error('Choose the complete resume first.');const x=await json(await fetch(location.pathname+'api/ledger',{method:'POST',headers:{...headers,'Content-Type':'text/markdown'},body:await f.text()}));document.querySelector('#status').textContent='Published '+x.revision.slice(0,12)}catch(e){document.querySelector('#status').textContent=e.message}};
-document.querySelector('#compile').onclick=async()=>{const s=document.querySelector('#summary');try{s.textContent='Compiling from the master ledger…';const x=await json(await fetch(location.pathname+'api/compile',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({jobDescription:document.querySelector('#job').value,polish:document.querySelector('#polish').checked,provider:document.querySelector('#provider').value})}));s.textContent=`${x.manifest.sections.length} source section${x.manifest.sections.length===1?'':'s'}, ${x.manifest.gaps.length} honest gap${x.manifest.gaps.length===1?'':'s'}. ${x.usedCompositionProvider?'Polished with '+x.compositionProvider:'Exact selected prose.'}`;document.querySelector('#output').innerHTML=x.publishedHtml;for(const k of ['md','docx','pdf'])document.querySelector('#'+k).href=x.downloads[k==='md'?'markdown':k];document.querySelector('#downloads').classList.remove('hidden')}catch(e){s.textContent=e.message}};
+async function json(r){const t=await r.text();let x;try{x=JSON.parse(t)}catch{}if(!r.ok)throw new Error(x?.error??Object.values(x?.errors??{}).flat()[0]??t);return x}
+document.querySelector('#publish').onclick=async()=>{try{const f=document.querySelector('#careerRecord').files[0];if(!f)throw new Error('Choose the JobML career record first.');const x=await json(await fetch(location.pathname+'api/career-record',{method:'POST',headers:{...headers,'Content-Type':'text/markdown'},body:await f.text()}));document.querySelector('#status').textContent='Published '+x.revision.slice(0,12)}catch(e){document.querySelector('#status').textContent=e.message}};
+document.querySelector('#compile').onclick=async()=>{const s=document.querySelector('#summary');try{s.textContent='Compiling from the published career record…';const x=await json(await fetch(location.pathname+'api/compile',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({jobDescription:document.querySelector('#job').value,polish:document.querySelector('#polish').checked,provider:document.querySelector('#provider').value})}));s.textContent=`${x.manifest.sections.length} source section${x.manifest.sections.length===1?'':'s'}, ${x.manifest.gaps.length} honest gap${x.manifest.gaps.length===1?'':'s'}. ${x.usedCompositionProvider?'Polished with '+x.compositionProvider:'Exact selected prose.'}`;document.querySelector('#output').innerHTML=x.publishedHtml;for(const k of ['md','docx','pdf'])document.querySelector('#'+k).href=x.downloads[k==='md'?'markdown':k];document.querySelector('#downloads').classList.remove('hidden')}catch(e){s.textContent=e.message}};
 </script></body></html>
 """;
 }

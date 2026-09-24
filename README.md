@@ -162,7 +162,8 @@ Every major job site wants your email, your browsing history, and permission to 
 - **Search query generator**: suggests job searches from your strongest skill communities
 
 ### Evidence Projection
-- Treats the complete 10+ page human résumé and full JobML ledger as source code
+- Treats the complete human career transcript and its canonical ledger as source data
+- Exports that source as a portable JobML `career_record`, including sources and optional semantic artefacts
 - Detects role requirements, then deterministically plans sections and selects evidence
 - Semantic compression: 13 roles -> 6 relevant -> filtered to evidence-backed bullets
 - Optionally runs bounded tightening and human-voice passes over selected source prose
@@ -174,9 +175,10 @@ Every major job site wants your email, your browsing history, and permission to 
 `lucidRESUME.Web` is an ASP.NET Core control for the narrow publish-and-compile
 workflow. It does not ingest LinkedIn exports, repositories, or old CVs. That
 happens upstream in the desktop application. The control accepts the already
-complete Markdown + JobML master, publishes an immutable revision, accepts a job
-description, and returns a shorter evidence-bounded projection with Markdown,
-Word, and PDF downloads.
+exported Markdown + JobML `career_record`, publishes an immutable revision,
+accepts a job description, and returns a shorter evidence-bounded projection with
+Markdown, Word, and PDF downloads. The application career ledger remains the
+canonical source; the published JobML document is its portable projection.
 
 ![JobML web compiler rendering an evidence-linked projection](docs/screenshots/jobml-web-compiler.png)
 
@@ -251,7 +253,8 @@ lucidresume jobml validate  --file resume.jobml.md
 lucidresume jobml reconcile --file resume.jobml.md
 lucidresume jobml coverage  --file resume.jobml.md
 lucidresume jobml cold-parser-probe --file resume.jobml.md
-lucidresume jobml compact --file resume.jobml.md --complete-ledger https://example.net/resume.jobml --output resume.md
+lucidresume jobml career-record --resume-dir /path/to/resumes --output career.jobml.md
+lucidresume jobml compact --file resume.jobml.md --full-jobml https://example.net/career.jobml --output resume.md
 lucidresume jobml link-post --file resume.jobml.md --claim claim-id --url https://example.net/article --output linked.jobml.md
 ```
 
@@ -259,7 +262,7 @@ Role projections include compact cJobML citations in Markdown, Word, and PDF by
 default. Pass `--cjobml false` to `tailor`, `generate`, or `render` for a
 human-only copy. Compact references can cite imported résumé sources and public
 evidence without copying full passages, selectors, or drift hashes out of the
-complete ledger.
+full JobML career record.
 
 ---
 

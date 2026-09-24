@@ -90,7 +90,7 @@ its concepts are excluded as well.
 The extension does not fetch external evidence URIs from JobML. It accepts HTTPS
 ledger endpoints, with HTTP permitted only for `localhost` and `127.0.0.1` during
 development. Credentials in endpoint URLs are rejected. The response stream and
-parser both enforce a 4 MB limit. The fetched ledger is held in side-panel
+parser both enforce a 16 MB limit. The fetched career record is held in side-panel
 memory. Only the endpoint URL is persisted locally.
 
 Chrome Web Store policy treats form contents and locally processed personal data

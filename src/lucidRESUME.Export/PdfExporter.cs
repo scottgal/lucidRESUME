@@ -214,7 +214,7 @@ public sealed class PdfExporter : IResumeExporter
         col.Item().Element(c => SectionHeading(c, "References", template));
         col.Item().Text(CJobMlProjector.SemanticPreamble)
             .FontSize(8).FontColor(Colors.Grey.Darken1);
-        if (Uri.TryCreate(compact.CompleteLedger, UriKind.Absolute, out var completeLedger))
+        if (Uri.TryCreate(compact.FullJobMl, UriKind.Absolute, out var completeLedger))
             col.Item().Hyperlink(completeLedger.ToString()).Text($"Full JobML: {completeLedger}")
                 .FontSize(7).FontColor($"#{template.AccentHex}").Underline();
 

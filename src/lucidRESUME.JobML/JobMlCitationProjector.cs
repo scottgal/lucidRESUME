@@ -63,21 +63,21 @@ public static class CJobMlProjector
         }
 
         var markdown = InsertCitations(file.Markdown, anchors);
-        var hasCompleteLedger = Uri.TryCreate(file.Data.Document.CompleteLedger,
-            UriKind.Absolute, out var completeLedger);
+        var hasFullJobMl = Uri.TryCreate(file.Data.Document.EffectiveFullJobMl,
+            UriKind.Absolute, out var fullJobMl);
         var hasAcceptedClaim = file.Data.Claims.Any(claim =>
             string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase));
-        if (references.Count > 0 || hasCompleteLedger && hasAcceptedClaim)
+        if (references.Count > 0 || hasFullJobMl && hasAcceptedClaim)
         {
             var bibliography = string.Join("\n\n", references.Select(reference => reference.Markdown));
             var preamble = SemanticPreamble;
-            if (hasCompleteLedger)
-                preamble += $" Full JobML: <{completeLedger}>.";
+            if (hasFullJobMl)
+                preamble += $" Full JobML: <{fullJobMl}>.";
             markdown = $"{markdown.TrimEnd()}\n\n{ReferencesHeading}\n\n{preamble}" +
                        (references.Count > 0 ? $"\n\n{bibliography}" : "") + "\n";
         }
 
-        return new CJobMlProjection(markdown, anchors, references, file.Data.Document.CompleteLedger);
+        return new CJobMlProjection(markdown, anchors, references, file.Data.Document.EffectiveFullJobMl);
     }
 
     public static string Marker(IEnumerable<int> numbers) =>
@@ -187,7 +187,7 @@ public sealed record CJobMlProjection(
     string Markdown,
     IReadOnlyList<CJobMlAnchor> Anchors,
     IReadOnlyList<CJobMlReference> References,
-    string? CompleteLedger);
+    string? FullJobMl);
 
 public sealed record CJobMlAnchor(
     string ClaimId,

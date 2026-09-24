@@ -1,12 +1,12 @@
 import { parse as parseYaml } from "yaml";
 import type { JobMlRoot, ParsedJobMl } from "./types";
 
-export const MAX_LEDGER_BYTES = 4 * 1024 * 1024;
+export const MAX_LEDGER_BYTES = 16 * 1024 * 1024;
 const fencePattern = /^[ \t]*```jobml[ \t]*\n(?<yaml>.*?)[ \t]*```[ \t]*(?:\n|$)/gims;
 
 export function parseJobMlDocument(source: string): ParsedJobMl {
   if (new TextEncoder().encode(source).byteLength > MAX_LEDGER_BYTES)
-    throw new Error("The JobML document exceeds the 4 MB extension limit.");
+    throw new Error("The JobML document exceeds the 16 MB extension limit.");
 
   const normalized = source.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
   const matches = [...normalized.matchAll(fencePattern)];
@@ -36,12 +36,12 @@ export function parseJobMlDocument(source: string): ParsedJobMl {
 export async function readJobMlResponse(response: Response): Promise<string> {
   const declaredLength = Number(response.headers.get("content-length"));
   if (Number.isFinite(declaredLength) && declaredLength > MAX_LEDGER_BYTES)
-    throw new Error("The JobML document exceeds the 4 MB extension limit.");
+    throw new Error("The JobML document exceeds the 16 MB extension limit.");
 
   if (!response.body) {
     const text = await response.text();
     if (new TextEncoder().encode(text).byteLength > MAX_LEDGER_BYTES)
-      throw new Error("The JobML document exceeds the 4 MB extension limit.");
+      throw new Error("The JobML document exceeds the 16 MB extension limit.");
     return text;
   }
 
@@ -55,7 +55,7 @@ export async function readJobMlResponse(response: Response): Promise<string> {
     bytes += value.byteLength;
     if (bytes > MAX_LEDGER_BYTES) {
       await reader.cancel();
-      throw new Error("The JobML document exceeds the 4 MB extension limit.");
+      throw new Error("The JobML document exceeds the 16 MB extension limit.");
     }
     text += decoder.decode(value, { stream: true });
   }

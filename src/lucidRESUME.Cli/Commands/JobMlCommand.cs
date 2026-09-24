@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Text.Json;
 using lucidRESUME.Cli.Infrastructure;
+using lucidRESUME.Export;
 using lucidRESUME.Ingestion.Web;
 using lucidRESUME.JobML;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +20,51 @@ public static class JobMlCommand
         command.Subcommands.Add(BuildCoverage());
         command.Subcommands.Add(BuildColdParserProbe());
         command.Subcommands.Add(BuildCompact());
+        command.Subcommands.Add(BuildCareerRecord());
         command.Subcommands.Add(BuildLinkPost());
+        return command;
+    }
+
+    private static Command BuildCareerRecord()
+    {
+        var resumeOption = new Option<FileInfo?>("--resume")
+        { Description = "Single resume source to ingest" };
+        var directoryOption = new Option<DirectoryInfo?>("--resume-dir")
+        { Description = "Directory of resume sources to merge into the complete career transcript" };
+        var outputOption = new Option<FileInfo?>("--output")
+        { Description = "Write the JobML career record to this file instead of stdout" };
+        outputOption.Aliases.Add("-o");
+        var configOption = new Option<FileInfo?>("--config") { Description = "Path to lucidresume.json config" };
+        var command = new Command("career-record",
+            "Ingest career sources and export one full JobML career_record document")
+            { resumeOption, directoryOption, outputOption, configOption };
+        command.SetAction(async (result, cancellationToken) =>
+        {
+            var resume = result.GetValue(resumeOption);
+            var directory = result.GetValue(directoryOption);
+            if (resume is null && directory is null)
+                throw new ArgumentException("Provide --resume or --resume-dir.");
+            if (resume is not null && directory is not null)
+                throw new ArgumentException("Use either --resume or --resume-dir, not both.");
+
+            var services = ServiceBootstrap.Build(result.GetValue(configOption)?.FullName);
+            var transcript = await ResumeInputHelper.LoadAsync(services, resume, directory, cancellationToken);
+            var file = await services.GetRequiredService<CareerRecordJobMlBuilder>()
+                .BuildAsync(transcript, cancellationToken);
+            var diagnostics = JobMlProcessor.Validate(file);
+            var errors = diagnostics.Where(item => item.Severity == JobMlDiagnosticSeverity.Error).ToList();
+            if (errors.Count > 0)
+                throw new InvalidDataException(string.Join("; ", errors.Select(item => $"{item.Code}: {item.Message}")));
+
+            var serialized = new JobMlParser().Serialize(file);
+            var output = result.GetValue(outputOption);
+            if (output is null) Console.Write(serialized);
+            else
+            {
+                await File.WriteAllTextAsync(output.FullName, serialized, cancellationToken);
+                Console.Error.WriteLine($"Written JobML career record to {output.FullName}");
+            }
+        });
         return command;
     }
 
@@ -29,19 +74,21 @@ public static class JobMlCommand
         var outputOption = new Option<FileInfo?>("--output")
         { Description = "Write cJobML Markdown to this file instead of stdout" };
         outputOption.Aliases.Add("-o");
-        var ledgerOption = new Option<string?>("--complete-ledger")
-        { Description = "Public absolute URL for the complete full-resolution JobML ledger" };
+        var fullJobMlOption = new Option<string?>("--full-jobml")
+        { Description = "Public absolute URL for the full-resolution JobML projection" };
+        fullJobMlOption.Aliases.Add("--complete-ledger");
         var command = new Command("compact", "Project full JobML as inline xrefs and a compact JATS-like reference list")
-            { fileOption, outputOption, ledgerOption };
+            { fileOption, outputOption, fullJobMlOption };
         command.SetAction(async (result, cancellationToken) =>
         {
             var parsed = await ParseAsync(result.GetValue(fileOption)!, cancellationToken);
-            var ledger = result.GetValue(ledgerOption);
-            if (!string.IsNullOrWhiteSpace(ledger))
+            var fullJobMl = result.GetValue(fullJobMlOption);
+            if (!string.IsNullOrWhiteSpace(fullJobMl))
             {
-                if (!Uri.TryCreate(ledger, UriKind.Absolute, out _))
-                    throw new ArgumentException("--complete-ledger must be an absolute URL.");
-                parsed.Data.Document.CompleteLedger = ledger;
+                if (!Uri.TryCreate(fullJobMl, UriKind.Absolute, out _))
+                    throw new ArgumentException("--full-jobml must be an absolute URL.");
+                parsed.Data.Document.FullJobMl = fullJobMl;
+                parsed.Data.Document.LegacyCompleteLedger = null;
             }
 
             var errors = JobMlProcessor.Validate(parsed)

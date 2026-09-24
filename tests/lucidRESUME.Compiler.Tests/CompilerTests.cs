@@ -114,6 +114,42 @@ public sealed class CompilerTests
     }
 
     [Fact]
+    public async Task Compiler_collapses_near_duplicate_imported_prose_in_one_section()
+    {
+        var parser = new JobMlParser();
+        var file = parser.Parse(Fixture.Source);
+        const string duplicate = "Led the 15-person TypeScript engineering team through an AWS platform change with release and security governance.";
+        file = file with { Markdown = file.Markdown + $"\n\n{duplicate}" };
+        file.Data.Claims.Add(new JobMlClaim
+        {
+            Id = "leadership-duplicate",
+            Subject = "example-role",
+            Type = "achievement",
+            Statement = duplicate,
+            Review = "accepted",
+            Origin = "declared",
+            Concepts = new JobMlClaimConcepts { Skills = ["typescript", "aws"] },
+            Evidence =
+            [
+                new JobMlEvidence
+                {
+                    Type = "prose", Ref = "#example-role:p2",
+                    Fingerprint = new JobMlFingerprint { Text = MarkdownEvidenceIndex.Fingerprint(duplicate) }
+                }
+            ]
+        });
+        var snapshot = new JobMlSnapshot(new string('a', 64), DateTimeOffset.UtcNow,
+            parser.Serialize(file), file, JobMlProcessor.Validate(file));
+        var compiler = new JobMlResumeCompiler(new FakeJobParser(),
+            new ResumeCompositionOrchestrator([], new CompositionValidator()));
+
+        var result = await compiler.CompileAsync(snapshot, "VP Engineering with TypeScript and AWS.");
+
+        Assert.Single(result.Manifest.Sections.Single().Claims);
+        Assert.Single(result.ProjectedJobMl.Data.Claims);
+    }
+
+    [Fact]
     public async Task Orchestrator_discards_a_pass_that_invents_a_number()
     {
         var claim = new JobMlClaim { Id = "leadership", Subject = "role", Statement = "Led engineering." };

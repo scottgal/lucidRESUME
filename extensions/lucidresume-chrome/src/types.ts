@@ -20,8 +20,8 @@ export type JobMlClaim = {
 };
 
 export type JobMlRoot = {
-  jobml?: string | { version?: string; purpose?: string; semantics?: string[] };
-  document?: { id?: string; language?: string; complete_ledger?: string };
+  jobml?: string | { version?: string; profile?: "resume" | "career_record"; purpose?: string; semantics?: string[] };
+  document?: { id?: string; language?: string; full_jobml?: string; complete_ledger?: string };
   entities?: Array<{ id?: string; type?: string; name?: string; source?: string }>;
   claims?: JobMlClaim[];
   concepts?: Array<{ id?: string; type?: string; name?: string; aliases?: string[] }>;
