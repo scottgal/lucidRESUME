@@ -77,6 +77,11 @@ def arguments() -> argparse.Namespace:
         type=Path,
         default=REPOSITORY_ROOT / "output/playwright/form-matrix",
     )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run Chrome without a display, including CI-safe sandbox and shared-memory flags.",
+    )
     return parser.parse_args()
 
 
@@ -149,6 +154,10 @@ def main() -> None:
     options.binary_location = str(args.chrome)
     options.enable_bidi = True
     options.enable_webextensions = True
+    if args.headless:
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
     for value in (
         f"--user-data-dir={profile}",
         "--password-store=basic",

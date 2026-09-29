@@ -454,7 +454,7 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test lucidRESUME.sln    # 478 tests across 12 projects
+dotnet test lucidRESUME.sln    # 479 tests across 12 projects
 ```
 
 | Project | Tests | Coverage |
@@ -463,7 +463,7 @@ dotnet test lucidRESUME.sln    # 478 tests across 12 projects
 | Extraction.Tests | 25 | NER, recognizers, RRF fusion pipeline |
 | AI.Tests | 46 | Providers, embeddings, bounded decisions, deterministic projection, gated live OpenAI checks |
 | Matching.Tests | 64 | Skill scoring, filters, voting, job-search resilience, projection quality |
-| JobSpec.Tests | 15 | JD parsing, salary extraction |
+| JobSpec.Tests | 16 | JD parsing, deterministic flattened-title extraction, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
 | GitHub.Tests | 44 | Language map, repository assessment, package families, LinkedIn parsing, reviewed document merge |
 | JobML.Tests | 29 | Parsing, validation, drift, reversible links, cJobML projection |

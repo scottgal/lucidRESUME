@@ -413,6 +413,7 @@ jobs:
           "$RUNNER_TEMP/lucidresume-form-tests/bin/pip" install -r test/e2e/requirements.txt
           "$RUNNER_TEMP/lucidresume-form-tests/bin/python" test/e2e/form_matrix.py \
             --chrome "$(command -v google-chrome)" \
+            --headless \
             --output "$RUNNER_TEMP/lucidresume-form-matrix"
 
       - name: Package extension
