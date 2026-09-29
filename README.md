@@ -3,6 +3,7 @@
 > NOTE: lucidRESUME is a **research project** and not intended as a product for general use. 
 
 [![lucidRESUME release](https://img.shields.io/github/v/release/scottgal/lucidRESUME?logo=github&label=lucidRESUME)](https://github.com/scottgal/lucidRESUME/releases/latest)
+[![lucidRESUME total downloads](https://img.shields.io/github/downloads/scottgal/lucidRESUME/total?logo=github&label=total%20downloads)](https://github.com/scottgal/lucidRESUME/releases)
 [![Mostlylucid.Avalonia.UITesting on NuGet](https://img.shields.io/nuget/v/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=Mostlylucid.Avalonia.UITesting)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Mostlylucid.Avalonia.UITesting.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/Mostlylucid.Avalonia.UITesting)
 
