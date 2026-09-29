@@ -804,8 +804,20 @@ public sealed class ScriptPlayer : IAsyncDisposable
             ?? throw new InvalidOperationException("The shell does not expose GetPage(string)");
         var resumePage = getPage.Invoke(shell, ["Resume"])
             ?? throw new InvalidOperationException("The shell did not return the Resume page");
-        if (action.Target?.Equals("Fast", StringComparison.OrdinalIgnoreCase) == true)
-            resumePage.GetType().GetProperty("ImportMode")?.SetValue(resumePage, "Fast");
+        if (!string.IsNullOrWhiteSpace(action.Target))
+        {
+            var importModeProperty = resumePage.GetType().GetProperty("ImportMode")
+                ?? throw new InvalidOperationException(
+                    $"The Resume page does not expose ImportMode, but the script requested '{action.Target}'.");
+            var supportedModes = resumePage.GetType().GetProperty("ImportModes")?.GetValue(resumePage)
+                as IEnumerable<string>;
+            var selectedMode = supportedModes?.FirstOrDefault(mode =>
+                mode.Equals(action.Target, StringComparison.OrdinalIgnoreCase)) ?? action.Target;
+            if (supportedModes is not null && !supportedModes.Contains(selectedMode, StringComparer.OrdinalIgnoreCase))
+                throw new InvalidOperationException(
+                    $"Unsupported resume import mode '{action.Target}'. Supported modes: {string.Join(", ", supportedModes)}.");
+            importModeProperty.SetValue(resumePage, selectedMode);
+        }
         var import = resumePage.GetType().GetMethod("ImportFromPathAsync", [typeof(string)])
             ?? throw new InvalidOperationException("The Resume page does not expose ImportFromPathAsync(string)");
 

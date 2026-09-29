@@ -10,7 +10,8 @@ public sealed record ResumePublication(
     string PublicId,
     DateTimeOffset PublishedAt,
     string? ApplicationReference,
-    CompilationResult Compilation);
+    CompilationResult Compilation,
+    int MinimumPages = 2);
 
 public interface IResumePublicationStore
 {
@@ -28,4 +29,4 @@ public interface IResumeMarkdownRenderer
 
 public sealed record CompileRequest(string JobDescription, string? SourceRevision = null,
     bool Polish = true, string? Provider = "openai", bool Publish = true,
-    string? ApplicationReference = null);
+    string? ApplicationReference = null, bool IncludeCitations = true, int MinimumPages = 2);

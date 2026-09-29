@@ -67,7 +67,7 @@ xattr -dr com.apple.quarantine ./lucidRESUME.app
 
 - **PDF** - including two-column layouts, LaTeX-generated, and scanned documents (with Docling)
 - **DOCX** - Microsoft Word and compatible editors. Preview powered by [Morph](https://github.com/SimonCropp/Morph) — no LibreOffice needed.
-- **TXT** - plain text resumes
+- **Markdown / TXT** - complete career transcripts and plain-text resumes
 - **LinkedIn ZIP** - drop your LinkedIn data export archive and it auto-detects and imports positions, skills, education, projects, and contact info
 - **GitHub** - import skills from your GitHub repos via the Profile page
 
@@ -79,7 +79,8 @@ xattr -dr com.apple.quarantine ./lucidRESUME.app
 2. **Choose your import mode** from the dropdown next to the Import button:
    - **Fast** - structural parsing + NER only. Sub-second. No external services needed. Best for well-formatted DOCX resumes and clean PDFs.
    - **AI** - adds LLM fallback for missing fields. Takes 3-10 seconds. Requires Ollama or a cloud API key. Best for messy PDFs, non-standard formats, or resumes where Fast mode missed experience/skills.
-3. Click **Import Resume** and select your file
+   - **Reviewed** - deterministic parsing for a complete transcript you have already checked. Conflicting contact details, role identity and dates from this source are selected as authoritative in the review. Import reviewed transcripts one at a time so each overlay has an explicit review. This does not make generated or unreviewed content trustworthy; use it only for a document you are willing to treat as your corrected career record.
+3. Click **Import Resume** and select one file. Repeat for additional sources; each receives its own merge review before it enters the career record.
 
 ### Unified Candidate Document
 
@@ -94,7 +95,9 @@ Each element tracks which imports contributed to it (e.g. "LinkedIn + executive-
 
 ### Import Review
 
-When importing into an existing document, you'll see a **review page** showing what would change. You can accept or reject individual items before they enter your data.
+Every import, including the first, opens a **review page** before extracted data enters the canonical record. You can accept or reject individual items. **Apply Safe Items** accepts unambiguous additions, but deliberately leaves conflicting contact details, materially different dates, placeholder text, inverted date ranges, and malformed roles unselected. Resolve those explicitly rather than allowing import order to decide which source becomes authoritative.
+
+Reviewed personal details entered on **My Data** override extracted values in every compiled resume. Correct a stale email or phone number there once; do not patch each exported document separately.
 
 ### Document Layout Detection
 

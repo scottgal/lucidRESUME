@@ -107,26 +107,37 @@ public static class EndpointRouteBuilderExtensions
                             configuredUri.Scheme is "http" or "https"
             ? configuredUri.ToString().TrimEnd('/')
             : requestBaseUri;
-        var publish = request.Publish && webConfigured.Value.PublishCompiledResumes;
+        var minimumPages = Math.Clamp(request.MinimumPages, 1, 2);
+        var publish = request.IncludeCitations && request.Publish && webConfigured.Value.PublishCompiledResumes;
         var publicId = publish ? publications.CreatePublicId() : null;
         var fullJobMlUri = publicId is null
             ? $"{publicBaseUri}/api/jobml/{snapshot.Revision}"
             : $"{publicBaseUri}/{publicId}/jobml";
-        var result = await compiler.CompileAsync(snapshot, request.JobDescription,
-            new CompilationOptions
-            {
-                ComposeProse = request.Polish,
-                CompositionProvider = request.Provider,
-                FullJobMlUri = fullJobMlUri
-            }, ct);
-        sessions.Put(result, TimeSpan.FromMinutes(configured.Value.CompilationCacheMinutes));
+        var compilationOptions = new CompilationOptions
+        {
+            ComposeProse = request.Polish,
+            CompositionProvider = request.Provider,
+            FullJobMlUri = fullJobMlUri
+        };
+        if (minimumPages == 1)
+        {
+            compilationOptions.MaximumClaims = 12;
+            compilationOptions.MaximumClaimsPerSubject = 2;
+            compilationOptions.MaximumSections = 6;
+            compilationOptions.MinimumExperienceSections = 5;
+            compilationOptions.MinimumProjectSections = 2;
+        }
+        var result = await compiler.CompileAsync(snapshot, request.JobDescription, compilationOptions, ct);
+        sessions.Put(result, TimeSpan.FromMinutes(configured.Value.CompilationCacheMinutes),
+            request.IncludeCitations, minimumPages);
+        var outputMarkdown = request.IncludeCitations ? result.PublishedMarkdown : result.HumanMarkdown;
         var previewMarkdown = System.Text.RegularExpressions.Regex.Replace(
-            result.PublishedMarkdown, "<a id=\"ref-\\d+\"></a>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            outputMarkdown, "<a id=\"ref-\\d+\"></a>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         ResumePublication? publication = null;
         if (publicId is not null)
         {
             publication = new ResumePublication(publicId, DateTimeOffset.UtcNow,
-                NormalizeApplicationReference(request.ApplicationReference), result);
+                NormalizeApplicationReference(request.ApplicationReference), result, minimumPages);
             await publications.PublishAsync(publication, ct);
         }
         var publicationPath = publication is null
@@ -139,7 +150,7 @@ public static class EndpointRouteBuilderExtensions
         {
             result.CompilationId,
             result.HumanMarkdown,
-            result.PublishedMarkdown,
+            PublishedMarkdown = outputMarkdown,
             publishedHtml = renderer.ToHtml(previewMarkdown),
             result.Manifest,
             result.UsedCompositionProvider,
@@ -194,8 +205,9 @@ public static class EndpointRouteBuilderExtensions
     private static async Task<IResult> Export(string id, string format, CompilationSessionStore sessions,
         IEnumerable<IResumeExporter> exporters, CancellationToken ct)
     {
-        if (!sessions.TryGet(id, out var result)) return Results.NotFound();
-        return await ExportResult(result, format, exporters, ct);
+        if (!sessions.TryGet(id, out var session)) return Results.NotFound();
+        return await ExportResult(session.Result, format, exporters, session.IncludeCitations,
+            session.MinimumPages, ct);
     }
 
     private static async Task<IResult> PublishedResume(string publicId, HttpContext context,
@@ -338,7 +350,8 @@ public static class EndpointRouteBuilderExtensions
         var publication = await publications.GetAsync(publicId, ct);
         return publication is null
             ? Results.NotFound()
-            : await ExportResult(publication.Compilation, format, exporters, ct);
+            : await ExportResult(publication.Compilation, format, exporters, true,
+                publication.MinimumPages, ct);
     }
 
     private static void SetPublicationCacheHeaders(HttpContext context, ResumePublication publication)
@@ -377,7 +390,7 @@ public static class EndpointRouteBuilderExtensions
     }
 
     private static async Task<IResult> ExportResult(CompilationResult result, string format,
-        IEnumerable<IResumeExporter> exporters, CancellationToken ct)
+        IEnumerable<IResumeExporter> exporters, bool includeCitations, int minimumPages, CancellationToken ct)
     {
         var parsedFormat = format.ToUpperInvariant() switch
         {
@@ -387,7 +400,7 @@ public static class EndpointRouteBuilderExtensions
             _ => (ExportFormat?)null
         };
         if (parsedFormat is null) return Results.BadRequest(new { error = "Use markdown, docx or pdf." });
-        var resume = ResumeProjectionMapper.Build(result);
+        var resume = ResumeProjectionMapper.Build(result, includeCitations, minimumPages);
         var exporter = exporters.Single(x => x.Format == parsedFormat);
         var bytes = await exporter.ExportAsync(resume, ct);
         var metadata = parsedFormat switch
@@ -402,12 +415,12 @@ public static class EndpointRouteBuilderExtensions
     private const string Html = """
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="icon" href="data:,">
 <title>lucidRESUME compiler</title><style>
-:root{font-family:Inter,system-ui,sans-serif;color:#172026;background:#f5f7f7}body{margin:0}.shell{max-width:1180px;margin:auto;padding:32px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:#fff;border:1px solid #ccd6d5;border-radius:12px;padding:20px}textarea,input[type=text]{box-sizing:border-box;width:100%;border:1px solid #9dafac;border-radius:8px;padding:12px}textarea{min-height:330px;font:14px ui-monospace,monospace}button,a.button{border:1px solid #176b61;background:#176b61;color:#fff;padding:10px 14px;border-radius:7px;text-decoration:none;cursor:pointer}.muted{color:#596b69}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}.preview{margin-top:18px;padding:30px 34px;min-height:500px;background:#fff;border:1px solid #d9dfde;box-shadow:0 8px 22px #243b3720;font-family:Georgia,serif;line-height:1.48}.preview h1{font:700 30px Inter,system-ui;border-bottom:2px solid #176b61;padding-bottom:10px}.preview h2{font:700 19px Inter,system-ui;margin-top:28px}.preview a{color:#176b61}.hidden{display:none}@media(max-width:800px){.grid{grid-template-columns:1fr}.shell{padding:16px}.preview{padding:22px}}
-</style></head><body><main class="shell"><h1>Paste the job. Get the right version of you.</h1><p class="muted">Compile a short, evidence-linked résumé from a published JobML career record.</p><div class="grid"><section class="card"><h2>1. Career record</h2><p class="muted">Upload the complete human career transcript and its JobML career_record projection. The source may include every role, project, repository and linked article.</p><input id="careerRecord" type="file" accept=".md,text/markdown,text/plain"><div class="actions"><button id="publish">Publish career record</button><span id="status"></span></div><h2>2. Target role</h2><textarea id="job" placeholder="Paste the complete job description"></textarea><label for="applicationReference">Application label</label><input id="applicationReference" type="text" maxlength="160" placeholder="Planet DDS, Engineering Technical Lead"><div class="actions"><label><input id="polish" type="checkbox" checked> Select, tighten and redraft the reviewed prose</label><label><input id="publishProjection" type="checkbox" checked> Create a shareable evidence link</label><select id="provider"><option value="openai">OpenAI</option><option value="llamasharp">Local LLamaSharp</option></select><button id="compile">Compile résumé</button></div></section><section class="card"><h2>Résumé projection</h2><div id="summary" class="muted">Nothing compiled yet.</div><div id="publication" class="actions hidden"><a id="publicationLink">Open the evidence-linked résumé</a></div><article id="output" class="preview"></article><div id="downloads" class="actions hidden"><a class="button" id="md">Markdown</a><a class="button" id="docx">Word</a><a class="button" id="pdf">PDF</a></div></section></div></main><script>
+:root{font-family:Inter,system-ui,sans-serif;color:#172026;background:#f5f7f7}body{margin:0}.shell{max-width:1180px;margin:auto;padding:32px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:#fff;border:1px solid #ccd6d5;border-radius:12px;padding:20px}textarea,input[type=text],select{box-sizing:border-box;border:1px solid #9dafac;border-radius:8px;padding:12px}textarea,input[type=text]{width:100%}textarea{min-height:330px;font:14px ui-monospace,monospace}button,a.button{border:1px solid #176b61;background:#176b61;color:#fff;padding:10px 14px;border-radius:7px;text-decoration:none;cursor:pointer}.muted{color:#596b69}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}.preview{margin-top:18px;padding:30px 34px;min-height:500px;background:#fff;border:1px solid #d9dfde;box-shadow:0 8px 22px #243b3720;font-family:Georgia,serif;line-height:1.48}.preview h1{font:700 30px Inter,system-ui;border-bottom:2px solid #176b61;padding-bottom:10px}.preview h2{font:700 19px Inter,system-ui;margin-top:28px}.preview a{color:#176b61}.hidden{display:none}@media(max-width:800px){.grid{grid-template-columns:1fr}.shell{padding:16px}.preview{padding:22px}}
+</style></head><body><main class="shell"><h1>Paste the job. Get the right version of you.</h1><p class="muted">Compile a focused résumé from a published JobML career record.</p><div class="grid"><section class="card"><h2>1. Career record</h2><p class="muted">Upload the complete human career transcript and its JobML career_record projection. The source may include every role, project, repository and linked article.</p><input id="careerRecord" type="file" accept=".md,text/markdown,text/plain"><div class="actions"><button id="publish">Publish career record</button><span id="status"></span></div><h2>2. Target role</h2><textarea id="job" placeholder="Paste the complete job description"></textarea><label for="applicationReference">Application label</label><input id="applicationReference" type="text" maxlength="160" placeholder="Planet DDS, Engineering Technical Lead"><div class="actions"><label><input id="polish" type="checkbox" checked> Select, tighten and redraft the reviewed prose</label><label><input id="includeCitations" type="checkbox" checked> Include cJobML references and evidence link</label><label><input id="publishProjection" type="checkbox" checked> Create a shareable evidence link</label><label for="minimumPages">Length</label><select id="minimumPages"><option value="2" selected>Minimum 2 pages</option><option value="1">Allow 1 page</option></select><select id="provider"><option value="openai">OpenAI</option><option value="llamasharp">Local LLamaSharp</option></select><button id="compile">Compile résumé</button></div></section><section class="card"><h2>Résumé projection</h2><div id="summary" class="muted">Nothing compiled yet.</div><div id="publication" class="actions hidden"><a id="publicationLink">Open the evidence-linked résumé</a></div><article id="output" class="preview"></article><div id="downloads" class="actions hidden"><a class="button" id="md">Markdown</a><a class="button" id="docx">Word</a><a class="button" id="pdf">PDF</a></div></section></div></main><script>
 const token='__TOKEN__';const headers={'X-CSRF-TOKEN':token};
 async function json(r){const t=await r.text();let x;try{x=JSON.parse(t)}catch{}if(!r.ok)throw new Error(x?.error??Object.values(x?.errors??{}).flat()[0]??t);return x}
 document.querySelector('#publish').onclick=async()=>{try{const f=document.querySelector('#careerRecord').files[0];if(!f)throw new Error('Choose the JobML career record first.');const x=await json(await fetch(location.pathname+'api/career-record',{method:'POST',headers:{...headers,'Content-Type':'text/markdown'},body:await f.text()}));document.querySelector('#status').textContent='Published '+x.revision.slice(0,12)}catch(e){document.querySelector('#status').textContent=e.message}};
-document.querySelector('#compile').onclick=async()=>{const s=document.querySelector('#summary');try{s.textContent='Compiling from the published career record...';const x=await json(await fetch(location.pathname+'api/compile',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({jobDescription:document.querySelector('#job').value,polish:document.querySelector('#polish').checked,provider:document.querySelector('#provider').value,publish:document.querySelector('#publishProjection').checked,applicationReference:document.querySelector('#applicationReference').value})}));s.textContent=`${x.manifest.sections.length} source section${x.manifest.sections.length===1?'':'s'}, ${x.manifest.gaps.length} honest gap${x.manifest.gaps.length===1?'':'s'}. ${x.usedCompositionProvider?'Polished with '+x.compositionProvider:'Exact selected prose.'}`;document.querySelector('#output').innerHTML=x.publishedHtml;for(const k of ['md','docx','pdf'])document.querySelector('#'+k).href=x.downloads[k==='md'?'markdown':k];document.querySelector('#downloads').classList.remove('hidden');const p=document.querySelector('#publication');if(x.publication){const a=document.querySelector('#publicationLink');a.href=x.publication.url;a.textContent='Open the evidence-linked résumé';p.classList.remove('hidden')}else p.classList.add('hidden')}catch(e){s.textContent=e.message}};
+document.querySelector('#compile').onclick=async()=>{const s=document.querySelector('#summary');try{s.textContent='Compiling from the published career record...';const x=await json(await fetch(location.pathname+'api/compile',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({jobDescription:document.querySelector('#job').value,polish:document.querySelector('#polish').checked,provider:document.querySelector('#provider').value,includeCitations:document.querySelector('#includeCitations').checked,publish:document.querySelector('#publishProjection').checked,minimumPages:Number(document.querySelector('#minimumPages').value),applicationReference:document.querySelector('#applicationReference').value})}));s.textContent=`${x.manifest.sections.length} source section${x.manifest.sections.length===1?'':'s'}, ${x.manifest.gaps.length} honest gap${x.manifest.gaps.length===1?'':'s'}. ${x.usedCompositionProvider?'Polished with '+x.compositionProvider:'Exact selected prose.'}`;document.querySelector('#output').innerHTML=x.publishedHtml;for(const k of ['md','docx','pdf'])document.querySelector('#'+k).href=x.downloads[k==='md'?'markdown':k];document.querySelector('#downloads').classList.remove('hidden');const p=document.querySelector('#publication');if(x.publication){const a=document.querySelector('#publicationLink');a.href=x.publication.url;a.textContent='Open the evidence-linked résumé';p.classList.remove('hidden')}else p.classList.add('hidden')}catch(e){s.textContent=e.message}};
 </script></body></html>
 """;
 }

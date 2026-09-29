@@ -32,6 +32,7 @@ public sealed class ImportPreview
     // Stats
     public int TotalNewItems => NewExperience.Count + NewSkills.Count + NewEducation.Count + NewProjects.Count;
     public int TotalMergeItems => MergedExperience.Count + UpdatedSkills.Count;
+    public int TotalReviewItems => TotalNewItems + TotalMergeItems + PersonalInfoChanges.Count;
     public int TotalAnomalies => Anomalies.Count;
 }
 
@@ -62,6 +63,7 @@ public sealed class ExperienceMergePreview
     public bool DatesDiffer { get; init; }
     public int NewAchievementsCount { get; init; }
     public int NewTechnologiesCount { get; init; }
+    public bool IncomingIsAuthoritative { get; init; }
     public bool IsAccepted { get; set; } = true;
 }
 

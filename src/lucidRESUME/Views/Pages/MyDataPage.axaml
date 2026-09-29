@@ -283,8 +283,8 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="mydata:CareerAnchorItemVm">
                   <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,3">
-                    <StackPanel Spacing="2">
-                      <Grid ColumnDefinitions="*,Auto,Auto">
+                    <StackPanel Spacing="6">
+                      <Grid ColumnDefinitions="*,Auto,Auto,Auto" IsVisible="{Binding !IsEditing}">
                         <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource LrPrimaryTextBrush}">
                           <Run Text="{Binding Experience.Title}"/><Run Text=" — "/><Run Text="{Binding Experience.Company}"/>
                         </TextBlock>
@@ -293,13 +293,36 @@
                           <Run Text=" – "/>
                           <Run Text="{Binding Experience.EndDate, StringFormat='{}{0:MMM yyyy}', TargetNullValue='Present'}"/>
                         </TextBlock>
-                        <ToggleButton Grid.Column="2" Margin="10,0,0,0" Padding="8,2"
+                        <Button Grid.Column="2" Margin="10,0,0,0" Padding="8,2" FontSize="10"
+                                Content="Edit" Command="{Binding EditCommand}"/>
+                        <ToggleButton Grid.Column="3" Margin="10,0,0,0" Padding="8,2"
                                       FontSize="10" Content="Always include"
                                       IsChecked="{Binding IsCareerAnchor, Mode=TwoWay}"
                                       ToolTip.Tip="Keep this career anchor in every role-specific projection."/>
                       </Grid>
                       <TextBlock Text="{Binding Experience.Location}" FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"
-                                 IsVisible="{Binding Experience.Location, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                 IsVisible="{Binding !IsEditing}"/>
+
+                      <StackPanel IsVisible="{Binding IsEditing}" Spacing="6">
+                        <Grid ColumnDefinitions="*,10,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                          <TextBlock Grid.Row="0" Grid.Column="0" Text="Role title" FontSize="10" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                          <TextBlock Grid.Row="0" Grid.Column="2" Text="Employer" FontSize="10" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                          <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding Title}" FontSize="11" Padding="6,3"/>
+                          <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding Company}" FontSize="11" Padding="6,3"/>
+                          <TextBlock Grid.Row="2" Grid.Column="0" Text="Start (YYYY-MM)" FontSize="10" Margin="0,4,0,0" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                          <TextBlock Grid.Row="2" Grid.Column="2" Text="End (YYYY-MM)" FontSize="10" Margin="0,4,0,0" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                          <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding StartDate}" FontSize="11" Padding="6,3"/>
+                          <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding EndDate}" FontSize="11" Padding="6,3" IsEnabled="{Binding !IsCurrent}"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+                          <TextBox Grid.Column="0" Text="{Binding Location}" PlaceholderText="Location" FontSize="11" Padding="6,3"/>
+                          <CheckBox Grid.Column="1" Content="Current role" IsChecked="{Binding IsCurrent}" FontSize="10" VerticalAlignment="Center"/>
+                          <Button Grid.Column="2" Content="Cancel" Command="{Binding CancelCommand}" Padding="8,3" FontSize="10"/>
+                          <Button Grid.Column="3" Content="Save reviewed role" Command="{Binding SaveCommand}" Padding="8,3" FontSize="10"/>
+                        </Grid>
+                        <TextBlock Text="{Binding ValidationError}" FontSize="10" Foreground="{DynamicResource LrAccentRedBrush}"
+                                   IsVisible="{Binding ValidationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                      </StackPanel>
                     </StackPanel>
                   </Border>
                 </DataTemplate>

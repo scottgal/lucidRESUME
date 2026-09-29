@@ -113,9 +113,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     // Keep raw findings for compatibility with the quality view.
     [ObservableProperty] private IReadOnlyList<QualityFindingViewModel> _qualityFindings = [];
 
-    // Import mode: "Fast" (structural only) vs "AI" (structural + LLM + Docling)
+    // Fast and Reviewed are deterministic. AI adds the configured model fallback.
     [ObservableProperty] private string _importMode = "AI";
-    public IReadOnlyList<string> ImportModes { get; } = ["Fast", "AI"];
+    public IReadOnlyList<string> ImportModes { get; } = ["Fast", "AI", "Reviewed"];
 
     // Detected language
     [ObservableProperty] private string _detectedLanguage = "";
@@ -192,52 +192,21 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
         var files = await TopLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select Resumes",
-            AllowMultiple = true,
+            Title = "Select Resume or Career Transcript",
+            // Every source receives its own merge review. Importing a batch here
+            // would either skip review or require a hidden queue of pending decisions.
+            AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Resume Files") { Patterns = ["*.pdf", "*.docx", "*.txt"] },
+                new FilePickerFileType("Resume Files") { Patterns = ["*.pdf", "*.docx", "*.md", "*.markdown", "*.txt"] },
                 new FilePickerFileType("PDF") { Patterns = ["*.pdf"] },
                 new FilePickerFileType("Word Document") { Patterns = ["*.docx"] },
-                new FilePickerFileType("Text") { Patterns = ["*.txt"] },
+                new FilePickerFileType("Markdown or Text") { Patterns = ["*.md", "*.markdown", "*.txt"] },
             ]
         });
 
         if (files.Count == 0) return;
-
-        ErrorMessage = null;
-        IsLoading = true;
-
-        try
-        {
-            var mode = ImportMode == "Fast" ? ParseMode.Fast : ParseMode.AI;
-            ResumeDocument? lastImported = null;
-            string? lastPath = null;
-            foreach (var file in files)
-            {
-                lastPath = file.Path.LocalPath;
-                StatusMessage = $"Parsing {Path.GetFileName(lastPath)}…";
-                lastImported = await ParseResumeAsync(lastPath, mode);
-                await SaveImportedResumeAsync(lastImported);
-            }
-
-            if (lastImported is not null && lastPath is not null)
-                await ShowResumeAsync(lastImported, lastPath);
-
-            var modeLabel = mode == ParseMode.Fast ? "fast" : "AI";
-            StatusMessage = files.Count == 1
-                ? $"Imported {Path.GetFileName(files[0].Path.LocalPath)} ({modeLabel})"
-                : $"Imported {files.Count} resumes ({modeLabel}); selected {Path.GetFileName(lastPath)}";
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Import failed: {ex.Message}";
-            StatusMessage = null;
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+        await ImportFromPathAsync(files[0].Path.LocalPath);
     }
 
     /// <summary>Programmatic import for UX testing and drag-drop - bypasses file picker dialog.</summary>
@@ -263,7 +232,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             else
             {
                 StatusMessage = $"Parsing {Path.GetFileName(path)}…";
-                var mode = ImportMode == "Fast" ? ParseMode.Fast : ParseMode.AI;
+                var mode = ImportMode == "AI" ? ParseMode.AI : ParseMode.Fast;
                 incoming = await ParseResumeAsync(path, mode);
                 sourceName = Path.GetFileName(path);
             }
@@ -273,35 +242,25 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             var target = state.SelectedResume;
             if (target == null)
             {
-                // First import — use incoming as the base
-                foreach (var exp in incoming.Experience) exp.ImportSources.Add(sourceName);
-                foreach (var skill in incoming.Skills) skill.ImportSources.Add(sourceName);
-                foreach (var edu in incoming.Education) edu.ImportSources.Add(sourceName);
-                foreach (var proj in incoming.Projects) proj.ImportSources.Add(sourceName);
-                Resume = incoming;
-                await _store.MutateAsync(s => s.AddOrReplaceResume(Resume, select: true));
-                RefreshResumeItems(await _store.LoadAsync());
+                target = Core.Models.Resume.ResumeDocumentMerger.CreateReviewTarget(incoming);
             }
-            else
+
+            // Every import, including the first, follows the same reviewed merge path.
+            var merger = new Core.Models.Resume.ResumeDocumentMerger(_ledgerBuilder.Embedder);
+            var preview = await merger.PreviewMergeAsync(target, incoming, sourceName,
+                incomingIsAuthoritative: ImportMode == "Reviewed");
+
+            if (preview.TotalReviewItems > 0)
             {
-                // Subsequent import — show review page for user to approve/reject
-                var merger = new Core.Models.Resume.ResumeDocumentMerger(_ledgerBuilder.Embedder);
-                var preview = await merger.PreviewMergeAsync(target, incoming, sourceName);
-
-                if (preview.TotalNewItems + preview.TotalMergeItems > 0)
-                {
-                    // Navigate to import review page
-                    StatusMessage = $"Reviewing {sourceName}: {preview.TotalNewItems} new, {preview.TotalMergeItems} to merge";
-                    ShowImportReview?.Invoke(target, preview);
-                    return; // resume page will re-show after review completes
-                }
-                else
-                {
-                    StatusMessage = $"No new data found in {sourceName}";
-                }
+                StatusMessage = $"Reviewing {sourceName}: {preview.TotalNewItems} new, " +
+                                $"{preview.TotalMergeItems} merges, {preview.PersonalInfoChanges.Count} identity fields";
+                ShowImportReview?.Invoke(target, preview);
+                return; // resume page will re-show after review completes
             }
 
-            var activeResume = target ?? incoming;
+            StatusMessage = $"No new data found in {sourceName}";
+
+            var activeResume = target;
             Resume = activeResume;
             await ShowResumeAsync(activeResume, path);
             StatusMessage ??= $"Imported {sourceName}: {activeResume.Skills.Count} skills, {activeResume.Experience.Count} positions";
@@ -328,13 +287,6 @@ public sealed partial class ResumePageViewModel : ViewModelBase
             await resume.LlmEnhancementTask;
         lucidRESUME.Matching.SkillCategoriser.Categorise(resume);
         return resume;
-    }
-
-    private async Task SaveImportedResumeAsync(ResumeDocument imported)
-    {
-        await _store.MutateAsync(state => state.AddOrReplaceResume(imported, select: true));
-        var state = await _store.LoadAsync();
-        RefreshResumeItems(state);
     }
 
     private async Task ShowResumeAsync(ResumeDocument resume, string? filePath = null)

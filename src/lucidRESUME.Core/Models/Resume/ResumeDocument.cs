@@ -39,6 +39,13 @@ public sealed class ResumeDocument
     /// <summary>Selected single-column output template for DOCX and PDF rendering.</summary>
     public string OutputTemplateId { get; set; } = ResumeTemplateCatalog.AtsClassicId;
 
+    /// <summary>
+    /// Minimum page count requested for paginated exports. Two pages is the default
+    /// because a credible senior-career projection needs room for evidence and chronology.
+    /// Set to one for an explicitly compact export.
+    /// </summary>
+    public int MinimumOutputPages { get; set; } = 2;
+
     /// <summary>The role this immutable projection was compiled for.</summary>
     public string? TargetRole { get; set; }
 
@@ -55,6 +62,8 @@ public sealed class ResumeDocument
     public List<Skill> Skills { get; set; } = [];
     public List<Certification> Certifications { get; set; } = [];
     public List<Project> Projects { get; set; } = [];
+    /// <summary>Reviewed public writing selected for the human resume.</summary>
+    public List<Project> Publications { get; set; } = [];
 
     // Extraction metadata
     public List<ExtractedEntity> Entities { get; set; } = [];

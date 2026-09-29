@@ -116,6 +116,20 @@ public sealed class MarkdownExporter : IResumeExporter
             }
         }
 
+        if (resume.Publications.Count > 0)
+        {
+            sb.AppendLine("## Selected Recent Publications");
+            foreach (var publication in resume.Publications)
+            {
+                sb.AppendLine(Uri.TryCreate(publication.Url, UriKind.Absolute, out _)
+                    ? $"- [{publication.Name}]({publication.Url})"
+                    : $"- {publication.Name}" + (string.IsNullOrWhiteSpace(publication.Description)
+                        ? string.Empty
+                        : $" — {publication.Description}"));
+            }
+            sb.AppendLine();
+        }
+
         return Task.FromResult(Encoding.UTF8.GetBytes(sb.ToString()));
     }
 

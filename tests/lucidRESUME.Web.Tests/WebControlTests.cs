@@ -286,6 +286,7 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
         using var documentReader = new StreamReader(archive.GetEntry("word/document.xml")!.Open());
         var documentXml = await documentReader.ReadToEndAsync();
         Assert.Contains(prose, documentXml);
+        Assert.Contains("w:type=\"page\"", documentXml);
         Assert.Contains("Target role: Head of Engineering", documentXml);
         Assert.Contains("Jan 2022 – Present", documentXml);
         Assert.Contains("Additional consulting, contract and earlier experience", documentXml);
@@ -329,5 +330,38 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
 
         var fullJobMl = await _client.GetStringAsync("/resume/api/jobml");
         Assert.Contains("profile: career_record", fullJobMl);
+
+        using var citationFreeCompile = new HttpRequestMessage(HttpMethod.Post, "/resume/api/compile");
+        citationFreeCompile.Headers.Add("X-CSRF-TOKEN", token);
+        citationFreeCompile.Content = new StringContent(JsonSerializer.Serialize(new
+        {
+            jobDescription = "Head of Engineering. TypeScript and AWS experience required.",
+            polish = false,
+            publish = true,
+            includeCitations = false,
+            minimumPages = 1
+        }), Encoding.UTF8, "application/json");
+        using var citationFreeResponse = await _client.SendAsync(citationFreeCompile);
+        var citationFreePayload = await citationFreeResponse.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, citationFreeResponse.StatusCode);
+        using var citationFreeJson = JsonDocument.Parse(citationFreePayload);
+        Assert.Equal(JsonValueKind.Null, citationFreeJson.RootElement.GetProperty("publication").ValueKind);
+        var citationFreeMarkdown = citationFreeJson.RootElement.GetProperty("publishedMarkdown").GetString()!;
+        Assert.Contains(prose, citationFreeMarkdown);
+        Assert.DoesNotContain("cJobML 0.1", citationFreeMarkdown);
+        Assert.DoesNotContain("## References", citationFreeMarkdown);
+        Assert.DoesNotContain("MACHINE AREA", citationFreeMarkdown);
+
+        var citationFreeDocxUrl = citationFreeJson.RootElement.GetProperty("downloads")
+            .GetProperty("docx").GetString()!;
+        var citationFreeDocx = await _client.GetByteArrayAsync(citationFreeDocxUrl);
+        using var citationFreeArchive = new ZipArchive(new MemoryStream(citationFreeDocx), ZipArchiveMode.Read);
+        using var citationFreeDocumentReader = new StreamReader(
+            citationFreeArchive.GetEntry("word/document.xml")!.Open());
+        var citationFreeDocumentXml = await citationFreeDocumentReader.ReadToEndAsync();
+        Assert.Contains(prose, citationFreeDocumentXml);
+        Assert.DoesNotContain("w:type=\"page\"", citationFreeDocumentXml);
+        Assert.DoesNotContain("References", citationFreeDocumentXml);
+        Assert.DoesNotContain("cJobML", citationFreeDocumentXml);
     }
 }

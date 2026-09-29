@@ -186,7 +186,7 @@
       <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8">
         <Button x:Name="ApplySelectedImportButton" Content="Apply Selected" Command="{Binding ApplySelectedCommand}" Padding="16,8"
                 Background="{DynamicResource LrAccentGreenBrush}" Foreground="White"/>
-        <Button x:Name="ApplyAllImportButton" Content="Apply All" Command="{Binding ApplyAllCommand}" Padding="16,8"/>
+        <Button x:Name="ApplyAllImportButton" Content="Apply Safe Items" Command="{Binding ApplyAllCommand}" Padding="16,8"/>
         <Button Content="Cancel" Command="{Binding CancelCommand}" Padding="16,8"
                 Background="Transparent" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
       </StackPanel>

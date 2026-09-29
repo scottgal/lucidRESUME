@@ -79,10 +79,14 @@ public sealed partial class ImportReviewPageViewModel : ViewModelBase
     private async Task ApplyAll()
     {
         if (_target == null || _preview == null) return;
-        // Accept everything
-        foreach (var c in _preview.PersonalInfoChanges) c.IsAccepted = true;
-        foreach (var e in _preview.NewExperience) e.IsAccepted = true;
-        foreach (var e in _preview.MergedExperience) e.IsAccepted = true;
+        // Accept all safe additions. Conflicting identity fields, inconsistent dates,
+        // and structurally invalid roles require an explicit per-item decision.
+        foreach (var c in _preview.PersonalInfoChanges.Where(change => !change.IsConflict))
+            c.IsAccepted = true;
+        foreach (var e in _preview.NewExperience.Where(item => item.Note is null))
+            e.IsAccepted = true;
+        foreach (var e in _preview.MergedExperience.Where(item => !item.DatesDiffer))
+            e.IsAccepted = true;
         foreach (var s in _preview.NewSkills) s.IsAccepted = true;
         foreach (var s in _preview.UpdatedSkills) s.IsAccepted = true;
         foreach (var e in _preview.NewEducation) e.IsAccepted = true;

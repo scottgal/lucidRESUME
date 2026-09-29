@@ -91,8 +91,12 @@ public sealed class AppState
         if (Resumes.Count == 0) return null;
         if (Resumes.Count == 1)
         {
-            ApplyCareerAnchors(Resumes[0].Experience, Overrides);
-            return Resumes[0];
+            var singleProjection = CloneForAggregate(Resumes[0]);
+            ApplyExperienceOverrides(singleProjection.Experience, Overrides);
+            ApplyCareerAnchors(singleProjection.Experience, Overrides);
+            ApplyPersonalInfoOverrides(singleProjection.Personal, Overrides);
+            EvidenceLedgerBuilder.Rebuild(singleProjection);
+            return singleProjection;
         }
 
         var selected = SelectedResume ?? Resumes.Last();
@@ -103,7 +107,8 @@ public sealed class AppState
             .Select(r => r.LastModifiedAt ?? r.CreatedAt)
             .DefaultIfEmpty(aggregate.CreatedAt)
             .Max();
-        aggregate.Personal = selected.Personal;
+        aggregate.Personal = CopyPersonalInfo(selected.Personal);
+        ApplyPersonalInfoOverrides(aggregate.Personal, Overrides);
         aggregate.CanonicalMarkdown = selected.CanonicalMarkdown;
         aggregate.JobMlSource = selected.JobMlSource;
         aggregate.JobMlRevision = selected.JobMlRevision;
@@ -112,6 +117,7 @@ public sealed class AppState
         aggregate.OutputTemplateId = selected.OutputTemplateId;
 
         aggregate.Experience = DeduplicateExperience(Resumes.SelectMany(r => r.Experience).ToList());
+        ApplyExperienceOverrides(aggregate.Experience, Overrides);
         ApplyCareerAnchors(aggregate.Experience, Overrides);
         aggregate.Education = DeduplicateEducation(Resumes.SelectMany(r => r.Education).ToList());
         aggregate.Certifications = Resumes.SelectMany(r => r.Certifications)
@@ -291,6 +297,113 @@ public sealed class AppState
             role.IsCareerAnchor |= overrides.CareerAnchorExperienceIds.Contains(role.Id) ||
                                    overrides.CareerAnchorRoleKeys.Contains(CareerAnchorRoleKey(role)) ||
                                    companies.Contains(NormalizeCompany(role.Company ?? ""));
+        }
+    }
+
+    private static void ApplyExperienceOverrides(IEnumerable<WorkExperience> experience, UserOverrides overrides)
+    {
+        foreach (var role in experience)
+        {
+            var roleKey = CareerAnchorRoleKey(role);
+            var correction = overrides.ExperienceOverrides
+                .LastOrDefault(candidate => candidate.ExperienceId == role.Id ||
+                                            candidate.MatchRoleKey.Equals(roleKey,
+                                                StringComparison.OrdinalIgnoreCase));
+            if (correction is null) continue;
+
+            role.Company = correction.Company;
+            role.Title = correction.Title;
+            role.Location = correction.Location;
+            role.StartDate = correction.StartDate;
+            role.EndDate = correction.IsCurrent ? null : correction.EndDate;
+            role.IsCurrent = correction.IsCurrent;
+        }
+    }
+
+    private static PersonalInfo CopyPersonalInfo(PersonalInfo source) => new()
+    {
+        FullName = source.FullName,
+        Email = source.Email,
+        Phone = source.Phone,
+        ContactPreference = source.ContactPreference,
+        Location = source.Location,
+        LinkedInUrl = source.LinkedInUrl,
+        GitHubUrl = source.GitHubUrl,
+        WebsiteUrl = source.WebsiteUrl,
+        Summary = source.Summary
+    };
+
+    private static ResumeDocument CloneForAggregate(ResumeDocument source) => new()
+    {
+        ResumeId = source.ResumeId,
+        FileName = source.FileName,
+        ContentType = source.ContentType,
+        FileSizeBytes = source.FileSizeBytes,
+        CreatedAt = source.CreatedAt,
+        LastModifiedAt = source.LastModifiedAt,
+        RawMarkdown = source.RawMarkdown,
+        RawJson = source.RawJson,
+        PlainText = source.PlainText,
+        CanonicalMarkdown = source.CanonicalMarkdown,
+        JobMlSource = source.JobMlSource,
+        JobMlRevision = source.JobMlRevision,
+        CompleteJobMlUri = source.CompleteJobMlUri,
+        IncludeCompactJobMl = source.IncludeCompactJobMl,
+        OutputTemplateId = source.OutputTemplateId,
+        MinimumOutputPages = source.MinimumOutputPages,
+        TargetRole = source.TargetRole,
+        ImageCacheKey = source.ImageCacheKey,
+        PageCount = source.PageCount,
+        Personal = CopyPersonalInfo(source.Personal),
+        Experience = source.Experience.Select(CloneExperience).ToList(),
+        Education = [.. source.Education],
+        Skills = [.. source.Skills],
+        Certifications = [.. source.Certifications],
+        Projects = [.. source.Projects],
+        Publications = [.. source.Publications],
+        Entities = [.. source.Entities],
+        IngestionDecisions = [.. source.IngestionDecisions],
+        Projection = source.Projection,
+        TailoredForJobId = source.TailoredForJobId,
+        GenerationEvidenceLinks = [.. source.GenerationEvidenceLinks],
+        GenerationWarnings = [.. source.GenerationWarnings]
+    };
+
+    private static WorkExperience CloneExperience(WorkExperience source) => new()
+    {
+        Id = source.Id,
+        Company = source.Company,
+        Title = source.Title,
+        Location = source.Location,
+        StartDate = source.StartDate,
+        EndDate = source.EndDate,
+        IsCurrent = source.IsCurrent,
+        IsCompact = source.IsCompact,
+        IsCareerAnchor = source.IsCareerAnchor,
+        Achievements = [.. source.Achievements],
+        Technologies = [.. source.Technologies],
+        ImportSources = [.. source.ImportSources]
+    };
+
+    private static void ApplyPersonalInfoOverrides(PersonalInfo personal, UserOverrides overrides)
+    {
+        foreach (var (field, value) in overrides.PersonalInfoOverrides)
+        {
+            switch (field)
+            {
+                case nameof(PersonalInfo.FullName): personal.FullName = value; break;
+                case nameof(PersonalInfo.Email): personal.Email = value; break;
+                case nameof(PersonalInfo.Phone): personal.Phone = value; break;
+                case nameof(PersonalInfo.ContactPreference): personal.ContactPreference = value; break;
+                case nameof(PersonalInfo.Location): personal.Location = value; break;
+                case nameof(PersonalInfo.LinkedInUrl):
+                case "LinkedIn": personal.LinkedInUrl = value; break;
+                case nameof(PersonalInfo.GitHubUrl):
+                case "GitHub": personal.GitHubUrl = value; break;
+                case nameof(PersonalInfo.WebsiteUrl):
+                case "Website": personal.WebsiteUrl = value; break;
+                case nameof(PersonalInfo.Summary): personal.Summary = value; break;
+            }
         }
     }
 

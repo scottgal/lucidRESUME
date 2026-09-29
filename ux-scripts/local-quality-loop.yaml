@@ -10,6 +10,10 @@ actions:
     target: Fast
     value: /Users/scottgalloway/Desktop/resumes/CV.docx
   - type: Wait
+    value: "1500"
+  - type: Click
+    target: ApplyAllImportButton
+  - type: Wait
     value: "2500"
   - type: Screenshot
     value: 01-first-resume
@@ -37,6 +41,16 @@ actions:
   - type: ImportFile
     target: Fast
     value: /Users/scottgalloway/Desktop/resumes/resume.docx
+  - type: Wait
+    value: "1500"
+  - type: Click
+    target: ApplyAllImportButton
+  - type: Wait
+    value: "2500"
+
+  - type: ImportFile
+    target: Reviewed
+    value: /Users/scottgalloway/Desktop/resumes/generated/genai-roles-2026-09-25/scott-galloway-complete-career-transcript-draft.md
   - type: Wait
     value: "1500"
   - type: Click
@@ -71,6 +85,10 @@ actions:
     target: ProjectedResumeText
     matcher: Not.HasText
     value: Desired Job Title
+  - type: Expect
+    target: ProjectedResumeText
+    matcher: ContainsText
+    value: scott@mostlylucid.net
   - type: Screenshot
     value: 03-lead-developer-projection
 

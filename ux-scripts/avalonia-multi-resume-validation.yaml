@@ -15,6 +15,14 @@ actions:
     description: Import the first DOCX as the candidate base.
 
   - type: Expect
+    target: name=ReviewImportTitle
+    matcher: IsVisible
+    timeout: 15000
+
+  - type: Click
+    target: name=ApplyAllImportButton
+
+  - type: Expect
     target: name=ResumeContent
     matcher: IsVisible
     timeout: 15000

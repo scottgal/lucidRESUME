@@ -190,4 +190,59 @@ public sealed class ResumeImportValidationTests
         Assert.NotEmpty(aggregate.EvidenceLedger.Claims);
     }
 
+    [Fact]
+    public void AppState_AppliesReviewedPersonalOverridesToCompilerAggregate()
+    {
+        var imported = ResumeDocument.Create("old.docx", "application/docx", 100);
+        imported.Personal.Email = "old@example.com";
+        imported.Personal.Phone = "+44 0000 000000";
+        var state = new AppState();
+        state.AddOrReplaceResume(imported);
+        state.Overrides.PersonalInfoOverrides[nameof(PersonalInfo.Email)] = "reviewed@example.com";
+        state.Overrides.PersonalInfoOverrides[nameof(PersonalInfo.Phone)] = "+44 1111 111111";
+        state.Overrides.PersonalInfoOverrides["Website"] = "https://example.com";
+
+        var aggregate = Assert.IsType<ResumeDocument>(state.BuildAggregateResume());
+
+        Assert.Equal("reviewed@example.com", aggregate.Personal.Email);
+        Assert.Equal("+44 1111 111111", aggregate.Personal.Phone);
+        Assert.Equal("https://example.com", aggregate.Personal.WebsiteUrl);
+    }
+
+    [Fact]
+    public void AppState_AppliesReviewedRoleDatesWithoutChangingImportedEvidence()
+    {
+        var imported = ResumeDocument.Create("old.docx", "application/docx", 100);
+        var role = new WorkExperience
+        {
+            Company = "ZenChef Limited",
+            Title = "Lead Contract Developer",
+            StartDate = new DateOnly(2024, 10, 1),
+            IsCurrent = true
+        };
+        imported.Experience.Add(role);
+        var state = new AppState();
+        state.AddOrReplaceResume(imported);
+        state.Overrides.ExperienceOverrides.Add(new lucidRESUME.Core.Models.Profile.ExperienceOverride
+        {
+            ExperienceId = role.Id,
+            MatchRoleKey = AppState.CareerAnchorRoleKey(role),
+            Company = "ZenChef Ltd / Formitable",
+            Title = "Lead Contract Developer",
+            StartDate = new DateOnly(2024, 10, 1),
+            EndDate = new DateOnly(2026, 5, 1),
+            IsCurrent = false
+        });
+
+        var aggregate = Assert.IsType<ResumeDocument>(state.BuildAggregateResume());
+
+        var reviewed = Assert.Single(aggregate.Experience);
+        Assert.Equal("ZenChef Ltd / Formitable", reviewed.Company);
+        Assert.Equal(new DateOnly(2026, 5, 1), reviewed.EndDate);
+        Assert.False(reviewed.IsCurrent);
+        Assert.Single(state.Overrides.ExperienceOverrides);
+        Assert.True(role.IsCurrent);
+        Assert.Null(role.EndDate);
+    }
+
 }

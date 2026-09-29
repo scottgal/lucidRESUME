@@ -454,18 +454,18 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test lucidRESUME.sln    # 460 tests across 12 projects
+dotnet test lucidRESUME.sln    # 478 tests across 12 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 92 | Persistence, models, multi-resume, export, linked posts |
+| Core.Tests | 101 | Persistence, models, reviewed transcript overlays, multi-resume, export, linked posts |
 | Extraction.Tests | 25 | NER, recognizers, RRF fusion pipeline |
 | AI.Tests | 46 | Providers, embeddings, bounded decisions, deterministic projection, gated live OpenAI checks |
-| Matching.Tests | 62 | Skill scoring, filters, voting, job-search resilience, projection quality |
+| Matching.Tests | 64 | Skill scoring, filters, voting, job-search resilience, projection quality |
 | JobSpec.Tests | 15 | JD parsing, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
-| GitHub.Tests | 37 | Language map, repository assessment, package families, LinkedIn parsing, document merge |
+| GitHub.Tests | 44 | Language map, repository assessment, package families, LinkedIn parsing, reviewed document merge |
 | JobML.Tests | 29 | Parsing, validation, drift, reversible links, cJobML projection |
 | Compiler.Tests | 24 | Deterministic evidence selection, compact chronology and projection orchestration |
 | Web.Tests | 5 | ASP.NET Core endpoint and projection control |

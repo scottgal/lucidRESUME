@@ -99,11 +99,13 @@ public sealed class DocxExporter : IResumeExporter
             // --- Experience ---
             if (resume.Experience.Count > 0)
             {
+                var secondPageExperienceIndex = ExportLayoutPolicy.SecondPageExperienceIndex(resume);
+                if (secondPageExperienceIndex == 0)
+                    body.Append(new Paragraph(new Run(new Break { Type = BreakValues.Page })));
                 body.Append(CreateParagraph("Experience", "Heading2"));
-                var detailedExperienceCount = resume.Experience.Count(experience => !experience.IsCompact);
                 for (var experienceIndex = 0; experienceIndex < resume.Experience.Count; experienceIndex++)
                 {
-                    if (detailedExperienceCount >= 10 && experienceIndex == 7)
+                    if (experienceIndex == secondPageExperienceIndex && experienceIndex > 0)
                         body.Append(new Paragraph(new Run(new Break { Type = BreakValues.Page })));
                     var exp = resume.Experience[experienceIndex];
                     if (exp.IsCompact && (experienceIndex == 0 || !resume.Experience[experienceIndex - 1].IsCompact))
@@ -157,6 +159,36 @@ public sealed class DocxExporter : IResumeExporter
                 body.Append(CreateParagraph("Certifications", "Heading2"));
                 foreach (var c in resume.Certifications)
                     body.Append(CreateBullet($"{c.Name} — {c.Issuer}" + (c.IssuedDate.HasValue ? $" ({c.IssuedDate.Value.Year})" : "")));
+            }
+
+            if (resume.Publications.Count > 0)
+            {
+                body.Append(CreateParagraph("Selected Recent Publications", "Heading2"));
+                var paragraph = new Paragraph();
+                for (var publicationIndex = 0; publicationIndex < resume.Publications.Count; publicationIndex++)
+                {
+                    var publication = resume.Publications[publicationIndex];
+                    if (publicationIndex > 0)
+                        paragraph.Append(new Run(new RunProperties(new FontSize { Val = "20" }),
+                            new Text(" · ") { Space = SpaceProcessingModeValues.Preserve }));
+                    if (Uri.TryCreate(publication.Url, UriKind.Absolute, out var uri))
+                    {
+                        var relationship = mainPart.AddHyperlinkRelationship(uri, true);
+                        paragraph.Append(new Hyperlink(
+                            new Run(new RunProperties(
+                                    new Color { Val = template.AccentHex },
+                                    new Underline { Val = UnderlineValues.Single },
+                                    new FontSize { Val = "20" }),
+                                new Text(publication.Name)))
+                        { Id = relationship.Id });
+                    }
+                    else
+                    {
+                        paragraph.Append(new Run(new RunProperties(new FontSize { Val = "20" }),
+                            new Text(publication.Name) { Space = SpaceProcessingModeValues.Preserve }));
+                    }
+                }
+                body.Append(paragraph);
             }
 
             AppendReferences(mainPart, body, compact, template);

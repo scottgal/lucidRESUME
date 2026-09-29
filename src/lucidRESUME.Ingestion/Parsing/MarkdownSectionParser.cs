@@ -248,6 +248,8 @@ public static partial class MarkdownSectionParser
         IReadOnlyList<DocumentSection> sections, int fromIndex)
     {
         var parentLevel = sections[fromIndex].Level;
+        var parentType = sections[fromIndex].SemanticType ??
+                         SectionClassifier.ClassifyHeading(sections[fromIndex].Heading);
         var lines = new List<string>();
         for (int j = fromIndex + 1; j < sections.Count; j++)
         {
@@ -257,7 +259,8 @@ public static partial class MarkdownSectionParser
             // Stop only at major section boundaries (Experience, Education, Skills, Summary)
             // at the same or higher level. Minor/ambiguous headings like "Mentorship & Education"
             // or "AI Systems & Applied ML" within an experience block are absorbed as content.
-            if (t != null && s.Level <= parentLevel && IsMajorSection(t))
+            if (t != null && !string.Equals(t, parentType, StringComparison.OrdinalIgnoreCase) &&
+                s.Level <= parentLevel && IsMajorSection(t))
                 break;
 
             // Include heading as a content line (it may itself be a job title or skill name)
@@ -507,15 +510,24 @@ public static partial class MarkdownSectionParser
 
         foreach (var raw in lines.Skip(nameIndex + 1).TakeWhile(line => !line.StartsWith('#')))
         {
-            foreach (var rawPart in raw.Split('|', StringSplitOptions.RemoveEmptyEntries))
+            foreach (var rawPart in raw.Split(['|', '·'], StringSplitOptions.RemoveEmptyEntries))
             {
                 var part = rawPart.Trim().Trim('<', '>');
                 if (part.Length == 0) continue;
                 if (part.Contains('@') && Regex.IsMatch(part, @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
                     resume.Personal.Email ??= part;
-                else if (Regex.IsMatch(part, @"^\+?[\d\s().-]{9,24}$") &&
-                         part.Count(char.IsDigit) is >= 9 and <= 15)
-                    resume.Personal.Phone ??= part;
+                else if (Regex.Match(part,
+                             @"^(?<phone>\+?[\d\s.-]{9,24})(?:\s*(?:\((?<parenthesized>[^)]+)\)|-\s*(?<hyphenated>[^-]+?)\s*-?))?$",
+                             RegexOptions.CultureInvariant) is { Success: true } phoneMatch &&
+                         phoneMatch.Groups["phone"].Value.Count(char.IsDigit) is >= 9 and <= 15)
+                {
+                    resume.Personal.Phone ??= phoneMatch.Groups["phone"].Value.Trim();
+                    var preference = phoneMatch.Groups["parenthesized"].Success
+                        ? phoneMatch.Groups["parenthesized"].Value
+                        : phoneMatch.Groups["hyphenated"].Value;
+                    if (!string.IsNullOrWhiteSpace(preference))
+                        resume.Personal.ContactPreference ??= preference.Trim();
+                }
                 else if (part.Contains("linkedin.com/", StringComparison.OrdinalIgnoreCase))
                     resume.Personal.LinkedInUrl ??= part;
                 else if (part.Contains("github.com/", StringComparison.OrdinalIgnoreCase))
@@ -582,6 +594,14 @@ public static partial class MarkdownSectionParser
         {
             if (line.StartsWith('#'))
             {
+                // Many Word templates style role dates as headings. They are role
+                // metadata inside Experience, not new top-level sections.
+                if (currentLabel == "Experience" && ResumeDateParser.ExtractFirstDateRange(line) is not null)
+                {
+                    currentLines.Add(line);
+                    continue;
+                }
+
                 var headingLevel = line.TakeWhile(character => character == '#').Count();
                 var label = SectionClassifier.ClassifyHeading(line);
                 if (label != null)
@@ -817,15 +837,27 @@ public static partial class MarkdownSectionParser
                         var commaIdx = baseText.LastIndexOf(',');
                         if (commaIdx > 0)
                         {
-                            current.Title = baseText[..commaIdx].Trim();
-                            current.Company = baseText[(commaIdx + 1)..].Trim();
-                            if (parenIdx > 0)
-                                current.Location = rest[(parenIdx + 1)..].TrimEnd(')').Trim();
+                            var first = baseText[..commaIdx].Trim();
+                            var second = baseText[(commaIdx + 1)..].Trim();
+                            var firstCommaIdx = baseText.IndexOf(',');
+                            var companyCandidate = baseText[..firstCommaIdx].Trim();
+                            if (!LooksLikeJobTitle(companyCandidate) && LooksLikeLocation(second))
+                            {
+                                current.Company = companyCandidate;
+                                current.Location = baseText[(firstCommaIdx + 1)..].Trim();
+                            }
+                            else
+                            {
+                                current.Title = first;
+                                current.Company = second;
+                                if (parenIdx > 0)
+                                    current.Location = rest[(parenIdx + 1)..].TrimEnd(')').Trim();
+                            }
                         }
+                        else if (LooksLikeCompanyName(baseText))
+                            current.Company = baseText.Trim();
                         else
-                        {
                             current.Title = baseText.Trim();
-                        }
                         continue;
                     }
                 }
@@ -1364,10 +1396,24 @@ public static partial class MarkdownSectionParser
         return roleTerms.Any(term => value.Contains(term, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static int ExperienceScore(ResumeDocument resume) =>
-        resume.Experience.Count * 5 +
-        resume.Experience.Count(item => !string.IsNullOrWhiteSpace(item.Company) &&
-                                        !string.IsNullOrWhiteSpace(item.Title)) * 10;
+    private static bool LooksLikeCompanyName(string value) => Regex.IsMatch(value,
+        @"\b(ltd|limited|inc|incorporated|corp|corporation|plc|llc|gmbh|group|systems?|technologies|consulting)\b|\.(?:com|net|io)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static bool LooksLikeLocation(string value)
+    {
+        var normalized = value.Trim().TrimEnd('.');
+        if (Regex.IsMatch(normalized, @"^(uk|us|usa|remote)$", RegexOptions.IgnoreCase)) return true;
+        return normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length <= 3 &&
+               !LooksLikeJobTitle(normalized) && !LooksLikeCompanyName(normalized);
+    }
+
+    private static int ExperienceScore(ResumeDocument resume) => resume.Experience.Sum(item =>
+        5 +
+        (!string.IsNullOrWhiteSpace(item.Company) && !string.IsNullOrWhiteSpace(item.Title) ? 10 : 0) +
+        (item.StartDate is { Year: > 1900 } ? 4 : 0) +
+        (item.IsCurrent || item.EndDate is { Year: > 1900 } ? 2 : 0) -
+        (item.StartDate.HasValue && item.EndDate.HasValue && item.EndDate < item.StartDate ? 12 : 0));
 
     private static void ApplyDateRange(WorkExperience job, DateRangeResult range)
     {
@@ -1484,6 +1530,6 @@ public static partial class MarkdownSectionParser
     [GeneratedRegex(@"(?<=\S)\s*[-–—]\s+(?=\S)")]
     private static partial Regex CompactRoleSeparator();
 
-    [GeneratedRegex(@"\s*[-–—]\s*(?:present|current|now|to date)\s*\.?$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?:\s*[-–—]\s*)?\b(?:present|current|now|to date)\b\s*\.?$", RegexOptions.IgnoreCase)]
     private static partial Regex PresentTail();
 }

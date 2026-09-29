@@ -263,6 +263,9 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         if (string.IsNullOrWhiteSpace(p.Summary))
             findings.Add(new("Personal", FindingSeverity.Warning, "NO_SUMMARY",
                 "No summary or objective section - add 2-3 sentences at the top"));
+        else if (p.Summary.Contains("Desired Job Title", StringComparison.OrdinalIgnoreCase))
+            findings.Add(new("Personal", FindingSeverity.Error, "PLACEHOLDER_SUMMARY",
+                "The summary still contains an imported template placeholder: Desired Job Title"));
 
         if (resume.Experience.Count == 0)
             findings.Add(new("Experience", FindingSeverity.Error, "NO_EXPERIENCE",
@@ -283,7 +286,23 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
             if (exp.StartDate is null)
                 findings.Add(new($"Experience[{i}]", FindingSeverity.Warning, "MISSING_START_DATE",
                     $"{exp.Company ?? "?"}: start date not found"));
+            else if (exp.StartDate.Value.Year < 1900 || exp.StartDate.Value.Year > DateTime.Today.Year + 1)
+                findings.Add(new($"Experience[{i}]", FindingSeverity.Error, "IMPLAUSIBLE_START_DATE",
+                    $"{ExperienceLabel(exp)}: start date {exp.StartDate:MMM yyyy} is outside a plausible career range"));
+            if (exp.EndDate is { } endDate && (endDate.Year < 1900 || endDate.Year > DateTime.Today.Year + 1))
+                findings.Add(new($"Experience[{i}]", FindingSeverity.Error, "IMPLAUSIBLE_END_DATE",
+                    $"{ExperienceLabel(exp)}: end date {exp.EndDate:MMM yyyy} is outside a plausible career range"));
+            if (exp.StartDate.HasValue && exp.EndDate.HasValue && exp.EndDate < exp.StartDate)
+                findings.Add(new($"Experience[{i}]", FindingSeverity.Error, "INVERTED_DATE_RANGE",
+                    $"{ExperienceLabel(exp)}: end date {exp.EndDate:MMM yyyy} precedes start date {exp.StartDate:MMM yyyy}"));
+            if (string.IsNullOrWhiteSpace(exp.Title) && string.IsNullOrWhiteSpace(exp.Company))
+                findings.Add(new($"Experience[{i}]", FindingSeverity.Error, "MISSING_ROLE_IDENTITY",
+                    "Experience entry has neither a role title nor an employer"));
         }
+
+        foreach (var duplicate in FindProbableDuplicateExperience(resume.Experience))
+            findings.Add(new("Experience", FindingSeverity.Warning, "PROBABLE_DUPLICATE_ROLE",
+                $"Probable duplicate role: {ExperienceLabel(duplicate.First)} and {ExperienceLabel(duplicate.Second)}"));
 
         return findings;
     }
@@ -436,6 +455,63 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
         if (earliest == default) return 5; // assume mid-level if unknown
         return (int)((DateOnly.FromDateTime(DateTime.Today).DayNumber - earliest.DayNumber) / 365.25);
+    }
+
+    private static IEnumerable<(WorkExperience First, WorkExperience Second)> FindProbableDuplicateExperience(
+        IReadOnlyList<WorkExperience> experience)
+    {
+        for (var firstIndex = 0; firstIndex < experience.Count; firstIndex++)
+        for (var secondIndex = firstIndex + 1; secondIndex < experience.Count; secondIndex++)
+        {
+            var first = experience[firstIndex];
+            var second = experience[secondIndex];
+            if (string.IsNullOrWhiteSpace(first.Company) || string.IsNullOrWhiteSpace(second.Company) ||
+                CanonicalCompany(first.Company) != CanonicalCompany(second.Company) ||
+                !DatesOverlap(first, second) || !TitlesOverlap(first.Title, second.Title))
+                continue;
+
+            yield return (first, second);
+        }
+    }
+
+    private static bool DatesOverlap(WorkExperience first, WorkExperience second)
+    {
+        if (!first.StartDate.HasValue || !second.StartDate.HasValue) return false;
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var firstEnd = first.IsCurrent ? today : first.EndDate ?? first.StartDate.Value;
+        var secondEnd = second.IsCurrent ? today : second.EndDate ?? second.StartDate.Value;
+        if (firstEnd < first.StartDate || secondEnd < second.StartDate) return false;
+        return first.StartDate <= secondEnd && second.StartDate <= firstEnd;
+    }
+
+    private static bool TitlesOverlap(string? first, string? second)
+    {
+        var firstTokens = CanonicalTitleTokens(first);
+        var secondTokens = CanonicalTitleTokens(second);
+        return firstTokens.Count > 0 && secondTokens.Count > 0 && firstTokens.Overlaps(secondTokens) &&
+               (firstTokens.Contains("lead") || secondTokens.Contains("lead") ||
+                firstTokens.SetEquals(secondTokens));
+    }
+
+    private static HashSet<string> CanonicalTitleTokens(string? value) =>
+        Regex.Matches(value?.ToLowerInvariant() ?? string.Empty, "[a-z]+")
+            .Select(match => match.Value.StartsWith("develop", StringComparison.Ordinal) ? "developer" : match.Value)
+            .Where(token => token is not ("contract" or "contractor" or "senior" or "ii"))
+            .ToHashSet(StringComparer.Ordinal);
+
+    private static string CanonicalCompany(string value)
+    {
+        var tokens = Regex.Matches(value.ToLowerInvariant(), "[a-z0-9]+")
+            .Select(match => match.Value)
+            .Where(token => token is not ("limited" or "ltd" or "inc" or "corp" or "corporation" or "plc"));
+        return string.Join(' ', tokens);
+    }
+
+    private static string ExperienceLabel(WorkExperience experience)
+    {
+        var identity = new[] { experience.Title, experience.Company }
+            .Where(value => !string.IsNullOrWhiteSpace(value));
+        return string.Join(" at ", identity.DefaultIfEmpty("unnamed role"));
     }
 
     /// <summary>

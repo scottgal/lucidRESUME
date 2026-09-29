@@ -1,5 +1,6 @@
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.Ingestion.Parsing;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -75,6 +76,151 @@ public class ResumeDocumentMergerTests
         Assert.Single(preview.NewExperience);
         Assert.Single(preview.UpdatedSkills);
         Assert.Single(preview.NewSkills);
+    }
+
+    [Fact]
+    public async Task PreviewMerge_FirstImportRejectsPlaceholderAndInvertedRoleByDefault()
+    {
+        var incoming = ResumeDocument.Create("template.docx", "application/docx", 100);
+        incoming.Personal.FullName = "Alex Example";
+        incoming.Personal.Summary = "Desired Job Title: Engineering Lead";
+        incoming.Experience.Add(new WorkExperience
+        {
+            Company = "Example Ltd",
+            Title = "Engineering Lead",
+            StartDate = new DateOnly(2025, 9, 1),
+            EndDate = new DateOnly(2025, 2, 1)
+        });
+
+        var target = ResumeDocumentMerger.CreateReviewTarget(incoming);
+        var preview = await _merger.PreviewMergeAsync(target, incoming, "template.docx");
+
+        var summary = Assert.Single(preview.PersonalInfoChanges,
+            change => change.FieldName == nameof(PersonalInfo.Summary));
+        Assert.True(summary.IsConflict);
+        Assert.False(summary.IsAccepted);
+        Assert.False(Assert.Single(preview.NewExperience).IsAccepted);
+        Assert.Contains(preview.Anomalies, anomaly => anomaly.Type == AnomalyType.PlaceholderContent);
+        Assert.Contains(preview.Anomalies, anomaly => anomaly.Type == AnomalyType.InvertedDateRange);
+    }
+
+    [Fact]
+    public async Task PreviewMerge_ConflictingIdentityFieldRequiresExplicitAcceptance()
+    {
+        var target = ResumeDocument.Create("reviewed.md", "text/markdown", 100);
+        target.Personal.Email = "reviewed@example.com";
+        var incoming = ResumeDocument.Create("old.docx", "application/docx", 100);
+        incoming.Personal.Email = "stale@example.com";
+
+        var preview = await _merger.PreviewMergeAsync(target, incoming, "old.docx");
+
+        var email = Assert.Single(preview.PersonalInfoChanges);
+        Assert.True(email.IsConflict);
+        Assert.False(email.IsAccepted);
+        ResumeDocumentMerger.ApplyPreview(target, preview);
+        Assert.Equal("reviewed@example.com", target.Personal.Email);
+    }
+
+    [Fact]
+    public async Task PreviewMerge_ReviewedTranscriptOverridesStaleContactAndRoleDates()
+    {
+        var target = ResumeDocument.Create("old.docx", "application/docx", 100);
+        target.Personal.Email = "old@example.com";
+        target.Experience.Add(new WorkExperience
+        {
+            Company = "ZenChef Limited",
+            Title = "Lead Contract Developer",
+            StartDate = new DateOnly(2024, 10, 1),
+            IsCurrent = true
+        });
+        var transcript = ResumeDocument.Create("reviewed.md", "text/markdown", 100);
+        transcript.Personal.Email = "reviewed@example.com";
+        transcript.Experience.Add(new WorkExperience
+        {
+            Company = "ZenChef Ltd / Formitable",
+            Title = "Lead Contract Developer",
+            StartDate = new DateOnly(2024, 10, 1),
+            EndDate = new DateOnly(2026, 5, 1),
+            IsCurrent = false,
+            Achievements = ["Took technical ownership of the acquired production platform."]
+        });
+
+        var preview = await _merger.PreviewMergeAsync(target, transcript, "reviewed.md",
+            incomingIsAuthoritative: true);
+        ResumeDocumentMerger.ApplyPreview(target, preview);
+
+        Assert.Equal("reviewed@example.com", target.Personal.Email);
+        var role = Assert.Single(target.Experience);
+        Assert.Equal("ZenChef Ltd / Formitable", role.Company);
+        Assert.Equal(new DateOnly(2026, 5, 1), role.EndDate);
+        Assert.False(role.IsCurrent);
+        Assert.Single(role.Achievements);
+    }
+
+    [Fact]
+    public async Task ReviewedMarkdownTranscript_ParsesAndOverlaysRawResumeEndToEnd()
+    {
+        var target = ResumeDocument.Create("old.docx", "application/docx", 100);
+        target.Personal.Email = "stale@example.com";
+        target.Experience.Add(new WorkExperience
+        {
+            Company = "Example Platform Ltd",
+            Title = "Lead Engineer",
+            StartDate = new DateOnly(2024, 10, 1),
+            IsCurrent = true
+        });
+        const string markdown = """
+            # Alex Example
+
+            alex@example.com | 07498 479614 - please email in the first instance - | Glasgow, United Kingdom
+
+            ## Summary
+
+            Hands-on engineering leader.
+
+            ## Experience
+
+            ### Lead Engineer | Example Platform Ltd
+            *Oct 2024 - May 2026*
+
+            - Took end-to-end ownership of a distributed production platform.
+            """;
+        var transcript = ResumeDocument.Create("complete-transcript.md", "text/markdown", markdown.Length);
+        MarkdownSectionParser.PopulateSections(transcript, markdown);
+
+        var preview = await _merger.PreviewMergeAsync(target, transcript, transcript.FileName,
+            incomingIsAuthoritative: true);
+        ResumeDocumentMerger.ApplyPreview(target, preview);
+
+        Assert.Equal("alex@example.com", target.Personal.Email);
+        Assert.Equal("please email in the first instance", target.Personal.ContactPreference);
+        var role = Assert.Single(target.Experience);
+        Assert.Equal(new DateOnly(2026, 5, 1), role.EndDate);
+        Assert.False(role.IsCurrent);
+        Assert.Contains(role.Achievements, text => text.Contains("end-to-end ownership"));
+    }
+
+    [Fact]
+    public async Task ApplyPreview_RebuildsLedgerFromAcceptedItems()
+    {
+        var incoming = ResumeDocument.Create("first.docx", "application/docx", 100);
+        incoming.Personal.FullName = "Alex Example";
+        incoming.Experience.Add(new WorkExperience
+        {
+            Company = "Example Ltd",
+            Title = "Engineering Lead",
+            StartDate = new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2025, 1, 1),
+            Achievements = ["Led delivery of a production platform migration."]
+        });
+
+        var target = ResumeDocumentMerger.CreateReviewTarget(incoming);
+        var preview = await _merger.PreviewMergeAsync(target, incoming, "first.docx");
+        ResumeDocumentMerger.ApplyPreview(target, preview);
+
+        Assert.Single(target.Experience);
+        Assert.NotEmpty(target.EvidenceLedger.Claims);
+        Assert.Contains(target.Experience[0].ImportSources, source => source == "first.docx");
     }
 
     [Fact]
@@ -380,5 +526,57 @@ public class ResumeDocumentMergerTests
         await _merger.MergeIntoAsync(target, incoming, "base.docx");
 
         Assert.Equal(2, target.Experience.Count);
+    }
+
+    [Fact]
+    public async Task MergeInto_ResolvesMissingCompanyFreelanceVariantIntoNamedBusiness()
+    {
+        var target = ResumeDocument.Create("old.docx", "application/docx", 100);
+        target.Experience.Add(new WorkExperience
+        {
+            Title = "Freelance Developer",
+            StartDate = new DateOnly(2012, 1, 1),
+            IsCurrent = true
+        });
+        var incoming = ResumeDocument.Create("reviewed.docx", "application/docx", 100);
+        incoming.Experience.Add(new WorkExperience
+        {
+            Company = "Mostlylucid Limited",
+            Title = "Freelance Consultant / Lead Developer",
+            StartDate = new DateOnly(2012, 1, 1),
+            IsCurrent = true
+        });
+
+        await _merger.MergeIntoAsync(target, incoming, "reviewed.docx");
+
+        var role = Assert.Single(target.Experience);
+        Assert.Equal("Mostlylucid Limited", role.Company);
+        Assert.Equal("Freelance Consultant / Lead Developer", role.Title);
+    }
+
+    [Fact]
+    public async Task MergeInto_MergesAdjacentCompanyNameTransposition()
+    {
+        var target = ResumeDocument.Create("correct.docx", "application/docx", 100);
+        target.Experience.Add(new WorkExperience
+        {
+            Company = "BlackID",
+            Title = "Web Developer",
+            StartDate = new DateOnly(1999, 2, 1),
+            EndDate = new DateOnly(2000, 6, 1)
+        });
+        var incoming = ResumeDocument.Create("typo.docx", "application/docx", 100);
+        incoming.Experience.Add(new WorkExperience
+        {
+            Company = "BalckID",
+            Title = "Web Developer",
+            StartDate = new DateOnly(1999, 2, 1),
+            EndDate = new DateOnly(2000, 6, 1)
+        });
+
+        await _merger.MergeIntoAsync(target, incoming, "typo.docx");
+
+        Assert.Single(target.Experience);
+        Assert.Equal("BlackID", target.Experience[0].Company);
     }
 }

@@ -122,7 +122,15 @@ public sealed class JobMlResumeCompiler(
         IReadOnlyList<CompilerRequirement> requirements,
         IReadOnlyList<JobMlClaim> acceptedClaims)
     {
-        var rankedClaims = group
+        var groupClaims = group.ToList();
+        var hasNarrative = groupClaims.Any(item => item.Claim.Type != "experience");
+        var subject = group.Key;
+        var isDatedExperience = acceptedClaims.Any(item =>
+            item.Subject.Equals(subject, StringComparison.OrdinalIgnoreCase) && item.Type == "experience");
+        var rankedClaims = groupClaims
+            // Date claims establish chronology and the heading, but are not resume
+            // prose when the same subject has a reviewed narrative passage.
+            .Where(item => item.Claim.Type != "experience" || !hasNarrative)
             .OrderByDescending(item => RoleFramingClaimSignal(item.Claim.Statement) >= 7)
             .ThenByDescending(item => item.Score)
             .ToList();
@@ -137,13 +145,14 @@ public sealed class JobMlResumeCompiler(
             .ToList();
         var focus = allFocus.Take(6).ToList();
         var isSummary = rankedClaims.Any(item => item.Claim.Type == "summary");
-        var isProject = rankedClaims.Any(item => item.Claim.Type == "project");
+        var isProject = !isDatedExperience && rankedClaims.Any(item => item.Claim.Type == "project");
         var isEducation = rankedClaims.Any(item => item.Claim.Type == "education");
+        var isPublication = !isDatedExperience && rankedClaims.Any(item => item.Claim.Type == "publication");
         // A senior summary needs enough room for identity, the vacancy-specific
         // differentiator and the relevant implementation/leadership context. At
         // 72 words the sentence-preserving compactor commonly retained identity
         // and stack but dropped the differentiator (for example daily agent use).
-        var targetWords = isSummary ? 80 : isEducation ? 36 : isProject ? 60 :
+        var targetWords = isSummary ? 80 : isEducation ? 36 : isPublication ? 60 : isProject ? 60 :
             48 + Math.Max(0, rankedClaims.Count - 1) * 20;
         targetWords = Math.Min(targetWords, isSummary ? 80 : 76);
         var claims = FitHumanProse(rankedClaims, targetWords, allFocus, isSummary);
@@ -159,8 +168,14 @@ public sealed class JobMlResumeCompiler(
         if (focus.Count > 0)
             intent += $" The target emphasis is: {string.Join("; ", focus)}.";
 
-        var heading = isSummary ? "Professional Summary" : CompactHeading(claims[0].SubjectName);
-        var dateRange = isSummary || isProject || isEducation ? null : ExperienceDateRange(group.Key, acceptedClaims);
+        var heading = isSummary
+            ? "Professional Summary"
+            : isPublication
+                ? CompactPublicationHeading(claims[0].SubjectName)
+                : CompactHeading(claims[0].SubjectName);
+        var dateRange = isSummary || isProject || isEducation || isPublication
+            ? null
+            : ExperienceDateRange(group.Key, acceptedClaims);
         if (!string.IsNullOrWhiteSpace(dateRange)) heading += $" | {dateRange}";
 
         return new EvidencePacket(
@@ -170,7 +185,8 @@ public sealed class JobMlResumeCompiler(
             maximumWords,
             claims,
             requirementIds,
-            isSummary ? "summary" : isProject ? "project" : isEducation ? "education" : "experience");
+            isSummary ? "summary" : isProject ? "project" : isEducation ? "education" :
+            isPublication ? "publication" : "experience");
     }
 
     private static IReadOnlyList<EvidencePacket> BuildAdditionalExperiencePackets(
@@ -468,6 +484,32 @@ public sealed class JobMlResumeCompiler(
                 education.Matches.Select(match => match.Score).DefaultIfEmpty(.4).Max(), education.Matches));
         }
 
+        // A career record can mark a small publication list as resume material.
+        // Preserve its reviewed titles and links as a compact final section; it is
+        // portfolio context, not evidence-footnote machinery.
+        foreach (var publication in candidates
+                     .Where(claim => claim.Type == "publication" &&
+                                     entities.GetValueOrDefault(claim.Subject)?.Type == "publication")
+                     .Select(claim => new
+                     {
+                         Claim = claim,
+                         Matches = matches.Where(match =>
+                             match.ClaimId.Equals(claim.Id, StringComparison.OrdinalIgnoreCase)).ToList(),
+                         Prose = ResolveProse(claim, reconciled, index)
+                     })
+                     .Where(candidate => !string.IsNullOrWhiteSpace(candidate.Prose))
+                     .OrderByDescending(candidate => candidate.Matches.Count > 0)
+                     .ThenByDescending(candidate =>
+                         candidate.Matches.Select(match => match.Score).DefaultIfEmpty(.4).Max())
+                     .Take(3))
+        {
+            result.Add(new SelectedClaim(publication.Claim,
+                entities.GetValueOrDefault(publication.Claim.Subject)?.Name ?? publication.Claim.Subject,
+                publication.Prose!,
+                publication.Claim.Evidence.Select((e, i) => e.Id ?? $"{publication.Claim.Id}-e{i + 1}").ToList(),
+                publication.Matches.Select(match => match.Score).DefaultIfEmpty(.4).Max(), publication.Matches));
+        }
+
         // Reserve relevant employment evidence before project matches consume the
         // section budget. Leadership resumes still need to read as career histories.
         var reservedRoles = candidates
@@ -668,7 +710,7 @@ public sealed class JobMlResumeCompiler(
         IEnumerable<SelectedClaim> selected,
         IReadOnlySet<string>? careerAnchorSubjects) => selected.Count(item =>
         careerAnchorSubjects?.Contains(item.Claim.Subject) != true &&
-        item.Claim.Type is not ("summary" or "education"));
+        item.Claim.Type is not ("summary" or "education" or "publication"));
 
     private static string? ResolveProse(JobMlClaim claim,
         IReadOnlyDictionary<string, ClaimEvidenceResolution> reconciled, MarkdownEvidenceIndex index) =>
@@ -874,7 +916,7 @@ public sealed class JobMlResumeCompiler(
         var identity = (firstSection.Success ? completeMarkdown[..firstSection.Index] : completeMarkdown).Trim();
         if (string.IsNullOrWhiteSpace(identity)) identity = "# Résumé";
         var packetById = packets.ToDictionary(packet => packet.SectionId, StringComparer.OrdinalIgnoreCase);
-        var orderedKinds = new[] { "summary", "project", "experience", "education" };
+        var orderedKinds = new[] { "summary", "project", "experience", "education", "publication" };
         var renderedGroups = new List<string>();
         foreach (var kind in orderedKinds)
         {
@@ -907,6 +949,7 @@ public sealed class JobMlResumeCompiler(
             {
                 "project" => "Selected Engineering",
                 "education" => "Education",
+                "publication" => "Selected Recent Publications",
                 _ => "Experience"
             };
             var rendered = matching.Select(block => RenderResumeBlock(block, packetById[block.SectionId], 3))
@@ -1080,10 +1123,18 @@ public sealed class JobMlResumeCompiler(
         return heading[..(boundary > 30 ? boundary : 106)].TrimEnd() + "…";
     }
 
+    private static string CompactPublicationHeading(string value)
+    {
+        var heading = Regex.Replace(value, @"\s+", " ").Trim();
+        if (heading.Length <= 110) return heading;
+        var boundary = heading.LastIndexOf(' ', 106);
+        return heading[..(boundary > 30 ? boundary : 106)].TrimEnd() + "…";
+    }
+
     private static bool IsAccepted(JobMlClaim claim) =>
         string.Equals(claim.Review, "accepted", StringComparison.OrdinalIgnoreCase);
     private static bool IsResumeNarrative(JobMlClaim claim) => claim.Type is null or
-        "summary" or "achievement" or "project" or "education" or "experience";
+        "summary" or "achievement" or "project" or "education" or "experience" or "publication";
     private static bool IsProse(JobMlEvidence evidence) =>
         evidence.Type.Equals("prose", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(evidence.Uri);
     private static JobMlEvidence CloneEvidence(JobMlEvidence e) => new()

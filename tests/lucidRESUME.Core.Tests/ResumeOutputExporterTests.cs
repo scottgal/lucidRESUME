@@ -5,6 +5,8 @@ using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Export;
 using lucidRESUME.JobML;
+using lucidRESUME.Ingestion.Parsing;
+using lucidRESUME.Parsing;
 using UglyToad.PdfPig;
 
 namespace lucidRESUME.Core.Tests;
@@ -114,6 +116,93 @@ public sealed class ResumeOutputExporterTests
         Assert.Contains("Jane Smith", pageTexts[0]);
         Assert.DoesNotContain(pageTexts.Skip(1), text => text.Contains("Jane Smith", StringComparison.Ordinal));
         Assert.DoesNotContain(pageTexts, text => text.Contains(" / ", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ExportedDocx_RoundTripPreservesRoleEmployerDateAssociations()
+    {
+        var resume = CreateResume(ResumeTemplateCatalog.AtsClassicId);
+        resume.IncludeCompactJobMl = false;
+        resume.MinimumOutputPages = 1;
+        resume.Experience[0].Title = "Platform Engineer";
+        resume.Experience[0].StartDate = new DateOnly(2022, 1, 1);
+        resume.Experience[0].IsCurrent = true;
+        resume.Experience.AddRange([
+            new WorkExperience
+            {
+                Company = "Northstar Systems",
+                Title = "Engineering Lead",
+                StartDate = new DateOnly(2018, 3, 1),
+                EndDate = new DateOnly(2021, 12, 1),
+                Achievements = ["Led delivery of production services across a distributed team."]
+            },
+            new WorkExperience
+            {
+                Company = "Contoso Cloud",
+                Title = "Senior Software Engineer",
+                StartDate = new DateOnly(2014, 5, 1),
+                EndDate = new DateOnly(2018, 2, 1),
+                Achievements = ["Built and operated customer-facing APIs."]
+            }
+        ]);
+        var path = Path.Combine(Path.GetTempPath(), $"lucidresume-conformance-{Guid.NewGuid():N}.docx");
+        try
+        {
+            await File.WriteAllBytesAsync(path, await new DocxExporter().ExportAsync(resume));
+            var parsed = Assert.IsType<ParsedDocument>(await new DocxDirectParser().ParseAsync(path));
+            var roundTrip = ResumeDocument.Create("roundtrip.docx", "application/docx", parsed.PlainText.Length);
+            MarkdownSectionParser.PopulateSections(roundTrip, parsed.Markdown, parsed.Sections);
+
+            Assert.Collection(roundTrip.Experience,
+                role => AssertRole(role, "Example Corp", "Platform Engineer", 2022),
+                role => AssertRole(role, "Northstar Systems", "Engineering Lead", 2018),
+                role => AssertRole(role, "Contoso Cloud", "Senior Software Engineer", 2014));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task Paginated_exports_default_to_an_intentional_second_page()
+    {
+        var resume = CreateResume(ResumeTemplateCatalog.AtsClassicId);
+        resume.IncludeCompactJobMl = false;
+
+        var docxBytes = await new DocxExporter().ExportAsync(resume);
+        using (var stream = new MemoryStream(docxBytes))
+        using (var document = WordprocessingDocument.Open(stream, false))
+        {
+            Assert.Contains(document.MainDocumentPart!.Document!.Descendants<
+                    DocumentFormat.OpenXml.Wordprocessing.Break>(),
+                pageBreak => pageBreak.Type?.Value == DocumentFormat.OpenXml.Wordprocessing.BreakValues.Page);
+        }
+
+        var pdfBytes = await new PdfExporter().ExportAsync(resume);
+        using var pdf = PdfDocument.Open(pdfBytes);
+        Assert.True(pdf.NumberOfPages >= 2);
+    }
+
+    [Fact]
+    public async Task Explicit_compact_layout_does_not_force_a_second_page()
+    {
+        var resume = CreateResume(ResumeTemplateCatalog.AtsClassicId);
+        resume.IncludeCompactJobMl = false;
+        resume.MinimumOutputPages = 1;
+
+        var docxBytes = await new DocxExporter().ExportAsync(resume);
+        using (var stream = new MemoryStream(docxBytes))
+        using (var document = WordprocessingDocument.Open(stream, false))
+        {
+            Assert.DoesNotContain(document.MainDocumentPart!.Document!.Descendants<
+                    DocumentFormat.OpenXml.Wordprocessing.Break>(),
+                pageBreak => pageBreak.Type?.Value == DocumentFormat.OpenXml.Wordprocessing.BreakValues.Page);
+        }
+
+        var pdfBytes = await new PdfExporter().ExportAsync(resume);
+        using var pdf = PdfDocument.Open(pdfBytes);
+        Assert.Equal(1, pdf.NumberOfPages);
     }
 
     [Fact]
@@ -329,6 +418,13 @@ public sealed class ResumeOutputExporterTests
             ResumeTemplateCatalog.AtsClassicId));
 
         Assert.Contains("ledger changed", error.Message);
+    }
+
+    private static void AssertRole(WorkExperience role, string company, string title, int startYear)
+    {
+        Assert.Equal(company, role.Company);
+        Assert.Equal(title, role.Title);
+        Assert.Equal(startYear, role.StartDate?.Year);
     }
 
     private static ResumeDocument CreateResume(string templateId)

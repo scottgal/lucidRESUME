@@ -142,11 +142,13 @@ public sealed class PdfExporter : IResumeExporter
             // Experience
             if (resume.Experience.Count > 0)
             {
+                var secondPageExperienceIndex = ExportLayoutPolicy.SecondPageExperienceIndex(resume);
+                if (secondPageExperienceIndex == 0)
+                    col.Item().PageBreak();
                 col.Item().Element(c => SectionHeading(c, "Experience", template));
-                var detailedExperienceCount = resume.Experience.Count(experience => !experience.IsCompact);
                 for (var experienceIndex = 0; experienceIndex < resume.Experience.Count; experienceIndex++)
                 {
-                    if (detailedExperienceCount >= 10 && experienceIndex == 7)
+                    if (experienceIndex == secondPageExperienceIndex && experienceIndex > 0)
                         col.Item().PageBreak();
                     var exp = resume.Experience[experienceIndex];
                     if (exp.IsCompact && (experienceIndex == 0 || !resume.Experience[experienceIndex - 1].IsCompact))
@@ -238,6 +240,30 @@ public sealed class PdfExporter : IResumeExporter
                     col.Item().SemanticParagraph().Text($"{c.Name} — {c.Issuer}" +
                         (c.IssuedDate.HasValue ? $" ({c.IssuedDate.Value.Year})" : "")).FontSize(9);
                 col.Item().PaddingBottom(6);
+            }
+
+            if (resume.Publications.Count > 0)
+            {
+                col.Item().SemanticSection().Column(publicationColumn =>
+                {
+                    publicationColumn.Item().Element(c => SectionHeading(c, "Selected Recent Publications", template));
+                    publicationColumn.Item().SemanticParagraph().Text(text =>
+                    {
+                        for (var publicationIndex = 0;
+                             publicationIndex < resume.Publications.Count;
+                             publicationIndex++)
+                        {
+                            var publication = resume.Publications[publicationIndex];
+                            if (publicationIndex > 0) text.Span(" · ").FontSize(8);
+                            if (Uri.TryCreate(publication.Url, UriKind.Absolute, out var uri))
+                                text.Hyperlink(publication.Name, uri.ToString()).FontSize(8)
+                                    .FontColor($"#{template.AccentHex}").Underline();
+                            else
+                                text.Span(publication.Name).FontSize(8);
+                        }
+                    });
+                    publicationColumn.Item().PaddingBottom(6);
+                });
             }
 
             AppendReferences(col, compact, template);

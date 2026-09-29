@@ -10,7 +10,7 @@ namespace lucidRESUME.Web;
 
 internal static class ResumeProjectionMapper
 {
-    public static ResumeDocument Build(CompilationResult result)
+    public static ResumeDocument Build(CompilationResult result, bool includeCitations = true, int minimumPages = 2)
     {
         var resume = ResumeDocument.Create("tailored.md", "text/markdown",
             Encoding.UTF8.GetByteCount(result.HumanMarkdown));
@@ -19,6 +19,8 @@ internal static class ResumeProjectionMapper
         resume.JobMlSource = result.FullJobMlMarkdown;
         resume.JobMlRevision = result.Manifest.SourceRevision;
         resume.TargetRole = result.Manifest.TargetTitle;
+        resume.IncludeCompactJobMl = includeCitations;
+        resume.MinimumOutputPages = Math.Clamp(minimumPages, 1, 2);
         MarkdownSectionParser.PopulateSections(resume, result.HumanMarkdown);
         PopulateSections(resume, result.ProjectedJobMl, result.Manifest);
         return resume;
@@ -32,6 +34,7 @@ internal static class ResumeProjectionMapper
         resume.Personal.Summary = null;
         resume.Experience.Clear();
         resume.Projects.Clear();
+        resume.Publications.Clear();
         resume.Education.Clear();
 
         var index = MarkdownEvidenceIndex.Create(projection.Markdown);
@@ -85,6 +88,19 @@ internal static class ResumeProjectionMapper
                     Degree = education.Degree,
                     Institution = education.Institution,
                     Highlights = [prose]
+                });
+                continue;
+            }
+
+            if (item.Entity.Type == "publication")
+            {
+                var url = Regex.Match(prose, @"https?://\S+", RegexOptions.CultureInvariant).Value
+                    .TrimEnd('.', ',', ';', ')');
+                resume.Publications.Add(new Project
+                {
+                    Name = item.Entity.Name,
+                    Description = string.IsNullOrWhiteSpace(url) ? prose : null,
+                    Url = string.IsNullOrWhiteSpace(url) ? null : url
                 });
                 continue;
             }

@@ -185,7 +185,7 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
             // Experience, education, projects
             Experience = new ObservableCollection<WorkExperience>(_resume.Experience);
             ExperienceItems = new ObservableCollection<CareerAnchorItemVm>(_resume.Experience.Select(experience =>
-                new CareerAnchorItemVm(experience, OnCareerAnchorChanged)));
+                new CareerAnchorItemVm(experience, OnCareerAnchorChanged, OnExperienceEdited)));
             Education = new ObservableCollection<Education>(_resume.Education);
             Projects = new ObservableCollection<Project>(_resume.Projects);
             Issues = new ObservableCollection<ConsistencyIssue>(_ledger.Issues);
@@ -274,6 +274,29 @@ public sealed partial class MyDataPageViewModel : ViewModelBase
             _overrides.CareerAnchorRoleKeys.Remove(AppState.CareerAnchorRoleKey(experience));
         }
         ScheduleSave();
+    }
+
+    private void OnExperienceEdited(CareerAnchorItemVm item)
+    {
+        var experience = item.Experience;
+        _overrides.ExperienceOverrides.RemoveAll(correction =>
+            correction.ExperienceId == experience.Id ||
+            correction.MatchRoleKey.Equals(item.MatchRoleKey, StringComparison.OrdinalIgnoreCase));
+        _overrides.ExperienceOverrides.Add(new ExperienceOverride
+        {
+            ExperienceId = experience.Id,
+            MatchRoleKey = item.MatchRoleKey,
+            Company = experience.Company,
+            Title = experience.Title,
+            Location = experience.Location,
+            StartDate = experience.StartDate,
+            EndDate = experience.EndDate,
+            IsCurrent = experience.IsCurrent,
+            ReviewedAt = DateTimeOffset.UtcNow
+        });
+        BuildCharts(AllSkills.ToList(), Experience);
+        ScheduleSave();
+        StatusMessage = $"Reviewed {experience.Title ?? "role"} at {experience.Company ?? "unknown employer"}";
     }
 
     [RelayCommand]

@@ -1,4 +1,5 @@
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Evidence;
 using System.Text.RegularExpressions;
 
 namespace lucidRESUME.Core.Models.Resume;
@@ -24,7 +25,8 @@ public sealed class ResumeDocumentMerger
     /// Returns an ImportPreview with accept/reject toggles on every item.
     /// </summary>
     public async Task<ImportPreview> PreviewMergeAsync(
-        ResumeDocument target, ResumeDocument incoming, string sourceName, CancellationToken ct = default)
+        ResumeDocument target, ResumeDocument incoming, string sourceName,
+        bool incomingIsAuthoritative = false, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(incoming);
@@ -32,18 +34,18 @@ public sealed class ResumeDocumentMerger
         var preview = new ImportPreview { SourceName = sourceName, Incoming = incoming };
 
         // Personal info changes
-        PreviewPersonalInfo(target.Personal, incoming.Personal, sourceName, preview);
+        PreviewPersonalInfo(target.Personal, incoming.Personal, sourceName, preview, incomingIsAuthoritative);
 
         // Experience: classify as new or merge
         foreach (var exp in incoming.Experience)
         {
+            var structuralProblem = ValidateIncomingExperience(exp, sourceName, preview.Anomalies);
             var match = await FindMatchingExperienceAsync(target.Experience, exp, ct);
             if (match != null)
             {
                 var titleDiffers = match.Title != null && exp.Title != null &&
                     !match.Title.Equals(exp.Title, StringComparison.OrdinalIgnoreCase);
-                var datesDiffer = match.StartDate.HasValue && exp.StartDate.HasValue &&
-                    Math.Abs(match.StartDate.Value.DayNumber - exp.StartDate.Value.DayNumber) > 90;
+                var datesDiffer = HaveMaterialDateConflict(match, exp);
                 var newAchievements = exp.Achievements.Count(a =>
                     !match.Achievements.Any(ma => ma.Contains(a, StringComparison.OrdinalIgnoreCase)
                                                    || a.Contains(ma, StringComparison.OrdinalIgnoreCase)));
@@ -58,6 +60,8 @@ public sealed class ResumeDocumentMerger
                     DatesDiffer = datesDiffer,
                     NewAchievementsCount = newAchievements,
                     NewTechnologiesCount = newTechs,
+                    IncomingIsAuthoritative = incomingIsAuthoritative,
+                    IsAccepted = !structuralProblem && (!datesDiffer || incomingIsAuthoritative),
                 });
 
                 if (titleDiffers)
@@ -72,14 +76,19 @@ public sealed class ResumeDocumentMerger
                     preview.Anomalies.Add(new ImportAnomaly
                     {
                         Type = AnomalyType.DateMismatch,
-                        Description = $"Start date differs for {match.Company}: {match.StartDate:MMM yyyy} vs {exp.StartDate:MMM yyyy}",
+                        Description = $"Dates differ for {match.Company}: {FormatDateRange(match)} vs {FormatDateRange(exp)}",
                         Severity = AnomalySeverity.Warning,
                         Source = sourceName,
                     });
             }
             else
             {
-                preview.NewExperience.Add(new ReviewableItem<WorkExperience> { Item = exp });
+                preview.NewExperience.Add(new ReviewableItem<WorkExperience>
+                {
+                    Item = exp,
+                    IsAccepted = !structuralProblem,
+                    Note = structuralProblem ? "Resolve the structural error before importing this role." : null
+                });
             }
         }
 
@@ -137,6 +146,34 @@ public sealed class ResumeDocumentMerger
     }
 
     /// <summary>
+    /// Creates an empty reviewed target while preserving the source document and parser provenance.
+    /// The first import therefore follows the same acceptance path as every later import.
+    /// </summary>
+    public static ResumeDocument CreateReviewTarget(ResumeDocument incoming)
+    {
+        ArgumentNullException.ThrowIfNull(incoming);
+        return new ResumeDocument
+        {
+            ResumeId = incoming.ResumeId,
+            FileName = incoming.FileName,
+            ContentType = incoming.ContentType,
+            FileSizeBytes = incoming.FileSizeBytes,
+            CreatedAt = incoming.CreatedAt,
+            LastModifiedAt = incoming.LastModifiedAt,
+            RawMarkdown = incoming.RawMarkdown,
+            RawJson = incoming.RawJson,
+            PlainText = incoming.PlainText,
+            CanonicalMarkdown = incoming.CanonicalMarkdown,
+            JobMlSource = incoming.JobMlSource,
+            JobMlRevision = incoming.JobMlRevision,
+            CompleteJobMlUri = incoming.CompleteJobMlUri,
+            IncludeCompactJobMl = incoming.IncludeCompactJobMl,
+            OutputTemplateId = incoming.OutputTemplateId,
+            MinimumOutputPages = incoming.MinimumOutputPages,
+        };
+    }
+
+    /// <summary>
     /// Apply only the accepted items from a preview to the target document.
     /// </summary>
     public static void ApplyPreview(ResumeDocument target, ImportPreview preview)
@@ -171,7 +208,7 @@ public sealed class ResumeDocumentMerger
 
         // Merged experience
         foreach (var merge in preview.MergedExperience.Where(m => m.IsAccepted))
-            MergeExperience(merge.Existing, merge.Incoming, source);
+            MergeExperience(merge.Existing, merge.Incoming, source, merge.IncomingIsAuthoritative);
 
         // New skills
         foreach (var item in preview.NewSkills.Where(i => i.IsAccepted))
@@ -205,18 +242,53 @@ public sealed class ResumeDocumentMerger
             target.Projects.Add(item.Item);
         }
 
+        foreach (var certification in preview.Incoming.Certifications)
+            if (!target.Certifications.Any(existing =>
+                    existing.Name.Equals(certification.Name, StringComparison.OrdinalIgnoreCase)))
+                target.Certifications.Add(certification);
+
+        target.Entities.AddRange(preview.Incoming.Entities);
+        target.IngestionDecisions.AddRange(preview.Incoming.IngestionDecisions);
+
         target.LastModifiedAt = DateTimeOffset.UtcNow;
+        EvidenceLedgerBuilder.Rebuild(target);
     }
 
-    private static void PreviewPersonalInfo(PersonalInfo current, PersonalInfo incoming, string source, ImportPreview preview)
+    private static void PreviewPersonalInfo(
+        PersonalInfo current, PersonalInfo incoming, string source, ImportPreview preview,
+        bool incomingIsAuthoritative)
     {
         void Check(string field, string? cur, string? inc)
         {
-            if (inc == null) return;
+            if (string.IsNullOrWhiteSpace(inc)) return;
+            var isUnsafePlaceholder = field == "Summary" && IsPlaceholderSummary(inc);
             if (cur == null)
-                preview.PersonalInfoChanges.Add(new FieldChange { FieldName = field, CurrentValue = cur, IncomingValue = inc });
+                preview.PersonalInfoChanges.Add(new FieldChange
+                {
+                    FieldName = field,
+                    CurrentValue = cur,
+                    IncomingValue = inc,
+                    IsConflict = isUnsafePlaceholder,
+                    IsAccepted = !isUnsafePlaceholder
+                });
             else if (!cur.Equals(inc, StringComparison.OrdinalIgnoreCase))
-                preview.PersonalInfoChanges.Add(new FieldChange { FieldName = field, CurrentValue = cur, IncomingValue = inc, IsConflict = true });
+                preview.PersonalInfoChanges.Add(new FieldChange
+                {
+                    FieldName = field,
+                    CurrentValue = cur,
+                    IncomingValue = inc,
+                    IsConflict = true,
+                    IsAccepted = incomingIsAuthoritative && !isUnsafePlaceholder
+                });
+
+            if (isUnsafePlaceholder)
+                preview.Anomalies.Add(new ImportAnomaly
+                {
+                    Type = AnomalyType.PlaceholderContent,
+                    Description = $"Summary from {source} looks like an unfilled template and was not selected.",
+                    Severity = AnomalySeverity.Error,
+                    Source = source
+                });
         }
 
         Check("FullName", current.FullName, incoming.FullName);
@@ -229,6 +301,43 @@ public sealed class ResumeDocumentMerger
         Check("WebsiteUrl", current.WebsiteUrl, incoming.WebsiteUrl);
         Check("Summary", current.Summary, incoming.Summary);
     }
+
+    private static bool ValidateIncomingExperience(
+        WorkExperience experience, string source, ICollection<ImportAnomaly> anomalies)
+    {
+        if (string.IsNullOrWhiteSpace(experience.Company) && string.IsNullOrWhiteSpace(experience.Title))
+        {
+            anomalies.Add(new ImportAnomaly
+            {
+                Type = AnomalyType.MissingRoleIdentity,
+                Description = $"An experience entry from {source} has neither an employer nor a role title and was not selected.",
+                Severity = AnomalySeverity.Error,
+                Source = source
+            });
+            return true;
+        }
+
+        if (experience.StartDate.HasValue && experience.EndDate.HasValue &&
+            experience.EndDate < experience.StartDate)
+        {
+            anomalies.Add(new ImportAnomaly
+            {
+                Type = AnomalyType.InvertedDateRange,
+                Description = $"{experience.Title ?? "Role"} at {experience.Company ?? "unknown employer"} ends before it starts " +
+                              $"({experience.StartDate:MMM yyyy} to {experience.EndDate:MMM yyyy}) and was not selected.",
+                Severity = AnomalySeverity.Error,
+                Source = source
+            });
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsPlaceholderSummary(string value) =>
+        value.Contains("Desired Job Title", StringComparison.OrdinalIgnoreCase) ||
+        value.Contains("[insert", StringComparison.OrdinalIgnoreCase) ||
+        value.Contains("lorem ipsum", StringComparison.OrdinalIgnoreCase);
 
     public async Task<List<ImportAnomaly>> MergeIntoAsync(
         ResumeDocument target, ResumeDocument incoming, string sourceName, CancellationToken ct = default)
@@ -380,6 +489,10 @@ public sealed class ResumeDocumentMerger
     private async Task<WorkExperience?> FindMatchingExperienceAsync(
         List<WorkExperience> existing, WorkExperience incoming, CancellationToken ct)
     {
+        foreach (var candidate in existing)
+            if (MissingOrGenericCompanyRoleMatch(candidate, incoming))
+                return candidate;
+
         if (string.IsNullOrWhiteSpace(incoming.Company)) return null;
 
         // Deterministic path first. Imports must remain usable while a local model is
@@ -462,6 +575,21 @@ public sealed class ResumeDocumentMerger
                && incoming.StartDate.Value.DayNumber <= existingEnd + DateOverlapGraceDays;
     }
 
+    private static bool HaveMaterialDateConflict(WorkExperience existing, WorkExperience incoming)
+    {
+        var startConflict = existing.StartDate.HasValue && incoming.StartDate.HasValue &&
+                            Math.Abs(existing.StartDate.Value.DayNumber - incoming.StartDate.Value.DayNumber) >
+                            DateOverlapGraceDays;
+        var endConflict = existing.EndDate.HasValue && incoming.EndDate.HasValue &&
+                          Math.Abs(existing.EndDate.Value.DayNumber - incoming.EndDate.Value.DayNumber) >
+                          DateOverlapGraceDays;
+        return startConflict || endConflict;
+    }
+
+    private static string FormatDateRange(WorkExperience experience) =>
+        $"{experience.StartDate?.ToString("MMM yyyy") ?? "?"}-" +
+        $"{(experience.IsCurrent ? "Present" : experience.EndDate?.ToString("MMM yyyy") ?? "?")}";
+
     private static bool SameRolePeriod(WorkExperience existing, WorkExperience incoming)
     {
         var existingTitle = NormalizeName(existing.Title ?? "");
@@ -511,7 +639,39 @@ public sealed class ResumeDocumentMerger
     private static bool CompaniesMatch(string existing, string incoming)
     {
         return existing == incoming || existing.Contains(incoming, StringComparison.Ordinal) ||
-               incoming.Contains(existing, StringComparison.Ordinal);
+               incoming.Contains(existing, StringComparison.Ordinal) || IsAdjacentTransposition(existing, incoming);
+    }
+
+    private static bool MissingOrGenericCompanyRoleMatch(WorkExperience existing, WorkExperience incoming)
+    {
+        if (!IsGenericCompany(existing.Company) && !IsGenericCompany(incoming.Company)) return false;
+        if (!existing.StartDate.HasValue || !incoming.StartDate.HasValue) return false;
+        if (Math.Abs(existing.StartDate.Value.DayNumber - incoming.StartDate.Value.DayNumber) > 31) return false;
+        if (existing.IsCurrent != incoming.IsCurrent) return false;
+
+        var existingTitle = NormalizeName(existing.Title ?? "");
+        var incomingTitle = NormalizeName(incoming.Title ?? "");
+        return TitlesRelated(existingTitle, incomingTitle) ||
+               TitleTokenSimilarity(existing.Title, incoming.Title) >= 0.2;
+    }
+
+    private static bool IsGenericCompany(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return true;
+        var normalized = NormalizeName(value);
+        return normalized is "CONSULTING" or "CONSULTANCY" or "FREELANCE" or "SELFEMPLOYED";
+    }
+
+    private static bool IsAdjacentTransposition(string first, string second)
+    {
+        if (first.Length != second.Length || first.Length < 5) return false;
+        var mismatch = 0;
+        while (mismatch < first.Length && first[mismatch] == second[mismatch]) mismatch++;
+        if (mismatch >= first.Length - 1 || first[mismatch] != second[mismatch + 1] ||
+            first[mismatch + 1] != second[mismatch]) return false;
+        for (var index = mismatch + 2; index < first.Length; index++)
+            if (first[index] != second[index]) return false;
+        return true;
     }
 
     private static bool TitlesRelated(string existing, string incoming) =>
@@ -613,17 +773,31 @@ public sealed class ResumeDocumentMerger
         target.Summary ??= incoming.Summary;
     }
 
-    private static void MergeExperience(WorkExperience target, WorkExperience incoming, string source)
+    private static void MergeExperience(
+        WorkExperience target, WorkExperience incoming, string source, bool incomingIsAuthoritative = false)
     {
         if (!target.ImportSources.Contains(source))
             target.ImportSources.Add(source);
 
-        if ((incoming.Title?.Length ?? 0) > (target.Title?.Length ?? 0))
+        if (incomingIsAuthoritative)
+        {
+            target.Company = incoming.Company;
+            target.Title = incoming.Title;
+            target.Location = incoming.Location;
+            target.StartDate = incoming.StartDate;
+            target.EndDate = incoming.IsCurrent ? null : incoming.EndDate;
+            target.IsCurrent = incoming.IsCurrent;
+        }
+        else if ((incoming.Title?.Length ?? 0) > (target.Title?.Length ?? 0))
             target.Title = incoming.Title;
 
-        target.Location ??= incoming.Location;
+        if (!incomingIsAuthoritative && IsGenericCompany(target.Company) && !IsGenericCompany(incoming.Company))
+            target.Company = incoming.Company;
 
-        if (incoming.StartDate.HasValue && (target.StartDate is null ||
+        if (!incomingIsAuthoritative)
+            target.Location ??= incoming.Location;
+
+        if (!incomingIsAuthoritative && incoming.StartDate.HasValue && (target.StartDate is null ||
             (Math.Abs(incoming.StartDate.Value.DayNumber - target.StartDate.Value.DayNumber) <= DateOverlapGraceDays &&
              incoming.StartDate < target.StartDate)))
             target.StartDate = incoming.StartDate;
@@ -631,7 +805,7 @@ public sealed class ResumeDocumentMerger
         // An explicit end date is reviewable evidence and therefore wins over the
         // less precise "Present" marker, irrespective of import order. This stops
         // an older CV from reopening a role that a later source has closed.
-        if (incoming.EndDate.HasValue)
+        if (!incomingIsAuthoritative && incoming.EndDate.HasValue)
         {
             if (target.EndDate is null ||
                 (Math.Abs(incoming.EndDate.Value.DayNumber - target.EndDate.Value.DayNumber) <= DateOverlapGraceDays &&
@@ -639,7 +813,7 @@ public sealed class ResumeDocumentMerger
                 target.EndDate = incoming.EndDate;
             target.IsCurrent = false;
         }
-        else if (incoming.IsCurrent && target.EndDate is null)
+        else if (!incomingIsAuthoritative && incoming.IsCurrent && target.EndDate is null)
         {
             target.IsCurrent = true;
         }
@@ -670,6 +844,9 @@ public enum AnomalyType
     DateMismatch,
     SkillMismatch,
     LocationMismatch,
+    PlaceholderContent,
+    MissingRoleIdentity,
+    InvertedDateRange,
 }
 
 public enum AnomalySeverity

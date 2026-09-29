@@ -81,11 +81,12 @@ public interface IResumeCompositionProvider
 
 public sealed class CompilationOptions
 {
-    public int MaximumClaims { get; set; } = 12;
-    public int MaximumClaimsPerSubject { get; set; } = 2;
-    public int MaximumSections { get; set; } = 6;
-    public int MinimumExperienceSections { get; set; } = 5;
-    public int MinimumProjectSections { get; set; } = 2;
+    /// <summary>Two-page senior-career projection budget used unless a compact export is requested.</summary>
+    public int MaximumClaims { get; set; } = 16;
+    public int MaximumClaimsPerSubject { get; set; } = 3;
+    public int MaximumSections { get; set; } = 8;
+    public int MinimumExperienceSections { get; set; } = 6;
+    public int MinimumProjectSections { get; set; } = 3;
     public double RelatedThreshold { get; set; } = 0.56;
     public double DiversityPenalty { get; set; } = 0.18;
     /// <summary>Include qualifying roles omitted from the detailed projection as a compact chronology.</summary>

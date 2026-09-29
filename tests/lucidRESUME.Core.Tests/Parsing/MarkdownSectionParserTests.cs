@@ -7,6 +7,48 @@ namespace lucidRESUME.Core.Tests.Parsing;
 public class MarkdownSectionParserTests
 {
     [Fact]
+    public void PopulateSections_Parses_middle_dot_contact_line_and_preference()
+    {
+        var resume = ResumeDocument.Create("resume.md", "text/markdown", 0);
+        const string markdown = """
+            # Scott Galloway
+
+            Glasgow, United Kingdom · scott@mostlylucid.net · 07498 479614 (please email in the first instance)
+
+            ## Summary
+
+            Engineering leader.
+            """;
+
+        MarkdownSectionParser.PopulateSections(resume, markdown);
+
+        Assert.Equal("Glasgow, United Kingdom", resume.Personal.Location);
+        Assert.Equal("scott@mostlylucid.net", resume.Personal.Email);
+        Assert.Equal("07498 479614", resume.Personal.Phone);
+        Assert.Equal("please email in the first instance", resume.Personal.ContactPreference);
+    }
+
+    [Fact]
+    public void PopulateSections_Parses_exported_hyphenated_contact_preference()
+    {
+        var resume = ResumeDocument.Create("transcript.md", "text/markdown", 0);
+        const string markdown = """
+            # Alex Example
+
+            alex@example.com | 07498 479614 - please email in the first instance - | Glasgow, United Kingdom
+
+            ## Summary
+
+            Engineering leader.
+            """;
+
+        MarkdownSectionParser.PopulateSections(resume, markdown);
+
+        Assert.Equal("07498 479614", resume.Personal.Phone);
+        Assert.Equal("please email in the first instance", resume.Personal.ContactPreference);
+    }
+
+    [Fact]
     public void Career_anchor_directive_marks_role_without_becoming_achievement_text()
     {
         const string markdown = """
@@ -96,6 +138,77 @@ public class MarkdownSectionParserTests
         Assert.Equal("Freelance Developer", role.Title);
         Assert.Null(role.Company);
         Assert.Equal(new DateOnly(2012, 1, 20), role.StartDate);
+        Assert.True(role.IsCurrent);
+    }
+
+    [Fact]
+    public void Date_first_company_location_entries_take_title_from_following_line()
+    {
+        var resume = ResumeDocument.Create("legacy.docx", "application/docx", 100);
+
+        MarkdownSectionParser.PopulateSections(resume, """
+            # Alex Example
+
+            ## Experience
+            01/2007-10/2009 – Microsoft Corporation, Redmond
+            Program Manager, ASP.NET Team
+            Coordinated product releases across engineering teams.
+
+            02/2003-06/2005 – Storm ID Ltd, Edinburgh, UK
+            Senior Software Architect
+            Built high-volume public web systems.
+            """);
+
+        Assert.Collection(resume.Experience,
+            microsoft =>
+            {
+                Assert.Equal("Microsoft Corporation", microsoft.Company);
+                Assert.Equal("Program Manager, ASP.NET Team", microsoft.Title);
+                Assert.Equal("Redmond", microsoft.Location);
+                Assert.Equal(new DateOnly(2007, 1, 1), microsoft.StartDate);
+            },
+            storm =>
+            {
+                Assert.Equal("Storm ID Ltd", storm.Company);
+                Assert.Equal("Senior Software Architect", storm.Title);
+                Assert.Equal("Edinburgh, UK", storm.Location);
+            });
+    }
+
+    [Fact]
+    public void Heuristic_parse_with_dates_beats_stale_template_section_without_dates()
+    {
+        const string markdown = """
+            # Alex Example
+            ## Experience
+            #### ZenChef Limited | Lead Contract Developer | Remote
+            ### Oct 2024 – Present
+            Operated a distributed production platform.
+            """;
+        var sections = new List<DocumentSection>
+        {
+            new()
+            {
+                Heading = "Experience",
+                Body = "#### ZenChef Limited | Lead Contract Developer | Remote",
+                Level = 2,
+                SemanticType = "Experience"
+            },
+            new()
+            {
+                Heading = "Oct 2024 – Present",
+                Body = "Operated a distributed production platform.",
+                Level = 3,
+                SemanticType = "Experience"
+            }
+        };
+        var resume = ResumeDocument.Create("template.docx", "application/docx", 100);
+
+        MarkdownSectionParser.PopulateSections(resume, markdown, sections);
+
+        var role = Assert.Single(resume.Experience);
+        Assert.Equal("ZenChef Limited", role.Company);
+        Assert.Equal(new DateOnly(2024, 10, 1), role.StartDate);
         Assert.True(role.IsCurrent);
     }
 
