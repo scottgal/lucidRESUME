@@ -69,6 +69,17 @@ public class JobSpecParserTests
     }
 
     [Fact]
+    public async Task ParseFromText_ExtractsTitleFromFlattenedAdvertWithoutOptionalModels()
+    {
+        const string text =
+            "Head of Engineering. TypeScript and AWS experience required. Lead engineering change.";
+
+        var job = await _parser.ParseFromTextAsync(text);
+
+        Assert.Equal("Head of Engineering", job.Title);
+    }
+
+    [Fact]
     public async Task ParseFromText_ExtractsSalary()
     {
         var text = "Salary: £60,000 - £80,000 per annum. Location: London.";

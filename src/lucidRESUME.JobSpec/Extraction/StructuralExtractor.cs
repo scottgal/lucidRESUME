@@ -110,6 +110,22 @@ public static partial class StructuralExtractor
                 return;
             }
         }
+
+        // A pasted advert is sometimes flattened into one paragraph. Preserve the
+        // leading sentence when it is plainly a role title instead of requiring NER
+        // to recover it. This keeps compilation deterministic when optional models
+        // are not installed, as on a clean CI runner.
+        var firstSentenceEnd = clean.IndexOf('.');
+        if (firstSentenceEnd is > 2 and < 80)
+        {
+            var firstSentence = clean[..firstSentenceEnd].Trim();
+            if (LooksLikeRoleTitle(firstSentence))
+            {
+                candidates.Add(new("title", firstSentence, 0.85, "structural"));
+                return;
+            }
+        }
+
         if (clean.Length < 80)
         {
             candidates.Add(new("title", clean, 0.7, "structural"));
@@ -130,6 +146,12 @@ public static partial class StructuralExtractor
                     candidates.Add(new("company", company, 0.85, "structural"));
             }
         }
+    }
+
+    private static bool LooksLikeRoleTitle(string value)
+    {
+        if (value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length > 10) return false;
+        return RoleTitleRx().IsMatch(value);
     }
 
     private static void ExtractLabelledFields(List<JdFieldCandidate> candidates, string[] lines)
@@ -408,4 +430,7 @@ public static partial class StructuralExtractor
 
     [GeneratedRegex(@"(?:bachelor|master|phd|degree|b\.?s\.?c?|m\.?s\.?c?|mba)\s+(?:in\s+)?[\w\s,/]+", RegexOptions.IgnoreCase)]
     private static partial Regex EducationRx();
+
+    [GeneratedRegex(@"\b(?:engineer(?:ing)?|developer|architect|manager|director|officer|consultant|designer|scientist|analyst|lead|head\s+of|vice\s+president|vp|cto|cio|ciso|product|programme?|program)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex RoleTitleRx();
 }
