@@ -461,17 +461,17 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
         IReadOnlyList<WorkExperience> experience)
     {
         for (var firstIndex = 0; firstIndex < experience.Count; firstIndex++)
-        for (var secondIndex = firstIndex + 1; secondIndex < experience.Count; secondIndex++)
-        {
-            var first = experience[firstIndex];
-            var second = experience[secondIndex];
-            if (string.IsNullOrWhiteSpace(first.Company) || string.IsNullOrWhiteSpace(second.Company) ||
-                CanonicalCompany(first.Company) != CanonicalCompany(second.Company) ||
-                !DatesOverlap(first, second) || !TitlesOverlap(first.Title, second.Title))
-                continue;
+            for (var secondIndex = firstIndex + 1; secondIndex < experience.Count; secondIndex++)
+            {
+                var first = experience[firstIndex];
+                var second = experience[secondIndex];
+                if (string.IsNullOrWhiteSpace(first.Company) || string.IsNullOrWhiteSpace(second.Company) ||
+                    CanonicalCompany(first.Company) != CanonicalCompany(second.Company) ||
+                    !DatesOverlap(first, second) || !TitlesOverlap(first.Title, second.Title))
+                    continue;
 
-            yield return (first, second);
-        }
+                yield return (first, second);
+            }
     }
 
     private static bool DatesOverlap(WorkExperience first, WorkExperience second)

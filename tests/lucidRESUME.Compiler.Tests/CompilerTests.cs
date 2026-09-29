@@ -130,23 +130,35 @@ public sealed class CompilerTests
         };
         file.Data.Entities.Add(new JobMlEntity
         {
-            Id = "recent-role", Type = "experience", Name = "Engineering Lead, Recent Ltd", Source = "#recent-role"
+            Id = "recent-role",
+            Type = "experience",
+            Name = "Engineering Lead, Recent Ltd",
+            Source = "#recent-role"
         });
         var evidence = new JobMlEvidence
         {
-            Type = "prose", Ref = "#recent-leadership",
+            Type = "prose",
+            Ref = "#recent-leadership",
             Fingerprint = new JobMlFingerprint { Text = MarkdownEvidenceIndex.Fingerprint(recentProse) }
         };
         file.Data.Claims.Add(new JobMlClaim
         {
-            Id = "recent-dates", Subject = "recent-role", Type = "experience",
+            Id = "recent-dates",
+            Subject = "recent-role",
+            Type = "experience",
             Statement = "Engineering Lead | Recent Ltd | 2025-01-01 | Present",
-            Review = "accepted", Origin = "declared", Evidence = [evidence]
+            Review = "accepted",
+            Origin = "declared",
+            Evidence = [evidence]
         });
         file.Data.Claims.Add(new JobMlClaim
         {
-            Id = "recent-leadership", Subject = "recent-role", Type = "achievement",
-            Statement = recentProse, Review = "accepted", Origin = "declared",
+            Id = "recent-leadership",
+            Subject = "recent-role",
+            Type = "achievement",
+            Statement = recentProse,
+            Review = "accepted",
+            Origin = "declared",
             Concepts = new JobMlClaimConcepts { Skills = ["typescript", "aws"] },
             Evidence = [evidence]
         });
@@ -251,13 +263,19 @@ public sealed class CompilerTests
         };
         file.Data.Entities.Add(new JobMlEntity
         {
-            Id = "education", Type = "education", Name = "BSc (Hons) Psychology · University of Stirling",
+            Id = "education",
+            Type = "education",
+            Name = "BSc (Hons) Psychology · University of Stirling",
             Source = "#education"
         });
         file.Data.Claims.Add(new JobMlClaim
         {
-            Id = "degree", Subject = "education", Type = "education", Statement = educationProse,
-            Review = "accepted", Origin = "declared",
+            Id = "degree",
+            Subject = "education",
+            Type = "education",
+            Statement = educationProse,
+            Review = "accepted",
+            Origin = "declared",
             Evidence =
             [
                 new JobMlEvidence
@@ -306,8 +324,12 @@ public sealed class CompilerTests
             file.Data.Entities.Add(new JobMlEntity { Id = id, Type = "project", Name = name, Source = $"#{id}" });
             file.Data.Claims.Add(new JobMlClaim
             {
-                Id = $"{id}-claim", Subject = id, Type = "project", Statement = prose,
-                Review = "accepted", Origin = "declared",
+                Id = $"{id}-claim",
+                Subject = id,
+                Type = "project",
+                Statement = prose,
+                Review = "accepted",
+                Origin = "declared",
                 Concepts = new JobMlClaimConcepts { Skills = ["typescript", "aws"] },
                 Evidence =
                 [
@@ -333,11 +355,11 @@ public sealed class CompilerTests
         Assert.DoesNotContain(agentBody, result.HumanMarkdown);
 
         var handsOnCompiler = new JobMlResumeCompiler(new FakeJobParser(new JobDescription
-            {
-                Title = "Engineering Technical Lead",
-                RequiredSkills = ["TypeScript", "AWS"],
-                Responsibilities = ["Use AI-assisted development and coding agents throughout delivery"]
-            }), new ResumeCompositionOrchestrator([], new CompositionValidator()));
+        {
+            Title = "Engineering Technical Lead",
+            RequiredSkills = ["TypeScript", "AWS"],
+            Responsibilities = ["Use AI-assisted development and coding agents throughout delivery"]
+        }), new ResumeCompositionOrchestrator([], new CompositionValidator()));
         var handsOn = await handsOnCompiler.CompileAsync(snapshot,
             "Engineering Technical Lead using AI-assisted development and coding agents.",
             new CompilationOptions { MinimumExperienceSections = 0, MaximumSections = 1, MaximumClaims = 1 });
@@ -531,8 +553,12 @@ public sealed class CompilerTests
         file = file with { Markdown = file.Markdown + $"\n\n<p id=\"role-framing\">\n{framing}\n</p>" };
         file.Data.Claims.Add(new JobMlClaim
         {
-            Id = "role-framing", Subject = "example-role", Type = "achievement", Statement = framing,
-            Review = "accepted", Origin = "declared",
+            Id = "role-framing",
+            Subject = "example-role",
+            Type = "achievement",
+            Statement = framing,
+            Review = "accepted",
+            Origin = "declared",
             Evidence =
             [
                 new JobMlEvidence
@@ -590,12 +616,19 @@ public sealed class CompilerTests
         file = file with { Markdown = file.Markdown + $"\n\n<p id=\"professional-summary\">\n{summary}\n</p>" };
         file.Data.Entities.Add(new JobMlEntity
         {
-            Id = "person", Type = "person", Name = "Professional Summary", Source = "#professional-summary"
+            Id = "person",
+            Type = "person",
+            Name = "Professional Summary",
+            Source = "#professional-summary"
         });
         file.Data.Claims.Add(new JobMlClaim
         {
-            Id = "summary", Subject = "person", Type = "summary", Statement = summary,
-            Review = "accepted", Origin = "declared",
+            Id = "summary",
+            Subject = "person",
+            Type = "summary",
+            Statement = summary,
+            Review = "accepted",
+            Origin = "declared",
             Evidence =
             [
                 new JobMlEvidence
