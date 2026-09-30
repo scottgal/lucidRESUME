@@ -44,15 +44,28 @@ public static class SkillCategoriser
     private static readonly IReadOnlyDictionary<string, string> DecisionLabels =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["language"] = "Language", ["cloud_devops"] = "Cloud & DevOps",
-            ["database"] = "Database", ["framework"] = "Framework", ["tool"] = "Tool",
-            ["security"] = "Security", ["ai_ml"] = "AI/ML", ["methodology"] = "Methodology",
-            ["technology"] = "Technology", ["engineering"] = "Engineering",
-            ["healthcare"] = "Healthcare", ["finance"] = "Finance", ["accounting"] = "Accounting",
-            ["sales"] = "Sales", ["education"] = "Education", ["human_resources"] = "Human Resources",
-            ["construction"] = "Construction", ["design"] = "Design",
-            ["digital_media"] = "Digital Media", ["aviation"] = "Aviation",
-            ["hospitality"] = "Hospitality", ["legal"] = "Legal"
+            ["language"] = "Language",
+            ["cloud_devops"] = "Cloud & DevOps",
+            ["database"] = "Database",
+            ["framework"] = "Framework",
+            ["tool"] = "Tool",
+            ["security"] = "Security",
+            ["ai_ml"] = "AI/ML",
+            ["methodology"] = "Methodology",
+            ["technology"] = "Technology",
+            ["engineering"] = "Engineering",
+            ["healthcare"] = "Healthcare",
+            ["finance"] = "Finance",
+            ["accounting"] = "Accounting",
+            ["sales"] = "Sales",
+            ["education"] = "Education",
+            ["human_resources"] = "Human Resources",
+            ["construction"] = "Construction",
+            ["design"] = "Design",
+            ["digital_media"] = "Digital Media",
+            ["aviation"] = "Aviation",
+            ["hospitality"] = "Hospitality",
+            ["legal"] = "Legal"
         };
     // Map taxonomy file names to human-readable category labels
     private static readonly Dictionary<string, string> DomainToCategory = new(StringComparer.OrdinalIgnoreCase)
@@ -199,15 +212,23 @@ public static class SkillCategoriser
                 var label = accepted ? DecisionLabels[result.SelectedCandidate] : null;
                 resume.IngestionDecisions.Add(new IngestionDecision
                 {
-                    DecisionId = request.DecisionId, ContractVersion = SkillContractVersion,
-                    SourceRef = request.SourceRef, SourceHash = request.SourceHash,
-                    CandidateSetHash = candidateHash, SelectedCandidate = result.SelectedCandidate,
+                    DecisionId = request.DecisionId,
+                    ContractVersion = SkillContractVersion,
+                    SourceRef = request.SourceRef,
+                    SourceHash = request.SourceHash,
+                    CandidateSetHash = candidateHash,
+                    SelectedCandidate = result.SelectedCandidate,
                     SelectedValue = label,
                     Probabilities = new Dictionary<string, double>(result.Probabilities, StringComparer.Ordinal),
-                    Confidence = result.Confidence, Margin = margin, Accepted = accepted,
-                    Provider = result.Provider, Model = result.Model,
-                    InputTokens = result.InputTokens, OutputTokens = result.OutputTokens,
-                    RequestId = result.RequestId, EvaluatedAt = DateTimeOffset.UtcNow
+                    Confidence = result.Confidence,
+                    Margin = margin,
+                    Accepted = accepted,
+                    Provider = result.Provider,
+                    Model = result.Model,
+                    InputTokens = result.InputTokens,
+                    OutputTokens = result.OutputTokens,
+                    RequestId = result.RequestId,
+                    EvaluatedAt = DateTimeOffset.UtcNow
                 });
                 if (accepted) skill.Category = label;
             }

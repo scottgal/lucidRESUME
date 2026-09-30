@@ -33,6 +33,7 @@ The release also includes a documentation archive in both `.zip` and `.tar.gz` f
 - `jobml-package-extension-0.1.md` - package-family and registry-observation extension.
 - `jobml-web-compiler.md` - ASP.NET Core publication and deterministic compilation guide.
 - `chrome-evidence-filler.md` - on-device form-mapping experiment, privacy model, and limitations.
+- `nimble-parsing.md` - active local Ollama decision model setup and audit behavior.
 - `jev-parsing-experiment.md` - bounded parsing decisions and benchmark procedure.
 - `resume-output-design.md` - Markdown, DOCX, PDF, and cJobML output contract.
 - `2026-09-26-resume-cv-ats-review.md` - sourced format and ATS compatibility research.
@@ -60,12 +61,12 @@ matching macOS runner before upload.
 
 1. Ensure CI is green on `main`.
 2. Choose a semantic version in the current `2.x` release line, for example
-   `2.3.0`.
+   `2.4.0`.
 3. Create and push the tag:
 
 ```bash
-git tag v2.3.0
-git push origin v2.3.0
+git tag v2.4.0
+git push origin v2.4.0
 ```
 
 The `Release - App Archives` workflow will build, archive, checksum, and attach the files to a GitHub release.

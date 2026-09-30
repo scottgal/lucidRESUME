@@ -9,7 +9,7 @@ on:
       version:
         description: 'Release version, without leading v (for example, 1.0.0)'
         required: true
-        default: '2.3.0'
+        default: '2.4.0'
 
 permissions:
   contents: write
@@ -337,6 +337,10 @@ jobs:
             echo
             echo "---"
             echo
+            sed -n '1,$p' docs/nimble-parsing.md
+            echo
+            echo "---"
+            echo
             sed -n '1,$p' docs/jev-parsing-experiment.md
             echo
             echo "---"
@@ -357,7 +361,7 @@ jobs:
             docs/jobml-0.1.md docs/jobml-0.1-specification.md \
             docs/cjobml-0.1-specification.md docs/jobml-github-extension-0.1.md \
             docs/jobml-package-extension-0.1.md docs/resume-output-design.md \
-            docs/jev-parsing-experiment.md docs/chrome-evidence-filler.md \
+            docs/nimble-parsing.md docs/jev-parsing-experiment.md docs/chrome-evidence-filler.md \
             docs/research/2026-09-26-resume-cv-ats-review.md docs/jobml-0.1.schema.json \
             src/lucidRESUME/Resources/user-manual.md "$out_dir/"
           if [ -f "$release_notes" ]; then
@@ -520,6 +524,8 @@ jobs:
           | Area | Default | How to configure |
           |------|---------|------------------|
           | Local AI | LLamaSharp with grug 9B | Download the optional GGUF model from Profile. It assists ingestion and can perform bounded edits of already-selected evidence. Rendering never re-infers evidence. |
+          | Local decisions | Off | Enable Nimble in Profile after installing Ollama and pulling \`nimble\`. It only resolves bounded ingestion ambiguities. |
+          | Local resume editing | Off | Enable Ollama composition on a local loopback server and select its model when compiling a job-specific resume. |
           | Cloud AI | Off | Add Anthropic or OpenAI API keys with user secrets, environment variables, or the Profile page. |
           | PDF layout | Local parser fallback | Enable Docling for ML-based layout extraction on complex PDFs. |
           | Embeddings and NER | Auto-download on first run | Allow the first-run model download, or pre-populate the app data model cache. |

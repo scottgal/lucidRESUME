@@ -293,7 +293,10 @@ public static class EndpointRouteBuilderExtensions
             sourceLength = snapshot.File.Markdown.Length,
             chunks = index.Chunks.Select(chunk => new
             {
-                chunk.Index, chunk.SourceStart, chunk.SourceLength, chunk.Sha256,
+                chunk.Index,
+                chunk.SourceStart,
+                chunk.SourceLength,
+                chunk.Sha256,
                 url = $"{path}/transcript/chunks/{chunk.Index}"
             })
         });

@@ -790,8 +790,13 @@ public sealed class CompilerTests
     [Fact]
     public async Task Orchestrator_can_tighten_a_summary_without_changing_its_claim()
     {
-        var claim = new JobMlClaim { Id = "summary", Subject = "person", Type = "summary",
-            Statement = "I build scalable services and lead engineering teams." };
+        var claim = new JobMlClaim
+        {
+            Id = "summary",
+            Subject = "person",
+            Type = "summary",
+            Statement = "I build scalable services and lead engineering teams."
+        };
         var selected = new SelectedClaim(claim, "Person", claim.Statement, ["e1"], .9, []);
         var packet = new EvidencePacket("summary", "Professional Summary", "tighten", 20,
             [selected], [], "summary");
