@@ -1,5 +1,7 @@
 # Jev-assisted parsing and benchmarking
 
+> Historical experiment. Hosted Jev and its benchmark adapter have been removed. The commands below are retained as a record of the earlier design and no longer run. For the active local decision path and runnable benchmark, see [Nimble parsing](nimble-parsing.md).
+
 ## Decision
 
 Jev is an optional decision layer inside ingestion. It is not a resume parser,

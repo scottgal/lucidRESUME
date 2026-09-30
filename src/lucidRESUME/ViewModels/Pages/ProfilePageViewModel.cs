@@ -75,8 +75,8 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     [ObservableProperty] private string _aiProvider = "openai";
     [ObservableProperty] private string _anthropicApiKey = "";
     [ObservableProperty] private string _openAiApiKey = "";
-    [ObservableProperty] private bool _jevEnabled;
-    [ObservableProperty] private string _jevApiKey = "";
+    [ObservableProperty] private bool _nimbleEnabled;
+    [ObservableProperty] private string _nimbleBaseUrl = "http://localhost:11434";
     [ObservableProperty] private string _selectedModel = "";
     [ObservableProperty] private ObservableCollection<string> _availableModelIds = [];
     [ObservableProperty] private ObservableCollection<ModelInfo> _availableModels = [];
@@ -340,7 +340,6 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     {
         var legacyAnthropicKey = "";
         var legacyOpenAiKey = "";
-        var legacyJevKey = "";
         try
         {
             if (File.Exists(_aiSettingsPath.Path))
@@ -356,10 +355,11 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                 if (doc.RootElement.TryGetProperty("OpenAi", out var openai) &&
                     openai.TryGetProperty("ApiKey", out var oKey))
                     legacyOpenAiKey = oKey.GetString() ?? "";
-                if (doc.RootElement.TryGetProperty("Jev", out var jev))
+                if (doc.RootElement.TryGetProperty("Nimble", out var nimble))
                 {
-                    if (jev.TryGetProperty("Enabled", out var enabled)) JevEnabled = enabled.GetBoolean();
-                    if (jev.TryGetProperty("ApiKey", out var jKey)) legacyJevKey = jKey.GetString() ?? "";
+                    if (nimble.TryGetProperty("Enabled", out var enabled)) NimbleEnabled = enabled.GetBoolean();
+                    if (nimble.TryGetProperty("BaseUrl", out var baseUrl))
+                        NimbleBaseUrl = baseUrl.GetString() ?? NimbleBaseUrl;
                 }
                 if (doc.RootElement.TryGetProperty("Anthropic", out var a2) &&
                     a2.TryGetProperty("Model", out var model))
@@ -373,8 +373,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             {
                 AnthropicApiKey = await LoadOrMigrateSecretAsync(AiSecretNames.AnthropicApiKey, legacyAnthropicKey);
                 OpenAiApiKey = await LoadOrMigrateSecretAsync(AiSecretNames.OpenAiApiKey, legacyOpenAiKey);
-                JevApiKey = await LoadOrMigrateSecretAsync(AiSecretNames.JevApiKey, legacyJevKey);
-                if (legacyAnthropicKey.Length > 0 || legacyOpenAiKey.Length > 0 || legacyJevKey.Length > 0)
+                if (legacyAnthropicKey.Length > 0 || legacyOpenAiKey.Length > 0)
                     await RemoveLegacySecretsAsync();
             }
             else
@@ -383,7 +382,6 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                 // installing a supported keyring. Never write them back to JSON.
                 AnthropicApiKey = legacyAnthropicKey;
                 OpenAiApiKey = legacyOpenAiKey;
-                JevApiKey = legacyJevKey;
             }
         }
         catch (Exception ex)
@@ -427,15 +425,16 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     {
         try
         {
-            if (!_secretStore.IsAvailable)
-                throw new InvalidOperationException(
-                    "No OS credential store is available. Install secret-tool/libsecret on Linux before saving API keys.");
-            if (JevEnabled && string.IsNullOrWhiteSpace(JevApiKey))
-                throw new InvalidOperationException("Enter a Jev API key before enabling Jev-assisted ingestion.");
-
-            await SaveSecretAsync(AiSecretNames.AnthropicApiKey, AnthropicApiKey);
-            await SaveSecretAsync(AiSecretNames.OpenAiApiKey, OpenAiApiKey);
-            await SaveSecretAsync(AiSecretNames.JevApiKey, JevApiKey);
+            if (!Uri.TryCreate(NimbleBaseUrl.TrimEnd('/') + "/", UriKind.Absolute, out var nimbleUri)
+                || nimbleUri.Scheme != Uri.UriSchemeHttp || !nimbleUri.IsLoopback)
+                throw new InvalidOperationException("Nimble URL must be a local HTTP loopback address.");
+            if (_secretStore.IsAvailable)
+            {
+                await SaveSecretAsync(AiSecretNames.AnthropicApiKey, AnthropicApiKey);
+                await SaveSecretAsync(AiSecretNames.OpenAiApiKey, OpenAiApiKey);
+            }
+            else if (!string.IsNullOrWhiteSpace(AnthropicApiKey) || !string.IsNullOrWhiteSpace(OpenAiApiKey))
+                throw new InvalidOperationException("An OS credential store is required to save API keys.");
 
             var settings = new Dictionary<string, object>
             {
@@ -454,10 +453,11 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                     ["Model"] = AiProvider == "openai" ? SelectedModel : "",
                     ["ExtractionModel"] = AiProvider == "openai" ? SelectedModel : ""
                 },
-                ["Jev"] = new Dictionary<string, object>
+                ["Nimble"] = new Dictionary<string, object>
                 {
-                    ["Enabled"] = JevEnabled,
-                    ["Model"] = "jev-1.13.0"
+                    ["Enabled"] = NimbleEnabled,
+                    ["BaseUrl"] = nimbleUri.ToString().TrimEnd('/'),
+                    ["Model"] = "nimble"
                 },
                 ["Ollama"] = new Dictionary<string, string>
                 {
@@ -473,7 +473,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
 
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
             await WriteSettingsAtomicallyAsync(json);
-            AiSettingsStatus = $"Saved. API keys are in {_secretStore.BackendName}. Restart to apply settings.";
+            AiSettingsStatus = "Saved. Restart to apply settings.";
         }
         catch (Exception ex)
         {

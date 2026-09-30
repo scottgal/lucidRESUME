@@ -13,6 +13,7 @@ Led a 15 engineer TypeScript team through platform change on AWS, with accountab
 ```jobml
 jobml:
   version: "0.1"
+  profile: career_record
   purpose: Complete machine-readable evidence ledger for this resume.
   semantics:
     - Claims describe experience, skills, capabilities, responsibilities, or domain knowledge.
@@ -39,7 +40,7 @@ claims:
         type: prose
         ref: "#example-leadership"
         fingerprint:
-          text: "fnv1a64:d3e4ad35fe5f6ba4"
+          text: "fnv1a64:6920a9adc824efeb"
       - id: engineering-post
         type: article
         uri: https://example.com/engineering

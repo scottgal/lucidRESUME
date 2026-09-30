@@ -736,7 +736,7 @@ public sealed class SemanticCompressor
         var s = start?.ToString("MMM yyyy") ?? "";
         var e = isCurrent ? "Present" : end?.ToString("MMM yyyy") ?? "";
         if (s == "" && e == "") return "";
-        return e == "" ? s : s == "" ? e : $"{s} – {e}";
+        return e == "" ? s : s == "" ? e : $"{s} - {e}";
     }
 }
 

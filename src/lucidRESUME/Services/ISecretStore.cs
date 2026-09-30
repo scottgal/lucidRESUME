@@ -13,5 +13,4 @@ public static class AiSecretNames
 {
     public const string OpenAiApiKey = "openai-api-key";
     public const string AnthropicApiKey = "anthropic-api-key";
-    public const string JevApiKey = "jev-api-key";
 }

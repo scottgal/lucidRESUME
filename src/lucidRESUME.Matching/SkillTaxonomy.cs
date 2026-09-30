@@ -93,6 +93,13 @@ public sealed class SkillTaxonomy
     public static IReadOnlyList<string> LoadedTaxonomies =>
         AllTaxonomies.Value.Keys.ToList();
 
+    /// <summary>Return every taxonomy containing a canonical skill.</summary>
+    public static IReadOnlyList<string> FindDomains(string canonical) => AllTaxonomies.Value
+        .Where(pair => pair.Value.CanonicalToAliases.ContainsKey(canonical.ToLowerInvariant().Trim()))
+        .Select(pair => pair.Key)
+        .Order(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
     private static Dictionary<string, TaxonomyFile> LoadAll()
     {
         var result = new Dictionary<string, TaxonomyFile>(StringComparer.OrdinalIgnoreCase);

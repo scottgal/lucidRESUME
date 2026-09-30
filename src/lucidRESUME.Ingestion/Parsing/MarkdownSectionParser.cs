@@ -19,6 +19,9 @@ public static partial class MarkdownSectionParser
     private static readonly Regex CareerAnchorDirectivePattern = new(
         @"^<!--\s*lucidresume\s*:\s*career-anchor\s*-->$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex CompactRoleDirectivePattern = new(
+        @"^<!--\s*lucidresume\s*:\s*compact\s*-->$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex StableAnchorPattern = new(@"\s*\{#[A-Za-z][A-Za-z0-9_.-]*\}\s*$", RegexOptions.Compiled);
     private static readonly Regex CompactMarkdownCitationPattern = new(@"\s*\[\[\d+\]\]\(#ref-\d+\)", RegexOptions.Compiled);
     private static readonly Regex CompactPlainCitationPattern = new(@"\s*\[\d+\]", RegexOptions.Compiled);
@@ -667,6 +670,9 @@ public static partial class MarkdownSectionParser
             foreach (var part in parts)
             {
                 var skill = SkillYearsSuffix().Replace(part.Trim().TrimStart('-', '*', ' '), "").Trim().TrimEnd('.');
+                // The compiler links each visible skill to its reviewed prose
+                // section. Keep the human-readable name in structured exports.
+                skill = Regex.Replace(skill, @"^\[(?<name>[^\]]+)\]\(#[^)]+\)$", "${name}");
                 skill = NumericParenthetical().Replace(skill, "").Trim();
                 if (skill.Count(character => character == '(') > skill.Count(character => character == ')'))
                     skill = skill[..skill.IndexOf('(')].Trim();
@@ -870,6 +876,12 @@ public static partial class MarkdownSectionParser
             if (CareerAnchorDirectivePattern.IsMatch(line))
             {
                 current.IsCareerAnchor = true;
+                continue;
+            }
+
+            if (CompactRoleDirectivePattern.IsMatch(line))
+            {
+                current.IsCompact = true;
                 continue;
             }
 

@@ -18,6 +18,12 @@ public sealed class SkillEvidence
     /// <summary>The specific text that evidences the skill.</summary>
     public string SourceText { get; set; } = "";
 
+    /// <summary>Paragraph reference or external evidence URI, when available.</summary>
+    public string? SourceReference { get; set; }
+
+    /// <summary>Fingerprint of the referenced source paragraph.</summary>
+    public string? SourceFingerprint { get; set; }
+
     /// <summary>Start of the date range where this skill was used.</summary>
     public DateOnly? StartDate { get; set; }
 

@@ -48,10 +48,15 @@ public sealed class CompilerTests
         Assert.Contains("Led a 15 engineer", result.HumanMarkdown);
         Assert.Contains("**VP Engineering**", result.HumanMarkdown);
         Assert.Contains("## Core Skills", result.HumanMarkdown);
-        Assert.Contains("**Leadership and delivery:** Engineering Leadership", result.HumanMarkdown);
+        Assert.DoesNotContain("[Engineering Leadership](#", result.HumanMarkdown);
         Assert.Contains("**Platform engineering:**", result.HumanMarkdown);
         Assert.Contains("TypeScript", result.HumanMarkdown);
         Assert.Contains("AWS", result.HumanMarkdown);
+        var skillLinks = System.Text.RegularExpressions.Regex.Matches(result.HumanMarkdown,
+            @"\[(TypeScript|AWS)\]\(#(?<anchor>section-[^)]+)\)");
+        Assert.Equal(2, skillLinks.Count);
+        foreach (System.Text.RegularExpressions.Match link in skillLinks)
+            Assert.Contains("{#" + link.Groups["anchor"].Value + "}", result.HumanMarkdown);
         Assert.Contains("## Experience", result.HumanMarkdown);
         Assert.Contains("### VP Engineering, Example Ltd", result.HumanMarkdown);
         Assert.Contains("Terraform", result.Manifest.Gaps);
@@ -183,7 +188,8 @@ public sealed class CompilerTests
         {
             (Id: "four-hour-role", Name: "Consultant · Tiny Engagement", Start: "2024-01-01", End: "2024-01-01"),
             (Id: "three-month-role", Name: "Consultant · Exact Quarter Ltd", Start: "2023-01-01", End: "2023-04-01"),
-            (Id: "long-role", Name: "Technical Lead · Durable Systems Ltd", Start: "2022-01-01", End: "2022-04-02")
+            (Id: "long-role", Name: "Technical Lead · Durable Systems Ltd", Start: "2022-01-01", End: "2022-04-02"),
+            (Id: "long-role-import", Name: "Durable Systems Limited · Remote", Start: "2022-01-01", End: "2022-04-02")
         };
         foreach (var role in roles)
         {
@@ -240,6 +246,7 @@ public sealed class CompilerTests
         Assert.Contains("Technical Lead · Durable Systems Ltd | Jan 2022 - Apr 2022", result.HumanMarkdown);
         Assert.DoesNotContain("Tiny Engagement", result.HumanMarkdown);
         Assert.DoesNotContain("Exact Quarter", result.HumanMarkdown);
+        Assert.DoesNotContain("Durable Systems Limited", result.HumanMarkdown);
         var additional = Assert.Single(result.Manifest.Sections,
             section => section.Kind == "additional_experience");
         Assert.Equal("long-role-dates", Assert.Single(additional.Claims).Claim.Id);
@@ -763,12 +770,14 @@ public sealed class CompilerTests
     }
 
     [Fact]
-    public async Task Orchestrator_never_rewrites_the_reviewed_human_summary()
+    public async Task Orchestrator_rejects_job_ad_copying_in_summary()
     {
         var claim = new JobMlClaim { Id = "summary", Subject = "person", Type = "summary", Statement = "Human summary." };
         var selected = new SelectedClaim(claim, "Person", "Human summary.", ["e1"], .9, []);
         var packet = new EvidencePacket("summary", "Professional Summary", "retain", 20, [selected], [], "summary");
-        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "lexical");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow,
+            [new CompilerRequirement("terraform", "Terraform", RequirementKind.Required, "Terraform")],
+            [packet], [], [], "lexical");
         var orchestrator = new ResumeCompositionOrchestrator([new VacancyCopyingProvider()], new CompositionValidator());
 
         var result = await orchestrator.ComposeAsync(manifest, "Terraform experience", new CompilationOptions
@@ -776,6 +785,27 @@ public sealed class CompilerTests
 
         Assert.Equal("Human summary.", Assert.Single(result.Blocks).Text);
         Assert.False(result.Used);
+    }
+
+    [Fact]
+    public async Task Orchestrator_can_tighten_a_summary_without_changing_its_claim()
+    {
+        var claim = new JobMlClaim { Id = "summary", Subject = "person", Type = "summary",
+            Statement = "I build scalable services and lead engineering teams." };
+        var selected = new SelectedClaim(claim, "Person", claim.Statement, ["e1"], .9, []);
+        var packet = new EvidencePacket("summary", "Professional Summary", "tighten", 20,
+            [selected], [], "summary");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "lexical");
+        var orchestrator = new ResumeCompositionOrchestrator([new SummaryEditingProvider()], new CompositionValidator());
+
+        var result = await orchestrator.ComposeAsync(manifest, "Build cloud services", new CompilationOptions
+        { ComposeProse = true, CompositionProvider = "summary-edit" });
+
+        Assert.True(result.Used);
+        var edited = Assert.Single(result.Blocks);
+        Assert.Equal("I build scalable services.", edited.Text);
+        Assert.Equal("summary", Assert.Single(edited.ClaimIds));
+        Assert.Equal("e1", Assert.Single(edited.EvidenceIds));
     }
 
     [Fact]
@@ -834,6 +864,15 @@ public sealed class CompilerTests
         public Task<CompositionDraft> RunPassAsync(CompositionPassRequest request, CancellationToken cancellationToken = default) =>
             Task.FromResult(new CompositionDraft(
                 request.CurrentBlocks.Select(x => x with { Text = "Led an engineering and Terraform team." }).ToList(), []));
+    }
+
+    private sealed class SummaryEditingProvider : IResumeCompositionProvider
+    {
+        public string ProviderId => "summary-edit";
+        public bool IsAvailable => true;
+        public Task<CompositionDraft> RunPassAsync(CompositionPassRequest request,
+            CancellationToken cancellationToken = default) => Task.FromResult(new CompositionDraft(
+            request.CurrentBlocks.Select(block => block with { Text = "I build scalable services." }).ToList(), []));
     }
 
     private sealed class PartiallyValidProvider : IResumeCompositionProvider

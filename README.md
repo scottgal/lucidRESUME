@@ -74,12 +74,12 @@ template rationale, and configuration.
 No invented skills. No output-time guessing. Extraction is recorded once with its
 method, confidence, source, and review state.
 
-An optional Jev decision layer can resolve bounded ingestion ambiguities after local
+An optional local Ollama Nimble decision layer can resolve bounded ingestion ambiguities after local
 rules and NER have proposed candidates. It can classify an unknown section or
-select an already-extracted person or employer span. It cannot generate a new
+prose-linked skill, or select an already-extracted person or employer span. It cannot generate a new
 name, company, claim, or evidence value. Every decision is probability-gated,
-source-hashed, and recorded for review. Jev is disabled by default because the
-current service is hosted. See the [experiment and benchmark guide](docs/jev-parsing-experiment.md).
+source-hashed, and recorded for review. Nimble is disabled by default. See the
+[local setup and decision guide](docs/nimble-parsing.md).
 Cloud API keys entered in Profile are held by the operating system credential
 store, never in the JSON settings file.
 
@@ -235,6 +235,15 @@ application-specific publication URLs carry ETags and cache headers. API keys
 remain server-side. See the
 [web compiler guide](docs/jobml-web-compiler.md).
 
+For the adjacent Mostlylucid site checkout, run
+`scripts/run-local-resume-integration.sh` to serve the compiler at
+`http://127.0.0.1:8080/resume/`. Publish the reviewed Markdown and JobML career
+record locally, paste a job description, then use the resulting evidence link to
+inspect the full transcript, ordered source chunks, cJobML, Word, and PDF. The
+sample's `App_Data` publications are ignored by Git; keep private career records
+out of commits. Local Ollama setup and gateway configuration are in the
+[web compiler guide](docs/jobml-web-compiler.md).
+
 ### Personal ATS (Pipeline)
 
 ![Pipeline tracking](docs/screenshots/pipeline-page.png)
@@ -256,7 +265,7 @@ tables, sidebars, text boxes and repeated résumé headers.
 - [Release & Archive Guide](docs/release.md) - release workflow, platform archives, and single-page docs archive.
 - [Technical Architecture](docs/architecture.md) - modules, data flow, persistence, and extraction pipeline.
 - [Document Layout Detection](docs/layout-detection.md) - DocLayNet YOLO model, structural hashing, template communities.
-- [Jev-assisted Parsing and Benchmarking](docs/jev-parsing-experiment.md) - bounded NER decisions, privacy, drift records, and reproducible benchmarks.
+- [Local Nimble Parsing](docs/nimble-parsing.md) - bounded section and NER decisions with source hashes and probabilities.
 - [JobML 0.1 Specification](docs/jobml-0.1-specification.md) - normative document model, evidence reconciliation, review states, and extensions.
 - [cJobML 0.1 Publication Projection](docs/cjobml-0.1-specification.md) - compact numbered citations, references, full-ledger endpoints, and one-pass parsing.
 - [Resume and ATS Compatibility Review](docs/research/2026-09-26-resume-cv-ats-review.md) - sourced format guidance, reproduced parser results, limitations, and the validation plan.

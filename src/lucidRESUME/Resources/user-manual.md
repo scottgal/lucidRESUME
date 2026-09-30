@@ -602,17 +602,18 @@ The app connects to `http://localhost:11434` by default. Change this on the Prof
 2. On the Profile page, enter your API key in the Anthropic field
 3. Select a model (Claude Haiku is cheapest, Sonnet is best value)
 
-### Jev (Bounded Cloud Decision Layer)
+### Nimble (Local Decision Layer)
 
-Jev is separate from the prose provider. When enabled, it can resolve a small
+Nimble is separate from the prose provider. When enabled, it can resolve a small
 number of ingestion ambiguities after local parsing and NER have produced a
 closed candidate set. Current tasks are unknown section classification, choosing
-between competing name candidates, and selecting an employer for an experience
-entry whose company is missing.
+between competing name candidates, selecting an employer for an experience
+entry whose company is missing, and categorising a skill found in a source passage.
 
-Jev cannot generate a new name, company, claim, or evidence passage. Low
-probability or low-margin decisions remain unresolved for review. Candidate text
-is sent to TypeSafe only after you enable Jev and provide your own API key.
+Nimble cannot generate a new name, company, skill, claim, or evidence passage.
+Low probability or low-margin decisions remain unresolved for review. It runs
+through local Ollama 0.35 or newer. Pull the model with `ollama pull nimble`,
+then enable it and set the local server URL on the Profile page.
 
 ### API Key Storage
 
@@ -631,9 +632,9 @@ Linux users need `secret-tool` and a working Secret Service provider.
 | Anthropic Haiku | ~$0.001/resume | Fast | Very good | Data sent to Anthropic |
 | Anthropic Sonnet | ~$0.01/resume | Medium | Excellent | Data sent to Anthropic |
 | OpenAI | Model-dependent | Model-dependent | Excellent with full-strength models | Data sent to OpenAI |
-| Jev decision layer | Usage-based | Fast | Bounded choices only | Candidate passages sent to TypeSafe |
+| Nimble decision layer | Free | Depends on hardware | Bounded choices only | Candidate passages stay on the local Ollama server |
 
-> **Recommendation:** Use deterministic extraction and NER first. Use full-strength OpenAI when source documents need model assistance. Jev is the bounded decision layer for closed candidate sets. Keep the local grug path experimental until larger held-out benchmarks justify promotion.
+> **Recommendation:** Use deterministic extraction and NER first. Use full-strength OpenAI when source documents need model assistance. Nimble handles optional closed candidate decisions locally. Keep the local grug path experimental until larger held-out benchmarks justify promotion.
 
 ---
 

@@ -25,6 +25,7 @@ public interface IResumePublicationStore
 public interface IResumeMarkdownRenderer
 {
     string ToHtml(string markdown);
+    string ToTranscriptHtml(string markdown);
 }
 
 public sealed record CompileRequest(string JobDescription, string? SourceRevision = null,

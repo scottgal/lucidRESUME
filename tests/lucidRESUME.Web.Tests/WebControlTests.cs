@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
 using lucidRESUME.JobML;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -23,6 +24,17 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
         Assert.Contains("complete human career transcript", html);
         Assert.Contains("JobML career_record projection", html);
         Assert.Contains("Paste the job. Get the right version of you.", html);
+        Assert.Contains("Copy verification link", html);
+        Assert.Contains("Career record ready", html);
+    }
+
+    [Fact]
+    public async Task Resume_without_trailing_slash_serves_working_control()
+    {
+        using var response = await _client.GetAsync("/resume");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("const basePath=location.pathname.endsWith('/')?location.pathname:location.pathname+'/'",
+            await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -105,6 +117,8 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
             # Jane Smith
 
             ## Example Ltd {#example-role}
+
+            A short introduction to the team.
 
             <p id="leadership">
             {{prose}}
@@ -273,6 +287,10 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
             json.RootElement.GetProperty("manifest").GetProperty("targetTitle").GetString());
         var publicationUrl = json.RootElement.GetProperty("publication").GetProperty("url").GetString()!;
         Assert.Matches(@"^/resume/[A-Za-z0-9_-]{32}$", publicationUrl);
+        Assert.Equal(publicationUrl + "/transcript",
+            json.RootElement.GetProperty("publication").GetProperty("transcript").GetString());
+        Assert.Equal(publicationUrl + "/transcript/chunks",
+            json.RootElement.GetProperty("publication").GetProperty("transcriptChunks").GetString());
         Assert.Equal("Example Ltd, Head of Engineering",
             json.RootElement.GetProperty("publication").GetProperty("applicationReference").GetString());
         var publishedMarkdown = json.RootElement.GetProperty("publishedMarkdown").GetString()!;
@@ -288,14 +306,14 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
         Assert.Contains(prose, documentXml);
         Assert.Contains("w:type=\"page\"", documentXml);
         Assert.Contains("Target role: Head of Engineering", documentXml);
-        Assert.Contains("Jan 2022 – Present", documentXml);
+        Assert.Contains("Jan 2022 - Present", documentXml);
         Assert.Contains("Additional consulting, contract and earlier experience", documentXml);
         Assert.Contains("Technical Consultant", documentXml);
         Assert.Contains("Earlier Ltd", documentXml);
-        Assert.Contains("Jan 2018 – May 2018", documentXml);
+        Assert.Contains("Jan 2018 - May 2018", documentXml);
         Assert.DoesNotContain("Brief Ltd", documentXml);
-        Assert.Contains("BSc (Hons) Computer Science — Example University", documentXml);
-        Assert.Matches(@"BSc \(Hons\) Computer Science — Example University.*?\[\d+\]", documentXml);
+        Assert.Contains("BSc (Hons) Computer Science - Example University", documentXml);
+        Assert.Matches(@"BSc \(Hons\) Computer Science - Example University.*?\[\d+\]", documentXml);
         using var relationshipsReader = new StreamReader(
             archive.GetEntry("word/_rels/document.xml.rels")!.Open());
         var relationshipsXml = await relationshipsReader.ReadToEndAsync();
@@ -303,6 +321,8 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
 
         var evidencePage = await _client.GetStringAsync(publicationUrl);
         Assert.Contains("Evidence behind this résumé", evidencePage);
+        Assert.Contains($"href=\"{publicationUrl}/download/docx\"", evidencePage);
+        Assert.Contains($"href=\"{publicationUrl}/download/pdf\"", evidencePage);
         Assert.Contains("Read this section in the complete transcript", evidencePage);
         Assert.Contains("Reviewed source passage:", evidencePage);
         Assert.Contains("Example Ltd, Head of Engineering", evidencePage);
@@ -327,6 +347,25 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
         Assert.Contains("Complete career transcript", transcriptPage);
         Assert.Contains(prose, transcriptPage);
         Assert.Contains("id=\"example-role\"", transcriptPage);
+        Assert.Contains("id=\"example-role:p1\"", transcriptPage);
+
+        var transcriptMarkdown = await _client.GetStringAsync(publicationUrl + "/transcript");
+        using var chunkManifest = JsonDocument.Parse(
+            await _client.GetStringAsync(publicationUrl + "/transcript/chunks"));
+        var chunks = chunkManifest.RootElement.GetProperty("chunks").EnumerateArray().ToList();
+        var reassembled = new StringBuilder();
+        foreach (var chunk in chunks)
+        {
+            var text = await _client.GetStringAsync(chunk.GetProperty("url").GetString());
+            Assert.Equal(chunk.GetProperty("sourceStart").GetInt32(), reassembled.Length);
+            Assert.Equal(chunk.GetProperty("sourceLength").GetInt32(), text.Length);
+            Assert.Equal(chunk.GetProperty("sha256").GetString(),
+                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text))));
+            reassembled.Append(text);
+        }
+        Assert.Equal(transcriptMarkdown, reassembled.ToString());
+        Assert.Equal(chunkManifest.RootElement.GetProperty("sourceSha256").GetString(),
+            Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(transcriptMarkdown))));
 
         var fullJobMl = await _client.GetStringAsync("/resume/api/jobml");
         Assert.Contains("profile: career_record", fullJobMl);

@@ -125,7 +125,7 @@ public sealed class MarkdownExporter : IResumeExporter
                     ? $"- [{publication.Name}]({publication.Url})"
                     : $"- {publication.Name}" + (string.IsNullOrWhiteSpace(publication.Description)
                         ? string.Empty
-                        : $" — {publication.Description}"));
+                        : $" - {publication.Description}"));
             }
             sb.AppendLine();
         }

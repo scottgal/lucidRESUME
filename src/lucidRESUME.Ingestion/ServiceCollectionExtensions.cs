@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
     {
         var doclingSection = config.GetSection("Docling");
         services.Configure<DoclingOptions>(doclingSection);
-        services.Configure<ResumeDecisionPolicyOptions>(config.GetSection("Jev"));
+        services.Configure<ResumeDecisionPolicyOptions>(config.GetSection("Nimble"));
 
         if (doclingSection.GetValue<bool>("Enabled"))
         {
@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
         }).AddStandardResilienceHandler();
         services.AddTransient<LinkedInZipParser>();
         services.AddDirectParsing();
-        if (config.GetSection("Jev").GetValue<bool>("Enabled"))
+        if (config.GetSection("Nimble").GetValue<bool>("Enabled"))
             services.AddTransient<ResumeDecisionResolver>();
         services.AddTransient<IResumeParser, ResumeParser>();
         services.AddTransient<ResumeCorpusLoader>();

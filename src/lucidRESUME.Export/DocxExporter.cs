@@ -143,7 +143,7 @@ public sealed class DocxExporter : IResumeExporter
                 {
                     var title = new[] { edu.Degree, edu.FieldOfStudy, edu.Institution }
                         .Where(s => !string.IsNullOrWhiteSpace(s));
-                    var paragraph = CreateParagraph(string.Join(" — ", title), bold: true);
+                    var paragraph = CreateParagraph(string.Join(" - ", title), bold: true);
                     AppendCitationMarkers(paragraph,
                         ExportArtifact.EducationCitationNumbers(edu, compact));
                     body.Append(paragraph);
@@ -158,7 +158,7 @@ public sealed class DocxExporter : IResumeExporter
             {
                 body.Append(CreateParagraph("Certifications", "Heading2"));
                 foreach (var c in resume.Certifications)
-                    body.Append(CreateBullet($"{c.Name} — {c.Issuer}" + (c.IssuedDate.HasValue ? $" ({c.IssuedDate.Value.Year})" : "")));
+                    body.Append(CreateBullet($"{c.Name} - {c.Issuer}" + (c.IssuedDate.HasValue ? $" ({c.IssuedDate.Value.Year})" : "")));
             }
 
             if (resume.Publications.Count > 0)
@@ -476,6 +476,6 @@ public sealed class DocxExporter : IResumeExporter
     {
         var s = start?.ToString("MMM yyyy") ?? "";
         var e = isCurrent ? "Present" : end?.ToString("MMM yyyy") ?? "";
-        return s != "" || e != "" ? $"{s} – {e}" : "";
+        return s != "" || e != "" ? $"{s} - {e}" : "";
     }
 }

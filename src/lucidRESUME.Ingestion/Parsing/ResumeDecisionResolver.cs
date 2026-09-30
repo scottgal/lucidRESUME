@@ -63,9 +63,9 @@ public sealed class ResumeDecisionResolver
         _policy = policy.Value;
         _logger = logger;
         if (_policy.AcceptanceProbability is < 0 or > 1)
-            throw new InvalidOperationException("Jev:AcceptanceProbability must be between 0 and 1.");
+            throw new InvalidOperationException("Nimble:AcceptanceProbability must be between 0 and 1.");
         if (_policy.MinimumMargin is < 0 or > 1)
-            throw new InvalidOperationException("Jev:MinimumMargin must be between 0 and 1.");
+            throw new InvalidOperationException("Nimble:MinimumMargin must be between 0 and 1.");
     }
 
     public async Task<IReadOnlyList<DocumentSection>> ResolveSectionsAsync(
@@ -147,7 +147,7 @@ public sealed class ResumeDecisionResolver
     }
 
     /// <summary>
-    /// Selects among names already proposed by positional rules or NER. Jev is not
+    /// Selects among names already proposed by positional rules or NER. Nimble is not
     /// allowed to spell a new name, so the original extracted span remains authoritative.
     /// </summary>
     public async Task ResolveNameAsync(ResumeDocument resume, string documentText, CancellationToken ct = default)

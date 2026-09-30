@@ -95,7 +95,10 @@ public sealed class ResumeCompositionOrchestrator(
         // The initial state is selected human prose, never model-authored text.
         var source = manifest.Sections.Select(packet => new CompositionBlock(
             packet.SectionId,
-            string.Join("\n\n", packet.Claims.Select(x => x.Prose).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct()),
+            string.Join("\n\n", packet.Claims.Select(x => x.Prose.Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x)).Distinct()
+                .Select(text => packet.Kind is not ("experience" or "summary" or "project") ||
+                                ".!?".Contains(text[^1]) ? text : text + ".")),
             packet.Claims.Select(x => x.Claim.Id).Distinct().ToList(),
             packet.Claims.SelectMany(x => x.EvidenceIds).Distinct().ToList())).ToList();
         if (!options.ComposeProse) return (source, false, null, []);
@@ -107,8 +110,7 @@ public sealed class ResumeCompositionOrchestrator(
 
         IReadOnlyList<CompositionBlock> current = source;
         var editableSectionIds = manifest.Sections
-            .Where(section => !section.Kind.Equals("summary", StringComparison.OrdinalIgnoreCase) &&
-                              !section.Kind.Equals("publication", StringComparison.OrdinalIgnoreCase) &&
+            .Where(section => !section.Kind.Equals("publication", StringComparison.OrdinalIgnoreCase) &&
                               !section.Kind.Equals("additional_experience", StringComparison.OrdinalIgnoreCase))
             .Select(section => section.SectionId)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.AI.Tests;
 
-public sealed class JevResumeDecisionProviderTests
+public sealed class NimbleResumeDecisionProviderTests
 {
     [Fact]
     public async Task SendsClosedChoiceAndRedactsContactDetails()
@@ -14,16 +14,18 @@ public sealed class JevResumeDecisionProviderTests
         string? captured = null;
         var handler = new StubHandler(async request =>
         {
+            Assert.Equal("http://127.0.0.1:11435/v1/systemone", request.RequestUri?.ToString());
+            Assert.Null(request.Headers.Authorization);
             captured = await request.Content!.ReadAsStringAsync();
             var response = Json("""
                 {
-                  "model":"jev-1.13.0",
+                  "model":"nimble",
                   "answers":{"decision":{"type":"choice","choice":"experience","confidence":0.91,
                     "probabilities":{"experience":0.88,"other":0.12}}},
                   "usage":{"input_tokens":42,"output_tokens":3}
                 }
                 """);
-            response.Headers.Add("x-typesafe-request-id", "req-1");
+            response.Headers.Add("x-request-id", "req-1");
             return response;
         });
         var sut = Create(handler);
@@ -52,7 +54,7 @@ public sealed class JevResumeDecisionProviderTests
     {
         var handler = new StubHandler(_ => Task.FromResult(Json("""
             {
-              "model":"jev-1.13.0",
+              "model":"nimble",
               "answers":{"decision":{"type":"choice","choice":"invented","confidence":1,
                 "probabilities":{"invented":1}}},
               "usage":{}
@@ -65,12 +67,11 @@ public sealed class JevResumeDecisionProviderTests
         await Assert.ThrowsAsync<InvalidDataException>(() => sut.DecideAsync(request));
     }
 
-    private static JevResumeDecisionProvider Create(HttpMessageHandler handler) =>
-        new(new HttpClient(handler), Options.Create(new JevOptions
+    private static NimbleResumeDecisionProvider Create(HttpMessageHandler handler) =>
+        new(new HttpClient(handler), Options.Create(new NimbleOptions
         {
             Enabled = true,
-            ApiKey = "test-key",
-            BaseUrl = "https://example.invalid"
+            BaseUrl = "http://127.0.0.1:11435"
         }));
 
     private static HttpResponseMessage Json(string json) => new(HttpStatusCode.OK)

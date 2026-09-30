@@ -2,6 +2,7 @@ namespace lucidRESUME.AI;
 
 public sealed class OllamaOptions
 {
+    public bool CompositionEnabled { get; set; }
     public string BaseUrl { get; set; } = "http://localhost:11434";
     /// <summary>Main tailoring model. Qwen3 family - thinking is disabled at call time.</summary>
     public string Model { get; set; } = "qwen3.5:4b";

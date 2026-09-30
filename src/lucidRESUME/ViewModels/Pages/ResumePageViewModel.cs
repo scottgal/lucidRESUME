@@ -16,6 +16,7 @@ using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.Ingestion.LinkedIn;
 using lucidRESUME.Ingestion.Preview;
+using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.ViewModels.Pages;
 
@@ -34,6 +35,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
     private readonly SkillLedgerBuilder _ledgerBuilder;
     private readonly IResumeExporter? _jsonExporter;
     private readonly IResumeExporter? _markdownExporter;
+    private readonly IResumeDecisionProvider? _decisionProvider;
+    private readonly NimbleOptions _nimbleOptions;
     private string? _loadedFilePath;
     private bool _suppressResumeSelectionSave;
 
@@ -135,7 +138,9 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         EmbeddingIndexer embeddingIndexer,
         QualitySynthesizer synthesizer,
         SkillLedgerBuilder ledgerBuilder,
-        IEnumerable<IResumeExporter> exporters)
+        IEnumerable<IResumeExporter> exporters,
+        IResumeDecisionProvider? decisionProvider = null,
+        IOptions<NimbleOptions>? nimbleOptions = null)
     {
         _parser = parser;
         _imageCache = imageCache;
@@ -148,6 +153,8 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         _embeddingIndexer = embeddingIndexer;
         _synthesizer = synthesizer;
         _ledgerBuilder = ledgerBuilder;
+        _decisionProvider = decisionProvider;
+        _nimbleOptions = nimbleOptions?.Value ?? new NimbleOptions();
         var exporterList = exporters.ToList();
         _jsonExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.JsonResume);
         _markdownExporter = exporterList.FirstOrDefault(e => e.Format == ExportFormat.Markdown);
@@ -285,7 +292,11 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         var resume = await _parser.ParseAsync(path, mode);
         if (resume.LlmEnhancementTask != null)
             await resume.LlmEnhancementTask;
-        lucidRESUME.Matching.SkillCategoriser.Categorise(resume);
+        SkillCategoriser.Categorise(resume, useDomainFallback: false);
+        if (_decisionProvider is not null)
+            await SkillCategoriser.CategoriseAmbiguousAsync(resume, _decisionProvider,
+                _nimbleOptions.AcceptanceProbability, _nimbleOptions.MinimumMargin);
+        SkillCategoriser.Categorise(resume);
         return resume;
     }
 

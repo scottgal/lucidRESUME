@@ -1,9 +1,6 @@
 using System.CommandLine;
 using System.Text.Json;
 using lucidRESUME.Cli.Infrastructure;
-using lucidRESUME.Core.Interfaces;
-using lucidRESUME.Matching;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace lucidRESUME.Cli.Commands;
 
@@ -51,9 +48,6 @@ public static class ParseCommand
 
             using var services = ServiceBootstrap.Build(config?.FullName);
             var resume = await ResumeInputHelper.LoadAsync(services, file, directory, ct);
-
-            // Categorise skills using taxonomy detection
-            SkillCategoriser.Categorise(resume);
 
             var json = JsonSerializer.Serialize(resume, PrettyJson);
 

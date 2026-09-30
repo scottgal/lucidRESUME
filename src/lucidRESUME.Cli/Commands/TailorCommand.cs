@@ -73,7 +73,7 @@ public static class TailorCommand
                 return;
             }
 
-            using var services = ServiceBootstrap.Build(config?.FullName);
+            await using var services = ServiceBootstrap.Build(config?.FullName);
             var jobParser = services.GetRequiredService<IJobSpecParser>();
             var qualityAnalyser = services.GetRequiredService<IResumeQualityAnalyser>();
             var compressor = services.GetRequiredService<SemanticCompressor>();

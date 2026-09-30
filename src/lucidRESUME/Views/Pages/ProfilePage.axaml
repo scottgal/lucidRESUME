@@ -259,13 +259,12 @@
 
             <Border BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
               <StackPanel Spacing="8">
-                <CheckBox Content="Use Jev for ambiguous ingestion decisions"
-                          IsChecked="{Binding JevEnabled}"/>
-                <TextBlock Text="Jev may classify unresolved sections or select among name and employer spans already proposed by local parsing and NER. It cannot generate evidence or prose. Candidate text is sent only when enabled."
-                           TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
-                <TextBlock Text="Jev API Key" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-                <TextBox Text="{Binding JevApiKey}" PlaceholderText="TypeSafe API key" PasswordChar="*"
+                <CheckBox Content="Use local Nimble for ambiguous ingestion decisions"
+                          IsChecked="{Binding NimbleEnabled}"/>
+                <TextBox Text="{Binding NimbleBaseUrl}" PlaceholderText="http://localhost:11434"
                          CornerRadius="6" Padding="10,8"/>
+                <TextBlock Text="Nimble classifies unresolved sections or selects among name and employer spans already proposed by parsing and NER. It runs through local Ollama and cannot generate evidence or prose. Install Ollama 0.35 or newer and run ollama pull nimble."
+                           TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
               </StackPanel>
             </Border>
 

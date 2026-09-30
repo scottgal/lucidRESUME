@@ -34,17 +34,31 @@ public sealed class SkillLedgerBuilder
         var evidenceLedger = Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
 
         // 1a. Collect skills from the Skills section
+        var skillSource = resume.CanonicalMarkdown ?? resume.RawMarkdown;
+        var skillSourceIndex = !string.IsNullOrWhiteSpace(skillSource)
+            ? MarkdownEvidenceIndex.Create(skillSource)
+            : null;
         foreach (var skill in resume.Skills.Where(skill =>
                      !skill.ImportSources.Contains("LLM extraction", StringComparer.OrdinalIgnoreCase)))
         {
             var entry = GetOrCreate(entries, skill.Name);
             entry.Category ??= skill.Category;
-            entry.Evidence.Add(new SkillEvidence
+            IEnumerable<string?> references = skill.SourceReferences.Count > 0
+                ? skill.SourceReferences.Select(reference => (string?)reference) : new string?[] { null };
+            foreach (var reference in references)
             {
-                SourceText = skill.Name,
-                Source = EvidenceSource.SkillsSection,
-                Confidence = 0.9
-            });
+                ProsePassage? passage = null;
+                if (reference is not null && skillSourceIndex is not null &&
+                    skillSourceIndex.TryGet(reference, out var resolved)) passage = resolved;
+                entry.Evidence.Add(new SkillEvidence
+                {
+                    SourceText = passage?.Text ?? skill.Name,
+                    SourceReference = passage?.Reference,
+                    SourceFingerprint = passage?.Fingerprint,
+                    Source = EvidenceSource.SkillsSection,
+                    Confidence = passage is not null ? 0.9 : 0.7
+                });
+            }
         }
 
         // 1b. Add NER-extracted skills BEFORE experience scanning
@@ -259,6 +273,8 @@ public sealed class SkillLedgerBuilder
                         Company = experience?.Company ?? entity?.Name,
                         JobTitle = experience?.Title,
                         SourceText = sourceText,
+                        SourceReference = evidence.Evidence.Ref ?? evidence.Evidence.Uri,
+                        SourceFingerprint = evidence.Evidence.Fingerprint?.Text,
                         StartDate = experience?.StartDate,
                         EndDate = experience?.IsCurrent == true ? null : experience?.EndDate,
                         Source = EvidenceSource.JobMlClaim,

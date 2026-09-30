@@ -60,7 +60,10 @@ public sealed class JobMlSkillLedgerTests
         Assert.Empty(beforeReview.Entries);
         var entry = Assert.Single(afterReview.Entries);
         Assert.Equal("Kubernetes", entry.SkillName);
-        Assert.Equal(EvidenceSource.JobMlClaim, Assert.Single(entry.Evidence).Source);
+        var evidence = Assert.Single(entry.Evidence);
+        Assert.Equal(EvidenceSource.JobMlClaim, evidence.Source);
+        Assert.Equal(file.Data.Claims[0].Evidence[0].Ref, evidence.SourceReference);
+        Assert.Equal(file.Data.Claims[0].Evidence[0].Fingerprint?.Text, evidence.SourceFingerprint);
         Assert.DoesNotContain(afterReview.Entries, item => item.SkillName == "Unreviewed legacy skill");
     }
 

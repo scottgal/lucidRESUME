@@ -93,6 +93,8 @@ public sealed class CompilationOptions
     public bool IncludeAdditionalExperience { get; set; } = true;
     /// <summary>Roles must be strictly longer than this many calendar months to enter the compact chronology.</summary>
     public int MinimumAdditionalExperienceMonths { get; set; } = 3;
+    /// <summary>Maximum compact chronology entries in the application résumé; the full record remains linked.</summary>
+    public int MaximumAdditionalExperienceEntries { get; set; } = 6;
     public bool ComposeProse { get; set; }
     public string? CompositionProvider { get; set; }
     /// <summary>Published endpoint for the full JobML career-record projection.</summary>

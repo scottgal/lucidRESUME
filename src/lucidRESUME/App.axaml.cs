@@ -125,8 +125,7 @@ public partial class App : Application
             return new Dictionary<string, string?>
             {
                 ["OpenAi:ApiKey"] = store.GetAsync(AiSecretNames.OpenAiApiKey).GetAwaiter().GetResult(),
-                ["Anthropic:ApiKey"] = store.GetAsync(AiSecretNames.AnthropicApiKey).GetAwaiter().GetResult(),
-                ["Jev:ApiKey"] = store.GetAsync(AiSecretNames.JevApiKey).GetAwaiter().GetResult()
+                ["Anthropic:ApiKey"] = store.GetAsync(AiSecretNames.AnthropicApiKey).GetAwaiter().GetResult()
             }.Where(pair => !string.IsNullOrWhiteSpace(pair.Value))
                 .ToDictionary(pair => pair.Key, pair => pair.Value);
         }

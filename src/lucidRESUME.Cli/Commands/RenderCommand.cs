@@ -29,6 +29,10 @@ public static class RenderCommand
         {
             Description = "Output template: ats-classic, modern-professional, compact-technical"
         };
+        var targetRoleOption = new Option<string?>("--target-role")
+        {
+            Description = "Target role displayed in the rendered document and document metadata"
+        };
         var compactJobMlOption = new Option<bool>("--cjobml")
         {
             DefaultValueFactory = _ => true,
@@ -38,7 +42,7 @@ public static class RenderCommand
 
         var command = new Command("render", "Render a portable JobML resume without calling an AI provider")
         {
-            fileOption, outputOption, formatOption, templateOption, configOption, compactJobMlOption
+            fileOption, outputOption, formatOption, templateOption, targetRoleOption, configOption, compactJobMlOption
         };
         command.SetAction(async (result, cancellationToken) =>
         {
@@ -52,10 +56,11 @@ public static class RenderCommand
             resume.JobMlSource = source;
             resume.JobMlRevision = MarkdownEvidenceIndex.Fingerprint(parsed.Markdown);
             resume.OutputTemplateId = ResumeTemplateCatalog.Get(result.GetValue(templateOption)).Id;
+            resume.TargetRole = result.GetValue(targetRoleOption)?.Trim();
             resume.IncludeCompactJobMl = result.GetValue(compactJobMlOption);
             MarkdownSectionParser.PopulateSections(resume, parsed.Markdown);
 
-            using var services = ServiceBootstrap.Build(result.GetValue(configOption)?.FullName);
+            await using var services = ServiceBootstrap.Build(result.GetValue(configOption)?.FullName);
             await ResumeOutputWriter.WriteAsync(
                 services, resume, result.GetValue(formatOption)!, output, cancellationToken);
         });

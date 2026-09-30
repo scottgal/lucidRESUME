@@ -14,21 +14,17 @@ var corpus = await BenchmarkCorpus.LoadAsync(cli.FixturePath);
 var runners = new List<IBenchmarkRunner> { new DeterministicRunner(corpus.Task) };
 LlamaSharpRuntime? localRuntime = null;
 
-if (cli.Provider is "jev" or "all")
+if (cli.Provider is "nimble" or "all")
 {
-    var apiKey = Environment.GetEnvironmentVariable("TYPESAFE_API_KEY");
-    if (string.IsNullOrWhiteSpace(apiKey))
-        throw new InvalidOperationException("TYPESAFE_API_KEY is required for --provider jev or all.");
-    var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-    var provider = new JevResumeDecisionProvider(http, Options.Create(new JevOptions
+    var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
+    var provider = new NimbleResumeDecisionProvider(http, Options.Create(new NimbleOptions
     {
         Enabled = true,
-        ApiKey = apiKey,
-        BaseUrl = cli.JevBaseUrl,
-        Model = cli.JevModel,
+        BaseUrl = cli.NimbleBaseUrl,
+        Model = cli.NimbleModel,
         RedactContactDetails = true
     }));
-    runners.Add(new JevRunner(provider, corpus.Task, cli.AcceptanceProbability, cli.MinimumMargin));
+    runners.Add(new NimbleRunner(provider, corpus.Task, cli.AcceptanceProbability, cli.MinimumMargin));
 }
 
 if (cli.Provider is "openai" or "all")
@@ -125,13 +121,13 @@ internal sealed class DeterministicRunner(string task) : IBenchmarkRunner
     }
 }
 
-internal sealed class JevRunner(
+internal sealed class NimbleRunner(
     IResumeDecisionProvider provider,
     string task,
     double acceptanceProbability,
     double minimumMargin) : IBenchmarkRunner
 {
-    public string Name => "jev";
+    public string Name => "ollama-nimble";
 
     public async Task<Prediction> PredictAsync(BenchmarkCase item, int repetition)
     {
@@ -368,8 +364,8 @@ internal sealed record BenchmarkOptions(
     int Repetitions,
     double AcceptanceProbability,
     double MinimumMargin,
-    string JevBaseUrl,
-    string JevModel,
+    string NimbleBaseUrl,
+    string NimbleModel,
     string OpenAiBaseUrl,
     string OpenAiModel,
     string LlamaModel,
@@ -388,8 +384,8 @@ internal sealed record BenchmarkOptions(
         if (suite is not "section" and not "entity")
             throw new ArgumentException("--suite must be section or entity.");
         var provider = Value("--provider", "deterministic").ToLowerInvariant();
-        if (provider is not "deterministic" and not "jev" and not "openai" and not "llamasharp" and not "all")
-            throw new ArgumentException("--provider must be deterministic, jev, openai, llamasharp, or all.");
+        if (provider is not "deterministic" and not "nimble" and not "openai" and not "llamasharp" and not "all")
+            throw new ArgumentException("--provider must be deterministic, nimble, openai, llamasharp, or all.");
         var repetitions = int.Parse(Value("--repetitions", "1"), CultureInfo.InvariantCulture);
         if (repetitions is < 1 or > 100)
             throw new ArgumentOutOfRangeException(nameof(args), "--repetitions must be between 1 and 100.");
@@ -403,8 +399,8 @@ internal sealed record BenchmarkOptions(
             repetitions,
             double.Parse(Value("--acceptance", "0.80"), CultureInfo.InvariantCulture),
             double.Parse(Value("--margin", "0.20"), CultureInfo.InvariantCulture),
-            Value("--jev-base-url", "https://api.typesafe.ai"),
-            Value("--jev-model", "jev-1.13.0"),
+            Value("--nimble-base-url", "http://localhost:11434"),
+            Value("--nimble-model", "nimble"),
             Value("--openai-base-url", "https://api.openai.com/v1"),
             Value("--openai-model", "gpt-5.6-luna"),
             Value("--llama-model", "grug-9b-Q4_K_M"),

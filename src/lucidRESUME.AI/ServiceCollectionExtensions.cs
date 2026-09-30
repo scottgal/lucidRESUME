@@ -16,12 +16,12 @@ public static class ServiceCollectionExtensions
         services.Configure<LlamaSharpOptions>(config.GetSection("LlamaSharp"));
         services.Configure<TailoringOptions>(config.GetSection("Tailoring"));
         services.Configure<EmbeddingOptions>(config.GetSection("Embedding"));
-        services.Configure<JevOptions>(config.GetSection("Jev"));
+        services.Configure<NimbleOptions>(config.GetSection("Nimble"));
 
-        if (config.GetSection("Jev").GetValue<bool>("Enabled"))
+        if (config.GetSection("Nimble").GetValue<bool>("Enabled"))
         {
-            services.AddHttpClient<IResumeDecisionProvider, JevResumeDecisionProvider>(client =>
-                client.Timeout = TimeSpan.FromSeconds(30));
+            services.AddHttpClient<IResumeDecisionProvider, NimbleResumeDecisionProvider>(client =>
+                client.Timeout = TimeSpan.FromMinutes(2));
         }
 
         // Full-strength OpenAI is the primary configured provider. Local LLamaSharp
@@ -33,6 +33,10 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<LlamaSharpModelManager>(client =>
             client.Timeout = Timeout.InfiniteTimeSpan);
         services.AddSingleton<LlamaSharpRuntime>();
+        services.AddHttpClient<OllamaResumeCompositionProvider>(client =>
+            client.Timeout = TimeSpan.FromMinutes(10));
+        services.AddTransient<IResumeCompositionProvider>(provider =>
+            provider.GetRequiredService<OllamaResumeCompositionProvider>());
         services.AddSingleton<IResumeCompositionProvider, LlamaSharpResumeCompositionProvider>();
         services.AddHttpClient<IResumeCompositionProvider, OpenAiResumeCompositionProvider>()
             .AddStandardResilienceHandler(options =>

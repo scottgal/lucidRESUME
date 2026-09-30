@@ -237,7 +237,7 @@ public sealed class PdfExporter : IResumeExporter
             {
                 col.Item().Element(c => SectionHeading(c, "Certifications", template));
                 foreach (var c in resume.Certifications)
-                    col.Item().SemanticParagraph().Text($"{c.Name} — {c.Issuer}" +
+                    col.Item().SemanticParagraph().Text($"{c.Name} - {c.Issuer}" +
                         (c.IssuedDate.HasValue ? $" ({c.IssuedDate.Value.Year})" : "")).FontSize(9);
                 col.Item().PaddingBottom(6);
             }
@@ -337,7 +337,7 @@ public sealed class PdfExporter : IResumeExporter
     {
         var s = start?.ToString("MMM yyyy") ?? "";
         var e = isCurrent ? "Present" : end?.ToString("MMM yyyy") ?? "";
-        return s != "" || e != "" ? $"{s} – {e}" : "";
+        return s != "" || e != "" ? $"{s} - {e}" : "";
     }
 
 }

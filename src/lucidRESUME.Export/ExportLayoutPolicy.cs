@@ -14,6 +14,17 @@ internal static class ExportLayoutPolicy
         if (resume.MinimumOutputPages < 2 || resume.Experience.Count == 0)
             return null;
 
+        // Rich front matter already fills the first page and causes the experience
+        // list to flow naturally. Adding a second forced split inside that list can
+        // strand a single role on an otherwise empty page.
+        var frontMatterWords = CountWords(resume.Personal.Summary)
+                               + resume.Skills.Sum(skill => CountWords(skill.Name) + CountWords(skill.Category))
+                               + resume.Projects.Sum(project => CountWords(project.Name) +
+                                   CountWords(project.Description) +
+                                   project.Technologies.Sum(CountWords));
+        if (frontMatterWords >= 220)
+            return null;
+
         var detailedIndices = resume.Experience
             .Select((experience, index) => (experience, index))
             .Where(item => !item.experience.IsCompact)
@@ -31,4 +42,8 @@ internal static class ExportLayoutPolicy
         var detailedSplit = Math.Clamp(detailedIndices.Count / 2, 1, detailedIndices.Count - 1);
         return detailedIndices[detailedSplit];
     }
+
+    private static int CountWords(string? value) => string.IsNullOrWhiteSpace(value)
+        ? 0
+        : value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
 }

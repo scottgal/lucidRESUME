@@ -7,6 +7,31 @@ namespace lucidRESUME.Core.Tests.Parsing;
 public class MarkdownSectionParserTests
 {
     [Fact]
+    public void Core_skill_prose_links_keep_plain_skill_names_in_structured_export()
+    {
+        const string markdown = """
+            # Alex Example
+
+            ## Core Skills
+
+            **Platform engineering:** [TypeScript](#section-1-role), [AWS](#section-1-role)
+
+            ## Experience
+
+            ### Engineer {#section-1-role}
+
+            Built a TypeScript service on AWS.
+            """;
+        var resume = ResumeDocument.Create("resume.md", "text/markdown", markdown.Length);
+
+        MarkdownSectionParser.PopulateSections(resume, markdown);
+
+        Assert.Contains(resume.Skills, skill => skill.Name == "TypeScript");
+        Assert.Contains(resume.Skills, skill => skill.Name == "AWS");
+        Assert.DoesNotContain(resume.Skills, skill => skill.Name.Contains("#section-", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void PopulateSections_Parses_middle_dot_contact_line_and_preference()
     {
         var resume = ResumeDocument.Create("resume.md", "text/markdown", 0);
@@ -416,6 +441,29 @@ public class MarkdownSectionParserTests
         Assert.Equal("University of Stirling", education.Institution);
         Assert.Equal(1992, education.StartDate?.Year);
         Assert.Equal(1996, education.EndDate?.Year);
+    }
+
+    [Fact]
+    public void PopulateSections_PreservesCompactRoleDirective()
+    {
+        const string markdown = """
+            # Jane Smith
+
+            ## Experience
+            ### Lead Developer - Example Ltd
+            <!-- lucidresume:compact -->
+            *Jan 2020 - Dec 2021*
+
+            - Maintained the production platform.
+            """;
+        var resume = ResumeDocument.Create("portable.md", "text/markdown", markdown.Length);
+
+        MarkdownSectionParser.PopulateSections(resume, markdown);
+
+        var experience = Assert.Single(resume.Experience);
+        Assert.True(experience.IsCompact);
+        Assert.Equal("Lead Developer", experience.Title);
+        Assert.Equal("Example Ltd", experience.Company);
     }
 
     [Fact]
