@@ -19,6 +19,14 @@ public sealed class SkillTaxonomy
     public static string? Canonicalize(string term)
     {
         var lower = term.ToLowerInvariant().Trim();
+        // A canonical name takes precedence over the same word used as an alias
+        // in another taxonomy (for example, Salesforce is also a CRM alias).
+        foreach (var tax in AllTaxonomies.Value.Values)
+        {
+            if (tax.CanonicalToAliases.ContainsKey(lower))
+                return lower;
+        }
+
         foreach (var tax in AllTaxonomies.Value.Values)
         {
             if (tax.AliasToCanonical.TryGetValue(lower, out var canonical))
@@ -112,7 +120,7 @@ public sealed class SkillTaxonomy
         }
         if (!Directory.Exists(taxDir)) return result;
 
-        foreach (var file in Directory.GetFiles(taxDir, "*.txt"))
+        foreach (var file in Directory.GetFiles(taxDir, "*.txt").Order(StringComparer.Ordinal))
         {
             var name = Path.GetFileNameWithoutExtension(file);
             var tax = ParseTaxonomyFile(file);
