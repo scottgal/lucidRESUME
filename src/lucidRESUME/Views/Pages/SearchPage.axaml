@@ -71,6 +71,9 @@
         </Border>
 
         <!-- Status -->
+        <Button x:Name="ProjectAddedJobButton" Content="Project resume for added job"
+                Command="{Binding ProjectAddedJobCommand}"
+                IsVisible="{Binding LastAddedJob, Converter={x:Static ObjectConverters.IsNotNull}}"/>
         <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"
                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
@@ -96,7 +99,7 @@
             <DataTemplate x:DataType="vm:SavedJobItem">
               <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1"
                       CornerRadius="6" Padding="12,8" Margin="0,0,0,6">
-                <Grid ColumnDefinitions="*,Auto">
+                <Grid ColumnDefinitions="*,Auto,Auto">
                   <StackPanel Grid.Column="0" Spacing="2">
                     <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}" FontSize="13">
                       <Run Text="{Binding Title}"/>
@@ -111,7 +114,10 @@
                       </Border>
                     </StackPanel>
                   </StackPanel>
-                  <Button Grid.Column="1" Content="✕"
+                  <Button Grid.Column="1" Content="Project Resume" Margin="8,0" VerticalAlignment="Center"
+                          Command="{Binding $parent[UserControl].((vm:SearchPageViewModel)DataContext).ProjectSavedJobCommand}"
+                          CommandParameter="{Binding}"/>
+                  <Button Grid.Column="2" Content="✕"
                           Command="{Binding $parent[UserControl].((vm:SearchPageViewModel)DataContext).RemoveJobCommand}"
                           CommandParameter="{Binding}"
                           Width="28" Height="28" Padding="0"

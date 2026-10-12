@@ -22,6 +22,8 @@ public sealed class JobDescription
     public List<JobCompetency> Competencies { get; set; } = [];
     public List<string> RequiredSkills { get; set; } = [];
     public List<string> PreferredSkills { get; set; } = [];
+    /// <summary>Extracted skill mentions retained independently of competency headings; mentions alone do not imply required priority.</summary>
+    public List<string> MentionedSkills { get; set; } = [];
     public int? RequiredYearsExperience { get; set; }
     public string? RequiredEducation { get; set; }
     public List<string> Responsibilities { get; set; } = [];

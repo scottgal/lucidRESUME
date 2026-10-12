@@ -162,7 +162,7 @@ public sealed class PdfExporter : IResumeExporter
                         col.Item().PaddingTop(5).SemanticHeading3()
                             .Text("Additional consulting, contract and earlier experience").Bold().FontSize(9);
                     col.Item().PaddingTop(experienceIndex == 0 ? 0 : exp.IsCompact ? 3 : 9)
-                        .ShowEntire().SemanticSection().Column(experienceColumn =>
+                        .EnsureSpace(70).SemanticSection().Column(experienceColumn =>
                     {
                         var dates = FormatDates(exp.StartDate, exp.EndDate, exp.IsCurrent);
                         var compactCitations = exp.IsCompact

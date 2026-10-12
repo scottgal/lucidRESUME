@@ -21,7 +21,29 @@ original archives. Invalid legacy JobML is retained with migration warnings, and
 its claims require review. Removing an input archive does not silently retract
 career facts already incorporated into the record.
 
-## Fill role gaps
+## Select a job and control the output
+
+After adding a job, choose **Project resume for added job**, or open **Jobs**,
+select a role and choose **Project Resume**. The projection page also offers a
+saved-job selector. These routes carry the saved job's identity, description and
+requirements into generation and its archived result.
+
+**Length** offers Automatic, Concise, Standard and Extended. Automatic scales the
+evidence budget with distinct job requirements. **Detail** controls the depth of
+supported examples; **Tone** offers Direct, Understated and Expressive when prose
+editing is enabled. Tone changes expression while preserving ownership, facts and
+uncertainty. Preferences are retained with each generated version. Available evidence
+determines the actual output size; these controls do not fabricate extra material.
+
+![Saved job with length, detail and tone controls](screenshots/projection-options.png)
+
+Word now flows naturally across A4 pages, and PDF roles can flow across page
+boundaries. Generation no longer forces a page break after an arbitrary role count.
+
+See the [prose and related-work research spike](research/2026-10-12-evidence-preserving-prose.md)
+for NLP diagnostics, blog discovery and proposed concise related GitHub links.
+
+## Optional evidence interview
 
 Job-specific generation identifies missing requirements, thin role accounts, bare
 skill labels and related evidence which does not establish a required skill. The

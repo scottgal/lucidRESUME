@@ -43,6 +43,33 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     private ResumeDocument? _contextResume;
     private JobDescription? _contextJob;
     private ResumeDocument? _generatedResume;
+    private bool _loadingSavedJobs;
+    public IReadOnlyList<ResumeLength> LengthOptions { get; } = Enum.GetValues<ResumeLength>();
+    public IReadOnlyList<ResumeDetail> DetailOptions { get; } = Enum.GetValues<ResumeDetail>();
+    public IReadOnlyList<ResumeTone> ToneOptions { get; } = Enum.GetValues<ResumeTone>();
+    [ObservableProperty] private ResumeLength _selectedLength = ResumeLength.Automatic;
+    [ObservableProperty] private ResumeDetail _selectedDetail = ResumeDetail.Balanced;
+    [ObservableProperty] private ResumeTone _selectedTone = ResumeTone.Direct;
+    [ObservableProperty] private IReadOnlyList<SavedJobItem> _savedJobs = [];
+    [ObservableProperty] private SavedJobItem? _selectedSavedJob;
+
+    public async Task LoadSavedJobsAsync()
+    {
+        var state = await _store.LoadAsync();
+        _loadingSavedJobs = true;
+        try
+        {
+            SavedJobs = state.Jobs.Where(job => !job.IsEmployerRole).OrderByDescending(job => job.CreatedAt)
+                .Select(job => new SavedJobItem(job.JobId, job.Title ?? "Untitled job", job.Company ?? "", job.Location ?? "", "", job)).ToList();
+            SelectedSavedJob = SavedJobs.FirstOrDefault(item => item.JobId == _contextJob?.JobId);
+        }
+        finally { _loadingSavedJobs = false; }
+    }
+
+    partial void OnSelectedSavedJobChanged(SavedJobItem? value)
+    {
+        if (!_loadingSavedJobs && value is not null) SetContext(null, value.FullJob);
+    }
 
     [ObservableProperty] private string _jobTitle = "";
     [ObservableProperty] private string _company = "";
@@ -212,7 +239,8 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             {
                 if (version == _contextVersion && IsTailoring) StatusMessage = message;
             });
-            var compressed = await _compressor.CompressAsync(resume, job, progress: progress);
+            var compressed = await _compressor.CompressAsync(resume, job, progress: progress,
+                generationOptions: new ResumeGenerationOptions { Length = SelectedLength, Detail = SelectedDetail, Tone = SelectedTone });
 
             if (version != _contextVersion) return;
             CompressionStats = $"{compressed.IncludedRoleCount}/{compressed.OriginalRoleCount} roles, " +

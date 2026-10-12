@@ -122,8 +122,15 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                     immutable_human_source = Protect(current.SectionId, source.Text),
                     current_draft = current.Text == source.Text ? null : Protect(current.SectionId, current.Text),
                     section_brief = packet.Intent,
-                    maximum_words = summaryIds.Contains(current.SectionId)
-                        ? Math.Min(packet.MaximumWords, 65) : packet.MaximumWords
+                    selected_claims = packet.Claims.Select(claim => new
+                    {
+                        id = claim.Claim.Id,
+                        subject = claim.Claim.Subject,
+                        statement = Protect(current.SectionId, claim.Claim.Statement),
+                        skills = claim.Claim.Concepts.All,
+                        evidence_ids = claim.EvidenceIds
+                    }),
+                    maximum_words = packet.MaximumWords
                 };
             }).ToList();
             var sectionIds = batch.Select(block => block.SectionId).ToArray();

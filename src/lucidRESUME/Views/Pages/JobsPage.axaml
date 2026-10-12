@@ -325,8 +325,12 @@
 
           <!-- Description -->
           <ScrollViewer Grid.Row="4">
+            <StackPanel Spacing="8">
+            <TextBlock Text="Skills and requirements" FontWeight="SemiBold" FontSize="12"/>
+            <TextBlock Text="{Binding SelectedJobSkills}" TextWrapping="Wrap" FontSize="12"/>
             <TextBlock Text="{Binding SelectedJobDescription}"
                        TextWrapping="Wrap" Foreground="{DynamicResource LrTertiaryTextBrush}" FontSize="12" LineHeight="18"/>
+            </StackPanel>
           </ScrollViewer>
 
           <!-- Aspect voting panel -->
@@ -378,7 +382,7 @@
 
           <!-- Actions -->
           <StackPanel Grid.Row="6" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-            <Button Content="Project Evidence Resume"
+            <Button x:Name="ProjectSelectedJobButton" Content="Project Resume"
                     Command="{Binding TailorSelectedJobCommand}"
                     Padding="16,8"/>
             <Button Content="Track Application"

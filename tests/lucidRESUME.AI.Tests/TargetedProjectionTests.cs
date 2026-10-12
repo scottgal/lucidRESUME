@@ -10,6 +10,33 @@ namespace lucidRESUME.AI.Tests;
 public sealed class TargetedProjectionTests
 {
     [Fact]
+    public async Task Extended_projection_selects_more_supported_roles_and_retains_generation_preferences()
+    {
+        var resume = ResumeDocument.Create("career.md", "text/markdown", 0);
+        resume.Experience = Enumerable.Range(0, 10).Select(i => new WorkExperience
+        {
+            Title = "Software Engineer", Company = $"Example {i}",
+            StartDate = new DateOnly(2000 + i, 1, 1), EndDate = new DateOnly(2000 + i, 12, 31),
+            Achievements = ["Built reliable APIs with C#."]
+        }).ToList();
+        var embedder = new EmptyEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }),
+            NullLogger<SemanticCompressor>.Instance);
+        var job = new JobDescription { Title = "Software Engineer", RawText = "Build reliable APIs with C#." };
+        var concise = await compressor.CompressAsync(resume, job, generationOptions: new() { Length = ResumeLength.Concise });
+        var preferences = new ResumeGenerationOptions { Length = ResumeLength.Extended, Detail = ResumeDetail.Thorough, Tone = ResumeTone.Expressive };
+        var extended = await compressor.CompressAsync(resume, job, generationOptions: preferences);
+        Assert.Equal(3, concise.Projection.Experience.Count(role => !role.IsCompact));
+        Assert.Equal(10, extended.Projection.Experience.Count(role => !role.IsCompact));
+        Assert.Equal(preferences, extended.Projection.GenerationOptions);
+        Assert.Equal(1, extended.Projection.MinimumOutputPages);
+        Assert.All(extended.Projection.Projection!.Blocks, block =>
+            Assert.Contains(resume.EvidenceLedger!.Claims, claim => claim.Id == block.ClaimId));
+    }
+
+    [Fact]
     public async Task Different_jobs_select_different_achievements_without_competencies_or_embeddings()
     {
         var resume = ResumeDocument.Create("career.md", "text/markdown", 0);

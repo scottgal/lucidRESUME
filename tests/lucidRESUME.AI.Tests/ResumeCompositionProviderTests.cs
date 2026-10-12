@@ -116,7 +116,9 @@ public sealed class ResumeCompositionProviderTests
         using var request = JsonDocument.Parse(handler.RequestBody!);
         var userPrompt = request.RootElement.GetProperty("messages")[1].GetProperty("content").GetString()!;
         Assert.Contains("\"target_role\":\"\"", userPrompt);
-        Assert.Contains("\"maximum_words\":65", userPrompt);
+        Assert.Contains("\"maximum_words\":80", userPrompt);
+        Assert.Contains("\"selected_claims\":", userPrompt);
+        Assert.Contains("\"evidence_ids\":[\"evidence-1\"]", userPrompt);
         Assert.DoesNotContain("vector search", userPrompt, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Azure", userPrompt, StringComparison.OrdinalIgnoreCase);
     }

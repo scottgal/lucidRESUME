@@ -82,6 +82,9 @@ public sealed class JobSpecParser : IJobSpecParser
         // Fuse all signals via RRF
         var fused = JdFieldFuser.Fuse(allCandidates, _fusionOpts);
         ApplyFusedFields(job, fused);
+        job.MentionedSkills = job.RequiredSkills.Concat(job.PreferredSkills)
+            .Where(skill => skill.Length is >= 2 and <= 50)
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var outline = JobAdvertOutline.Extract(text);
         if (outline.Count > 0)
         {

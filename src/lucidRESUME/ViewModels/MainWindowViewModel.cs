@@ -68,6 +68,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             ["Help"] = helpPage
         };
         applyPage.OpenArchive = () => Navigate("Generated");
+        searchPage.OpenProjection = job =>
+        {
+            applyPage.SetContext(null, job);
+            Navigate("Apply");
+        };
         _currentPage = resumePage;
         _healthCheck = healthCheck;
         _watchPoller = watchPoller;
@@ -210,6 +215,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         SelectedNav = page;
         CurrentPage = vm;
         if (vm is JobMlEditorPageViewModel editor) _ = editor.LoadCompleteCareerAsync();
+        if (vm is ApplyPageViewModel apply) _ = apply.LoadSavedJobsAsync();
     }
 
     /// <summary>Show a transient page (not in nav) like Import Review.</summary>

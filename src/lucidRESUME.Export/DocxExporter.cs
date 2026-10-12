@@ -99,14 +99,9 @@ public sealed class DocxExporter : IResumeExporter
             // --- Experience ---
             if (resume.Experience.Count > 0)
             {
-                var secondPageExperienceIndex = ExportLayoutPolicy.SecondPageExperienceIndex(resume);
-                if (secondPageExperienceIndex == 0)
-                    body.Append(new Paragraph(new Run(new Break { Type = BreakValues.Page })));
                 body.Append(CreateParagraph("Experience", "Heading2"));
                 for (var experienceIndex = 0; experienceIndex < resume.Experience.Count; experienceIndex++)
                 {
-                    if (experienceIndex == secondPageExperienceIndex && experienceIndex > 0)
-                        body.Append(new Paragraph(new Run(new Break { Type = BreakValues.Page })));
                     var exp = resume.Experience[experienceIndex];
                     if (exp.IsCompact && (experienceIndex == 0 || !resume.Experience[experienceIndex - 1].IsCompact))
                         body.Append(CreateParagraph("Additional consulting, contract and earlier experience",
@@ -128,7 +123,11 @@ public sealed class DocxExporter : IResumeExporter
                     }
                     for (var paragraphIndex = 0; paragraphIndex < roleParagraphs.Count; paragraphIndex++)
                     {
-                        KeepTogether(roleParagraphs[paragraphIndex], paragraphIndex < roleParagraphs.Count - 1);
+                        // Keep the heading/tools with the start of the account, while
+                        // allowing later bullets to flow onto the next page naturally.
+                        var firstAchievement = exp.Technologies.Count > 0 ? 2 : 1;
+                        if (paragraphIndex < firstAchievement)
+                            KeepTogether(roleParagraphs[paragraphIndex], paragraphIndex < roleParagraphs.Count - 1);
                         body.Append(roleParagraphs[paragraphIndex]);
                     }
                     body.Append(CreateParagraph("", fontSize: exp.IsCompact ? 8 : 22)); // spacing
@@ -196,6 +195,7 @@ public sealed class DocxExporter : IResumeExporter
             // Set page margins
             var margin = (int)Math.Round(template.PageMarginPoints * 20);
             body.Append(new SectionProperties(
+                new PageSize { Width = 11906u, Height = 16838u }, // A4, matching PDF
                 new PageMargin
                 {
                     Top = margin,
@@ -215,6 +215,15 @@ public sealed class DocxExporter : IResumeExporter
         var stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
         stylesPart.Styles = new Styles(
             new Style(
+                new StyleName { Val = "Normal" },
+                new StyleParagraphProperties(
+                    new WidowControl(),
+                    new SpacingBetweenLines { After = "60", Line = "240", LineRule = LineSpacingRuleValues.Auto }),
+                new StyleRunProperties(
+                    new RunFonts { Ascii = template.FontFamily, HighAnsi = template.FontFamily },
+                    new FontSize { Val = ((int)Math.Round(template.BodyFontSize * 2)).ToString() }))
+            { Type = StyleValues.Paragraph, StyleId = "Normal", Default = true },
+            new Style(
                 new StyleName { Val = "Heading1" },
                 new StyleRunProperties(
                     new RunFonts { Ascii = template.FontFamily, HighAnsi = template.FontFamily },
@@ -227,6 +236,7 @@ public sealed class DocxExporter : IResumeExporter
             new Style(
                 new StyleName { Val = "Heading2" },
                 new StyleParagraphProperties(
+                    new KeepNext(),
                     new SpacingBetweenLines { Before = "200", After = "60" }
                 ),
                 new StyleRunProperties(

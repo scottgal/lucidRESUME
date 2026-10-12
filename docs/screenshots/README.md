@@ -1,5 +1,10 @@
 # Desktop documentation screenshots
 
+The synthetic [projection-options.png](projection-options.png) capture was added on
+2026-10-12 after exercising Add Job → Project Resume in the native client. It shows
+the saved-job selector and length, detail and tone controls. Its fixture contains
+no private career information.
+
 The following screenshots were refreshed on 2026-10-12 using the native Avalonia
 UI test bridge with a private copy of the imported career. They are real client
 captures, without compositing or generated UI imagery.

@@ -40,6 +40,8 @@ public sealed class ResumeArtifactBuilder
         result.JobMlSource = artifact;
         result.JobMlRevision = MarkdownEvidenceIndex.Fingerprint(jobMl.Markdown);
         result.OutputTemplateId = templateId;
+        result.GenerationOptions = projection.GenerationOptions;
+        result.MinimumOutputPages = projection.MinimumOutputPages;
         result.TargetRole = job.Title;
         result.MarkTailoredFor(job.JobId);
 

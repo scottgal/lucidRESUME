@@ -500,6 +500,7 @@ public sealed class AppState
         IncludeCompactJobMl = source.IncludeCompactJobMl,
         OutputTemplateId = source.OutputTemplateId,
         MinimumOutputPages = source.MinimumOutputPages,
+        GenerationOptions = source.GenerationOptions,
         TargetRole = source.TargetRole,
         ImageCacheKey = source.ImageCacheKey,
         PageCount = source.PageCount,

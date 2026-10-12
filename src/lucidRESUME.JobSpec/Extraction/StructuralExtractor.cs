@@ -342,7 +342,7 @@ public static partial class StructuralExtractor
                     trimmed = trimmed[(numEnd + 1)..].Trim();
             }
 
-            if (trimmed.Length > 2)
+            if (trimmed.Length >= 2)
                 AddItemsFromLine(candidates, trimmed, fieldType, 0.8);
         }
     }
@@ -359,11 +359,11 @@ public static partial class StructuralExtractor
             foreach (var item in items)
             {
                 var clean = item.Trim().TrimStart('-', '•', ' ');
-                if (clean.Length > 2 && clean.Length < 120)
+                if (clean.Length >= 2 && clean.Length < 120)
                     candidates.Add(new(fieldType, clean, baseConfidence, "structural"));
             }
         }
-        else if (cleaned.Length > 2 && cleaned.Length < 200)
+        else if (cleaned.Length >= 2 && cleaned.Length < 200)
         {
             candidates.Add(new(fieldType, cleaned, baseConfidence, "structural"));
         }

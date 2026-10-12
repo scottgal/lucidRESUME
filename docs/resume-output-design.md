@@ -2,13 +2,38 @@
 
 ## End-to-end output
 
+### October 2026 pagination and prose controls
+
+Native projection now exposes saved-job selection, length, detail and bounded tone.
+Automatic length scales its evidence budget with distinct requirements; Extended
+permits more supported roles and examples. These preferences are archived with the
+projection. Tone changes phrasing only when the optional prose editor runs.
+
+Word exports use explicit A4 geometry and natural pagination. Role headers and tools
+stay with the beginning of the account, while later bullets may flow onto another
+page. PDF permits the same role flow. New native projections have no minimum-page
+quota. Older PDF artifacts retain their legacy minimum-page preference.
+
+Regression on the reported private DOCX preserved all 678 words in exactly the same
+order. LibreOffice rendered the old version as three pages (296, 61 and 332 extracted
+words), and the updated exporter as two pages (357 and 332 extracted words). Rendered
+word counts include layout-dependent extraction differences; the Word XML text
+comparison establishes content preservation. The original Desktop file was not
+modified. Historical page counts later in this document describe earlier builds.
+
+The [research spike](research/2026-10-12-evidence-preserving-prose.md) records the NLP,
+tone, publication retrieval and concise related-project proposals separately from
+implemented behavior.
+
+### Projection workflow
+
 The supported role-specific document path is:
 
 1. Import one or more resume documents and LinkedIn data.
 2. Import GitHub repositories and their public evidence.
 3. Review the merge so uncertain facts do not enter the profile silently.
-4. Paste a job advert into Project.
-5. Select an output template and project the relevant accepted ledger records.
+4. Add a job and choose Project Resume, select a saved job, or paste an advert into Project.
+5. Choose length, detail, tone and an output template, then project the relevant accepted ledger records.
 6. Review the human-owned prose and its JobML evidence links.
 7. Export the same projection as Markdown, DOCX, or PDF.
 

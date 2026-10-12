@@ -8,6 +8,16 @@ public class JobSpecParserTests
     // Use the internal text-only constructor - no scraper needed for these tests
     private readonly JobSpecParser _parser = new(NullLogger<JobSpecParser>.Instance);
 
+    [Fact]
+    public async Task Competency_outline_does_not_discard_extracted_named_skill_mentions()
+    {
+        var text = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures", "morena-head-applied-ai.txt"));
+        var job = await _parser.ParseFromTextAsync(text + "\nRequired skills\n- C#\n- PostgreSQL\n");
+        Assert.NotEmpty(job.Competencies);
+        Assert.Contains("C#", job.MentionedSkills);
+        Assert.Contains("PostgreSQL", job.MentionedSkills);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

@@ -44,11 +44,13 @@ public sealed class ResumeDocument
     public string OutputTemplateId { get; set; } = ResumeTemplateCatalog.AtsClassicId;
 
     /// <summary>
-    /// Minimum page count requested for paginated exports. Two pages is the default
-    /// because a credible senior-career projection needs room for evidence and chronology.
-    /// Set to one for an explicitly compact export.
+    /// Legacy PDF minimum-page preference, retained for older saved artifacts.
+    /// New native projections set this to one and flow according to their content.
+    /// Word always uses natural pagination.
     /// </summary>
     public int MinimumOutputPages { get; set; } = 2;
+
+    public ResumeGenerationOptions GenerationOptions { get; set; } = new();
 
     /// <summary>The role this immutable projection was compiled for.</summary>
     public string? TargetRole { get; set; }

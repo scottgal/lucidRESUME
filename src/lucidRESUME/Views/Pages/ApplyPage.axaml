@@ -8,14 +8,15 @@
   <Grid ColumnDefinitions="*,*" Margin="16,12">
 
     <!-- LEFT: job input form -->
-    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0" IsEnabled="{Binding !IsTailoring}">
+    <ScrollViewer Grid.Column="0" Margin="0,0,12,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" IsEnabled="{Binding !IsTailoring}">
 
       <!-- Header -->
-      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
+      <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
         <TextBlock Text="Generate Resume" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
-        <Button Content="Build complete transcript" Command="{Binding BuildCompleteTranscriptCommand}"/>
-        <Button x:Name="ViewGeneratedArchive" Content="Archive" Command="{Binding ViewArchiveCommand}"/>
-      </StackPanel>
+        <Button Content="Build complete transcript" Margin="12,0,0,4" Command="{Binding BuildCompleteTranscriptCommand}"/>
+        <Button x:Name="ViewGeneratedArchive" Content="Archive" Margin="12,0,0,4" Command="{Binding ViewArchiveCommand}"/>
+      </WrapPanel>
 
       <!-- Projection invariant -->
       <Border Grid.Row="1" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10">
@@ -42,6 +43,14 @@
 
       <!-- Job Title -->
       <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,10">
+        <TextBlock Text="Choose a saved job, or paste a description below" FontSize="12"/>
+        <ComboBox x:Name="ProjectionSavedJobSelector" ItemsSource="{Binding SavedJobs}" SelectedItem="{Binding SelectedSavedJob}" HorizontalAlignment="Stretch">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:SavedJobItem">
+              <TextBlock><Run Text="{Binding Title}"/><Run Text=" — "/><Run Text="{Binding Company}"/></TextBlock>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
         <TextBlock Text="Job Title" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
         <TextBox x:Name="ProjectionJobTitle" Text="{Binding JobTitle}" PlaceholderText="e.g. Senior Software Engineer"/>
       </StackPanel>
@@ -65,6 +74,22 @@
 
       <!-- Output template -->
       <StackPanel Grid.Row="6" Spacing="4" Margin="0,0,0,10">
+        <Grid ColumnDefinitions="*,12,*">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Length" FontSize="12"/>
+            <ComboBox x:Name="ProjectionLengthSelector" ItemsSource="{Binding LengthOptions}" SelectedItem="{Binding SelectedLength}" HorizontalAlignment="Stretch"/>
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="4">
+            <TextBlock Text="Detail" FontSize="12"/>
+            <ComboBox x:Name="ProjectionDetailSelector" ItemsSource="{Binding DetailOptions}" SelectedItem="{Binding SelectedDetail}" HorizontalAlignment="Stretch"/>
+          </StackPanel>
+        </Grid>
+        <TextBlock Text="Tone" FontSize="12"/>
+        <ComboBox x:Name="ProjectionToneSelector" ItemsSource="{Binding ToneOptions}" SelectedItem="{Binding SelectedTone}" HorizontalAlignment="Stretch"/>
+        <TextBlock Text="Tone changes expression while preserving evidence and ownership. Applied when prose editing is enabled."
+                   FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource LrSubtleTextBrush}"/>
+        <TextBlock Text="Automatic scales evidence to the job's requirements. Concise, Standard and Extended set the scope; detail controls examples per role. Page count follows the content."
+                   FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource LrSubtleTextBrush}"/>
         <TextBlock Text="Output Template" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
         <ComboBox x:Name="OutputTemplateSelector" ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate}"/>
         <TextBlock Text="{Binding SelectedTemplate.Description}" FontSize="10"
@@ -117,6 +142,7 @@
       </StackPanel>
 
     </Grid>
+    </ScrollViewer>
 
     <!-- RIGHT: projected result -->
     <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="12,0,0,0">

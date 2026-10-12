@@ -67,10 +67,11 @@ public sealed class JdSkillLedgerBuilder
 
         // 2. Structural: add terms from the extracted skill lists
         // Split comma-delimited lines into individual skills
-        foreach (var rawSkill in jd.RequiredSkills.Concat(jd.PreferredSkills))
+        foreach (var rawSkill in jd.RequiredSkills.Concat(jd.PreferredSkills).Concat(jd.MentionedSkills))
         {
             var importance = jd.RequiredSkills.Contains(rawSkill)
-                ? SkillImportance.Required : SkillImportance.Preferred;
+                ? SkillImportance.Required : jd.PreferredSkills.Contains(rawSkill)
+                    ? SkillImportance.Preferred : SkillImportance.Inferred;
 
             // Split on commas if the line contains multiple skills
             var parts = rawSkill.Contains(',')

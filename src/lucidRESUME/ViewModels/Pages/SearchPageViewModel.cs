@@ -20,6 +20,8 @@ public sealed partial class SearchPageViewModel : ViewModelBase
 {
     private readonly IJobSpecParser _parser;
     private readonly IAppStore _store;
+    public Action<JobDescription>? OpenProjection { get; set; }
+    [ObservableProperty] private JobDescription? _lastAddedJob;
 
     [ObservableProperty] private string _jobUrl = "";
     [ObservableProperty] private string _pastedText = "";
@@ -96,11 +98,11 @@ public sealed partial class SearchPageViewModel : ViewModelBase
             // If this was triggered from a manual-paste fallback, carry the URL
             if (!string.IsNullOrWhiteSpace(ManualUrl))
             {
-                job = JobDescription.Create(text, new JobSource
+                job.Source = new JobSource
                 {
                     Type = JobSourceType.Url,
                     Url = ManualUrl
-                });
+                };
                 ManualUrl = "";
                 NeedsManualText = false;
             }
@@ -131,6 +133,7 @@ public sealed partial class SearchPageViewModel : ViewModelBase
     {
         await _store.MutateAsync(state =>
             state.Jobs.RemoveAll(j => j.JobId == item.JobId));
+        if (LastAddedJob?.JobId == item.JobId) LastAddedJob = null;
         await LoadSavedJobsAsync();
         StatusMessage = "Removed.";
     }
@@ -139,6 +142,16 @@ public sealed partial class SearchPageViewModel : ViewModelBase
     {
         await _store.MutateAsync(state => state.Jobs.Add(job));
         await LoadSavedJobsAsync();
+        LastAddedJob = job;
+    }
+
+    [RelayCommand]
+    private void ProjectSavedJob(SavedJobItem item) => OpenProjection?.Invoke(item.FullJob);
+
+    [RelayCommand]
+    private void ProjectAddedJob()
+    {
+        if (LastAddedJob is not null) OpenProjection?.Invoke(LastAddedJob);
     }
 
     private async Task LoadSavedJobsAsync()

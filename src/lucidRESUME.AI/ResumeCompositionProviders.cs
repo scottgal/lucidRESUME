@@ -49,7 +49,12 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
                 {
                     x.SectionId,
                     x.Intent,
-                    x.MaximumWords
+                    x.MaximumWords,
+                    selected_claims = x.Claims.Select(claim => new
+                    {
+                        claim.Claim.Id, claim.Claim.Subject, claim.Claim.Statement,
+                        skills = claim.Claim.Concepts.All, claim.EvidenceIds
+                    })
                 })
             }),
             text = new
@@ -113,7 +118,7 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
         Prefer an action, its concrete object and a supported outcome. Qualitative outcomes are useful;
         never force a number into a passage. Avoid repeating the same outcome in multiple sections.
         For Tighten, remove repetition, setup and low-value detail while keeping names, outcomes and useful
-        technical specifics. For HumanVoice, keep the tightened length, remove stock phrases such as "proven
+        technical specifics. For HumanVoice, respect the section word budget and requested detail, remove stock phrases such as "proven
         track record", "passionate", "results-driven", "leveraged" and "spearheaded", and favour direct,
         natural UK English. Return every section once and preserve all identifier arrays.
         """;
@@ -161,6 +166,11 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
                                      immutable_human_source = source.Text,
                                      current_draft = current.Text,
                                      section_brief = packet.Intent,
+                                     selected_claims = packet.Claims.Select(claim => new
+                                     {
+                                         claim.Claim.Id, claim.Claim.Subject, claim.Claim.Statement,
+                                         skills = claim.Claim.Concepts.All, claim.EvidenceIds
+                                     }),
                                      maximum_words = packet.MaximumWords,
                                      allowed_emphasis = packet.RequirementIds.Select(id => request.Manifest.Requirements
                                          .First(requirement => requirement.Id == id).Text)
@@ -192,7 +202,7 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
             section_brief. allowed_emphasis may change focus, not facts. Make the sections work as one
             coherent resume without moving facts between sections. Write selective, compact role accounts
             rather than lists of every duty. Tighten means combine overlap and remove repetition, setup and
-            filler. HumanVoice means keep the tightened length and remove stock AI wording while preserving
+            filler. HumanVoice means respect the section budget and requested detail and remove stock AI wording while preserving
             the source's stance and rhythm. Prefer direct, natural UK English. Never use an em dash.
             Preserve personal versus team contribution, qualifiers, negation and causality. Helping must
             not become leading; intended benefits must not become achieved results. Qualitative outcomes

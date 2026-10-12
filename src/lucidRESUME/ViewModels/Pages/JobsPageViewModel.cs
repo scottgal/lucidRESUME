@@ -89,6 +89,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     [ObservableProperty] private string _selectedJobLocation = "";
     [ObservableProperty] private bool _selectedJobIsRemote;
     [ObservableProperty] private string _selectedJobDescription = "";
+    [ObservableProperty] private string _selectedJobSkills = "";
 
     [ObservableProperty] private IReadOnlyList<AspectVoteItem> _selectedJobAspects = [];
 
@@ -259,6 +260,9 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         SelectedJobLocation = value?.Location ?? "";
         SelectedJobIsRemote = value?.IsRemote ?? false;
         SelectedJobDescription = value?.FullJob.RawText ?? "";
+        SelectedJobSkills = value is null ? "" : string.Join(" · ", value.FullJob.MentionedSkills
+            .Concat(value.FullJob.RequiredSkills).Concat(value.FullJob.PreferredSkills)
+            .Distinct(StringComparer.OrdinalIgnoreCase));
         HasJdQualityReport = false;
         JdQualityFindings = [];
         HasCoverageReport = false;

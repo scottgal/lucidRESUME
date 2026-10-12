@@ -73,8 +73,11 @@ public sealed class SemanticCompressor
     /// Returns a pre-filtered projection whose prose blocks remain bound to ledger claims.
     /// </summary>
     public async Task<CompressedResume> CompressAsync(
-        ResumeDocument resume, JobDescription jd, CancellationToken ct = default, IProgress<string>? progress = null)
+        ResumeDocument resume, JobDescription jd, CancellationToken ct = default, IProgress<string>? progress = null,
+        ResumeGenerationOptions? generationOptions = null)
     {
+        var preferences = generationOptions ?? new ResumeGenerationOptions();
+        var budget = ResumeGenerationBudget.Resolve(jd, preferences);
         var sourceLedger = EvidenceLedgerBuilder.EnsureCurrent(resume);
         var resumeLedger = await _ledgerBuilder.BuildAsync(resume, ct);
         var jdLedger = await _jdLedgerBuilder.BuildAsync(jd, ct);
@@ -199,7 +202,7 @@ public sealed class SemanticCompressor
                 Tokens(role.Title ?? "").Intersect(targetTitleTerms).Count() * 12;
 
         var selectedRoleIds = SelectDetailedRoleIds(
-            resume.Experience, roleScores, _careerAnchorCompanies, MaximumRelevantRoles);
+            resume.Experience, roleScores, _careerAnchorCompanies, budget.Roles);
         var currentSpecialist = resume.Experience.Where(IsUsableRole).Where(role => role.IsCurrent &&
                 Tokens(role.Title ?? "").Intersect(targetTitleTerms).Any())
             .OrderByDescending(role => role.StartDate).FirstOrDefault();
@@ -217,6 +220,8 @@ public sealed class SemanticCompressor
             _logger.LogInformation("Retained {Count} author-selected career anchor role(s)", anchorCount);
 
         var projection = ResumeDocument.Create(resume.FileName, resume.ContentType, resume.FileSizeBytes);
+        projection.GenerationOptions = preferences;
+        projection.MinimumOutputPages = 1; // Content flows naturally; no artificial page quota.
         projection.Personal = new PersonalInfo
         {
             FullName = Accepted(sourceLedger, "personal:name") ? resume.Personal.FullName : null,
@@ -276,7 +281,7 @@ public sealed class SemanticCompressor
                 .Concat(roleProfile is null ? [] : _taxonomy.GetRoleSkills(roleProfile))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var summary = SelectSummary(CleanSummary(resume.Personal.Summary), summaryTerms,
-                roleProfile is "CTO" or "VP of Engineering" or "Head of Engineering");
+                roleProfile is "CTO" or "VP of Engineering" or "Head of Engineering", budget.SummaryWords);
             if (!string.IsNullOrWhiteSpace(summary))
             {
                 md.AppendLine("## Summary {#summary}");
@@ -320,7 +325,7 @@ public sealed class SemanticCompressor
                     .SelectMany(e => e)
                     .Any(e => e.SourceText == achievement);
 
-                if ((isEvidence || relevantAchievements.Count < 3) &&
+                if ((isEvidence || relevantAchievements.Count < budget.AchievementsPerRole) &&
                     relevantAchievements.All(existing => !NearDuplicate(existing, achievement)))
                     relevantAchievements.Add(achievement);
             }
@@ -362,7 +367,7 @@ public sealed class SemanticCompressor
                 ImportSources = [.. exp.ImportSources]
             };
             var paragraph = string.IsNullOrEmpty(dateRange) ? 1 : 2;
-            var maximumAchievements = isCareerAnchor ? 1 : 3;
+            var maximumAchievements = isCareerAnchor && preferences.Detail != ResumeDetail.Thorough ? 1 : budget.AchievementsPerRole;
             foreach (var a in relevantAchievements.Take(maximumAchievements))
             {
                 md.AppendLine($"- {a}");
@@ -417,7 +422,7 @@ public sealed class SemanticCompressor
             .Concat(roleProfile is null ? [] : _taxonomy.GetRoleSkills(roleProfile))
             .SelectMany(Tokens)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var selectedProjects = SelectRelevantProjects(resume.Projects, projectTerms, MaximumSelectedProjects);
+        var selectedProjects = SelectRelevantProjects(resume.Projects, projectTerms, budget.Projects);
 
         if (selectedProjects.Count > 0)
         {
@@ -426,7 +431,7 @@ public sealed class SemanticCompressor
             foreach (var project in selectedProjects)
             {
                 var anchor = $"project-{project.Id:N}";
-                var selectedDescription = SelectProjectDescription(project.Description!, projectTerms);
+                var selectedDescription = SelectProjectDescription(project.Description!, projectTerms, budget.ProjectWords);
                 var selectedTechnologies = SelectProjectTechnologies(project.Technologies, projectTerms);
                 md.AppendLine($"### {project.Name} {{#{anchor}}}");
                 md.AppendLine(selectedDescription);
@@ -766,7 +771,7 @@ public sealed class SemanticCompressor
         return summary;
     }
 
-    private static string SelectSummary(string summary, IReadOnlySet<string> roleSkills, bool isExecutiveTarget)
+    private static string SelectSummary(string summary, IReadOnlySet<string> roleSkills, bool isExecutiveTarget, int maximumWords = MaximumSummaryWords)
     {
         var cleaned = Regex.Replace(summary,
             @"(?im)^.*desired\s+job\s+title\s*:.*(?:\r?\n|$)", "").Trim();
@@ -784,7 +789,7 @@ public sealed class SemanticCompressor
                         @"\b(led|lead|trained|recruited|built)\b.*\b(team|teams|developers|engineers)\b",
                         RegexOptions.IgnoreCase) ? 4 : 0)
         })
-            .OrderByDescending(x => x.Score).ThenBy(x => x.Index).Take(4)
+            .OrderByDescending(x => x.Score).ThenBy(x => x.Index).Take(Math.Max(4, maximumWords / 25))
             .OrderBy(x => x.Index).ToList();
         var selected = new List<string>();
         var words = 0;
@@ -792,14 +797,14 @@ public sealed class SemanticCompressor
         {
             var sentence = item.Sentence;
             var count = Regex.Matches(sentence, @"\b[\p{L}\p{N}][\p{L}\p{N}'’-]*\b").Count;
-            if (words + count > MaximumSummaryWords) continue;
+            if (words + count > maximumWords) continue;
             selected.Add(sentence.Trim());
             words += count;
         }
         return selected.Count == 0 ? cleaned : string.Join(' ', selected);
     }
 
-    private static string SelectProjectDescription(string description, IReadOnlySet<string> targetTerms)
+    private static string SelectProjectDescription(string description, IReadOnlySet<string> targetTerms, int maximumWords = MaximumProjectDescriptionWords)
     {
         var sentences = Regex.Split(description.Trim(), @"(?<=[.!?])\s+")
             .Where(sentence => !string.IsNullOrWhiteSpace(sentence))
@@ -818,7 +823,7 @@ public sealed class SemanticCompressor
         foreach (var item in sentences)
         {
             var sentenceWords = Regex.Matches(item.Sentence, @"\b[\p{L}\p{N}][\p{L}\p{N}'’-]*\b").Count;
-            if (selected.Count >= 3 || wordCount + sentenceWords > MaximumProjectDescriptionWords) continue;
+            if (selected.Count >= Math.Max(3, maximumWords / 30) || wordCount + sentenceWords > maximumWords) continue;
             selected.Add((item.Sentence, item.Index));
             wordCount += sentenceWords;
         }

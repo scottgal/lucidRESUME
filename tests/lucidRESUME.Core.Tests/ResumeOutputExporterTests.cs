@@ -225,7 +225,7 @@ public sealed class ResumeOutputExporterTests
     }
 
     [Fact]
-    public async Task Paginated_exports_default_to_an_intentional_second_page()
+    public async Task Word_flows_naturally_while_legacy_pdf_minimum_pages_is_retained()
     {
         var resume = CreateResume(ResumeTemplateCatalog.AtsClassicId);
         resume.IncludeCompactJobMl = false;
@@ -234,7 +234,7 @@ public sealed class ResumeOutputExporterTests
         using (var stream = new MemoryStream(docxBytes))
         using (var document = WordprocessingDocument.Open(stream, false))
         {
-            Assert.Contains(document.MainDocumentPart!.Document!.Descendants<
+            Assert.DoesNotContain(document.MainDocumentPart!.Document!.Descendants<
                     DocumentFormat.OpenXml.Wordprocessing.Break>(),
                 pageBreak => pageBreak.Type?.Value == DocumentFormat.OpenXml.Wordprocessing.BreakValues.Page);
         }

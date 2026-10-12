@@ -304,7 +304,7 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
         using var documentReader = new StreamReader(archive.GetEntry("word/document.xml")!.Open());
         var documentXml = await documentReader.ReadToEndAsync();
         Assert.Contains(prose, documentXml);
-        Assert.Contains("w:type=\"page\"", documentXml);
+        Assert.DoesNotContain("w:type=\"page\"", documentXml);
         Assert.Contains("Target role: Head of Engineering", documentXml);
         Assert.Contains("Jan 2022 - Present", documentXml);
         Assert.Contains("Additional consulting, contract and earlier experience", documentXml);
