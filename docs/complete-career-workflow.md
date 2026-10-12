@@ -25,13 +25,19 @@ career facts already incorporated into the record.
 
 Job-specific generation identifies missing requirements, thin role accounts, bare
 skill labels and related evidence which does not establish a required skill. The
-interview asks for context, personal contribution and outcomes on a selected role.
+resume always projects from the available evidence; unanswered topics never block
+generation. A warning highlights gaps and **Improve role evidence (optional)** opens
+the interview after projection. **Back to projected resume** returns immediately
+without answering or regenerating. The interview asks for context, personal
+contribution and outcomes on a selected role.
+
+![Projected resume with an optional evidence-gap warning](screenshots/optional-gap-warning.png)
 The complete-transcript builder covers scope, delivery, decisions/tools, outcomes,
 leadership and reliability. Completed topics survive subsequent imports.
 
 Review the proposed prose and named skills before saving. Qualitative outcomes are
-useful; unknown quantities can remain blank. Skip a topic or choose **Project with
-current evidence** when appropriate. Raw answers and reviewed prose are retained
+useful; unknown quantities can remain blank. Answer only useful topics, then
+regenerate when you want the saved detail included. Raw answers and reviewed prose are retained
 on the canonical role with candidate-declared interview provenance. Neither an
 interview response nor an automated assessment establishes independent verification.
 Optional decision-model assessment is disabled by default; see

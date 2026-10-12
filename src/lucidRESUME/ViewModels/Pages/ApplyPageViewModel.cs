@@ -24,7 +24,6 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     private readonly HashSet<string> _handledTopics = [];
     private RoleInterviewTopic? _interviewTopic;
     private Guid? _preferredInterviewRole;
-    private bool _continueProjection;
     private int _contextVersion;
     private bool _settingParsedFields;
     private readonly IInterviewAssessor _interviewAssessor;
@@ -50,15 +49,18 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     [ObservableProperty] private string _jobDescriptionText = "";
     [ObservableProperty] private string? _tailoredMarkdown;
     [ObservableProperty] private bool _isTailoring;
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(ShowEmptyResult))] private bool _hasResult;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(ShowEmptyResult)), NotifyPropertyChangedFor(nameof(ShowProjectedResult)), NotifyPropertyChangedFor(nameof(CanImproveEvidence))] private bool _hasResult;
     [ObservableProperty] private string? _statusMessage;
     [ObservableProperty] private string? _errorMessage;
 
     [ObservableProperty] private bool _isTranscriptBuilder;
     [ObservableProperty] private string _interviewSkills = "";
-    [ObservableProperty] private int _interviewRemaining;
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(ShowEmptyResult))] private bool _hasInterview;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(CanImproveEvidence))] private int _interviewRemaining;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(ShowEmptyResult)), NotifyPropertyChangedFor(nameof(ShowProjectedResult)), NotifyPropertyChangedFor(nameof(CanImproveEvidence))] private bool _hasInterview;
     public bool ShowEmptyResult => !HasInterview && !HasResult;
+    public bool ShowProjectedResult => HasResult && !HasInterview;
+    public bool CanImproveEvidence => HasResult && !HasInterview && InterviewRemaining > 0;
+    [ObservableProperty] private string? _evidenceWarning;
     [ObservableProperty] private string _interviewRequirement = "";
     [ObservableProperty] private string _interviewReason = "";
     [ObservableProperty] private string _interviewEvidence = "";
@@ -126,13 +128,13 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             _ = RunCoverageAsync(resume, job);
     }
 
-    private async Task RunCoverageAsync(ResumeDocument resume, JobDescription job)
+    private async Task<CoverageReport?> RunCoverageAsync(ResumeDocument resume, JobDescription job)
     {
         var version = _contextVersion;
         try
         {
             var report = await _coverageAnalyser.AnalyseAsync(resume, job);
-            if (version != _contextVersion) return;
+            if (version != _contextVersion) return null;
             CoveragePercent = report.CoveragePercent;
             CoverageLabel = job.Competencies.Count > 0 ? "Competency evidence review" : $"Explicit evidence coverage: {report.CoveragePercent}%";
             GapCount = report.Entries.Count(e => e.Requirement.Priority == RequirementPriority.Required &&
@@ -141,10 +143,12 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                 ? ""
                 : report.CompanyType.ToString();
             HasCoverage = true;
+            return report;
         }
         catch
         {
             // Non-critical
+            return null;
         }
     }
 
@@ -156,6 +160,9 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         HasResult = false;
         StatusMessage = "Selecting ledger evidence for this role…";
         CompressionStats = null;
+        EvidenceWarning = null;
+        HasInterview = false;
+        CancelAssessment();
         var version = _contextVersion;
 
         try
@@ -184,22 +191,18 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                 finally { _settingParsedFields = false; }
             }
 
-            if (!_continueProjection)
-            {
-                var coverage = await _coverageAnalyser.AnalyseAsync(resume, job);
-                if (version != _contextVersion) return;
-                _interviewTopics = RoleInterviewPlanner.Plan(resume, coverage)
-                    .Where(topic => !_handledTopics.Contains(topic.Key)).ToList();
-                _contextResume = resume;
-                _contextJob = job;
-                if (_interviewTopics.Count > 0)
-                {
-                    ShowNextInterview();
-                    StatusMessage = "Add role evidence before projecting, or skip questions you cannot answer.";
-                    return;
-                }
-            }
-            _continueProjection = false;
+            var coverage = await RunCoverageAsync(resume, job);
+            if (version != _contextVersion) return;
+            _interviewTopics = coverage is null ? [] : RoleInterviewPlanner.Plan(resume, coverage)
+                .Where(topic => !_handledTopics.Contains(topic.Key)).ToList();
+            InterviewRemaining = _interviewTopics.Count;
+            _contextResume = resume;
+            _contextJob = job;
+            EvidenceWarning = coverage is null
+                ? "Evidence gaps could not be assessed. Generation will use your current career evidence; review the resume before applying."
+                : GapCount > 0 || InterviewRemaining > 0
+                    ? "Some job requirements have limited supporting evidence. Your resume will use what is available. You can optionally add role detail and regenerate."
+                    : null;
 
             if (version != _contextVersion) return;
 
@@ -245,12 +248,32 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         _assessment = null;
         InterviewNextQuestion = InterviewFeedback = "";
         HasInterview = false;
+        EvidenceWarning = null;
+        InterviewRemaining = 0;
         IsTranscriptBuilder = false;
         _interviewTopics.Clear();
         _handledTopics.Clear();
         _interviewTopic = null;
         _preferredInterviewRole = null;
-        _continueProjection = false;
+    }
+
+    [RelayCommand]
+    private void ImproveEvidence()
+    {
+        if (IsTailoring || !HasResult || _contextResume is null) return;
+        ErrorMessage = null;
+        ShowNextInterview();
+        StatusMessage = "Optional: add any useful role detail, or return to your projected resume at any time.";
+    }
+
+    [RelayCommand]
+    private void CloseInterview()
+    {
+        if (IsTailoring) return;
+        CancelAssessment();
+        HasInterview = false;
+        ErrorMessage = null;
+        StatusMessage = "Your projected resume is ready. Regenerate if you saved new role evidence.";
     }
 
     private void ShowNextInterview()
@@ -477,7 +500,6 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     {
         if (IsTailoring) return;
         HasInterview = false;
-        _continueProjection = true;
         await SmartCompressAsync();
     }
 

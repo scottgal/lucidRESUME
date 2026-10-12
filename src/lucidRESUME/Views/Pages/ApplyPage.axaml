@@ -97,11 +97,19 @@
 
       <!-- Status / Error -->
       <StackPanel Grid.Row="10" Spacing="4">
+        <Border Background="{DynamicResource LrAccentYellowBgBrush}" Padding="10,6" CornerRadius="4"
+                IsVisible="{Binding EvidenceWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding EvidenceWarning}" TextWrapping="Wrap" FontSize="12"/>
+            <Button x:Name="ImproveRoleEvidenceButton" Content="Improve role evidence (optional)"
+                    Command="{Binding ImproveEvidenceCommand}" IsVisible="{Binding CanImproveEvidence}"/>
+          </StackPanel>
+        </Border>
         <TextBlock Text="{Binding CompressionStats}" Foreground="{DynamicResource LrAccentPurpleBrush}" FontSize="11"
                    IsVisible="{Binding CompressionStats, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                    TextWrapping="Wrap"/>
         <TextBlock x:Name="ProjectionStatus" Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"
-                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap"/>
         <Border Background="{DynamicResource LrAccentRedBgBrush}" Padding="10,6" CornerRadius="4"
                 IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
           <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource LrAccentRedBrush}" TextWrapping="Wrap"/>
@@ -127,6 +135,7 @@
 
       <ScrollViewer Grid.Row="1" IsVisible="{Binding HasInterview}" Background="{DynamicResource LrPageBgBrush}">
         <StackPanel Spacing="10" Margin="12" IsEnabled="{Binding !IsTailoring}">
+          <Button x:Name="ReturnToProjectionButton" Content="Back to projected resume" Command="{Binding CloseInterviewCommand}" IsVisible="{Binding HasResult}"/>
           <TextBlock Text="Build your role transcript" FontSize="18" FontWeight="Bold"/>
           <TextBlock Text="{Binding InterviewRemaining, StringFormat='Remaining topics: {0}'}" FontSize="12"/>
           <TextBlock Text="{Binding InterviewRequirement}" FontWeight="SemiBold" TextWrapping="Wrap"/>
@@ -163,7 +172,7 @@
 
       <!-- Result -->
       <Border Grid.Row="1" Background="{DynamicResource LrPageBgBrush}" CornerRadius="4"
-              IsVisible="{Binding HasResult}">
+              IsVisible="{Binding ShowProjectedResult}">
         <controls:MarkdownViewer x:Name="ProjectedResumeText"
                                  Markdown="{Binding TailoredMarkdown}"
                                  Margin="12"/>

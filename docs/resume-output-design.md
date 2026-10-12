@@ -131,7 +131,7 @@ https://developers.openai.com/api/docs/guides/structured-outputs
 API keys are never written into an exported resume or JobML artifact.
 
 
-## Role interviews before projection
+## Optional role interviews
 
 The desktop Project Resume flow runs requirement coverage before selecting the
 resume. `RoleInterviewPlanner` prioritizes required gaps, then responsibilities,
@@ -139,8 +139,11 @@ then preferred requirements. It asks for a real example when a must-have has onl
 related evidence, a skill has no descriptive account, or a relevant role lacks
 concrete action/outcome detail. Its English action/outcome cues are conservative
 interview triggers, not a judgment that a claim is true, complete or well written.
-The UI presents one topic at a time, retains every outstanding requirement, and
-recalculates after a reviewed answer.
+Projection always proceeds with the current evidence. Gaps produce a warning, not
+an interview gate. **Improve role evidence (optional)** opens the questions after
+generation; **Back to projected resume** returns without requiring answers. The UI
+presents one topic at a time and recalculates after a reviewed answer. The separate
+complete-transcript builder remains available for deliberate career authoring.
 
 The interview asks about the situation/scope, the person's contribution and
 choices, and the outcome. This adapts the situation, action and result probes in

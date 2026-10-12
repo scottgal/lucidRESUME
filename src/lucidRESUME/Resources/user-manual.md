@@ -466,9 +466,13 @@ The career planner generates job search queries from your skill communities:
 2. Navigate to **Project**
 3. The system queries your skill ledger for evidence matching the JD
 4. **Semantic compression** selects only relevant roles and bullets
-5. Review any gap interview, then generate from the available evidence
+5. Generate immediately from the available evidence; gaps warn but never require answers
 6. Optional source-bound editing tightens prose; rejected edits retain source wording
 7. Markdown and JobML render from the selected claim IDs and the result is saved to **Generated resumes**
+
+Choose **Improve role evidence (optional)** to add useful detail after generation.
+You can return with **Back to projected resume** without answering questions.
+Regenerate when you want saved role detail included in a new version.
 
 > **Important:** Project is a projection, not a generation step. Evidence extraction
 > happens when sources are ingested or explicitly reviewed. Rendering never asks a

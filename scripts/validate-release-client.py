@@ -234,16 +234,21 @@ def main():
         client.nav('Apply')
         client.set('JobTitle', 'Senior Software Engineer')
         client.set('Company', 'Example Employer')
-        client.set('JobDescriptionText', 'Senior Software Engineer\nExample Employer\nBuild production C# and ASP.NET Core APIs with PostgreSQL. Implement automated testing and observability. London, remote.')
+        client.set('JobDescriptionText', 'Senior Software Engineer\nExample Employer\nBuild production C# and ASP.NET Core APIs with PostgreSQL. Implement automated testing and observability. AWS is required. London, remote.')
         client.click('ProjectResumeButton')
         client.wait('IsTailoring', 'False')
-        if client.get('HasInterview') == 'True':
-            client.click('type=Button text="Project with current evidence"')
-            client.wait('IsTailoring', 'False')
+        assert client.get('HasInterview') == 'False', 'Gap interviews must never block projection.'
         assert client.get('HasResult') == 'True', client.get('StatusMessage')
         assert client.get('ErrorMessage') == 'null', client.get('ErrorMessage')
         assert 'Saved to Generated archive' in client.get('StatusMessage'), client.get('StatusMessage')
+        assert client.get('EvidenceWarning') != 'null'
+        assert client.get('CanImproveEvidence') == 'True'
         client.shot('generated-result')
+        client.click('ImproveRoleEvidenceButton')
+        assert client.get('HasInterview') == 'True'
+        client.click('ReturnToProjectionButton')
+        assert client.get('ShowProjectedResult') == 'True'
+        assert client.get('HasInterview') == 'False'
 
     def archive():
         client.nav('Generated')
@@ -373,9 +378,7 @@ def main():
             client.set('JobDescriptionText', f'Senior Platform Engineer\nOwn {skill} systems. Hands-on experience with {skill} is required.')
             client.click('ProjectResumeButton')
             client.wait('IsTailoring', 'False')
-            if client.get('HasInterview') == 'True':
-                client.click('type=Button text="Project with current evidence"')
-                client.wait('IsTailoring', 'False')
+            assert client.get('HasInterview') == 'False', 'Gap interviews must never block projection.'
             assert client.get('HasResult') == 'True', client.get('StatusMessage')
             assert client.get('ErrorMessage') == 'null', client.get('ErrorMessage')
             with sqlite3.connect(output / 'data/data.db') as db:

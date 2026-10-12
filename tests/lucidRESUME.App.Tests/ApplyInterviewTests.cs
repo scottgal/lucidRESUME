@@ -13,7 +13,7 @@ namespace lucidRESUME.App.Tests;
 public sealed class ApplyInterviewTests
 {
     [Fact]
-    public async Task Project_pauses_for_gaps_and_reviewed_answer_is_saved_to_source_role()
+    public async Task Project_generates_before_optional_gap_review_and_saves_answer_to_source_role()
     {
         var path = Path.Combine(Path.GetTempPath(), "lucid-interview-" + Guid.NewGuid() + ".json");
         try
@@ -30,14 +30,19 @@ public sealed class ApplyInterviewTests
             var careerBuilder = new CareerRecordJobMlBuilder(new SkillLedgerBuilder(embedder, taxonomy), taxonomy, embedder);
             var coverage = new ResumeCoverageAnalyser(new CompanyClassifier(Options.Create(new CompanyClassifierOptions())),
                 Options.Create(new CoverageOptions()));
-            // The compressor is deliberately absent: generation must stop before invoking it.
-            var vm = new ApplyPageViewModel(null!, coverage, new NoReparseParser(), store, null!, [], careerBuilder);
+            var vm = ProjectionVm(store, coverage, new NoReparseParser(), path, careerBuilder);
             var job = new JobDescription { Title = "Platform Engineer", RawText = "Role from the jobs page", RequiredSkills = ["AWS"] };
             vm.SetContext(resume, job);
             await vm.SmartCompressCommand.ExecuteAsync(null);
             Assert.Null(vm.ErrorMessage);
+            Assert.True(vm.HasResult);
+            Assert.False(vm.HasInterview);
+            Assert.True(vm.CanImproveEvidence);
+            Assert.NotNull(vm.EvidenceWarning);
+            Assert.Single((await store.LoadAsync()).GeneratedResumes);
+            vm.ImproveEvidenceCommand.Execute(null);
             Assert.True(vm.HasInterview);
-            Assert.False(vm.HasResult);
+            Assert.False(vm.ShowProjectedResult);
             Assert.Equal("AWS", vm.InterviewRequirement);
             Assert.Null(vm.SelectedInterviewRole);
             vm.SelectedInterviewRole = Assert.Single(vm.InterviewRoles);
@@ -57,7 +62,11 @@ public sealed class ApplyInterviewTests
             Assert.Equal(0, vm.GapCount);
             Assert.NotNull(saved.JobMlSource);
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (Directory.Exists(path + ".archive")) Directory.Delete(path + ".archive", recursive: true);
+        }
     }
 
     [Fact]
@@ -145,7 +154,11 @@ public sealed class ApplyInterviewTests
                 Assert.Empty(vm.InterviewProse);
             }
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (Directory.Exists(path + ".archive")) Directory.Delete(path + ".archive", recursive: true);
+        }
     }
 
     [Fact]
@@ -160,17 +173,24 @@ public sealed class ApplyInterviewTests
             state.AddOrReplaceResume(resume);
             await store.SaveAsync(state);
             var coverage = new ResumeCoverageAnalyser(new CompanyClassifier(Options.Create(new CompanyClassifierOptions())), Options.Create(new CoverageOptions()));
-            var vm = new ApplyPageViewModel(null!, coverage, new PastedParser(), store, null!, [], null!);
+            var vm = ProjectionVm(store, coverage, new PastedParser(), path);
             vm.SetContext(resume, null);
             vm.JobDescriptionText = "Example advert requiring AWS";
             await vm.SmartCompressCommand.ExecuteAsync(null);
             Assert.Null(vm.ErrorMessage);
             Assert.Equal("Platform Engineer", vm.JobTitle);
             Assert.Equal("Example", vm.Company);
+            Assert.True(vm.HasResult);
+            Assert.False(vm.HasInterview);
+            vm.ImproveEvidenceCommand.Execute(null);
             Assert.True(vm.HasInterview);
             Assert.Equal("AWS", vm.InterviewRequirement);
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (Directory.Exists(path + ".archive")) Directory.Delete(path + ".archive", recursive: true);
+        }
     }
 
     [Fact]
@@ -188,15 +208,25 @@ public sealed class ApplyInterviewTests
             state.Overrides.PersonalInfoOverrides["Summary"] = "Developed products with agentic LLMs over the past year.";
             await store.SaveAsync(state);
             var coverage = new ResumeCoverageAnalyser(new CompanyClassifier(Options.Create(new CompanyClassifierOptions())), Options.Create(new CoverageOptions()));
-            var vm = new ApplyPageViewModel(null!, coverage, new PastedParser(), store, null!, [], null!);
+            var vm = ProjectionVm(store, coverage, new PastedParser(), path);
             vm.JobDescriptionText = "A platform role requiring AWS";
             await vm.SmartCompressCommand.ExecuteAsync(null);
             Assert.Null(vm.ErrorMessage);
+            Assert.True(vm.HasResult);
+            Assert.False(vm.HasInterview);
+            var generated = Assert.Single((await store.LoadAsync()).GeneratedResumes);
+            Assert.Contains("agentic LLMs", generated.Source.Personal.Summary);
+            Assert.Equal(2, generated.Source.Experience.Count);
+            vm.ImproveEvidenceCommand.Execute(null);
             Assert.True(vm.HasInterview);
             Assert.Equal(2, vm.InterviewRoles.Count);
             Assert.Contains(vm.InterviewRoles, item => item.Id == second.Experience[0].Id);
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (Directory.Exists(path + ".archive")) Directory.Delete(path + ".archive", recursive: true);
+        }
     }
 
     [Fact]
@@ -238,6 +268,84 @@ public sealed class ApplyInterviewTests
             Assert.Contains("Saved to Generated archive", vm.StatusMessage);
         }
         finally { Directory.Delete(root, recursive: true); }
+    }
+
+    private static ApplyPageViewModel ProjectionVm(IAppStore store, ICoverageAnalyser coverage, IJobSpecParser parser,
+        string path, CareerRecordJobMlBuilder? builder = null)
+    {
+        var embedder = new EmptyEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new lucidRESUME.AI.SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new lucidRESUME.AI.TailoringOptions { ComposeProse = false }),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<lucidRESUME.AI.SemanticCompressor>.Instance);
+        var exporters = new IResumeExporter[] { new DocxExporter(), new PdfExporter() };
+        var archive = new GeneratedResumeArchive(store, exporters, new GeneratedResumeArchivePath(path + ".archive"));
+        return new ApplyPageViewModel(compressor, coverage, parser, store, new ResumeArtifactBuilder(), exporters, builder!, archive: archive);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Many_gaps_or_failed_gap_analysis_never_block_projection(bool assessmentFails)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lucid-optional-gaps-" + Guid.NewGuid());
+        Directory.CreateDirectory(root);
+        try
+        {
+            using var store = new JsonAppStore(Path.Combine(root, "state.json"));
+            var resume = ResumeDocument.Create("cv.md", "text/markdown", 0);
+            resume.Personal.FullName = "Example Candidate";
+            resume.Experience.Add(new WorkExperience
+            {
+                Title = "Engineer",
+                Company = "Example",
+                Achievements = ["Built C# APIs for customer workflows."]
+            });
+            await store.SaveAsync(new AppState { Resumes = [resume] });
+            var vm = ProjectionVm(store, new ManyGaps(assessmentFails), new NoReparseParser(), root);
+            vm.SetContext(resume, new JobDescription { Title = "Engineer", RawText = "Build C# APIs. AWS required.", RequiredSkills = ["AWS"] });
+            await vm.SmartCompressCommand.ExecuteAsync(null);
+            Assert.Null(vm.ErrorMessage);
+            Assert.True(vm.HasResult);
+            Assert.True(vm.ShowProjectedResult);
+            Assert.False(vm.HasInterview);
+            Assert.NotNull(vm.EvidenceWarning);
+            Assert.Single((await store.LoadAsync()).GeneratedResumes);
+            if (!assessmentFails)
+            {
+                Assert.Equal(85, vm.InterviewRemaining);
+                Assert.True(vm.CanImproveEvidence);
+                vm.ImproveEvidenceCommand.Execute(null);
+                Assert.True(vm.HasInterview);
+                vm.CloseInterviewCommand.Execute(null);
+                Assert.True(vm.ShowProjectedResult);
+                Assert.False(vm.HasInterview);
+                Assert.Single((await store.LoadAsync()).GeneratedResumes);
+            }
+            // Project Resume must never reintroduce the interview gate on a repeat.
+            await vm.SmartCompressCommand.ExecuteAsync(null);
+            Assert.Null(vm.ErrorMessage);
+            Assert.True(vm.ShowProjectedResult);
+            Assert.False(vm.HasInterview);
+            var state = await store.LoadAsync();
+            Assert.Equal(2, state.GeneratedResumes.Count);
+            Assert.Empty(state.GetCompleteTranscript()!.Experience[0].InterviewEntries);
+            Assert.DoesNotContain(state.GeneratedResumes[0].Resume.Experience.SelectMany(r => r.Achievements), a => a.Contains("AWS"));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+            if (Directory.Exists(root + ".archive")) Directory.Delete(root + ".archive", recursive: true);
+        }
+    }
+
+    private sealed class ManyGaps(bool fails) : ICoverageAnalyser
+    {
+        public Task<CoverageReport> AnalyseAsync(ResumeDocument resume, JobDescription job, CancellationToken ct = default) =>
+            fails ? throw new InvalidOperationException("Assessment unavailable")
+                : Task.FromResult(new CoverageReport(Enumerable.Range(1, 85).Select(i =>
+                    new CoverageEntry(new("Required skill " + i, RequirementPriority.Required), null, null, 0)).ToList(),
+                    CompanyType.Unknown, DateTimeOffset.UtcNow));
     }
 
     private sealed class PastedParser : IJobSpecParser
