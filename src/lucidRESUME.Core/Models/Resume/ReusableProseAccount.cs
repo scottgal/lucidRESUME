@@ -9,6 +9,7 @@ public sealed class ReusableProseAccount
     public string Text { get; set; } = "";
     public bool RetainedSource { get; set; }
     public List<string> ReviewNotes { get; set; } = [];
+    public string RejectionReason { get; set; } = "";
     public List<string> Skills { get; set; } = [];
     public List<string> ClaimIds { get; set; } = [];
     public List<string> EvidenceIds { get; set; } = [];

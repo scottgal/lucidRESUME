@@ -341,7 +341,7 @@ model responses. Validation now normalizes punctuation, permits “unmeasured”
 Malformed response fields produce a clear fallback warning. The tool keeps the
 originals and warnings so these trade-offs remain inspectable.
 
-The final richer-packet run changed eight of twelve outputs; four retained source wording. Five cases recorded a rejected edit or malformed-response warning. Median elapsed time was approximately 5.42 s; the repeat was served from cache. The retry example now combines storage and audit-trail facts into one paragraph while retaining its unmeasured result. Luna review found that the compact retry paragraphs lose the specific purpose “inspect failed attempts”; accepted wording is therefore not a completeness guarantee. Tone differences remain small, and malformed responses remain an observed limitation of this local model configuration. Synthetic outputs and run metadata are retained in `docs/research/results/`.
+The earlier richer-packet run changed eight of twelve outputs; four retained source wording. Five cases recorded a rejected edit or malformed-response warning. Median elapsed time was approximately 5.42 s; the repeat was served from cache. The retry example combined storage and audit-trail facts into one paragraph while retaining its unmeasured result. Luna review found that the compact retry paragraphs lost the specific purpose “inspect failed attempts”; accepted wording was therefore not a completeness guarantee. Tone differences were small, and malformed responses remained an observed limitation of that configuration. Synthetic outputs and run metadata are retained in `docs/research/results/`.
 
 The implementation has regressions for incremental embeddings, model-space changes,
 review-only rejection, scoped deduplication, requirement diversity, multi-claim prose
@@ -353,10 +353,70 @@ NLI to the runtime requires a separate accuracy/latency comparison; this patch d
 not silently add those models.
 
 
-Final Release validation passed 628 .NET tests across twelve projects and fifteen
+At the earlier checkpoint, Release validation passed 628 .NET tests across twelve projects and fifteen
 native desktop workflow groups against an isolated synthetic SQLite store. The
 build reported zero warnings and errors. Generated Word/PDF related links have
 export regressions, and the native workflows cover saved-job projection, interviews,
 JobML, archives, persistence, contrasting jobs, cached publications and prose-index
 refresh. This is regression coverage, not a claim that every career or provider
 produces an excellent resume.
+
+### 8.1 Corrective iteration: detail, ownership and local response shape
+
+Capturing the synthetic HTTP exchanges established that the failing local responses
+were often complete `{sectionId, text}` objects, flattened out of the requested
+`sections` array. The parser now recovers that explicit identity and text. It never
+guesses an identity for unbound prose; normal completeness, duplicate and unknown-ID
+checks still apply. Raw exchanges are saved only by the synthetic evaluation tool,
+not by the application.
+
+The client and evaluation now share `ResumeWritingPolicy`, rather than testing tone
+enum names against different production instructions. Brief combines facts without
+removing their action, object or purpose. Thorough retains supported implementation
+detail and can use more sentences. Tone describes sentence openings, rhythm and
+emphasis, with the same grounding restrictions for every voice.
+
+Validation now checks that each represented claim retains substantive content and
+that explicit purpose clauses retain their distinguishing detail. It permits
+“unmeasured” and “without measuring” as bounded measurement-negation paraphrases.
+A coordinated-action check prevents “led the team and reviewed designs” becoming
+“led the team to review designs”. These are conservative lexical and grammatical
+checks, not general SRL or entailment; novel paraphrases may still retain source
+wording instead.
+
+Luna's follow-up also caught an ambiguous relative clause: “in a test environment,
+which did not measure production availability”. The policy now asks for explicit
+subjects for limitations, and a narrow grammatical guard rejects this measurement
+construction so the second pass can name the source activity. Understated tone asks
+for short separate factual sentences; Expressive asks for a purpose opening when
+the source supplies one. These controls change presentation, not the supported facts. The stronger style
+instructions also exposed invented reliability/stability goals and “I”/“we”
+attribution in model replies. Further checks reject unsupported purpose openings
+and introduced personal or collective pronouns, while allowing purpose openings
+that retain source-supported detail. Both passes use these same checks.
+
+A cache bug had concealed rejected edits from the orchestrator: retained source
+looked like an accepted edit, so the next pass did not receive repair instructions.
+Both cached providers now carry a separate rejection reason through fresh and cached
+responses. The existing second pass receives the precise error; rejected source
+fallbacks do not count as successful composition. Cache keys include validation
+policy version, and stable rejection reasons allow repaired outputs to be reused
+without repeating model calls.
+
+The corrective code passed 647 tests across twelve projects and all fifteen native
+desktop workflow groups, using synthetic data and isolated SQLite storage.
+The Release build reported zero warnings and errors. The final qwen3.5:4b matrix
+changed eight of twelve paragraphs and retained accepted source prose in four.
+All six retry cases preserve “inspect failed attempts” and the unmeasured result.
+Every evaluation case preserves the separate leadership and personal review actions,
+with explicit subjects for measurement limitations. No final output retains the
+invented reliability/stability purpose or introduced I/we attribution observed in
+the intermediate review. Six cases recorded rejected edits; two were repaired in
+the second pass, while four retained the already well-formed source. No case ended
+with a malformed-response failure. Median uncached latency was 9.78 s while other
+validation ran on the same machine, so this is not evidence of a speed improvement.
+The repeated case reused both passes in 15 ms. Results and model identity are in
+[`prose-synthesis-fixes-2026-10-12.json`](results/prose-synthesis-fixes-2026-10-12.json)
+and [`prose-synthesis-fixes-run-2026-10-12.json`](results/prose-synthesis-fixes-run-2026-10-12.json).
+Tone remains deliberately bounded and some variants share sentences; these twelve
+examples do not establish quality across a complete career or arbitrary providers.

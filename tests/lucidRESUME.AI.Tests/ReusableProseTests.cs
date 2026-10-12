@@ -78,9 +78,38 @@ public sealed class ReusableProseTests
             Assert.Equal(1, handler.ChatCalls);
             Assert.Equal(block.Text, Assert.Single(replay.Blocks).Text);
             Assert.Contains(replay.Warnings, warning => warning.Contains("numeric fact"));
+            Assert.Contains("numeric fact", replay.RejectedSections["role"]);
             var account = JsonSerializer.Deserialize<ReusableProseAccount>(await File.ReadAllTextAsync(Assert.Single(Directory.GetFiles(path))))!;
             Assert.True(account.RetainedSource);
             Assert.Equal(block.Text, account.Text);
+        }
+        finally { if (Directory.Exists(path)) Directory.Delete(path, true); }
+    }
+
+    [Fact]
+    public async Task Cached_rejection_reaches_the_second_pass_and_does_not_count_as_an_accepted_edit()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "lucid-repair-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var handler = new EchoHandler { Rewrite = "Led 99 engineers." };
+            var claim = new JobMlClaim { Id = "c", Subject = "role", Statement = "Built C# APIs." };
+            var packet = new EvidencePacket("role", "Engineer", "Edit", 40,
+                [new SelectedClaim(claim, "Engineer", claim.Statement, ["e"], 1, [])], [], "experience");
+            var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+            var provider = new OllamaResumeCompositionProvider(new HttpClient(handler),
+                Options.Create(new OllamaOptions { CompositionEnabled = true, Model = "example:latest" }),
+                proseStore: new ReusableProseStore(path));
+            var composer = new ResumeCompositionOrchestrator([provider], new CompositionValidator());
+            for (var run = 0; run < 2; run++)
+            {
+                var result = await composer.ComposeAsync(manifest, "Job", new() { ComposeProse = true, CompositionProvider = "ollama" });
+                Assert.False(result.Used);
+                Assert.Equal(claim.Statement, Assert.Single(result.Blocks).Text);
+            }
+            Assert.Equal(2, handler.ChatCalls);
+            Assert.Contains("Previous edit was rejected", handler.LastBrief);
+            Assert.Contains("numeric fact", handler.LastBrief);
         }
         finally { if (Directory.Exists(path)) Directory.Delete(path, true); }
     }
@@ -150,6 +179,7 @@ public sealed class ReusableProseTests
         public int ChatCalls;
         public string? Rewrite;
         public string Digest = "original-model";
+        public string? LastBrief;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             object body;
@@ -160,6 +190,7 @@ public sealed class ReusableProseTests
                 ChatCalls++;
                 using var payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
                 using var prompt = JsonDocument.Parse(payload.RootElement.GetProperty("messages")[1].GetProperty("content").GetString()!);
+                LastBrief = prompt.RootElement.GetProperty("sections")[0].GetProperty("section_brief").GetString();
                 var sections = prompt.RootElement.GetProperty("sections").EnumerateArray().Select(section => new
                 { sectionId = section.GetProperty("sectionId").GetString(), text = Rewrite ?? section.GetProperty("immutable_human_source").GetString() }).ToArray();
                 body = new { message = new { content = JsonSerializer.Serialize(new { sections }) } };

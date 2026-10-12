@@ -9,6 +9,22 @@ namespace lucidRESUME.AI.Tests;
 
 public sealed class ResumeCompositionProviderTests
 {
+    [Fact]
+    public void Local_provider_recovers_an_explicitly_identified_flat_section()
+    {
+        var result = LlamaSharpResumeCompositionProvider.ParseBatch(
+            """{"sectionId":"#role:p1","text":"Reviewed PostgreSQL recovery designs."}""");
+        Assert.Equal("#role:p1", Assert.Single(result.Sections).SectionId);
+        Assert.Equal("Reviewed PostgreSQL recovery designs.", result.Sections[0].Text);
+    }
+
+    [Theory]
+    [InlineData("{\"text\":\"Unbound prose.\"}")]
+    [InlineData("{\"sectionId\":\"role\",\"text\":null}")]
+    [InlineData("{\"sectionId\":\"\",\"text\":\"Unbound prose.\"}")]
+    public void Flat_response_requires_a_nonempty_explicit_identity_and_text(string json) =>
+        Assert.Throws<InvalidDataException>(() => LlamaSharpResumeCompositionProvider.ParseBatch(json));
+
     [Theory]
     [InlineData("{}")]
     [InlineData("{\"sections\":null}")]

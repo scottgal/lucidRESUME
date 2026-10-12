@@ -46,6 +46,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
         }
         var edited = new List<CompositionBlock>();
         var warnings = new List<string>();
+        var rejections = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         // Tighten creates a reusable, job-neutral account; HumanVoice adapts its emphasis.
         var jobBrief = request.Pass == CompositionPass.Tighten ? "" : request.JobDescription;
         var modelIdentity = proseStore is null ? null : await ResolveModelIdentityAsync(baseUri, cancellationToken);
@@ -58,7 +59,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
             var source = request.SourceBlocks.Single(block => block.SectionId == current.SectionId);
             var key = ReusableProseStore.Fingerprint(JsonSerializer.Serialize(new
             {
-                version = SystemInstructions + " neutral-tighten-v1",
+                version = SystemInstructions + " neutral-tighten-v1 " + CompositionValidator.PolicyVersion,
                 modelIdentity,
                 _options.Model,
                 _options.NumCtx,
@@ -94,6 +95,8 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
             {
                 edited.Add(candidate);
                 warnings.AddRange(account.ReviewNotes);
+                if (account.RetainedSource)
+                    rejections[current.SectionId] = account.RejectionReason;
             }
             else pending.Add(current);
         }
@@ -132,6 +135,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                         skills = claim.Claim.Concepts.All,
                         evidence_ids = claim.EvidenceIds
                     }),
+                    purpose_details_to_preserve = CompositionValidator.PurposeDetails(source.Text),
                     maximum_words = packet.MaximumWords
                 };
             }).ToList();
@@ -218,6 +222,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                         request.Manifest with { Sections = [packet] });
                     if (errors.Count > 0)
                     {
+                        rejections[original.SectionId] = string.Join(" ", errors);
                         edited[edited.FindIndex(block => block.SectionId == original.SectionId)] = original;
                         warnings.AddRange(errors.Select(error => $"Retained prior wording after rejected {request.Pass} edit: {error}"));
                     }
@@ -228,6 +233,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                         SourceText = source.Text,
                         Text = errors.Count == 0 ? candidates[0].Text : original.Text,
                         RetainedSource = errors.Count > 0,
+                        RejectionReason = string.Join(" ", errors),
                         ReviewNotes = errors.Select(error => $"Retained prior wording after rejected {request.Pass} edit: {error}").ToList(),
                         Skills = packet.Claims.SelectMany(claim => claim.Claim.Concepts.All).Distinct().ToList(),
                         ClaimIds = source.ClaimIds.ToList(),
@@ -242,7 +248,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                 }
             }
         }
-        return new CompositionDraft(edited, warnings);
+        return new CompositionDraft(edited, warnings) { RejectedSections = rejections };
     }
 
     private async Task<string?> ResolveModelIdentityAsync(Uri baseUri, CancellationToken ct)
@@ -286,7 +292,13 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
         Do not add "I" or "my" to passages written with an implied subject. Retain the source's grammatical person.
         Preserve named technical details that distinguish the work. Keep metrics and numeric notation exactly as supplied, including 10+, 80% and up to. Rewrite conversational asides as concise professional statements, retaining cancellations, planned work and uncertainty. Fix obvious spelling and capitalization errors. Remove stock praise such as
         "proven track record", "competitive advantages", "rapid ROI" and "technical excellence".
+        Preserve the substance of every selected claim and each purpose_details_to_preserve clause.
+        Do not replace a specific purpose such as inspecting failed attempts with generic inspection.
+        HumanVoice must retain those details even if the current draft omitted them; use the immutable source.
         Preserve personal versus team contribution, qualifiers, negation and causality. Helping must
+        remain helping. Keep the candidate's own actions distinct from the team's actions: leading
+        a team and personally reviewing designs must not become leading the team to review designs.
+        Helping must
         not become leading; an intended benefit must not become an achieved result. Use concrete
         actions and supported outcomes, including qualitative outcomes. Never force metrics.
         Keep complete

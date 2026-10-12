@@ -513,7 +513,7 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test lucidRESUME.sln    # 628 tests across 12 projects
+dotnet test lucidRESUME.sln    # 647 tests across 12 projects
 ```
 
 | Project | Tests | Coverage |

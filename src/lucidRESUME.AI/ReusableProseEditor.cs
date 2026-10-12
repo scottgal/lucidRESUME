@@ -16,6 +16,7 @@ internal static class ReusableProseEditor
         var pending = new List<CompositionBlock>();
         var keys = new Dictionary<string, string>();
         var warnings = new List<string>();
+        var rejections = new Dictionary<string, string>();
         var brief = request.Pass == CompositionPass.Tighten ? "" : request.JobDescription;
         foreach (var current in request.CurrentBlocks)
         {
@@ -26,6 +27,7 @@ internal static class ReusableProseEditor
                 provider,
                 modelIdentity,
                 instructions,
+                validatorPolicy = CompositionValidator.PolicyVersion,
                 request.Pass,
                 brief,
                 source,
@@ -49,11 +51,15 @@ internal static class ReusableProseEditor
                 account.ClaimIds.SequenceEqual(source.ClaimIds) && account.EvidenceIds.SequenceEqual(source.EvidenceIds) &&
                 (account.RetainedSource ? account.Text == current.Text : validator.Validate(new([candidate], []), [source],
                     request.Manifest with { Sections = [packet] }).Count == 0))
-            { result.Add(candidate); warnings.AddRange(account.ReviewNotes); }
+            {
+                result.Add(candidate);
+                warnings.AddRange(account.ReviewNotes);
+                if (account.RetainedSource) rejections[current.SectionId] = account.RejectionReason;
+            }
             else pending.Add(current);
         }
         if (result.Count > 0) request.Progress?.Report($"Reusing {result.Count} prose account(s) · {request.Pass}");
-        if (pending.Count == 0) return new(result, warnings);
+        if (pending.Count == 0) return new(result, warnings) { RejectedSections = rejections };
         var ids = pending.Select(block => block.SectionId).ToHashSet();
         var draft = await generate(request with
         {
@@ -71,6 +77,7 @@ internal static class ReusableProseEditor
             var packet = request.Manifest.Sections.Single(section => section.SectionId == current.SectionId);
             var errors = validator.Validate(new(candidates, []), [source], request.Manifest with { Sections = [packet] });
             var chosen = errors.Count == 0 ? candidates[0] : current;
+            if (errors.Count > 0) rejections[current.SectionId] = string.Join(" ", errors);
             var notes = errors.Select(error => $"Retained prior wording after rejected {request.Pass} edit: {error}").ToList();
             result.Add(chosen);
             warnings.AddRange(notes);
@@ -90,9 +97,10 @@ internal static class ReusableProseEditor
                 JobBrief = brief,
                 MaximumWords = packet.MaximumWords,
                 RetainedSource = errors.Count > 0,
+                RejectionReason = string.Join(" ", errors),
                 ReviewNotes = notes
             }, ct);
         }
-        return new(result, warnings);
+        return new(result, warnings) { RejectedSections = rejections };
     }
 }

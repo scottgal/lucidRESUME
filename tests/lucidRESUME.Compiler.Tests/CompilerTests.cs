@@ -746,6 +746,100 @@ public sealed class CompilerTests(Xunit.Abstractions.ITestOutputHelper output)
         Assert.Contains(errors, error => error.Contains("unsupported descriptive content"));
     }
 
+    [Theory]
+    [InlineData("Built C# billing retry queues with durable PostgreSQL storage and added audit trails for operations inspection. Recovery time impact remains unmeasured.", true)]
+    [InlineData("Built C# billing retry queues backed by durable PostgreSQL storage. Added audit trails enabling the operations team to inspect failed attempts. Recovery time impact remains unmeasured.", false)]
+    [InlineData("To let the operations team inspect failed attempts, added billing retry audit trails alongside C# billing retry queues backed by durable PostgreSQL storage. Recovery time impact was not measured.", false)]
+    public void Synthesis_preserves_the_specific_purpose_of_a_selected_action(string edited, bool rejected)
+    {
+        const string text = "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.";
+        var facts = text.Split(". ");
+        var claims = facts.Select((fact, i) => new SelectedClaim(new JobMlClaim
+        { Id = $"claim-{i}", Subject = "role", Statement = fact }, "Example", text, ["e1"], 1, [])).ToList();
+        var packet = new EvidencePacket("role", "Example", "synthesize", 100, claims, [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+        var source = new CompositionBlock("role", text, claims.Select(c => c.Claim.Id).ToList(), ["e1"]);
+        var errors = new CompositionValidator().Validate(new([source with { Text = edited }], []), [source], manifest);
+        if (rejected) Assert.Contains(errors, error => error.Contains("purpose detail"));
+        else Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Synthesis_cannot_keep_an_evidence_binding_while_omitting_its_claim()
+    {
+        const string first = "Led the API team and reviewed PostgreSQL recovery designs before the production release.";
+        const string second = "Introduced recovery drills using recorded failure cases in a test environment.";
+        var claims = new[] { first, second }.Select((fact, i) => new SelectedClaim(new JobMlClaim
+        { Id = $"claim-{i}", Subject = "role", Statement = fact }, "Example", first + " " + second, ["e1"], 1, [])).ToList();
+        var packet = new EvidencePacket("role", "Example", "synthesize", 100, claims, [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+        var source = new CompositionBlock("role", first + " " + second, ["claim-0", "claim-1"], ["e1"]);
+        var errors = new CompositionValidator().Validate(new([source with { Text = first }], []), [source], manifest);
+        Assert.Contains(errors, error => error.Contains("selected claim 'claim-1'"));
+    }
+
+    [Fact]
+    public void Measurement_negation_can_be_rephrased_without_becoming_a_result()
+    {
+        const string text = "Introduced recovery drills in a test environment and did not measure production availability.";
+        var claim = new SelectedClaim(new JobMlClaim { Id = "c", Subject = "role", Statement = text }, "Example", text, ["e"], 1, []);
+        var packet = new EvidencePacket("role", "Example", "synthesize", 80, [claim], [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+        var source = new CompositionBlock("role", text, ["c"], ["e"]);
+        Assert.Empty(new CompositionValidator().Validate(new([source with
+        { Text = "Introduced recovery drills in a test environment without measuring production availability." }], []), [source], manifest));
+        Assert.Contains(new CompositionValidator().Validate(new([source with
+        { Text = "Introduced recovery drills in a test environment and measured production availability." }], []), [source], manifest),
+            error => error.Contains("qualifier 'not'"));
+    }
+
+    [Theory]
+    [InlineData("Led the API team to review PostgreSQL recovery designs before production release.", true)]
+    [InlineData("Led the API team and reviewed PostgreSQL recovery designs before production release.", false)]
+    public void Editing_keeps_personal_review_distinct_from_directing_team_review(string edited, bool rejected)
+    {
+        const string text = "Led the API team and reviewed PostgreSQL recovery designs before the production release.";
+        var claim = new SelectedClaim(new JobMlClaim { Id = "c", Subject = "role", Statement = text }, "Example", text, ["e"], 1, []);
+        var packet = new EvidencePacket("role", "Example", "synthesize", 80, [claim], [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+        var source = new CompositionBlock("role", text, ["c"], ["e"]);
+        var errors = new CompositionValidator().Validate(new([source with { Text = edited }], []), [source], manifest);
+        if (rejected) Assert.Contains(errors, error => error.Contains("personal action"));
+        else Assert.Empty(errors);
+    }
+
+    [Theory]
+    [InlineData("Introduced recovery drills using recorded failure cases in a test environment, which did not measure production availability.", true)]
+    [InlineData("Introduced recovery drills using recorded failure cases. The drills ran in a test environment and did not measure production availability.", false)]
+    public void Measurement_limitation_has_an_explicit_activity_subject(string edited, bool rejected)
+    {
+        const string text = "Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.";
+        var claim = new SelectedClaim(new JobMlClaim { Id = "c", Subject = "role", Statement = text }, "Example", text, ["e"], 1, []);
+        var packet = new EvidencePacket("role", "Example", "synthesize", 80, [claim], [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+        var source = new CompositionBlock("role", text, ["c"], ["e"]);
+        var errors = new CompositionValidator().Validate(new([source with { Text = edited }], []), [source], manifest);
+        if (rejected) Assert.Contains(errors, error => error.Contains("ambiguous subject"));
+        else Assert.Empty(errors);
+    }
+
+    [Theory]
+    [InlineData("To improve PostgreSQL recovery reliability, led the API team and reviewed recovery designs before production release.", "unsupported purpose")]
+    [InlineData("To ensure API stability, led the API team and reviewed PostgreSQL recovery designs before production release.", "unsupported purpose")]
+    [InlineData("To ensure stability, led the API team and reviewed PostgreSQL recovery designs before production release.", "unsupported purpose")]
+    [InlineData("I led the API team and reviewed PostgreSQL recovery designs before production release.", "introduced I/my")]
+    [InlineData("We led the API team and reviewed PostgreSQL recovery designs before production release.", "introduced we/our")]
+    public void Expressive_style_cannot_invent_a_purpose_or_change_the_actor(string edited, string expectedError)
+    {
+        const string text = "Led the API team and reviewed PostgreSQL recovery designs before the production release.";
+        var claim = new SelectedClaim(new JobMlClaim { Id = "c", Subject = "role", Statement = text }, "Example", text, ["e"], 1, []);
+        var packet = new EvidencePacket("role", "Example", "Expressive", 80, [claim], [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+        var source = new CompositionBlock("role", text, ["c"], ["e"]);
+        Assert.Contains(new CompositionValidator().Validate(new([source with { Text = edited }], []), [source], manifest),
+            error => error.Contains(expectedError));
+    }
+
     [Fact]
     public void Number_preservation_cannot_replace_the_contribution_with_an_orphan_fragment()
     {

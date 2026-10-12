@@ -47,17 +47,7 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
         var packets = new List<EvidencePacket>();
         var preferences = projection.GenerationOptions;
         var budget = ResumeGenerationBudget.Resolve(job, preferences);
-        var toneInstruction = preferences.Tone switch
-        {
-            ResumeTone.Understated => "Use restrained, matter-of-fact phrasing with minimal rhetorical emphasis.",
-            ResumeTone.Expressive => "Use varied sentence rhythm and foreground the supported contribution; avoid slogans, superlatives and self-praise.",
-            _ => "Use direct active phrasing and plain, specific verbs."
-        };
-        var detailInstruction = preferences.Detail == Core.Models.Resume.ResumeDetail.Thorough
-            ? "Retain useful supported technical decisions, contribution and outcomes; do not compress away relevant detail."
-            : preferences.Detail == Core.Models.Resume.ResumeDetail.Brief
-                ? "Use a brief concrete account, keeping the most relevant supported contribution and outcome."
-                : "Write a concise, concrete account for this role.";
+        var writingInstruction = ResumeWritingPolicy.Describe(preferences.Tone, preferences.Detail);
         foreach (var group in projection.Projection.Blocks.GroupBy(binding => binding.ProseRef))
         {
             if (group.Key.StartsWith("#publications:", StringComparison.Ordinal) || group.Key.StartsWith("#related-projects:", StringComparison.Ordinal)) continue;
@@ -77,7 +67,7 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
                     passage.Heading ?? "", passage.Text.TrimStart('-', ' '), claim.EvidenceIds, 1, [])).ToList();
             if (selected.Count == 0) continue;
             var words = Regex.Matches(passage.Text, @"\S+").Count;
-            packets.Add(new(group.Key, passage.Heading ?? "", detailInstruction + " " + toneInstruction + " Structure the account around the candidate's action and its object, then a supported decision, context or result where available. Omit missing elements. Preserve the supported purpose and object of each action when detail permits. Preserve personal versus team ownership, prototype versus production status, uncertainty and named skills. Never turn helped into led, a goal into an achieved result, or a publication into employment experience. In a summary, preserve explicit time periods and named publication sites from the source.",
+            packets.Add(new(group.Key, passage.Heading ?? "", writingInstruction,
                 group.Key.StartsWith("#summary:") ? budget.SummaryWords : Math.Max((int)Math.Ceiling(words * (preferences.Detail == ResumeDetail.Thorough ? 1.4 : 1.15)), 40), selected, requirements.Select(requirement => requirement.Id).ToList(),
                 group.Key.StartsWith("#summary:") ? "summary" : "experience")
             {

@@ -62,7 +62,11 @@ public sealed record CompositionBlock(
 
 public sealed record CompositionDraft(
     IReadOnlyList<CompositionBlock> Blocks,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings)
+{
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyDictionary<string, string> RejectedSections { get; init; } = new Dictionary<string, string>();
+}
 
 public enum CompositionPass { Tighten, HumanVoice }
 

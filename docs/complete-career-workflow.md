@@ -168,6 +168,22 @@ Generation selects complementary passages for the job's individual requirements,
 combines compatible facts within a role, then asks the writer to synthesize natural
 prose. Exact duplicates retain all their evidence bindings. Changing jobs or tone
 reuses unchanged analysis; rejected claims and changed skills invalidate selection.
+
+The client and prose evaluation use the same writing policy for Direct, Understated
+and Expressive tone and Brief/Balanced/Thorough detail. Detail changes how selected
+facts are combined; it does not permit an action's purpose or uncertainty to disappear.
+Composition checks the substance of each represented claim and explicit purpose
+clauses, as well as skills, numbers and ownership. A rejected first edit supplies
+specific repair instructions to the existing second pass. Cached rejections preserve
+those instructions and do not count as successful edits. Both cached prose providers
+include the validation policy in their cache identities.
+
+Local responses containing one explicit `{sectionId, text}` object can be recovered
+without guessing an identity. Empty, unbound, duplicated or unexpected sections
+still fail the normal binding checks. Outcome limitations use explicit activity
+subjects, rather than an ambiguous “environment, which did not measure”. These
+conservative checks retain human prose
+when an edit is ambiguous; they are not a general semantic entailment model.
 Embeddings help retrieve passages and do not establish proficiency.
 
 In **Profile**, **Refresh career prose analysis** updates this derived index. The

@@ -13,7 +13,7 @@ var model = args.Length > 1 ? args[1] : "qwen3.5:0.8b";
 var endpoint = args.Length > 2 ? args[2] : "http://127.0.0.1:11434";
 if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) || !uri.IsLoopback) throw new ArgumentException("Evaluation requires a local Ollama endpoint.");
 Directory.CreateDirectory(output);
-using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+using var http = new HttpClient(new EvaluationCaptureHandler(output)) { Timeout = TimeSpan.FromSeconds(30) };
 var identity = await http.GetFromJsonAsync<JsonElement>(endpoint + "/api/tags");
 var digest = identity.GetProperty("models").EnumerateArray().FirstOrDefault(item => item.GetProperty("name").GetString() == model);
 var provider = new OllamaResumeCompositionProvider(http, Options.Create(new OllamaOptions
@@ -48,7 +48,7 @@ foreach (var detail in new[] { ResumeDetail.Brief, ResumeDetail.Thorough })
     var selected = facts.Select((fact, index) => new SelectedClaim(new JobMlClaim
     { Id = fixture.Id + "-" + index, Subject = "synthetic-role", Statement = fact, Concepts = new() { Skills = [fixture.Skill] } },
         "Synthetic role", fixture.Text, ["source-" + fixture.Id + "-" + index], 1, [])).ToList();
-    var packet = new EvidencePacket("#role:p1", "Synthetic role", $"Synthesize the selected facts into one natural resume paragraph. Use {tone} expression and {detail} detail. Preserve the candidate's action, object, actual ownership, status, uncertainty and named skills. Omit unsupported results. Never upgrade helped to led or intended to achieved.",
+    var packet = new EvidencePacket("#role:p1", "Synthetic role", ResumeWritingPolicy.Describe(tone, detail),
         detail == ResumeDetail.Brief ? 65 : 100, selected, [], "experience");
     var manifest = new ProjectionManifest("synthetic-v1", "synthetic-job-v1", DateTimeOffset.UtcNow, [], [packet], [], [], "none");
     var brief = fixture.Id is "prototype" or "intended" or "leadership" ? "Applied AI engineering: evaluation, safe actions and observability." : "Backend engineering: reliable APIs, database queries and recovery.";
@@ -77,4 +77,20 @@ await File.WriteAllTextAsync(Path.Combine(output, "run.json"), JsonSerializer.Se
 sealed class InlineProgress(List<string> messages) : IProgress<string>
 {
     public void Report(string value) => messages.Add(value);
+}
+
+// These fixtures are synthetic. Never install this request recorder in the application.
+sealed class EvaluationCaptureHandler(string output) : DelegatingHandler(new HttpClientHandler())
+{
+    private int sequence;
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        var body = request.Content is null ? null : await request.Content.ReadAsStringAsync(ct);
+        var response = await base.SendAsync(request, ct);
+        if (request.RequestUri?.AbsolutePath == "/api/chat")
+            await File.WriteAllTextAsync(Path.Combine(output, $"exchange-{++sequence:D3}.json"),
+                JsonSerializer.Serialize(new { request = body, response = await response.Content.ReadAsStringAsync(ct) },
+                    new JsonSerializerOptions { WriteIndented = true }), ct);
+        return response;
+    }
 }

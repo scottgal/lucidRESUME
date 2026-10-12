@@ -222,6 +222,14 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
         if (start < 0 || end <= start) throw new InvalidDataException("The model returned invalid section JSON.");
         try
         {
+            // Some local models flatten a one-item batch despite the requested schema.
+            // Recover the explicit identity, never infer a section from unbound prose.
+            using var document = JsonDocument.Parse(json[start..(end + 1)]);
+            if (!document.RootElement.TryGetProperty("sections", out _) &&
+                document.RootElement.TryGetProperty("sectionId", out var id) && id.ValueKind == JsonValueKind.String &&
+                document.RootElement.TryGetProperty("text", out var text) && text.ValueKind == JsonValueKind.String &&
+                !string.IsNullOrWhiteSpace(id.GetString()) && !string.IsNullOrWhiteSpace(text.GetString()))
+                return new SectionBatchEdit([new SectionEdit(id.GetString()!, text.GetString()!)], []);
             var result = JsonSerializer.Deserialize<SectionBatchEdit>(json[start..(end + 1)], JsonOptions);
             if (result?.Sections is null || result.Sections.Any(section => section is null || string.IsNullOrWhiteSpace(section.SectionId) || string.IsNullOrWhiteSpace(section.Text)))
                 throw new InvalidDataException("The model returned missing or empty section fields.");

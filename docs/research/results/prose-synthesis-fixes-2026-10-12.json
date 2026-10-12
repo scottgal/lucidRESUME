@@ -1,0 +1,166 @@
+[
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues with durable PostgreSQL storage and added audit trails for the operations team to inspect failed attempts. The effect on recovery time was not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 6685,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Direct",
+    "detail": "Thorough",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues with durable PostgreSQL storage. Added audit trails enabling the operations team to inspect failed attempts, though recovery time impact remained unmeasured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 6310,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Understated",
+    "detail": "Brief",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues with durable PostgreSQL storage. Added audit trails for the operations team to inspect failed attempts; recovery time impact was not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 6102,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Understated",
+    "detail": "Thorough",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues with durable PostgreSQL storage. Added audit trails enabling the operations team to inspect failed attempts. The effect on recovery time was not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 6232,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Expressive",
+    "detail": "Brief",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues with durable PostgreSQL storage. Added audit trails to let the operations team inspect failed attempts, though recovery time impact remains unmeasured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 6816,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues with durable PostgreSQL storage. Added audit trails to allow the operations team to inspect failed attempts, though recovery time impact was not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 8974,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 reassigned the candidate\u0027s personal action \u0027reviewed\u0027 to the team. Retain that the candidate led the team and personally reviewed the work.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 gives a measurement limitation an ambiguous subject. Name the drills, tests or other source activity explicitly instead of \u0027environment, which did not measure\u0027."
+    ],
+    "elapsed_ms": 14378,
+    "unchanged_source": true,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Direct",
+    "detail": "Thorough",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 reassigned the candidate\u0027s personal action \u0027reviewed\u0027 to the team. Retain that the candidate led the team and personally reviewed the work.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 gives a measurement limitation an ambiguous subject. Name the drills, tests or other source activity explicitly instead of \u0027environment, which did not measure\u0027."
+    ],
+    "elapsed_ms": 20357,
+    "unchanged_source": true,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Understated",
+    "detail": "Brief",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before production release. Introduced drills using recorded failure cases; these ran in a test environment without measuring production availability.",
+    "Used": true,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 gives a measurement limitation an ambiguous subject. Name the drills, tests or other source activity explicitly instead of \u0027environment, which did not measure\u0027."
+    ],
+    "elapsed_ms": 17737,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Understated",
+    "detail": "Thorough",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before production release. Introduced Recovery Drills using recorded failure cases; these drills ran in a test environment and did not measure production availability.",
+    "Used": true,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 gives a measurement limitation an ambiguous subject. Name the drills, tests or other source activity explicitly instead of \u0027environment, which did not measure\u0027."
+    ],
+    "elapsed_ms": 10590,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Expressive",
+    "detail": "Brief",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate\u0027s action.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: ensure, stability, candidate, reviewing, these, tests, only.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 gives a measurement limitation an ambiguous subject. Name the drills, tests or other source activity explicitly instead of \u0027environment, which did not measure\u0027."
+    ],
+    "elapsed_ms": 11089,
+    "unchanged_source": true,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced I/my into prose with an implied subject. Preserve the source\u0027s grammatical person.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced we/our and changed the contribution to a collective actor. Preserve the source\u0027s grammatical person.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate\u0027s action.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate\u0027s action.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: ensure, reliability, candidate, these, without."
+    ],
+    "elapsed_ms": 12216,
+    "unchanged_source": true,
+    "hard_errors": []
+  }
+]
