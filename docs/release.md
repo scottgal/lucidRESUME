@@ -81,13 +81,15 @@ the exception details. The workflow retains this JSON with the client screenshot
 ## Creating A Release
 
 1. Ensure CI is green on `main`.
-2. Choose a semantic version in the current `2.x` release line, for example
-   `2.5.0`.
+2. Increment the minor version for each release in the current `2.x` line
+   (for example, `2.5.0` to `2.6.0`). Check existing tags and releases first;
+   never reuse a release version. Update the application version, workflow default
+   and matching release notes together.
 3. Create and push the tag:
 
 ```bash
-git tag v2.5.0
-git push origin v2.5.0
+git tag v2.6.0
+git push origin v2.6.0
 ```
 
 The `Release - App Archives` workflow will build, archive, checksum, and attach the files to a GitHub release.
@@ -95,7 +97,7 @@ The `Release - App Archives` workflow will build, archive, checksum, and attach 
 ## Manual Dry Run
 
 Use the workflow dispatch button in GitHub Actions and provide a version such as
-`2.5.0-rc1`. Manual runs build the same application, documentation, and Chrome
+`2.6.0-rc1`. Manual runs build the same application, documentation, and Chrome
 extension archives and retain them as workflow artifacts, but do not publish a
 GitHub release. Only a pushed `v*` tag can publish one.
 
@@ -104,9 +106,9 @@ GitHub release. Only a pushed `v*` tag can publish one.
 The project intentionally ships archives rather than native installers for now. Archives are easier to inspect, work across more environments, and avoid unsigned-installer friction. Native packages such as MSI, DMG, AppImage, Flatpak, or Snap can be added later once signing, icons, and installer metadata are in place.
 
 
-## 2.5.0 preparation and end-to-end checks
+## 2.6.0 preparation and end-to-end checks
 
-See [2.5.0 release notes](release-notes/v2.5.0.md) and the
+See [2.6.0 release notes](release-notes/v2.6.0.md) and the
 [validation report](reviews/2026-10-12-v2.5-validation.md). The native validator
 covers import/review, deduplication, interviews, JobML editing, generation,
 archives, job/pipeline flows, hiring, profile saving, restart and PDF re-import.
@@ -128,4 +130,4 @@ on incompatible hosts.
 Close the application before backing up the complete app data directory. Include
 `data.db`, `generated-resumes/` and `prose-library/`; a database-only backup cannot
 restore archived document files. Preparing version metadata does not publish a
-release. Push `v2.5.0` only after final-source CI and archive validation pass.
+release. Push `v2.6.0` only after final-source CI and archive validation pass.
