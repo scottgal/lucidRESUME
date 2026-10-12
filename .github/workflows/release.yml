@@ -161,7 +161,7 @@ jobs:
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>CFBundleShortVersionString</key><string>${{ steps.version.outputs.VERSION }}</string>
             <key>CFBundleVersion</key><string>${{ steps.version.outputs.VERSION }}</string>
-            <key>LSMinimumSystemVersion</key><string>12.0</string>
+            <key>LSMinimumSystemVersion</key><string>14.0</string>
             <key>NSHighResolutionCapable</key><true/>
           </dict></plist>
           PLIST
@@ -281,6 +281,16 @@ jobs:
             codesign --verify --strict --verbose=2 "$payload/$native_library"
             otool -L "$payload/$native_library"
           done
+          python3 - "$bundle" "$payload/libe_sqlite3.dylib" "$payload/vec0.dylib" <<'PY'
+          import plistlib, re, subprocess, sys
+          with open(sys.argv[1] + '/Contents/Info.plist', 'rb') as source:
+              declared = plistlib.load(source)['LSMinimumSystemVersion']
+          version = lambda value: tuple(map(int, value.split('.')))
+          for library in sys.argv[2:]:
+              build = subprocess.check_output(['vtool', '-show-build', library], text=True)
+              minimum = re.search(r'\bminos\s+([0-9.]+)', build).group(1)
+              assert version(minimum) <= version(declared), (library, minimum, declared)
+          PY
           # Exercise the extracted launcher from an unrelated working directory,
           # without developer library paths or an installed .NET runtime root.
           report="$PWD/artifacts/storage-audit.json"

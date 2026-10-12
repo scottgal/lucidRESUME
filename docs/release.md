@@ -48,6 +48,10 @@ The GitHub release page itself is populated with Markdown release notes that cov
 
 The macOS app bundle and each native executable are ad-hoc signed, but the bundle
 is not Apple-notarized. The application payload and native libraries remain in
+`Contents/Resources/app`. The bundle requires macOS 14 or newer: the shipped
+Apple Silicon sqlite-vec library targets 14.0 (the previous 12.0 bundle declaration
+was incorrect). Release launch checks run on macOS 15 for both architectures.
+The payload remains in
 `Contents/Resources/app` rather than being extracted on first launch. Control-click
 `lucidRESUME.app`, choose **Open**, and confirm the first launch. If macOS still
 blocks the downloaded app, use a per-app exception after extracting the archive:
