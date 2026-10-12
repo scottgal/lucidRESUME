@@ -40,8 +40,10 @@ public sealed class TargetedProjectionTests
         var resume = ResumeDocument.Create("career.md", "text/markdown", 0);
         resume.Experience = Enumerable.Range(0, 10).Select(i => new WorkExperience
         {
-            Title = "Software Engineer", Company = $"Example {i}",
-            StartDate = new DateOnly(2000 + i, 1, 1), EndDate = new DateOnly(2000 + i, 12, 31),
+            Title = "Software Engineer",
+            Company = $"Example {i}",
+            StartDate = new DateOnly(2000 + i, 1, 1),
+            EndDate = new DateOnly(2000 + i, 12, 31),
             Achievements = ["Built reliable APIs with C#."]
         }).ToList();
         var embedder = new EmptyEmbedder();
@@ -222,7 +224,9 @@ public sealed class TargetedProjectionTests
         var source = ResumeDocument.Create("career.md", "text/markdown", 0);
         source.Experience.Add(new()
         {
-            Title = "Engineer", Company = "Example", IsCurrent = true,
+            Title = "Engineer",
+            Company = "Example",
+            IsCurrent = true,
             Achievements = ["Built billing retry queues in C#.", "Built billing retry queues in C#.",
                 "Added billing retry audit trails.", "Owned billing retry architecture for every customer."]
         });
@@ -253,7 +257,9 @@ public sealed class TargetedProjectionTests
         source.Personal.Summary = "Software engineer building internal AI agent runtimes.";
         source.Experience.Add(new()
         {
-            Title = "Engineer", Company = "Example", IsCurrent = true,
+            Title = "Engineer",
+            Company = "Example",
+            IsCurrent = true,
             Technologies = ["PostgreSQL", "Python", "PyTorch"],
             Achievements = ["Designed PostgreSQL reporting queries and database backup recovery drills.",
                 "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.",
@@ -266,7 +272,8 @@ public sealed class TargetedProjectionTests
             NullLogger<SemanticCompressor>.Instance);
         var result = await compressor.CompressAsync(source, new JobDescription
         {
-            Title = "Database Platform Engineer", RequiredSkills = ["PostgreSQL"],
+            Title = "Database Platform Engineer",
+            RequiredSkills = ["PostgreSQL"],
             Responsibilities = ["Design PostgreSQL reporting queries, database backup recovery drills and optimise measured test latency."]
         }, generationOptions: new() { Detail = ResumeDetail.Thorough });
         Assert.Contains("PostgreSQL", result.Projection.Personal.Summary);

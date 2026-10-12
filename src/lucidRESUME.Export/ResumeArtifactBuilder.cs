@@ -32,7 +32,8 @@ public sealed class ResumeArtifactBuilder
         jobMl.Data.Extensions ??= new();
         jobMl.Data.Extensions["lucidresume.related_work"] = new Dictionary<string, object?>
         {
-            ["version"] = "0.1", ["links"] = projection.RelatedWork
+            ["version"] = "0.1",
+            ["links"] = projection.RelatedWork
         };
         var artifact = JobMlArtifactComposer.Compose(jobMl);
 
@@ -60,8 +61,10 @@ public sealed class ResumeArtifactBuilder
         var selectedClaims = projectionInfo.Blocks.Select(block => block.ClaimId).ToHashSet(StringComparer.Ordinal);
         result.ProseIndex = new CareerProseIndex
         {
-            SourceRevision = source.ProseIndex.SourceRevision, AcceptedClaimsRevision = source.ProseIndex.AcceptedClaimsRevision,
-            EmbeddingSpace = source.ProseIndex.EmbeddingSpace, PolicyVersion = source.ProseIndex.PolicyVersion,
+            SourceRevision = source.ProseIndex.SourceRevision,
+            AcceptedClaimsRevision = source.ProseIndex.AcceptedClaimsRevision,
+            EmbeddingSpace = source.ProseIndex.EmbeddingSpace,
+            PolicyVersion = source.ProseIndex.PolicyVersion,
             AnalysedAt = source.ProseIndex.AnalysedAt,
             Segments = source.ProseIndex.Segments.Where(segment => segment.ClaimIds.Any(selectedClaims.Contains)).ToList()
         };

@@ -53,8 +53,11 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
                     contribution_accounts = x.Accounts,
                     selected_claims = x.Claims.Select(claim => new
                     {
-                        claim.Claim.Id, claim.Claim.Subject, claim.Claim.Statement,
-                        skills = claim.Claim.Concepts.All, claim.EvidenceIds
+                        claim.Claim.Id,
+                        claim.Claim.Subject,
+                        claim.Claim.Statement,
+                        skills = claim.Claim.Concepts.All,
+                        claim.EvidenceIds
                     })
                 })
             }),
@@ -170,8 +173,11 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
                                      contribution_accounts = packet.Accounts,
                                      selected_claims = packet.Claims.Select(claim => new
                                      {
-                                         claim.Claim.Id, claim.Claim.Subject, claim.Claim.Statement,
-                                         skills = claim.Claim.Concepts.All, claim.EvidenceIds
+                                         claim.Claim.Id,
+                                         claim.Claim.Subject,
+                                         claim.Claim.Statement,
+                                         skills = claim.Claim.Concepts.All,
+                                         claim.EvidenceIds
                                      }),
                                      maximum_words = packet.MaximumWords,
                                      allowed_emphasis = packet.RequirementIds.Select(id => request.Manifest.Requirements

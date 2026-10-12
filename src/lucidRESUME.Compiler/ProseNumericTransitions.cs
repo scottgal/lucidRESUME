@@ -21,7 +21,12 @@ public static class ProseNumericTransitions
 
     private static string CanonicalUnit(string unit) => unit switch
     {
-        "milliseconds" => "ms", "seconds" => "s", "megabytes" => "MB", "gigabytes" => "GB", "kilobytes" => "KB", _ => unit
+        "milliseconds" => "ms",
+        "seconds" => "s",
+        "megabytes" => "MB",
+        "gigabytes" => "GB",
+        "kilobytes" => "KB",
+        _ => unit
     };
 
     public sealed record Transition(string From, string FromUnit, string To, string ToUnit);

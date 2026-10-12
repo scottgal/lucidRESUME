@@ -48,14 +48,27 @@ public sealed class ResumeOutputExporterTests
         source.Projects.Add(project);
         var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
         var claim = Assert.Single(ledger.Claims);
-        var link = new RelatedWorkLink { SourceId = project.Id, Name = project.Name, Url = project.Url,
-            Kind = "project", Relevance = "billing retry queues", SupportingPassage = claim.Statement,
-            SourceRevision = ledger.SourceRevision, ClaimIds = [claim.Id], EvidenceIds = [.. claim.EvidenceIds] };
+        var link = new RelatedWorkLink
+        {
+            SourceId = project.Id,
+            Name = project.Name,
+            Url = project.Url,
+            Kind = "project",
+            Relevance = "billing retry queues",
+            SupportingPassage = claim.Statement,
+            SourceRevision = ledger.SourceRevision,
+            ClaimIds = [claim.Id],
+            EvidenceIds = [.. claim.EvidenceIds]
+        };
         var projection = ResumeDocument.Create("projection.md", "text/markdown", 0);
         projection.RelatedWork.Add(link);
         projection.RawMarkdown = "## Related projects {#related-projects}\n\n- [Retry toolkit](https://example.com/retry) — billing retry queues\n";
-        projection.Projection = new() { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
-            Blocks = [new() { ClaimId = claim.Id, ProseRef = "#related-projects:p1" }] };
+        projection.Projection = new()
+        {
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
+            Blocks = [new() { ClaimId = claim.Id, ProseRef = "#related-projects:p1" }]
+        };
         var artifact = new ResumeArtifactBuilder().Build(source, projection, new JobDescription { Title = "Engineer" }, "ats-classic");
         Assert.Equal(link, Assert.Single(artifact.RelatedWork));
         var jobml = new JobMlParser().Parse(artifact.JobMlSource!);

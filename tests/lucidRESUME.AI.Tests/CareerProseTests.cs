@@ -27,9 +27,15 @@ public sealed class CareerProseTests
         var source = ResumeDocument.Create("career.md", "text/markdown", 0);
         var role = new WorkExperience { Title = "Engineer", Company = "Example" };
         source.Experience.Add(role);
-        var entry = new RoleInterviewEntry { Action = "Implemented retries", Context = "Billing failures",
-            Outcome = "Unmeasured", ReviewedProse = "Implemented billing retries in C#; recovery time was unmeasured.", Skills = ["C#"],
-            Account = new() { Ownership = "Individual contributor", Decision = "Durable storage", DeliveryStatus = "Prototype" } };
+        var entry = new RoleInterviewEntry
+        {
+            Action = "Implemented retries",
+            Context = "Billing failures",
+            Outcome = "Unmeasured",
+            ReviewedProse = "Implemented billing retries in C#; recovery time was unmeasured.",
+            Skills = ["C#"],
+            Account = new() { Ownership = "Individual contributor", Decision = "Durable storage", DeliveryStatus = "Prototype" }
+        };
         Assert.True(RoleInterviewRecorder.Accept(source, role.Id, entry));
         var segment = Assert.Single((await new CareerProseAnalyser(new CountingEmbedder()).AnalyseAsync(source)).Segments);
         Assert.Contains("C#", segment.Skills);
@@ -112,11 +118,14 @@ public sealed class CareerProseTests
     [Fact]
     public void Retrieval_covers_distinct_requirements_and_preserves_role_scope()
     {
-        var index = new CareerProseIndex { Segments = [
+        var index = new CareerProseIndex
+        {
+            Segments = [
             new() { Id = "a", SubjectId = "role", Kind = "achievement", Text = "Built billing retry queues." },
             new() { Id = "b", SubjectId = "role", Kind = "achievement", Text = "Built billing retry queues with durable storage." },
             new() { Id = "c", SubjectId = "role", Kind = "achievement", Text = "Implemented audit logging and access authorization." },
-            new() { Id = "d", SubjectId = "different-role", Kind = "achievement", Text = "Billing retry queues and audit logging access authorization." }] };
+            new() { Id = "d", SubjectId = "different-role", Kind = "achievement", Text = "Billing retry queues and audit logging access authorization." }]
+        };
         ProseRequirement[] requirements = [new("recovery", "billing retry queues", []), new("safety", "audit logging access authorization", [])];
         var selected = CareerProseRetriever.Select(index, requirements, "role", 2);
         Assert.Contains(selected, item => item.Segment.Id == "c");

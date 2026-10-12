@@ -483,8 +483,11 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                 Outcome = InterviewOutcome.Trim(),
                 Account = new ContributionAccount
                 {
-                    Ownership = InterviewOwnership.Trim(), Object = InterviewObject.Trim(), Decision = InterviewDecision.Trim(),
-                    DeliveryStatus = InterviewDeliveryStatus.Trim(), Qualifiers = InterviewQualifiers.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList()
+                    Ownership = InterviewOwnership.Trim(),
+                    Object = InterviewObject.Trim(),
+                    Decision = InterviewDecision.Trim(),
+                    DeliveryStatus = InterviewDeliveryStatus.Trim(),
+                    Qualifiers = InterviewQualifiers.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList()
                 },
                 ReviewedProse = prose,
                 Assessment = _assessment?.InputHash == InterviewAssessmentRules.Hash(AssessmentRequest()) ? _assessment : null

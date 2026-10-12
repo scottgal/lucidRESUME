@@ -51,10 +51,18 @@ public static class RelatedWorkSelector
             if (relevance.Length > 140) relevance = relevance[..137] + "…";
             candidates.Add((new RelatedWorkLink
             {
-                SourceId = project.Id, Kind = kind, Name = project.Name, Url = uri.ToString(), Relevance = relevance,
-                SupportingPassage = best.Claim.Statement, SourceRevision = project.EvidenceMetadata.GetValueOrDefault("revision")
+                SourceId = project.Id,
+                Kind = kind,
+                Name = project.Name,
+                Url = uri.ToString(),
+                Relevance = relevance,
+                SupportingPassage = best.Claim.Statement,
+                SourceRevision = project.EvidenceMetadata.GetValueOrDefault("revision")
                     ?? project.EvidenceMetadata.GetValueOrDefault("content_hash") ?? ledger.SourceRevision,
-                Requirements = best.Requirements, ClaimIds = [best.Claim.Id], EvidenceIds = [.. best.Claim.EvidenceIds], Attribution = attribution
+                Requirements = best.Requirements,
+                ClaimIds = [best.Claim.Id],
+                EvidenceIds = [.. best.Claim.EvidenceIds],
+                Attribution = attribution
             }, best.Requirements.Count, best.Specificity, share, project.Date));
         }
         return candidates.OrderByDescending(item => item.Coverage).ThenByDescending(item => item.Specificity)

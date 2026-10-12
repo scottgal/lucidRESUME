@@ -169,7 +169,8 @@ public sealed class DocxExporter : IResumeExporter
                     var paragraph = new Paragraph();
                     var relation = mainPart.AddHyperlinkRelationship(new Uri(link.Url), true);
                     paragraph.Append(new Hyperlink(new Run(new RunProperties(new Color { Val = template.AccentHex },
-                        new Underline { Val = UnderlineValues.Single }), new Text(link.Name))) { Id = relation.Id });
+                        new Underline { Val = UnderlineValues.Single }), new Text(link.Name)))
+                    { Id = relation.Id });
                     paragraph.Append(new Run(new Text(" — " + link.Relevance) { Space = SpaceProcessingModeValues.Preserve }));
                     AppendCitationMarkers(paragraph, ExportArtifact.CitationNumbers($"[{link.Name}]({link.Url}) — {link.Relevance}", compact));
                     body.Append(paragraph);

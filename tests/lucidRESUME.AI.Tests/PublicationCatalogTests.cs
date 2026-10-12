@@ -47,8 +47,13 @@ public sealed class PublicationCatalogTests : IDisposable
     public void Only_reviewed_live_publications_are_selected_and_they_never_grant_skills()
     {
         var source = ResumeDocument.Create("career.md", "text/markdown", 0);
-        var article = new Project { Name = "Agent memory", Description = "Agent memory retrieval and workflow context.", Url = "https://www.mostlylucid.net/blog/agent-memory",
-            EvidenceMetadata = new() { ["provider"] = "blog", ["review"] = "accepted", ["live_url_verified"] = "false" } };
+        var article = new Project
+        {
+            Name = "Agent memory",
+            Description = "Agent memory retrieval and workflow context.",
+            Url = "https://www.mostlylucid.net/blog/agent-memory",
+            EvidenceMetadata = new() { ["provider"] = "blog", ["review"] = "accepted", ["live_url_verified"] = "false" }
+        };
         source.Publications.Add(article);
         var job = new JobDescription { RequiredSkills = ["agent memory retrieval"] };
         Assert.Empty(RelatedWorkSelector.Select(source, job, [], 3));

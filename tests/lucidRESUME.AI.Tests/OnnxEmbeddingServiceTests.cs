@@ -98,8 +98,11 @@ public class OnnxEmbeddingServiceTests : IDisposable
     [Fact]
     public async Task Missing_model_space_identity_is_stable_across_lazy_initialization_and_restart()
     {
-        var options = Options.Create(new EmbeddingOptions { OnnxModelPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".onnx"),
-            VocabPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt") });
+        var options = Options.Create(new EmbeddingOptions
+        {
+            OnnxModelPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".onnx"),
+            VocabPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
+        });
         using var first = new OnnxEmbeddingService(options, NullLogger<OnnxEmbeddingService>.Instance);
         var space = first.ModelId + "|" + first.ModelDigest;
         await first.EmbedAsync("billing retries");

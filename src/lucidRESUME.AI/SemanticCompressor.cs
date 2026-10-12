@@ -167,7 +167,7 @@ public sealed class SemanticCompressor
             proseRequirements.Add(new($"requirement-{proseRequirements.Count}", requirement,
                 jdLedger.Requirements.FirstOrDefault(item => string.Equals(item.SkillName, requirement, StringComparison.OrdinalIgnoreCase))?.Embedding ?? []));
         if (proseRequirements.Count == 0)
-            foreach (var clause in Regex.Split(jd.RawText, @"[\n.;]+" ).Where(clause => !string.IsNullOrWhiteSpace(clause)))
+            foreach (var clause in Regex.Split(jd.RawText, @"[\n.;]+").Where(clause => !string.IsNullOrWhiteSpace(clause)))
                 proseRequirements.Add(new($"clause-{proseRequirements.Count}", clause, []));
         var ignored = Tokens(string.Join(' ', new CoverageOptions().StopWords.Concat(new[]
             { "and", "the", "for", "are", "you", "our", "can", "has", "this", "that", "will", "from", "need", "work", "teams", "systems", "platform", "engineering", "technical", "built", "build", "designed", "design", "develop", "lead", "leadership", "production" })));

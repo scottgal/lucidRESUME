@@ -18,8 +18,12 @@ public static class RoleInterviewRecorder
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         entry.Account = (entry.Account ?? new ContributionAccount()) with
         {
-            RoleId = roleId, InterviewId = entry.Id, Action = entry.Action,
-            Context = entry.Context, Outcome = entry.Outcome, ReviewedProse = entry.ReviewedProse,
+            RoleId = roleId,
+            InterviewId = entry.Id,
+            Action = entry.Action,
+            Context = entry.Context,
+            Outcome = entry.Outcome,
+            ReviewedProse = entry.ReviewedProse,
             Skills = [.. entry.Skills]
         };
         foreach (var skill in entry.Skills)

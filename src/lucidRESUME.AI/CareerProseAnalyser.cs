@@ -23,8 +23,13 @@ public sealed class CareerProseAnalyser(IEmbeddingService embedder)
             previous.EmbeddingSpace == space && previous.PolicyVersion == CareerProseIndex.CurrentPolicyVersion) return previous;
         var reusable = previous.Segments.Where(segment => segment.EmbeddingSpace == space && (!force || segment.Embedding.Length > 0))
             .GroupBy(segment => segment.ContentHash).ToDictionary(group => group.Key, group => group.First());
-        var index = new CareerProseIndex { SourceRevision = ledger.SourceRevision, AcceptedClaimsRevision = acceptedRevision,
-            EmbeddingSpace = space, AnalysedAt = DateTimeOffset.UtcNow };
+        var index = new CareerProseIndex
+        {
+            SourceRevision = ledger.SourceRevision,
+            AcceptedClaimsRevision = acceptedRevision,
+            EmbeddingSpace = space,
+            AnalysedAt = DateTimeOffset.UtcNow
+        };
         var vectorsAvailable = true;
         var newVectors = 0;
         foreach (var group in accepted.Where(claim => claim.Kind is "achievement" or "summary" or "project" or "publication" || claim.SubjectId == "personal" && claim.Statement == source.Personal.Summary)
@@ -51,15 +56,21 @@ public sealed class CareerProseAnalyser(IEmbeddingService embedder)
             index.Segments.Add(new CareerProseSegment
             {
                 Id = ReusableProseStore.Fingerprint((group.Key.SubjectId ?? "career") + "|" + group.Key.Text),
-                ContentHash = hash, SubjectId = group.Key.SubjectId ?? "career", Kind = claims[0].Kind, Text = text,
-                ClaimIds = claims.Select(claim => claim.Id).ToList(), EvidenceIds = claims.SelectMany(claim => claim.EvidenceIds).Distinct().ToList(),
+                ContentHash = hash,
+                SubjectId = group.Key.SubjectId ?? "career",
+                Kind = claims[0].Kind,
+                Text = text,
+                ClaimIds = claims.Select(claim => claim.Id).ToList(),
+                EvidenceIds = claims.SelectMany(claim => claim.EvidenceIds).Distinct().ToList(),
                 Skills = claims.SelectMany(claim => claim.Concepts).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                 SkillConceptIds = claims.SelectMany(claim => claim.Concepts).Select(EvidenceLedgerBuilder.Slug).Distinct().ToList(),
                 Accounts = source.Experience.Where(role => group.Key.SubjectId == $"experience:{role.Id:N}")
                     .SelectMany(role => role.InterviewEntries).Where(entry => entry.Account is not null && claims.Any(claim => claim.Statement == entry.ReviewedProse))
                     .Select(entry => entry.Account!).ToList(),
-                MissingDimensions = ProseStructure.MissingDimensions(text).ToList(), Embedding = vector,
-                EmbeddingSpace = space, FactSignature = FactSignature(text),
+                MissingDimensions = ProseStructure.MissingDimensions(text).ToList(),
+                Embedding = vector,
+                EmbeddingSpace = space,
+                FactSignature = FactSignature(text),
                 Salience = 1d - ProseStructure.MissingDimensions(text).Count / 4d
             });
         }

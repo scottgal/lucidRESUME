@@ -46,13 +46,21 @@ public static class PublicationCatalog
                 .Distinct(StringComparer.Ordinal).Take(80).ToList();
             result.Add(new Project
             {
-                Id = EvidenceLedgerBuilder.StableGuid("publication:" + url), Name = title.Groups[1].Value.Trim(), Url = url, Date = published,
-                Description = passages.FirstOrDefault() ?? title.Groups[1].Value.Trim(), ImportSources = ["Blog Markdown catalog"],
+                Id = EvidenceLedgerBuilder.StableGuid("publication:" + url),
+                Name = title.Groups[1].Value.Trim(),
+                Url = url,
+                Date = published,
+                Description = passages.FirstOrDefault() ?? title.Groups[1].Value.Trim(),
+                ImportSources = ["Blog Markdown catalog"],
                 EvidencePassages = passages.Select(text => new ProjectEvidencePassage { Text = text, SourceUri = url, Revision = hash }).ToList(),
                 EvidenceMetadata = new(StringComparer.OrdinalIgnoreCase)
                 {
-                    ["provider"] = "blog", ["content_hash"] = hash, ["categories"] = categories,
-                    ["review"] = "required", ["live_url_verified"] = "false", ["observed_at"] = DateTimeOffset.UtcNow.ToString("O")
+                    ["provider"] = "blog",
+                    ["content_hash"] = hash,
+                    ["categories"] = categories,
+                    ["review"] = "required",
+                    ["live_url_verified"] = "false",
+                    ["observed_at"] = DateTimeOffset.UtcNow.ToString("O")
                 }
             });
         }

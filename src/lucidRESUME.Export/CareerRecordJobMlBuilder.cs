@@ -229,7 +229,8 @@ public sealed class CareerRecordJobMlBuilder(
                 .Where(claim => claim.Statement.Equals(segment.Text, StringComparison.OrdinalIgnoreCase)).DistinctBy(claim => claim.Id).ToList();
             return new Dictionary<string, object?>
             {
-                ["segment_id"] = segment.Id, ["ledger_claim_ids"] = segment.ClaimIds,
+                ["segment_id"] = segment.Id,
+                ["ledger_claim_ids"] = segment.ClaimIds,
                 ["jobml_claim_ids"] = claims.Select(claim => claim.Id).ToList(),
                 ["jobml_subject_ids"] = claims.Select(claim => claim.Subject).Distinct().ToList(),
                 ["jobml_skill_concept_ids"] = claims.SelectMany(claim => claim.Concepts.Skills).Distinct().ToList()
@@ -251,7 +252,8 @@ public sealed class CareerRecordJobMlBuilder(
         {
             ["lucidresume.publications"] = new Dictionary<string, object?>
             {
-                ["version"] = "0.1", ["articles"] = transcript.Publications.Select(ProjectObservation).ToList()
+                ["version"] = "0.1",
+                ["articles"] = transcript.Publications.Select(ProjectObservation).ToList()
             },
             ["lucidresume.transcript"] = new Dictionary<string, object?>
             {
