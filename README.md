@@ -207,6 +207,14 @@ unanswered topics later. Generation optionally tightens source-bound prose with
 your configured writer; rejected edits retain source wording and show a warning.
 See [generation and interview settings](docs/resume-output-design.md#morena-regression-and-full-transcript-builder).
 
+The career now also stores analysed prose passages with accepted skills, evidence,
+reviewed contribution accounts and reusable embeddings. Projection retrieves per job
+requirement, deduplicates accounts within their source role, and combines compatible
+facts for synthesis. Embeddings rank passages; they do not establish skills. The
+Profile page can refresh this index and import/review cached blog passages. Relevant
+articles and concise related repository links travel with the generated archive,
+Word/PDF exports and JobML. See the [implementation and evaluation paper](docs/research/2026-10-12-evidence-preserving-prose.md).
+
 ### Complete career record and saved output
 
 The complete career is a persisted authoritative record, separate from imported source files and generated resumes. Legacy imports are composed and deduplicated once; malformed employment headers stay in their original archives. Imports and reviewed interviews update the career at save time. Tailoring, coverage and career planning read its saved roles, claims, supported skill concepts and original evidence bindings; they do not reconstruct the career or rescan imported resumes for each job. Removing an input archive does not silently retract facts from the career. Invalid legacy JobML is retained in the archive with migration warnings and its claims require review.
@@ -505,22 +513,22 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test lucidRESUME.sln    # 598 tests across 12 projects
+dotnet test lucidRESUME.sln    # 628 tests across 12 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 121 | Persistence, models, reviewed transcript overlays, multi-resume, export, linked posts |
+| Core.Tests | 123 | Persistence, models, reviewed transcript overlays, multi-resume, export, linked posts |
 | Extraction.Tests | 25 | NER, recognizers, RRF fusion pipeline |
-| AI.Tests | 79 | Providers, embeddings, bounded decisions, deterministic projection, gated live OpenAI checks |
+| AI.Tests | 103 | Providers, embeddings, bounded decisions, deterministic projection, gated live OpenAI checks |
 | Matching.Tests | 99 | Skill scoring, filters, voting, job-search resilience, projection quality |
-| JobSpec.Tests | 18 | JD parsing, deterministic flattened-title extraction, salary extraction |
+| JobSpec.Tests | 19 | JD parsing, deterministic flattened-title extraction, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
 | GitHub.Tests | 48 | Language map, repository assessment, package families, LinkedIn parsing, reviewed document merge |
 | JobML.Tests | 33 | Parsing, validation, drift, reversible links, cJobML projection |
-| Compiler.Tests | 35 | Deterministic evidence selection, compact chronology and projection orchestration |
+| Compiler.Tests | 36 | Deterministic evidence selection, compact chronology and projection orchestration |
 | Web.Tests | 6 | ASP.NET Core endpoint and projection control |
-| App.Tests | 11 | Native credentials, complete-career projection and generated archive |
+| App.Tests | 13 | Native credentials, complete-career projection and generated archive |
 | Avalonia.UITesting.Tests | 98 | Input, scripts, locators, screenshots, REPL |
 
 The Chrome evidence filler has a separate TypeScript suite:

@@ -41,7 +41,7 @@ Word now flows naturally across A4 pages, and PDF roles can flow across page
 boundaries. Generation no longer forces a page break after an arbitrary role count.
 
 See the [prose and related-work research spike](research/2026-10-12-evidence-preserving-prose.md)
-for NLP diagnostics, blog discovery and proposed concise related GitHub links.
+for the analysed-prose pipeline, NLP diagnostics, blog discovery and concise related GitHub links.
 
 ## Optional evidence interview
 
@@ -158,3 +158,33 @@ Close the app before copying its app data directory. Preserve `data.db`,
 backup preserves structured records and archive metadata, but does not embed the
 archived Word/PDF files or rendered images. Prose cache files are derived and can
 be regenerated; archived document files are needed to reopen those exact versions.
+
+
+## Reusable analysed prose and related work
+
+The saved career has a prose index containing original accepted passages, scoped
+skills, reviewed contribution accounts, evidence links and reusable embeddings.
+Generation selects complementary passages for the job's individual requirements,
+combines compatible facts within a role, then asks the writer to synthesize natural
+prose. Exact duplicates retain all their evidence bindings. Changing jobs or tone
+reuses unchanged analysis; rejected claims and changed skills invalidate selection.
+Embeddings help retrieve passages and do not establish proficiency.
+
+In **Profile**, **Refresh career prose analysis** updates this derived index. The
+first projection can also build it automatically. Missing models leave lexical
+retrieval available, and unanswered interview questions never block projection.
+
+The **Articles and supporting publications** card imports a local blog Markdown
+directory into the saved career. Refresh reuses unchanged articles and resets review
+when their contents change. Filter titles/categories, inspect retained passages,
+and approve authorship after checking the published URL. Optional search uses only
+the supplied public topics. Generation reads cached evidence without crawling files,
+GitHub or the blog again. Article technology mentions do not add personal skills.
+
+Relevant accepted repository passages can appear as brief **Related projects** links;
+a project already explained at length is excluded from this section. Related articles
+are selected by requirement relevance rather than recency alone. Markdown, Word, PDF,
+the generated archive and JobML preserve the selected links and their evidence IDs.
+The source record keeps their observed revisions and contributor observations.
+
+![Cached publication passages and career prose analysis](screenshots/analysed-prose-articles.png)

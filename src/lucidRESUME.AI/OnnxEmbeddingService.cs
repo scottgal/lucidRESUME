@@ -28,11 +28,14 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IEmbeddingSpaceDes
     private const int MaxCacheEntries = 4096;
     private const int MaxSequenceLength = 256;
 
-    public string ModelId => _session is null
-        ? "lucidresume/lexical-fnv1a-384-v1"
-        : "sentence-transformers/all-MiniLM-L6-v2";
+    // Describe the installed space before lazy initialization, so restarting the
+    // app does not invalidate a persisted semantic index on every first request.
+    public string ModelId => File.Exists(_modelPath) && File.Exists(_vocabPath) && ModelSignature() != _failedModelSignature
+        ? "sentence-transformers/all-MiniLM-L6-v2"
+        : "lucidresume/lexical-fnv1a-384-v1";
     public string Normalization => "l2";
-    public string? ModelDigest => null;
+    // Explicit file metadata identity, not a cryptographic model attestation.
+    public string? ModelDigest => "files:" + ModelSignature();
 
     public OnnxEmbeddingService(IOptions<EmbeddingOptions> options, ILogger<OnnxEmbeddingService> logger)
     {

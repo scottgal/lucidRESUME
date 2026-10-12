@@ -30,7 +30,7 @@ public static class RoleInterviewPlanner
                     : !entry.IsCovered ? "No supporting account found. Check whether you have a real example; skipping leaves the gap visible."
                     : narrative ? "The matching account needs more detail about your contribution or outcome."
                     : "A skill is mentioned, but there is no concrete account of how you used it.",
-                roleId, entry.Evidence));
+                roleId, entry.Evidence, ProseStructure.NextQuestion(entry.Evidence ?? "") + " " + ProbeFor(entry.Requirement.Text, null)));
         }
         foreach (var role in resume.Experience.Where(RoleEvidenceQuality.HasRoleIdentity).OrderByDescending(r => r.StartDate)
                      .Where(r => !topics.Any(t => t.SuggestedRoleId == r.Id))

@@ -50,6 +50,7 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
                     x.SectionId,
                     x.Intent,
                     x.MaximumWords,
+                    contribution_accounts = x.Accounts,
                     selected_claims = x.Claims.Select(claim => new
                     {
                         claim.Claim.Id, claim.Claim.Subject, claim.Claim.Statement,
@@ -166,6 +167,7 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
                                      immutable_human_source = source.Text,
                                      current_draft = current.Text,
                                      section_brief = packet.Intent,
+                                     contribution_accounts = packet.Accounts,
                                      selected_claims = packet.Claims.Select(claim => new
                                      {
                                          claim.Claim.Id, claim.Claim.Subject, claim.Claim.Statement,
@@ -220,8 +222,10 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
         if (start < 0 || end <= start) throw new InvalidDataException("The model returned invalid section JSON.");
         try
         {
-            return JsonSerializer.Deserialize<SectionBatchEdit>(json[start..(end + 1)], JsonOptions)
-                   ?? throw new InvalidDataException("The model returned an empty section edit.");
+            var result = JsonSerializer.Deserialize<SectionBatchEdit>(json[start..(end + 1)], JsonOptions);
+            if (result?.Sections is null || result.Sections.Any(section => section is null || string.IsNullOrWhiteSpace(section.SectionId) || string.IsNullOrWhiteSpace(section.Text)))
+                throw new InvalidDataException("The model returned missing or empty section fields.");
+            return result;
         }
         catch (JsonException)
         {

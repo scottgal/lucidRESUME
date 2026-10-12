@@ -72,6 +72,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                 packet.Intent,
                 packet.MaximumWords,
                 packet.Kind,
+                packet.Accounts,
                 claims = packet.Claims.Select(claim => new
                 {
                     claim.Claim.Id,
@@ -122,6 +123,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                     immutable_human_source = Protect(current.SectionId, source.Text),
                     current_draft = current.Text == source.Text ? null : Protect(current.SectionId, current.Text),
                     section_brief = packet.Intent,
+                    contribution_accounts = packet.Accounts,
                     selected_claims = packet.Claims.Select(claim => new
                     {
                         id = claim.Claim.Id,

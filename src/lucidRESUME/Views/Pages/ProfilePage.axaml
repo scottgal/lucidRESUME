@@ -1,11 +1,12 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:resume="using:lucidRESUME.Core.Models.Resume"
              xmlns:controls="using:lucidRESUME.Views.Controls"
              x:DataType="vm:ProfilePageViewModel"
              x:Class="lucidRESUME.Views.Pages.ProfilePage">
 
-  <ScrollViewer Background="{DynamicResource LrPageBgBrush}">
+  <ScrollViewer x:Name="ProfileScrollViewer" Background="{DynamicResource LrPageBgBrush}">
     <StackPanel Margin="24,16" Spacing="20" MaxWidth="720">
 
       <!-- Page heading + theme toggle -->
@@ -176,6 +177,30 @@
             </StackPanel>
           </StackPanel>
         </Grid>
+      </Border>
+
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="20,16">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Articles and supporting publications" FontSize="14" FontWeight="SemiBold"/>
+          <Button x:Name="RefreshProseAnalysisButton" Content="Refresh career prose analysis" Command="{Binding RefreshProseAnalysisCommand}" IsEnabled="{Binding !IsImportingPublications}"/>
+          <TextBlock Text="Cache the blog's Markdown articles once. Review authorship and passages before they can be selected for a resume. Article mentions never add personal skills."
+                     TextWrapping="Wrap" FontSize="12"/>
+          <TextBox x:Name="PublicationMarkdownDirectory" Text="{Binding PublicationMarkdownDirectory}" PlaceholderText="Path to Mostlylucid/Markdown"/>
+          <Button x:Name="RefreshPublicationsButton" Content="Refresh article catalog" Command="{Binding RefreshPublicationsCommand}" IsEnabled="{Binding !IsImportingPublications}"/>
+          <TextBox Text="{Binding PublicationFilter}" PlaceholderText="Filter cached titles and categories"/>
+          <TextBox Text="{Binding PublicationTopics}" PlaceholderText="Optional public search topics, separated by semicolons"/>
+          <Button Content="Suggest articles using blog search" Command="{Binding DiscoverPublicationsCommand}" IsEnabled="{Binding !IsImportingPublications}"/>
+          <ComboBox x:Name="PublicationCandidateSelector" ItemsSource="{Binding PublicationCandidates}" SelectedItem="{Binding SelectedPublication}" HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="resume:Project">
+                <TextBlock Text="{Binding Name}" TextWrapping="Wrap"/>
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBox x:Name="PublicationEvidencePreview" Text="{Binding PublicationPreview}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" Height="180"/>
+          <Button x:Name="ApprovePublicationButton" Content="Approve authorship and passages" Command="{Binding ApprovePublicationCommand}" IsEnabled="{Binding !IsImportingPublications}"/>
+          <TextBlock Text="{Binding PublicationStatus}" TextWrapping="Wrap" FontSize="12"/>
+        </StackPanel>
       </Border>
 
       <!-- Card 5: Public software evidence -->

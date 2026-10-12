@@ -29,6 +29,11 @@ public sealed class ResumeArtifactBuilder
 
         var prose = RemoveExistingJobMl(projection.RawMarkdown ?? projection.PlainText ?? "").Trim();
         var jobMl = BuildProjectedJobMl(prose, source, projectionInfo, ledger, job);
+        jobMl.Data.Extensions ??= new();
+        jobMl.Data.Extensions["lucidresume.related_work"] = new Dictionary<string, object?>
+        {
+            ["version"] = "0.1", ["links"] = projection.RelatedWork
+        };
         var artifact = JobMlArtifactComposer.Compose(jobMl);
 
         var result = ResumeDocument.Create(
@@ -51,6 +56,15 @@ public sealed class ResumeArtifactBuilder
         result.Skills = projection.Skills;
         result.Projects = projection.Projects;
         result.Publications = projection.Publications;
+        result.RelatedWork = projection.RelatedWork;
+        var selectedClaims = projectionInfo.Blocks.Select(block => block.ClaimId).ToHashSet(StringComparer.Ordinal);
+        result.ProseIndex = new CareerProseIndex
+        {
+            SourceRevision = source.ProseIndex.SourceRevision, AcceptedClaimsRevision = source.ProseIndex.AcceptedClaimsRevision,
+            EmbeddingSpace = source.ProseIndex.EmbeddingSpace, PolicyVersion = source.ProseIndex.PolicyVersion,
+            AnalysedAt = source.ProseIndex.AnalysedAt,
+            Segments = source.ProseIndex.Segments.Where(segment => segment.ClaimIds.Any(selectedClaims.Contains)).ToList()
+        };
         result.Certifications = projection.Certifications;
         result.EvidenceLedger = ledger;
         result.Projection = projectionInfo;
@@ -87,6 +101,8 @@ public sealed class ResumeArtifactBuilder
         {
             if (!claimsById.TryGetValue(binding.ClaimId, out var ledgerClaim))
                 throw new InvalidOperationException($"Projection references missing ledger claim '{binding.ClaimId}'.");
+            if (ledgerClaim.Review != "accepted")
+                throw new InvalidOperationException($"Projection references unaccepted claim '{binding.ClaimId}'. Re-project after reviewing the career record.");
             if (!index.TryGet(binding.ProseRef, out var passage))
                 throw new InvalidOperationException($"Projection prose reference '{binding.ProseRef}' is missing or ambiguous.");
 

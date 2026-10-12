@@ -20,6 +20,18 @@ public sealed class CareerRecordJobMlBuilder(
     private static readonly string[] DefaultRoleCentroids =
         ["Lead Developer", "Head of Engineering", "CTO", "VP of Engineering"];
 
+    /// <summary>Refresh derived metadata without rebuilding claims, embeddings or authored Markdown.</summary>
+    public static void RefreshDerivedExtensions(ResumeDocument transcript)
+    {
+        var parser = new JobMlParser();
+        if (string.IsNullOrWhiteSpace(transcript.JobMlSource) || !parser.TryParse(transcript.JobMlSource, out var file, out _)) return;
+        file!.Data.Extensions ??= new();
+        foreach (var extension in BuildEvidenceExtensions(transcript)!) file.Data.Extensions[extension.Key] = extension.Value;
+        AddProseBindings(file.Data, transcript.ProseIndex);
+        transcript.JobMlSource = parser.Serialize(file);
+        transcript.JobMlRevision = MarkdownEvidenceIndex.Fingerprint(transcript.JobMlSource);
+    }
+
     public async Task<JobMlFile> BuildAsync(ResumeDocument transcript,
         CancellationToken cancellationToken = default, CareerSemanticIndex? semanticIndex = null)
     {
@@ -202,7 +214,29 @@ public sealed class CareerRecordJobMlBuilder(
                 });
             }
 
+        AddProseBindings(root, transcript.ProseIndex);
         return new JobMlFile(markdown, root);
+    }
+
+    private static void AddProseBindings(JobMlRoot root, CareerProseIndex index)
+    {
+        var byEvidence = root.Claims.Where(claim => claim.Review == "accepted")
+            .SelectMany(claim => claim.Evidence.Where(evidence => evidence.Id is not null).Select(evidence => (evidence.Id!, Claim: claim)))
+            .GroupBy(item => item.Item1).ToDictionary(group => group.Key, group => group.Select(item => item.Claim).ToList());
+        var bindings = index.Segments.Select(segment =>
+        {
+            var claims = segment.EvidenceIds.Where(byEvidence.ContainsKey).SelectMany(id => byEvidence[id])
+                .Where(claim => claim.Statement.Equals(segment.Text, StringComparison.OrdinalIgnoreCase)).DistinctBy(claim => claim.Id).ToList();
+            return new Dictionary<string, object?>
+            {
+                ["segment_id"] = segment.Id, ["ledger_claim_ids"] = segment.ClaimIds,
+                ["jobml_claim_ids"] = claims.Select(claim => claim.Id).ToList(),
+                ["jobml_subject_ids"] = claims.Select(claim => claim.Subject).Distinct().ToList(),
+                ["jobml_skill_concept_ids"] = claims.SelectMany(claim => claim.Concepts.Skills).Distinct().ToList()
+            };
+        }).ToList();
+        if (root.Extensions?.GetValueOrDefault("lucidresume.transcript") is Dictionary<string, object?> transcript)
+            transcript["prose_bindings"] = bindings;
     }
 
     private static Dictionary<string, object?>? BuildEvidenceExtensions(ResumeDocument transcript)
@@ -215,11 +249,16 @@ public sealed class CareerRecordJobMlBuilder(
             .Select(project => ProjectObservation(project)).ToList();
         var extensions = new Dictionary<string, object?>
         {
+            ["lucidresume.publications"] = new Dictionary<string, object?>
+            {
+                ["version"] = "0.1", ["articles"] = transcript.Publications.Select(ProjectObservation).ToList()
+            },
             ["lucidresume.transcript"] = new Dictionary<string, object?>
             {
                 ["version"] = "0.1",
                 ["retained_source_narrative"] = transcript.RawMarkdown,
                 ["narrative_policy"] = "Retained source material is not automatically an accepted claim or skill.",
+                ["prose_index"] = transcript.ProseIndex,
                 ["role_interviews"] = transcript.Experience.Where(role => role.InterviewEntries.Count > 0)
                     .Select(role => new Dictionary<string, object?>
                     {
@@ -233,6 +272,7 @@ public sealed class CareerRecordJobMlBuilder(
                             ["action"] = entry.Action,
                             ["outcome"] = entry.Outcome,
                             ["reviewed_prose"] = entry.ReviewedProse,
+                            ["contribution_account"] = entry.Account,
                             ["skills"] = entry.Skills,
                             ["accepted_at"] = entry.AcceptedAt.ToString("O")
                         }).ToList()
@@ -263,7 +303,8 @@ public sealed class CareerRecordJobMlBuilder(
             ["id"] = StableEntityId($"{provider}:{identity}"),
             ["name"] = project.Name,
             ["uri"] = project.Url,
-            ["technologies"] = project.Technologies
+            ["technologies"] = project.Technologies,
+            ["passages"] = project.EvidencePassages
         };
         foreach (var (key, value) in project.EvidenceMetadata)
             result[key] = ObservationValue(key, value);

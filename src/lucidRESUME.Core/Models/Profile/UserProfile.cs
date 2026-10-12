@@ -28,6 +28,7 @@ public sealed class UserProfile
     // Free-form notes for the AI (context, career goals, anything)
     public string? CareerGoals { get; set; }
     public string? AdditionalContext { get; set; }
+    public string? PublicationMarkdownDirectory { get; set; }
 
     public void BlockCompany(string company)
     {

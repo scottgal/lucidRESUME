@@ -160,6 +160,22 @@ public sealed class DocxExporter : IResumeExporter
                     body.Append(CreateBullet($"{c.Name} - {c.Issuer}" + (c.IssuedDate.HasValue ? $" ({c.IssuedDate.Value.Year})" : "")));
             }
 
+            var relatedProjects = resume.RelatedWork.Where(link => link.Kind == "project").ToList();
+            if (relatedProjects.Count > 0)
+            {
+                body.Append(CreateParagraph("Related projects", "Heading2"));
+                foreach (var link in relatedProjects)
+                {
+                    var paragraph = new Paragraph();
+                    var relation = mainPart.AddHyperlinkRelationship(new Uri(link.Url), true);
+                    paragraph.Append(new Hyperlink(new Run(new RunProperties(new Color { Val = template.AccentHex },
+                        new Underline { Val = UnderlineValues.Single }), new Text(link.Name))) { Id = relation.Id });
+                    paragraph.Append(new Run(new Text(" — " + link.Relevance) { Space = SpaceProcessingModeValues.Preserve }));
+                    AppendCitationMarkers(paragraph, ExportArtifact.CitationNumbers($"[{link.Name}]({link.Url}) — {link.Relevance}", compact));
+                    body.Append(paragraph);
+                }
+            }
+
             if (resume.Publications.Count > 0)
             {
                 body.Append(CreateParagraph("Selected Recent Publications", "Heading2"));

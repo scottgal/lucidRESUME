@@ -10,7 +10,8 @@ public sealed class CompositionValidator
         {
             "and", "the", "with", "from", "that", "this", "for", "into", "through", "role", "have",
             "must", "will", "your", "their", "our", "using", "across", "including", "alongside", "while",
-            "within", "between", "building", "build", "system", "platform", "tool"
+            "within", "between", "building", "build", "system", "platform", "tool", "was", "were", "been", "being",
+            "its", "but", "though", "which", "before", "after", "prior", "during"
         };
 
     public IReadOnlyList<string> Validate(
@@ -41,9 +42,27 @@ public sealed class CompositionValidator
                 !Regex.IsMatch(original.Text, @"\b(led|lead|owned|directed|headed|managed)\b", RegexOptions.IgnoreCase))
                 errors.Add($"Section '{block.SectionId}' introduced leadership or ownership not present in the source prose.");
             // Conservative editorial gates. Ambiguous rewrites retain the accepted human source.
+            const string tentative = @"\b(aimed to|designed to|intended to|planned to|would|may|might|hoped to)\b";
+            if (Regex.IsMatch(original.Text, tentative, RegexOptions.IgnoreCase) &&
+                !Regex.IsMatch(block.Text, tentative, RegexOptions.IgnoreCase))
+                errors.Add($"Section '{block.SectionId}' removed intended or uncertain outcome status.");
+            const string assistance = @"\b(helped|assisted|supported|contributed|contribution)\b";
+            if (Regex.IsMatch(original.Text, assistance, RegexOptions.IgnoreCase) &&
+                !Regex.IsMatch(block.Text, assistance, RegexOptions.IgnoreCase))
+                errors.Add($"Section '{block.SectionId}' removed assisted ownership from the source.");
+            foreach (var skill in packet.Claims.SelectMany(claim => claim.Claim.Concepts.All).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var pattern = @"(?<![\p{L}\p{N}])" + Regex.Escape(skill) + @"(?![\p{L}\p{N}])";
+                if (Regex.IsMatch(original.Text, pattern, RegexOptions.IgnoreCase) &&
+                    !Regex.IsMatch(block.Text, pattern, RegexOptions.IgnoreCase))
+                    errors.Add($"Section '{block.SectionId}' removed named skill '{skill}'.");
+            }
             foreach (var qualifier in new[] { "not", "never", "planned", "proposed", "intended", "estimated", "approximately", "up to", "no longer", "pilot", "prototype", "past year", "last year", "past month", "last month" })
                 if (Regex.IsMatch(original.Text, @"\b" + qualifier + @"\b", RegexOptions.IgnoreCase) &&
-                    !Regex.IsMatch(block.Text, @"\b" + qualifier + @"\b", RegexOptions.IgnoreCase))
+                    !Regex.IsMatch(block.Text, @"\b" + qualifier + @"\b", RegexOptions.IgnoreCase) &&
+                    !(qualifier == "not" && Regex.Matches(original.Text, @"\bnot\b", RegexOptions.IgnoreCase).Count == 1 &&
+                      Regex.IsMatch(original.Text, @"\bnot (?:yet )?measured\b", RegexOptions.IgnoreCase) &&
+                      Regex.IsMatch(block.Text, @"\bunmeasured\b", RegexOptions.IgnoreCase)))
                     errors.Add($"Section '{block.SectionId}' removed source qualifier '{qualifier}'.");
             if (WordCount(original.Text) >= 8 && WordCount(block.Text) < (packet.Kind == "summary" ? 4 : 6))
                 errors.Add($"Section '{block.SectionId}' lost the substantive account and became a fragment.");
@@ -67,6 +86,12 @@ public sealed class CompositionValidator
             var leaked = Words(block.Text).Where(x => targetTerms.Contains(x) && !allowedFacts.Contains(x)).ToList();
             foreach (var term in leaked)
                 errors.Add($"Section '{block.SectionId}' introduced target-role term '{term}' without selected evidence.");
+            // A lexical overlap floor alone accepts fluent, invented extra clauses.
+            // This conservative novelty budget is advisory grounding, not entailment proof.
+            var editorialWords = new HashSet<string>("added created developed implemented delivered used helped assisted contributed supported reviewed worked enabled enabling enables backed made approach focused involved provided established applied remains unmeasured inspection".Split(' '));
+            var novel = Words(block.Text).Except(allowedFacts).Except(editorialWords).ToList();
+            if (novel.Count > Math.Max(2, allowedFacts.Count * .15))
+                errors.Add($"Section '{block.SectionId}' introduced unsupported descriptive content: {string.Join(", ", novel)}.");
             if (WordCount(block.Text) > packet.MaximumWords)
                 errors.Add($"Section '{block.SectionId}' exceeds its {packet.MaximumWords}-word budget.");
         }
@@ -83,7 +108,7 @@ public sealed class CompositionValidator
     private static HashSet<string> Words(string value) => Word.Matches(value)
         .Select(x => CanonicalWord(x.Value)).Where(x => !StopWords.Contains(x)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    private static string CanonicalWord(string value) => value.ToLowerInvariant() switch
+    private static string CanonicalWord(string value) => value.TrimEnd('.').ToLowerInvariant() switch
     {
         "led" => "lead",
         "teams" => "team",
@@ -98,7 +123,11 @@ public sealed class CompositionValidator
         "releases" => "release",
         "standards" => "standard",
         "delivers" or "delivered" or "delivery" => "deliver",
-        _ => value.ToLowerInvariant()
+        "implemented" or "implementing" => "implement",
+        "measured" or "measuring" => "measure",
+        "attempts" => "attempt",
+        "improvements" => "improvement",
+        _ => value.TrimEnd('.').ToLowerInvariant()
     };
 }
 

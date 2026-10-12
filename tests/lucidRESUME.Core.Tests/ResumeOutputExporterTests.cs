@@ -14,6 +14,63 @@ namespace lucidRESUME.Core.Tests;
 public sealed class ResumeOutputExporterTests
 {
     [Fact]
+    public void Derived_prose_refresh_preserves_authored_markdown_and_foreign_extensions()
+    {
+        var source = ResumeDocument.Create("career.md", "text/markdown", 0);
+        const string narrative = "## My own heading\n\nA carefully authored paragraph.";
+        var parser = new JobMlParser();
+        source.JobMlSource = parser.Serialize(new JobMlFile(narrative, new JobMlRoot
+        {
+            Extensions = new() { ["other-tool.notes"] = "Retain this." },
+            Claims = [new() { Id = "custom-claim", Subject = "custom-role", Statement = "Original reviewed account.", Review = "accepted",
+                Concepts = new() { Skills = ["custom-skill"] }, Evidence = [new() { Id = "e1", Type = "document" }] }]
+        }));
+        source.ProseIndex.Segments.Add(new() { Id = "segment", Text = "Original reviewed account.", ClaimIds = ["claim"], EvidenceIds = ["e1"] });
+        CareerRecordJobMlBuilder.RefreshDerivedExtensions(source);
+        var refreshed = parser.Parse(source.JobMlSource);
+        Assert.Equal(narrative, refreshed.Markdown.Trim());
+        Assert.Equal("Retain this.", refreshed.Data.Extensions!["other-tool.notes"]);
+        Assert.Contains("Original reviewed account.", source.JobMlSource);
+        Assert.Contains("prose_index", source.JobMlSource);
+        var transcript = Assert.IsType<Dictionary<object, object>>(refreshed.Data.Extensions["lucidresume.transcript"]);
+        var bindings = Assert.IsType<List<object>>(transcript["prose_bindings"]);
+        var binding = Assert.IsType<Dictionary<object, object>>(Assert.Single(bindings));
+        Assert.Equal("custom-claim", Assert.Single(Assert.IsType<List<object>>(binding["jobml_claim_ids"])));
+        Assert.Equal("custom-skill", Assert.Single(Assert.IsType<List<object>>(binding["jobml_skill_concept_ids"])));
+        Assert.NotNull(source.JobMlRevision);
+    }
+
+    [Fact]
+    public async Task Related_project_has_a_live_hyperlink_and_traceable_claim_in_both_exports()
+    {
+        var source = ResumeDocument.Create("career.md", "text/markdown", 0);
+        var project = new Project { Name = "Retry toolkit", Description = "Billing retry queues and audit trails.", Url = "https://example.com/retry" };
+        source.Projects.Add(project);
+        var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
+        var claim = Assert.Single(ledger.Claims);
+        var link = new RelatedWorkLink { SourceId = project.Id, Name = project.Name, Url = project.Url,
+            Kind = "project", Relevance = "billing retry queues", SupportingPassage = claim.Statement,
+            SourceRevision = ledger.SourceRevision, ClaimIds = [claim.Id], EvidenceIds = [.. claim.EvidenceIds] };
+        var projection = ResumeDocument.Create("projection.md", "text/markdown", 0);
+        projection.RelatedWork.Add(link);
+        projection.RawMarkdown = "## Related projects {#related-projects}\n\n- [Retry toolkit](https://example.com/retry) — billing retry queues\n";
+        projection.Projection = new() { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
+            Blocks = [new() { ClaimId = claim.Id, ProseRef = "#related-projects:p1" }] };
+        var artifact = new ResumeArtifactBuilder().Build(source, projection, new JobDescription { Title = "Engineer" }, "ats-classic");
+        Assert.Equal(link, Assert.Single(artifact.RelatedWork));
+        var jobml = new JobMlParser().Parse(artifact.JobMlSource!);
+        Assert.Single(jobml.Data.Claims);
+        Assert.Contains("lucidresume.related_work", artifact.JobMlSource);
+        using var stream = new MemoryStream(await new DocxExporter().ExportAsync(artifact));
+        using var docx = WordprocessingDocument.Open(stream, false);
+        Assert.Contains(docx.MainDocumentPart!.HyperlinkRelationships, relationship => relationship.Uri.ToString() == project.Url);
+        Assert.Contains("Related projects", docx.MainDocumentPart.Document!.InnerText);
+        Assert.Empty(new OpenXmlValidator().Validate(docx));
+        using var pdf = PdfDocument.Open(await new PdfExporter().ExportAsync(artifact));
+        Assert.Contains("Retry toolkit", string.Join(' ', pdf.GetPages().Select(page => page.Text)));
+    }
+
+    [Fact]
     public async Task Publication_links_survive_artifact_and_word_export_and_invalidate_stale_ledger()
     {
         var source = ResumeDocument.Create("career.md", "text/markdown", 0);

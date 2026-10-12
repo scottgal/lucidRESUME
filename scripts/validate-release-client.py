@@ -359,6 +359,38 @@ def main():
             assert 'Lead reliable engineering teams' in json.dumps(data), data
         client.shot('saved-profile')
 
+    def analysed_prose_and_articles():
+        client.nav('Profile')
+        catalog = output / 'articles'
+        catalog.mkdir()
+        (catalog / 'synthetic-retry-example.md').write_text(
+            '# Synthetic retry example\n\n<datetime>2026-10-01</datetime>\n\n'
+            '<!-- category -- Testing -->\n\n'
+            'This synthetic article explains billing retry queues and audit trails without claiming employment experience.\n')
+        client.set('PublicationMarkdownDirectory', str(catalog))
+        client.click('RefreshPublicationsButton')
+        client.wait('IsImportingPublications', 'False')
+        assert '1 articles cached' in client.get('PublicationStatus'), client.get('PublicationStatus')
+        client.script('select-publication', [{'type': 'SelectDropDownItem', 'target': 'PublicationCandidateSelector', 'value': '0'}])
+        assert 'billing retry queues' in client.get('PublicationPreview')
+        assert 'required' in client.get('PublicationPreview')
+        client.click('RefreshPublicationsButton')
+        client.wait('IsImportingPublications', 'False')
+        assert '1 unchanged' in client.get('PublicationStatus'), client.get('PublicationStatus')
+        assert 'billing retry queues' in client.get('PublicationPreview'), 'Refresh lost the selected article preview.'
+        client.click('RefreshProseAnalysisButton')
+        client.wait('IsImportingPublications', 'False')
+        assert 'scoped prose segments analysed' in client.get('PublicationStatus'), client.get('PublicationStatus')
+        with sqlite3.connect(output / 'data/data.db') as db:
+            complete = json.loads(db.execute("select value from app_meta where key='complete_career'").fetchone()[0])['Transcript']
+        assert complete['ProseIndex']['Segments']
+        article = next(article for article in complete['Publications'] if article['Name'] == 'Synthetic retry example')
+        assert article['EvidenceMetadata']['review'] == 'required'
+        assert not article['Technologies']
+        assert all(segment['SubjectId'] != 'publication:' + article['Id'].replace('-', '') for segment in complete['ProseIndex']['Segments'])
+        client.script('scroll-articles', [{'type': 'Scroll', 'target': 'ProfileScrollViewer', 'value': '1400'}])
+        client.shot('analysed-prose-articles')
+
     def restart():
         nonlocal client
         client.close()
@@ -416,6 +448,7 @@ def main():
         case('jobml-draft-selection-drift', run_linked_editor)
         case('pdf-import-round-trip', pdf_import)
         case('different-jobs-different-evidence', contrasting_jobs)
+        case('analysed-prose-and-cached-articles', analysed_prose_and_articles)
     finally:
         client.close()
     report['passed'] = all(item['status'] == 'passed' for item in report['cases'])

@@ -97,6 +97,11 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     [ObservableProperty] private string _interviewContext = "";
     [ObservableProperty] private string _interviewAction = "";
     [ObservableProperty] private string _interviewOutcome = "";
+    [ObservableProperty] private string _interviewOwnership = "";
+    [ObservableProperty] private string _interviewObject = "";
+    [ObservableProperty] private string _interviewDecision = "";
+    [ObservableProperty] private string _interviewDeliveryStatus = "";
+    [ObservableProperty] private string _interviewQualifiers = "";
     [ObservableProperty] private string _interviewProse = "";
     [ObservableProperty] private string _interviewNextQuestion = "";
     [ObservableProperty] private string _interviewFeedback = "";
@@ -241,6 +246,17 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             });
             var compressed = await _compressor.CompressAsync(resume, job, progress: progress,
                 generationOptions: new ResumeGenerationOptions { Length = SelectedLength, Detail = SelectedDetail, Tone = SelectedTone });
+            await _store.MutateAsync(current =>
+            {
+                var saved = current.GetCompleteTranscript();
+                if (saved is not null && lucidRESUME.Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(saved).SourceRevision == resume.ProseIndex.SourceRevision)
+                {
+                    var changed = saved.ProseIndex.AnalysedAt != resume.ProseIndex.AnalysedAt ||
+                        saved.ProseIndex.AcceptedClaimsRevision != resume.ProseIndex.AcceptedClaimsRevision;
+                    saved.ProseIndex = resume.ProseIndex;
+                    if (changed) CareerRecordJobMlBuilder.RefreshDerivedExtensions(saved);
+                }
+            });
 
             if (version != _contextVersion) return;
             CompressionStats = $"{compressed.IncludedRoleCount}/{compressed.OriginalRoleCount} roles, " +
@@ -322,6 +338,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         if (!InterviewRoles.SequenceEqual(choices)) InterviewRoles = choices;
         SelectedInterviewRole = InterviewRoles.FirstOrDefault(r => r.Id == _interviewTopic.SuggestedRoleId);
         InterviewContext = InterviewAction = InterviewOutcome = InterviewProse = InterviewSkills = "";
+        InterviewOwnership = InterviewObject = InterviewDecision = InterviewDeliveryStatus = InterviewQualifiers = "";
         QueueAssessment();
     }
 
@@ -464,6 +481,11 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                 Context = InterviewContext.Trim(),
                 Action = InterviewAction.Trim(),
                 Outcome = InterviewOutcome.Trim(),
+                Account = new ContributionAccount
+                {
+                    Ownership = InterviewOwnership.Trim(), Object = InterviewObject.Trim(), Decision = InterviewDecision.Trim(),
+                    DeliveryStatus = InterviewDeliveryStatus.Trim(), Qualifiers = InterviewQualifiers.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList()
+                },
                 ReviewedProse = prose,
                 Assessment = _assessment?.InputHash == InterviewAssessmentRules.Hash(AssessmentRequest()) ? _assessment : null
             });

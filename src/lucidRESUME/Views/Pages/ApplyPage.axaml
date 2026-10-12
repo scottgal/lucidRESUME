@@ -176,6 +176,16 @@
           <TextBox x:Name="InterviewAction" Text="{Binding InterviewAction}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="65"/>
           <TextBlock Text="What changed as a result? Use a reliable metric or a concrete qualitative outcome. Leave unknown details blank." TextWrapping="Wrap"/>
           <TextBox x:Name="InterviewOutcome" Text="{Binding InterviewOutcome}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="65"/>
+          <Expander Header="Optional structured facts" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="6">
+              <TextBox Text="{Binding InterviewOwnership}" PlaceholderText="Your ownership: assisted, individual, team or led"/>
+              <TextBox Text="{Binding InterviewObject}" PlaceholderText="The service, workflow or product you changed"/>
+              <TextBox Text="{Binding InterviewDecision}" PlaceholderText="Your decision, alternatives and constraints"/>
+              <TextBox Text="{Binding InterviewDeliveryStatus}" PlaceholderText="Prototype, pilot, production, ongoing or unknown"/>
+              <TextBox Text="{Binding InterviewQualifiers}" PlaceholderText="Limitations or uncertainty; separate with semicolons"/>
+              <TextBlock Text="These facts stay with the reviewed role account. Leave unknown fields blank; generation remains available." TextWrapping="Wrap" FontSize="11"/>
+            </StackPanel>
+          </Expander>
           <Border Background="{DynamicResource LrCardBgBrush}" Padding="10" CornerRadius="6">
             <StackPanel Spacing="6">
               <TextBlock Text="Suggested next question" FontWeight="SemiBold"/>

@@ -60,7 +60,7 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
                 : "Write a concise, concrete account for this role.";
         foreach (var group in projection.Projection.Blocks.GroupBy(binding => binding.ProseRef))
         {
-            if (group.Key.StartsWith("#publications:", StringComparison.Ordinal)) continue;
+            if (group.Key.StartsWith("#publications:", StringComparison.Ordinal) || group.Key.StartsWith("#related-projects:", StringComparison.Ordinal)) continue;
             if (!index.TryGet(group.Key, out var passage)) continue;
             var selected = group.Where(binding => claims.ContainsKey(binding.ClaimId)).Select(binding => claims[binding.ClaimId])
                 .Where(claim => claim.Kind is "achievement" or "summary" or "project" || group.Key.StartsWith("#summary:")).Select(claim => new SelectedClaim(
@@ -71,16 +71,19 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
                         Statement = claim.Statement,
                         Concepts = new JobMlClaimConcepts
                         {
-                            Skills = claim.Concepts.Concat(source.Experience.SelectMany(role => role.InterviewEntries)
-                        .Where(entry => entry.ReviewedProse == claim.Statement).SelectMany(entry => entry.Skills)).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+                            Skills = [.. claim.Concepts]
                         }
                     },
                     passage.Heading ?? "", passage.Text.TrimStart('-', ' '), claim.EvidenceIds, 1, [])).ToList();
             if (selected.Count == 0) continue;
             var words = Regex.Matches(passage.Text, @"\S+").Count;
-            packets.Add(new(group.Key, passage.Heading ?? "", detailInstruction + " " + toneInstruction + " Structure the account around the candidate's action and its object, then a supported decision, context or result where available. Omit missing elements. Preserve personal versus team ownership, prototype versus production status, uncertainty and named skills. Never turn helped into led, a goal into an achieved result, or a publication into employment experience. In a summary, preserve explicit time periods and named publication sites from the source.",
+            packets.Add(new(group.Key, passage.Heading ?? "", detailInstruction + " " + toneInstruction + " Structure the account around the candidate's action and its object, then a supported decision, context or result where available. Omit missing elements. Preserve the supported purpose and object of each action when detail permits. Preserve personal versus team ownership, prototype versus production status, uncertainty and named skills. Never turn helped into led, a goal into an achieved result, or a publication into employment experience. In a summary, preserve explicit time periods and named publication sites from the source.",
                 group.Key.StartsWith("#summary:") ? budget.SummaryWords : Math.Max((int)Math.Ceiling(words * (preferences.Detail == ResumeDetail.Thorough ? 1.4 : 1.15)), 40), selected, requirements.Select(requirement => requirement.Id).ToList(),
-                group.Key.StartsWith("#summary:") ? "summary" : "experience"));
+                group.Key.StartsWith("#summary:") ? "summary" : "experience")
+            {
+                Accounts = source.ProseIndex.Segments.Where(segment => selected.Any(claim => segment.ClaimIds.Contains(claim.Claim.Id)))
+                    .SelectMany(segment => segment.Accounts).DistinctBy(account => account.InterviewId).ToList()
+            });
         }
         if (packets.Count == 0) return;
         var manifest = new ProjectionManifest(ledger.SourceRevision, MarkdownEvidenceIndex.Fingerprint(job.RawText),

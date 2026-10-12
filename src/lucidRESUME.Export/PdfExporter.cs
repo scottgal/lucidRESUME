@@ -249,6 +249,21 @@ public sealed class PdfExporter : IResumeExporter
                 col.Item().PaddingBottom(6);
             }
 
+            var relatedProjects = resume.RelatedWork.Where(link => link.Kind == "project").ToList();
+            if (relatedProjects.Count > 0)
+            {
+                col.Item().Element(c => SectionHeading(c, "Related projects", template));
+                foreach (var link in relatedProjects)
+                    col.Item().SemanticParagraph().Text(text =>
+                    {
+                        text.Hyperlink(link.Name, link.Url).FontSize(9).FontColor($"#{template.AccentHex}").Underline();
+                        text.Span(" — " + link.Relevance).FontSize(9);
+                        foreach (var number in ExportArtifact.CitationNumbers($"[{link.Name}]({link.Url}) — {link.Relevance}", compact))
+                            text.Span($" [{number}]").FontSize(7).Superscript();
+                    });
+                col.Item().PaddingBottom(6);
+            }
+
             if (resume.Publications.Count > 0)
             {
                 col.Item().SemanticSection().Column(publicationColumn =>

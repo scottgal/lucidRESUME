@@ -8,6 +8,7 @@ using lucidRESUME.Core.Models.Profile;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
 using lucidRESUME.GitHub;
+using lucidRESUME.Export;
 using lucidRESUME.Services;
 
 namespace lucidRESUME.ViewModels.Pages;
@@ -24,6 +25,138 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
     private CancellationTokenSource? _saveCts;
     private readonly SemaphoreSlim _saveGate = new(1, 1);
     private bool _isLoading;
+    private readonly PublicationDiscoveryService _publicationDiscovery;
+    private readonly CareerProseAnalyser? _proseAnalyser;
+    private IReadOnlyList<Project> _publicationCatalog = [];
+    [ObservableProperty] private string _publicationMarkdownDirectory = "";
+    [ObservableProperty] private string _publicationFilter = "";
+    [ObservableProperty] private string _publicationTopics = "";
+    [ObservableProperty] private string _publicationStatus = "";
+    [ObservableProperty] private bool _isImportingPublications;
+    [ObservableProperty] private IReadOnlyList<Project> _publicationCandidates = [];
+    [ObservableProperty] private Project? _selectedPublication;
+    [ObservableProperty] private string _publicationPreview = "";
+
+    partial void OnSelectedPublicationChanged(Project? value) => PublicationPreview = value is null ? "" :
+        $"{value.Name}\n{value.Url}\nReview: {value.EvidenceMetadata.GetValueOrDefault("review", "accepted")}\n\n" +
+        string.Join("\n\n", value.EvidencePassages.Select(passage => passage.Text).Prepend(value.Description ?? "").Distinct());
+
+    partial void OnPublicationFilterChanged(string value) => FilterPublications();
+
+    [RelayCommand]
+    private async Task RefreshProseAnalysisAsync()
+    {
+        if (IsImportingPublications || _proseAnalyser is null) return;
+        IsImportingPublications = true;
+        try
+        {
+            PublicationStatus = "Analysing the saved career's prose and reusing unchanged embeddings…";
+            var state = await _store.LoadAsync();
+            var source = state.GetCompleteTranscript();
+            if (source is null) { PublicationStatus = "Import a career record first."; return; }
+            var index = await _proseAnalyser.AnalyseAsync(source, force: true);
+            await _store.MutateAsync(current =>
+            {
+                var saved = current.GetCompleteTranscript();
+                if (saved is not null && lucidRESUME.Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(saved).SourceRevision == index.SourceRevision)
+                {
+                    saved.ProseIndex = index;
+                    CareerRecordJobMlBuilder.RefreshDerivedExtensions(saved);
+                }
+                else throw new InvalidOperationException("Career changed during analysis. Refresh again.");
+            });
+            PublicationStatus = $"{index.Segments.Count} scoped prose segments analysed; {index.Segments.Count(segment => segment.Embedding.Length > 0)} cached vectors. Skills remain linked to accepted evidence.";
+        }
+        catch (Exception ex) { PublicationStatus = "Prose analysis failed: " + ex.Message; }
+        finally { IsImportingPublications = false; }
+    }
+
+    private void FilterPublications() => PublicationCandidates = _publicationCatalog
+        .Where(article => string.IsNullOrWhiteSpace(PublicationFilter) ||
+            (article.Name + " " + article.EvidenceMetadata.GetValueOrDefault("categories")).Contains(PublicationFilter, StringComparison.OrdinalIgnoreCase))
+        .OrderByDescending(article => article.Date).Take(100).ToList();
+
+    [RelayCommand]
+    private async Task RefreshPublicationsAsync()
+    {
+        if (IsImportingPublications) return;
+        IsImportingPublications = true;
+        PublicationStatus = "Reading article metadata and passages…";
+        try
+        {
+            var state = await _store.LoadAsync();
+            var previous = state.GetCompleteTranscript()?.Publications ?? [];
+            var result = await Task.Run(() => PublicationCatalog.ImportAsync(PublicationMarkdownDirectory, previous));
+            await _store.MutateAsync(current =>
+            {
+                var resume = current.GetCompleteTranscript() ?? ResumeDocument.Create("Complete career transcript", CompleteCareerRecord.ContentType, 0);
+                foreach (var article in result.Articles)
+                {
+                    resume.Publications.RemoveAll(existing => existing.Url == article.Url);
+                    resume.Publications.Add(article);
+                }
+                resume.JobMlSource = resume.JobMlRevision = null;
+                lucidRESUME.Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
+                current.AddOrReplaceResume(resume);
+            });
+            var selectedId = SelectedPublication?.Id;
+            _publicationCatalog = result.Articles;
+            FilterPublications();
+            SelectedPublication = _publicationCatalog.FirstOrDefault(article => article.Id == selectedId);
+            PublicationStatus = $"{result.Articles.Count} articles cached; {result.Reused} unchanged. Review an article before using it. {result.Warnings.Count} read warning(s).";
+        }
+        catch (Exception ex) { PublicationStatus = "Article import failed: " + ex.Message; }
+        finally { IsImportingPublications = false; }
+    }
+
+    [RelayCommand]
+    private async Task ApprovePublicationAsync()
+    {
+        if (SelectedPublication is not { } selected || IsImportingPublications) return;
+        IsImportingPublications = true;
+        try
+        {
+            PublicationStatus = "Checking the published article…";
+            if (!await _publicationDiscovery.VerifyAsync(selected.Url ?? ""))
+            { PublicationStatus = "Could not verify the published URL. Article remains available for review; try again later."; return; }
+            await _store.MutateAsync(state =>
+            {
+                var resume = state.GetCompleteTranscript();
+                var article = resume?.Publications.FirstOrDefault(item => item.Id == selected.Id);
+                if (resume is null || article is null || article.EvidenceMetadata.GetValueOrDefault("content_hash") != selected.EvidenceMetadata.GetValueOrDefault("content_hash"))
+                    throw new InvalidOperationException("The article changed. Reload and review the current passage.");
+                article.EvidenceMetadata["review"] = "accepted";
+                article.EvidenceMetadata["live_url_verified"] = "true";
+                article.EvidenceMetadata["reviewed_at"] = DateTimeOffset.UtcNow.ToString("O");
+                resume.JobMlSource = resume.JobMlRevision = null;
+                lucidRESUME.Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
+                state.AddOrReplaceResume(resume);
+            });
+            var updated = await _store.LoadAsync();
+            _publicationCatalog = updated.GetCompleteTranscript()?.Publications ?? [];
+            FilterPublications();
+            SelectedPublication = _publicationCatalog.FirstOrDefault(article => article.Id == selected.Id);
+            PublicationStatus = "Article approved as authored-publication evidence. Its technology mentions do not declare skills.";
+        }
+        catch (Exception ex) { PublicationStatus = "Article approval failed: " + ex.Message; }
+        finally { IsImportingPublications = false; }
+    }
+
+    [RelayCommand]
+    private async Task DiscoverPublicationsAsync()
+    {
+        if (IsImportingPublications || string.IsNullOrWhiteSpace(PublicationTopics)) return;
+        IsImportingPublications = true;
+        try
+        {
+            PublicationStatus = "Searching the blog for the supplied public topics…";
+            var slugs = await _publicationDiscovery.SuggestAsync(PublicationTopics.Split(';', StringSplitOptions.TrimEntries));
+            PublicationCandidates = _publicationCatalog.Where(article => slugs.Contains(new Uri(article.Url!).Segments[^1], StringComparer.OrdinalIgnoreCase)).ToList();
+            PublicationStatus = $"{PublicationCandidates.Count} cached articles suggested. Review their passages; semantic scores do not establish relevance. Empty or unavailable search leaves the local catalog intact.";
+        }
+        catch (Exception ex) { PublicationStatus = "Discovery failed; use the local filter. " + ex.Message; }
+        finally { IsImportingPublications = false; }
+    }
 
     // ── Who they are ─────────────────────────────────────────────────────────
     [ObservableProperty] private string _fullName = "";
@@ -102,7 +235,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         ISecretStore secretStore,
         GitHubSkillImporter gitHubImporter,
         NuGetPackageAuditService nuGetPackageAudit,
-        LlamaSharpModelManager llamaSharpModels)
+        LlamaSharpModelManager llamaSharpModels, PublicationDiscoveryService? publicationDiscovery = null, CareerProseAnalyser? proseAnalyser = null)
     {
         _store = store;
         _modelDiscovery = modelDiscovery;
@@ -111,6 +244,8 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         _gitHubImporter = gitHubImporter;
         _nuGetPackageAudit = nuGetPackageAudit;
         _llamaSharpModels = llamaSharpModels;
+        _publicationDiscovery = publicationDiscovery ?? new PublicationDiscoveryService(new HttpClient());
+        _proseAnalyser = proseAnalyser;
 
         SubscribeCollections();
 
@@ -138,7 +273,8 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         base.OnPropertyChanged(e);
 
         // Don't trigger autosave while loading, and don't react to the toast flag itself
-        if (_isLoading || e.PropertyName == nameof(IsSaved))
+        if (_isLoading || e.PropertyName is nameof(IsSaved) or nameof(PublicationCandidates) or nameof(PublicationFilter)
+            or nameof(PublicationTopics) or nameof(PublicationPreview) or nameof(PublicationStatus) or nameof(SelectedPublication) or nameof(IsImportingPublications))
             return;
 
         ScheduleSave();
@@ -184,6 +320,9 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             YearsOfExperience = profile.YearsOfExperience;
             CareerGoals = profile.CareerGoals ?? "";
             AdditionalContext = profile.AdditionalContext ?? "";
+            PublicationMarkdownDirectory = profile.PublicationMarkdownDirectory ?? "";
+            _publicationCatalog = state.GetCompleteTranscript()?.Publications ?? [];
+            FilterPublications();
 
             OpenToRemote = profile.Preferences.OpenToRemote;
             OpenToHybrid = profile.Preferences.OpenToHybrid;
@@ -225,6 +364,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                 profile.YearsOfExperience = YearsOfExperience;
                 profile.CareerGoals = NullIfBlank(CareerGoals);
                 profile.AdditionalContext = NullIfBlank(AdditionalContext);
+                profile.PublicationMarkdownDirectory = NullIfBlank(PublicationMarkdownDirectory);
 
                 profile.Preferences.OpenToRemote = OpenToRemote;
                 profile.Preferences.OpenToHybrid = OpenToHybrid;

@@ -36,7 +36,10 @@ public sealed record EvidencePacket(
     int MaximumWords,
     IReadOnlyList<SelectedClaim> Claims,
     IReadOnlyList<string> RequirementIds,
-    string Kind = "experience");
+    string Kind = "experience")
+{
+    public IReadOnlyList<lucidRESUME.Core.Models.Resume.ContributionAccount> Accounts { get; init; } = [];
+}
 
 public sealed record ProjectionManifest(
     string SourceRevision,

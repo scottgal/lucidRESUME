@@ -1,0 +1,160 @@
+[
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues with durable PostgreSQL storage and added audit trails for operations inspection. Recovery time impact remains unmeasured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 5407,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Direct",
+    "detail": "Thorough",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues backed by durable PostgreSQL storage and implemented audit trails for operations inspection. Recovery time improvements were not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 5440,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Understated",
+    "detail": "Brief",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues backed by durable PostgreSQL storage and added audit trails for operations inspection. Recovery time improvements were not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 5585,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Understated",
+    "detail": "Thorough",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues backed by durable PostgreSQL storage and implemented audit trails for operations inspection. Recovery time improvements were not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 5567,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Expressive",
+    "detail": "Brief",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues backed by durable PostgreSQL storage and added audit trails for operations inspection. Recovery time improvements were not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 5556,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "retry-synthesis",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Built C# billing retry queues with durable PostgreSQL storage. Added billing retry audit trails so the operations team could inspect failed attempts. The effect on recovery time was not measured.",
+    "text": "Built C# billing retry queues backed by durable PostgreSQL storage and implemented audit trails for operations inspection. Recovery time improvements were not measured.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 5478,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before production release. Introduced drills using recorded failure cases in a test environment, which did not measure production availability.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 5550,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Direct",
+    "detail": "Thorough",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "Used": false,
+    "Warnings": [
+      "Discarded Tighten pass after provider failure: The model returned missing or empty section fields.",
+      "Discarded HumanVoice pass after provider failure: The model returned missing or empty section fields."
+    ],
+    "elapsed_ms": 3889,
+    "unchanged_source": true,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Understated",
+    "detail": "Brief",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs prior to production release. Introduced drills using recorded failure cases in a test environment, which did not measure production availability.",
+    "Used": true,
+    "Warnings": [
+      "Discarded Tighten pass after provider failure: The model returned missing or empty section fields."
+    ],
+    "elapsed_ms": 4570,
+    "unchanged_source": false,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Understated",
+    "detail": "Thorough",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "Used": false,
+    "Warnings": [
+      "Discarded Tighten pass after provider failure: The model returned missing or empty section fields.",
+      "Discarded HumanVoice pass after provider failure: The model returned missing or empty section fields."
+    ],
+    "elapsed_ms": 3821,
+    "unchanged_source": true,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Expressive",
+    "detail": "Brief",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "Used": true,
+    "Warnings": [
+      "Discarded Tighten pass after provider failure: The model returned missing or empty section fields.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 removed source qualifier \u0027not\u0027."
+    ],
+    "elapsed_ms": 4633,
+    "unchanged_source": true,
+    "hard_errors": []
+  },
+  {
+    "fixture": "evaluation-synthesis",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "text": "Led the API team and reviewed PostgreSQL recovery designs before the production release. Introduced recovery drills using recorded failure cases; the drills ran in a test environment and did not measure production availability.",
+    "Used": false,
+    "Warnings": [
+      "Discarded Tighten pass after provider failure: The model returned missing or empty section fields.",
+      "Discarded HumanVoice pass after provider failure: The model returned missing or empty section fields."
+    ],
+    "elapsed_ms": 4011,
+    "unchanged_source": true,
+    "hard_errors": []
+  }
+]

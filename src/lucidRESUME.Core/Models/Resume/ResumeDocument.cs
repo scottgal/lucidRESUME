@@ -70,6 +70,8 @@ public sealed class ResumeDocument
     public List<Project> Projects { get; set; } = [];
     /// <summary>Reviewed public writing selected for the human resume.</summary>
     public List<Project> Publications { get; set; } = [];
+    public List<RelatedWorkLink> RelatedWork { get; set; } = [];
+    public CareerProseIndex ProseIndex { get; set; } = new();
 
     // Extraction metadata
     public List<ExtractedEntity> Entities { get; set; } = [];

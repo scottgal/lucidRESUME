@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
         services.Configure<NimbleOptions>(config.GetSection("Nimble"));
         services.Configure<InterviewOptions>(config.GetSection("Interview"));
         services.AddHttpClient<IInterviewAssessor, SystemOneInterviewAssessor>();
+        services.AddHttpClient<PublicationDiscoveryService>();
 
         if (config.GetSection("Nimble").GetValue<bool>("Enabled"))
         {
@@ -107,6 +108,7 @@ public static class ServiceCollectionExtensions
 
         // Embedding indexer + deterministic semantic compression
         services.AddSingleton<EmbeddingIndexer>();
+        services.AddTransient<CareerProseAnalyser>();
         services.AddSingleton(_ => new ReusableProseStore(Path.Combine(Core.Configuration.AppDataPaths.Root, "prose-library")));
         services.AddSingleton<CompositionValidator>();
         services.AddTransient<ResumeCompositionOrchestrator>();

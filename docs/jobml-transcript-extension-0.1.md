@@ -48,3 +48,27 @@ the full career snapshot separately from the shorter employer-facing projection.
 
 See [JobML 0.1](jobml-0.1-specification.md) and
 [the complete career workflow](complete-career-workflow.md).
+
+
+`role_interviews.entries[].contribution_account` optionally retains ownership,
+action, object, context, decision, outcome, delivery status, qualifiers, declared
+skills, reviewed prose and role/interview IDs. Unknown fields stay empty.
+
+`prose_index` contains reusable derived passage analysis: source and accepted-claim
+revisions, policy and embedding-space identity, original scoped prose, claim/evidence
+links, skills, reviewed accounts, structural diagnostics and optional vectors. The
+index is invalidated by review-only and skill-link changes as well as source edits.
+Its structural completeness cue is heuristic; neither that cue nor vector similarity
+establishes competence. Vectors may be absent and lexical retrieval remains available.
+
+Full career records also expose `lucidresume.publications` with cached article
+observations and retained passages. Generated projections expose
+`lucidresume.related_work`, containing source ID, URL, kind, relevance, supporting
+passage, revision, requirements, claim/evidence IDs and observed attribution. These
+extensions complement accepted core claims; they never accept unreviewed content.
+
+
+`prose_bindings` maps each stable segment ID and its internal ledger claim IDs to
+actual claim, subject and skill-concept IDs in this JobML file. This mapping uses
+retained evidence identities and accommodates custom JobML IDs. Internal ledger
+IDs in the cached analysis are not assumed to be portable JobML claim IDs.

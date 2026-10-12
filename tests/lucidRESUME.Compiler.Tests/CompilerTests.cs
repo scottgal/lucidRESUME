@@ -733,6 +733,20 @@ public sealed class CompilerTests(Xunit.Abstractions.ITestOutputHelper output)
     }
 
     [Fact]
+    public void Fluent_rewrite_cannot_add_an_unsupported_operating_context()
+    {
+        const string text = "Led the API team and reviewed PostgreSQL recovery designs before the production release.";
+        var claim = new JobMlClaim { Id = "leadership", Subject = "role", Statement = text };
+        var packet = new EvidencePacket("role", "Example", "synthesize", 80,
+            [new SelectedClaim(claim, "Example", text, ["e1"], 1, [])], [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+        var source = new CompositionBlock("role", text, ["leadership"], ["e1"]);
+        var edited = source with { Text = text + " The recovered plans ensured resilience against failures during high load periods." };
+        var errors = new CompositionValidator().Validate(new([edited], []), [source], manifest);
+        Assert.Contains(errors, error => error.Contains("unsupported descriptive content"));
+    }
+
+    [Fact]
     public void Number_preservation_cannot_replace_the_contribution_with_an_orphan_fragment()
     {
         const string text = "Managed an engineering team of 10+ developers through a complete re-architecture of the production system.";

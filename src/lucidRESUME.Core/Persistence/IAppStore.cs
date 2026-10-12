@@ -511,6 +511,8 @@ public sealed class AppState
         Certifications = [.. source.Certifications],
         Projects = [.. source.Projects],
         Publications = [.. source.Publications],
+        RelatedWork = [.. source.RelatedWork],
+        ProseIndex = source.ProseIndex,
         Entities = [.. source.Entities],
         IngestionDecisions = [.. source.IngestionDecisions],
         Projection = source.Projection,

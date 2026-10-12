@@ -15,4 +15,5 @@ public sealed class RoleInterviewEntry
     public string ReviewedProse { get; set; } = "";
     public DateTimeOffset AcceptedAt { get; set; }
     public InterviewAssessment? Assessment { get; set; }
+    public ContributionAccount? Account { get; set; }
 }

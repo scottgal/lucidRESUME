@@ -1,7 +1,7 @@
 # Evidence-preserving resume prose: structure, tone and related work
 
 **Date:** 12 October 2026  
-**Status:** Research spike, source audit and article-discovery pilot  
+**Status:** Research spike with implemented desktop retrieval/synthesis pipeline and regression evaluation
 **Scope:** Contribution prose, optional interviews, tone, blog citations and related GitHub projects
 
 ## Abstract
@@ -14,8 +14,7 @@ supporting passages. The implementation direction is to reuse the complete caree
 transcript and refresh external sources incrementally. Neither a matching article
 nor a repository technology mention establishes personal production experience.
 
-This is a design paper with a small retrieval experiment. It does not report a hiring
-outcome study, a validated NLP classifier or a completed end-to-end product feature.
+This paper combines a design, a small retrieval experiment and implementation results. It does not report a hiring outcome study or a validated NLP classifier. The desktop paths below are implemented; semantic role labelling, NLI and blinded human quality ratings remain experiments.
 
 ## 1. The communication problem
 
@@ -71,6 +70,66 @@ section's claim statements, skills and evidence IDs makes that structure availab
 without sending unrelated roles. The accompanying prototype adds these fields and
 removes a separate hard-coded 65-word summary ceiling. It retains validation and
 source fallback; richer prompts do not establish factual correctness by themselves.
+
+### 2.1 Implemented analysed-prose pipeline
+
+The unit of reuse is an accepted passage in the complete career transcript, rather
+than an imported document or a finished resume bullet. This follows the retained
+segments, reusable vectors and relevance/diversity pattern in local DoomSummarizer
+(`ArticleProcessor`, DocSummarizer `SegmentExtractor`). Career passages retain whole
+accounts so splitting a sentence cannot detach a limitation from its claim.
+
+```mermaid
+flowchart LR
+    T[Complete career transcript] --> A[Analyse changed accepted passages]
+    A --> I[Persist prose, skills, evidence, accounts and embeddings]
+    J[Job requirements] --> R[Retrieve per requirement and role]
+    I --> R
+    R --> P[Assemble complementary fact packets]
+    P --> L[LLM synthesis with length, detail and tone]
+    L --> V[Validate against immutable selected facts]
+    V --> O[Resume and evidence-linked archive]
+    V --> F[Retain source when an edit fails]
+```
+
+`CareerProseIndex` stores original text, stable segment/content identities, role or
+project scope, claim IDs, evidence IDs, accepted skills/concept identifiers, reviewed
+contribution accounts, structural diagnostics and embedding-space identity. The
+original text remains authoritative. Action/ownership/result diagnostics are simple
+heuristics; they are not PropBank extraction or a proficiency assessment.
+
+Analysis is query independent. Unchanged passages reuse their vectors across jobs.
+Index validity includes source revision, accepted claim content, review decisions,
+skill links, evidence IDs, embedding space and policy version. A review-only rejection
+must remove a passage even when its original prose is unchanged. Model-file metadata
+also participates in ONNX cache identity; it is not a cryptographic attestation.
+The first refresh embeds at most 500 newly encountered accepted passages and retains
+all eligible text. Explicit refresh can fill remaining vectors later. Unavailable
+embeddings leave lexical retrieval usable. The profile exposes a refresh action;
+projection performs a cached check and persists a newly built index when necessary.
+
+`CareerProseRetriever` combines lexical and available semantic relevance, then rewards
+coverage of distinct requirements and penalizes redundant examples. Diversity cannot
+promote zero-relevance passages when relevant ones exist. Retrieval scores are not
+skill coverage findings. Existing skill catalogue aliases and accepted declarations
+remain the matching authority; embeddings serve passage discovery.
+
+Exact duplicate accounts within one role share a segment but retain every claim and
+support identity. Similar wording with a different fact is retained. Complementary
+facts can enter one synthesis packet only within the same role and compatible
+ownership/status classes. Conflicting metric values/directions and differences in explicit negation or measurement uncertainty prevent grouping. Every fact remains separately linked to the resulting
+paragraph. This permits a natural new paragraph assembled from several supported
+accounts, rather than a sequence of independent bullet rewrites. Personal projects
+and publications are selected separately; they cannot migrate into an employer's
+experience without an explicit career-record relationship.
+
+The writer receives individual claim statements, named skills, evidence IDs and
+reviewed structured accounts alongside immutable source prose. Validation checks
+identities, skills, numbers, selected qualifiers, ownership upgrades, target-term
+leakage and a conservative vocabulary-novelty budget. These checks cannot prove
+entailment or completeness. A failed edit retains supported source prose and records
+a warning. Optional interviews enrich the original role; missing fields never block
+projection.
 
 ## 3. Where NLP helps
 
@@ -147,7 +206,7 @@ The blog source exposes these routes, checked against live responses on this dat
 The related route was inspected in source, not exercised in this pilot. Semantic
 search can legitimately return an empty list when disabled; an integration must not
 interpret that as evidence that no relevant articles exist. A Python urllib request
-received HTTP 403 while curl succeeded, so client/header compatibility needs testing.
+received HTTP 403 while curl succeeded, so client/header compatibility needed testing. A later check through the actual .NET service returned nine candidate slugs for two public topics and verified the agent-architecture article in approximately 1.77 seconds. Candidate quality is still unlabelled.
 No authentication or server configuration was changed.
 
 Reproduce local discovery without network access:
@@ -201,11 +260,10 @@ and [DoomSummarizer article](https://www.mostlylucid.net/blog/doomsummarizer-dee
 Their existence establishes publication availability, not the validity of every
 technical statement or a production deployment claim.
 
-For the product, import and cache article metadata/passages once, keyed by canonical
+The profile now imports and caches article metadata/passages once, keyed by canonical
 URL and content hash. Categories help discovery; accepted skill aliases come from our
 skill catalogue. Use semantic search to expand candidates where useful, then show
-why each article matches a specific requirement. Persist approved links as publication
-evidence in the complete transcript. Never make publishing an article automatically
+why each article matches a specific requirement. Publication approval verifies the live URL and persists authored-publication evidence in the complete transcript. A content change resets approval. The optional semantic API search sends supplied public topics; generation itself reads the saved catalogue without file or network access. Never make publishing an article automatically
 declare every technology it mentions as a personal skill.
 
 ## 6. GitHub: concise related projects
@@ -231,8 +289,7 @@ Store each related link with repository ID/URL, revision, supporting passage,
 requirement IDs, contribution observation and review state. The visible resume can
 remain brief while JobML and the archive expose that evidence. Do not attach a
 personal repository to an employer role unless the transcript establishes the
-relationship. This section describes the proposed feature; this spike does not
-claim it is already wired through the client and exporters.
+relationship. The desktop selector now uses accepted cached passages, stores supporting claim/evidence IDs in `RelatedWork`, and renders the concise links in Markdown, Word and PDF. The generated archive preserves those links, and the JobML `lucidresume.related_work` extension exposes the support. Relevant publications use the same selection path.
 
 ## 7. Next experiment and acceptance criteria
 
@@ -259,3 +316,47 @@ The immediate recommendation is to improve structured inputs and reuse first,
 keep tone bounded, and run a labelled passage-level pilot before introducing another
 runtime NLP model. A resume should communicate the candidate's actual work more
 clearly while letting the reader follow a small number of relevant links.
+
+
+## 8. Implementation evaluation and limits
+
+The synthetic evaluation tool is `tools/lucidRESUME.ProseEvaluation`. It records
+model identity, elapsed time, warnings, unchanged source, validation errors and
+repeat-cache behavior separately. An unchanged output is not necessarily a fallback:
+a model can return the original wording and pass validation.
+
+The initial qwen3.5:0.8b run produced 36 outputs across six facts, three tones and two
+detail levels. Twenty-eight were unchanged; median latency was approximately 1.67 s
+and the repeated cached case took 9 ms. Luna review found one accepted embellishment:
+“high load periods” was added to an account which only described reviewing recovery
+designs. The previous overlap gate did not catch it. A regression and conservative
+novel-content gate were added. Thus zero errors from the old validator did **not**
+establish factual grounding or good prose.
+
+A follow-up uses two richer multi-claim packets and qwen3.5:4b (12 outputs). This is
+still too small and unlabelled to establish writing quality. Initial results revealed
+both over-strict lexical checks rejecting harmless paraphrases and malformed local
+model responses. Validation now normalizes punctuation, permits “unmeasured” for
+“not measured”, and distinguishes explicit uncertain outcomes from capability wording.
+Malformed response fields produce a clear fallback warning. The tool keeps the
+originals and warnings so these trade-offs remain inspectable.
+
+The final richer-packet run changed eight of twelve outputs; four retained source wording. Five cases recorded a rejected edit or malformed-response warning. Median elapsed time was approximately 5.42 s; the repeat was served from cache. The retry example now combines storage and audit-trail facts into one paragraph while retaining its unmeasured result. Luna review found that the compact retry paragraphs lose the specific purpose “inspect failed attempts”; accepted wording is therefore not a completeness guarantee. Tone differences remain small, and malformed responses remain an observed limitation of this local model configuration. Synthetic outputs and run metadata are retained in `docs/research/results/`.
+
+The implementation has regressions for incremental embeddings, model-space changes,
+review-only rejection, scoped deduplication, requirement diversity, multi-claim prose
+bindings, publication refresh/review, offline discovery and related-link exports.
+The native client harness also exercises catalogue refresh and persisted prose analysis
+in an isolated SQLite store. Human ratings, labelled retrieval relevance, general
+claim entailment and real hiring outcomes remain unmeasured. Adding SRL, TextRank or
+NLI to the runtime requires a separate accuracy/latency comparison; this patch does
+not silently add those models.
+
+
+Final Release validation passed 628 .NET tests across twelve projects and fifteen
+native desktop workflow groups against an isolated synthetic SQLite store. The
+build reported zero warnings and errors. Generated Word/PDF related links have
+export regressions, and the native workflows cover saved-job projection, interviews,
+JobML, archives, persistence, contrasting jobs, cached publications and prose-index
+refresh. This is regression coverage, not a claim that every career or provider
+produces an excellent resume.

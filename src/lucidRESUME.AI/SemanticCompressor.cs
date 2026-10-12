@@ -79,6 +79,8 @@ public sealed class SemanticCompressor
         var preferences = generationOptions ?? new ResumeGenerationOptions();
         var budget = ResumeGenerationBudget.Resolve(jd, preferences);
         var sourceLedger = EvidenceLedgerBuilder.EnsureCurrent(resume);
+        bool AcceptedRole(WorkExperience role) => Accepted(sourceLedger, $"experience:{role.Id:N}:role");
+        var proseIndex = await new CareerProseAnalyser(_embedder).AnalyseAsync(resume, ct);
         var resumeLedger = await _ledgerBuilder.BuildAsync(resume, ct);
         var jdLedger = await _jdLedgerBuilder.BuildAsync(jd, ct);
         var matchResult = await _matcher.MatchAsync(resumeLedger, jdLedger, ct);
@@ -123,7 +125,8 @@ public sealed class SemanticCompressor
             {
                 var roleText = string.Join(' ', new[] { experience.Title, experience.Company }
                     .Concat(experience.Achievements).Where(x => !string.IsNullOrWhiteSpace(x))!);
-                var similarity = _embedder.CosineSimilarity(roleCentroid, await _embedder.EmbedAsync(roleText, ct));
+                var similarity = proseIndex.Segments.Where(segment => segment.SubjectId == $"experience:{experience.Id:N}" && segment.Embedding.Length == roleCentroid.Length)
+                    .Select(segment => (double)_embedder.CosineSimilarity(roleCentroid, segment.Embedding)).Where(double.IsFinite).DefaultIfEmpty(0).Max();
                 roleScores[experience.Id] = roleScores.GetValueOrDefault(experience.Id) + Math.Max(0, similarity) * 8;
                 if (MentionsRole(roleText, roleProfile!)) roleScores[experience.Id] += 5;
                 roleScores[experience.Id] += RoleTitleSignal(experience.Title, roleProfile!);
@@ -153,11 +156,19 @@ public sealed class SemanticCompressor
 
         // Competency retrieval ranks actual role accounts; it never establishes coverage.
         var competencyVectors = new List<float[]>();
+        var proseRequirements = new List<ProseRequirement>();
         foreach (var competency in jd.Competencies.Where(c => c.Priority != Core.Models.Coverage.RequirementPriority.Preferred))
         {
             var vector = await _embedder.EmbedAsync(competency.Name + ": " + competency.Description, ct);
             if (vector.Length > 0) competencyVectors.Add(vector);
+            proseRequirements.Add(new($"competency-{proseRequirements.Count}", competency.Name + ": " + competency.Description, vector));
         }
+        foreach (var requirement in jd.RequiredSkills.Concat(jd.Responsibilities).Distinct(StringComparer.OrdinalIgnoreCase))
+            proseRequirements.Add(new($"requirement-{proseRequirements.Count}", requirement,
+                jdLedger.Requirements.FirstOrDefault(item => string.Equals(item.SkillName, requirement, StringComparison.OrdinalIgnoreCase))?.Embedding ?? []));
+        if (proseRequirements.Count == 0)
+            foreach (var clause in Regex.Split(jd.RawText, @"[\n.;]+" ).Where(clause => !string.IsNullOrWhiteSpace(clause)))
+                proseRequirements.Add(new($"clause-{proseRequirements.Count}", clause, []));
         var ignored = Tokens(string.Join(' ', new CoverageOptions().StopWords.Concat(new[]
             { "and", "the", "for", "are", "you", "our", "can", "has", "this", "that", "will", "from", "need", "work", "teams", "systems", "platform", "engineering", "technical", "built", "build", "designed", "design", "develop", "lead", "leadership", "production" })));
         // Structured competency extraction is optional. The original job and its
@@ -179,7 +190,8 @@ public sealed class SemanticCompressor
             var scores = new List<double>();
             foreach (var achievement in role.Achievements)
             {
-                var vector = competencyVectors.Count > 0 ? await _embedder.EmbedAsync(achievement, ct) : [];
+                var vector = competencyVectors.Count > 0 ? proseIndex.Segments.FirstOrDefault(segment =>
+                    segment.SubjectId == $"experience:{role.Id:N}" && segment.Text == achievement)?.Embedding ?? [] : [];
                 var score = competencyVectors.Where(query => query.Length > 0 && query.Length == vector.Length)
                     .Select(query => (double)_embedder.CosineSimilarity(query, vector))
                     .Where(double.IsFinite).DefaultIfEmpty(0).Max();
@@ -202,8 +214,8 @@ public sealed class SemanticCompressor
                 Tokens(role.Title ?? "").Intersect(targetTitleTerms).Count() * 12;
 
         var selectedRoleIds = SelectDetailedRoleIds(
-            resume.Experience, roleScores, _careerAnchorCompanies, budget.Roles);
-        var currentSpecialist = resume.Experience.Where(IsUsableRole).Where(role => role.IsCurrent &&
+            resume.Experience.Where(AcceptedRole).ToList(), roleScores, _careerAnchorCompanies, budget.Roles);
+        var currentSpecialist = resume.Experience.Where(IsUsableRole).Where(AcceptedRole).Where(role => role.IsCurrent &&
                 Tokens(role.Title ?? "").Intersect(targetTitleTerms).Any())
             .OrderByDescending(role => role.StartDate).FirstOrDefault();
         if (currentSpecialist is not null && !selectedRoleIds.Contains(currentSpecialist.Id))
@@ -232,7 +244,7 @@ public sealed class SemanticCompressor
             LinkedInUrl = CleanProfileUrl(resume.Personal.LinkedInUrl),
             GitHubUrl = resume.Personal.GitHubUrl,
             WebsiteUrl = resume.Personal.WebsiteUrl,
-            Summary = resume.Personal.Summary
+            Summary = Accepted(sourceLedger, "personal:summary") ? resume.Personal.Summary : null
         };
         projection.Projection = new ResumeProjectionInfo
         {
@@ -275,7 +287,7 @@ public sealed class SemanticCompressor
             projection.GenerationWarnings.Add($"{invalidRoleCount} imported role entries have missing or malformed title/company fields. Retained in the source transcript; excluded from resume selection and role interviews until reviewed.");
 
         // Compressed summary - targeted to the JD
-        if (!string.IsNullOrWhiteSpace(resume.Personal.Summary))
+        if (!string.IsNullOrWhiteSpace(resume.Personal.Summary) && Accepted(sourceLedger, "personal:summary"))
         {
             var summaryTerms = jd.RequiredSkills.Concat(jd.PreferredSkills).Concat(targetTokens)
                 .Concat(roleProfile is null ? [] : _taxonomy.GetRoleSkills(roleProfile))
@@ -316,17 +328,15 @@ public sealed class SemanticCompressor
             var relevantAchievements = new List<string>();
             var unresolvedStatus = RoleEvidenceQuality.NeedsStatusClarification(exp);
             if (unresolvedStatus) projection.GenerationWarnings.Add($"Verify delivery and cancellation chronology for {exp.Title} at {exp.Company}; status-sensitive accounts remain in the full transcript.");
-            foreach (var achievement in exp.Achievements.Where(text => !RoleEvidenceQuality.HasConversationalAside(text) &&
-                         (!unresolvedStatus || !RoleEvidenceQuality.IsStatusSensitive(text)))
-                         .OrderByDescending(a => relevance.GetValueOrDefault(a)))
+            var retrieved = CareerProseRetriever.Select(proseIndex, proseRequirements,
+                $"experience:{exp.Id:N}", Math.Max(budget.AchievementsPerRole * 3, 12),
+                segment => relevance.GetValueOrDefault(segment.Text));
+            foreach (var item in retrieved)
             {
-                // Check if this achievement is evidence for any matched skill
-                var isEvidence = skillToEvidence.Values
-                    .SelectMany(e => e)
-                    .Any(e => e.SourceText == achievement);
-
-                if ((isEvidence || relevantAchievements.Count < budget.AchievementsPerRole) &&
-                    relevantAchievements.All(existing => !NearDuplicate(existing, achievement)))
+                var achievement = item.Segment.Text;
+                if (RoleEvidenceQuality.HasConversationalAside(achievement) ||
+                    unresolvedStatus && RoleEvidenceQuality.IsStatusSensitive(achievement)) continue;
+                if (relevantAchievements.All(existing => !NearDuplicate(existing, achievement)))
                     relevantAchievements.Add(achievement);
             }
 
@@ -334,7 +344,8 @@ public sealed class SemanticCompressor
             if (isCareerAnchor ||
                 roleProfile is "CTO" or "VP of Engineering" or "Head of Engineering")
             {
-                var definingAchievement = exp.Achievements.FirstOrDefault(text => IsCareerDefiningAchievement(text) &&
+                var definingAchievement = exp.Achievements.FirstOrDefault(text => proseIndex.Segments.Any(segment =>
+                        segment.SubjectId == $"experience:{exp.Id:N}" && segment.Text == text) && IsCareerDefiningAchievement(text) &&
                     !RoleEvidenceQuality.HasConversationalAside(text) && (!unresolvedStatus || !RoleEvidenceQuality.IsStatusSensitive(text)));
                 if (definingAchievement is not null && isCareerAnchor)
                 {
@@ -363,20 +374,31 @@ public sealed class SemanticCompressor
                 EndDate = exp.EndDate,
                 IsCurrent = exp.IsCurrent,
                 IsCareerAnchor = IsCareerAnchor(exp, _careerAnchorCompanies),
-                Technologies = [.. exp.Technologies],
+                Technologies = exp.Technologies.Where(name => sourceLedger.Claims.Any(claim => claim.Review == "accepted" &&
+                    claim.SubjectId == $"experience:{exp.Id:N}" && claim.Kind == "technology" && claim.Statement.Equals(name, StringComparison.OrdinalIgnoreCase))).ToList(),
                 ImportSources = [.. exp.ImportSources]
             };
             var paragraph = string.IsNullOrEmpty(dateRange) ? 1 : 2;
             var maximumAchievements = isCareerAnchor && preferences.Detail != ResumeDetail.Thorough ? 1 : budget.AchievementsPerRole;
-            foreach (var a in relevantAchievements.Take(maximumAchievements))
+            var packets = ProseSynthesisAssembler.Assemble(relevantAchievements, targetTokens,
+                preferences.Detail == ResumeDetail.Thorough ? 3 : 2);
+            foreach (var facts in packets.Take(maximumAchievements))
             {
+                var a = string.Join(" ", facts.Select(fact => fact.Trim().TrimEnd('.') + "."));
+                if (facts.Count == 1) a = facts[0];
                 md.AppendLine($"- {a}");
                 md.AppendLine();
                 projectedExperience.Achievements.Add(a);
-                var sourceIndex = exp.Achievements.IndexOf(a);
-                if (sourceIndex >= 0)
-                    Bind(projection, sourceLedger, $"experience:{exp.Id:N}:achievement:{sourceIndex + 1}",
-                        $"#experience-{exp.Id:N}:p{paragraph++}");
+                foreach (var fact in facts)
+                {
+                    // Exact duplicate source accounts retain every claim/support identity.
+                    var segment = proseIndex.Segments.FirstOrDefault(segment => segment.SubjectId == $"experience:{exp.Id:N}" && segment.Text == fact);
+                    if (segment is not null)
+                        foreach (var claimId in segment.ClaimIds.Where(id => sourceLedger.Claims.Any(claim => claim.Id == id && claim.Review == "accepted")))
+                            projection.Projection!.Blocks.Add(new ResumeProjectionBlock
+                            { ClaimId = claimId, ProseRef = $"#experience-{exp.Id:N}:p{paragraph}" });
+                }
+                paragraph++;
             }
             projection.Experience.Add(projectedExperience);
             includedRoles++;
@@ -385,7 +407,7 @@ public sealed class SemanticCompressor
 
         var earlierRoles = new List<WorkExperience>();
         var chronology = resume.Experience.Where(role => selectedRoleIds.Contains(role.Id)).ToList();
-        foreach (var role in resume.Experience.Where(IsUsableRole).Where(role => !selectedRoleIds.Contains(role.Id)).OrderByDescending(role => role.StartDate))
+        foreach (var role in resume.Experience.Where(IsUsableRole).Where(AcceptedRole).Where(role => !selectedRoleIds.Contains(role.Id)).OrderByDescending(role => role.StartDate))
         {
             if (chronology.Any(existing => PossibleDuplicateChronology(existing, role)))
             {
@@ -422,7 +444,8 @@ public sealed class SemanticCompressor
             .Concat(roleProfile is null ? [] : _taxonomy.GetRoleSkills(roleProfile))
             .SelectMany(Tokens)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var selectedProjects = SelectRelevantProjects(resume.Projects, projectTerms, budget.Projects);
+        var selectedProjects = SelectRelevantProjects(resume.Projects.Where(project =>
+            Accepted(sourceLedger, $"project:{project.Id:N}:description")).ToList(), projectTerms, budget.Projects);
 
         if (selectedProjects.Count > 0)
         {
@@ -432,7 +455,9 @@ public sealed class SemanticCompressor
             {
                 var anchor = $"project-{project.Id:N}";
                 var selectedDescription = SelectProjectDescription(project.Description!, projectTerms, budget.ProjectWords);
-                var selectedTechnologies = SelectProjectTechnologies(project.Technologies, projectTerms);
+                var selectedTechnologies = SelectProjectTechnologies(project.Technologies.Where(name => sourceLedger.Claims.Any(claim =>
+                    claim.Review == "accepted" && claim.SubjectId == $"project:{project.Id:N}" &&
+                    claim.Concepts.Contains(name, StringComparer.OrdinalIgnoreCase))).ToList(), projectTerms);
                 md.AppendLine($"### {project.Name} {{#{anchor}}}");
                 md.AppendLine(selectedDescription);
                 md.AppendLine();
@@ -457,10 +482,26 @@ public sealed class SemanticCompressor
             }
         }
 
-        var selectedPublications = resume.Publications
-            .Where(item => Uri.TryCreate(item.Url, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http")
-            .OrderByDescending(item => Tokens(item.Name + " " + item.Description).Intersect(projectTerms).Count())
-            .ThenByDescending(item => item.Date).Take(3).ToList();
+        var related = RelatedWorkSelector.Select(resume, jd, selectedProjects.Select(project => project.Id), 20);
+        var relatedProjects = related.Where(link => link.Kind == "project")
+            .Take(preferences.Length == ResumeLength.Concise ? 2 : 4).ToList();
+        if (relatedProjects.Count > 0)
+        {
+            md.AppendLine("## Related projects {#related-projects}");
+            md.AppendLine();
+            for (var i = 0; i < relatedProjects.Count; i++)
+            {
+                var link = relatedProjects[i];
+                md.AppendLine($"- [{link.Name}]({link.Url}) — {link.Relevance}");
+                md.AppendLine();
+                foreach (var claimId in link.ClaimIds)
+                    projection.Projection!.Blocks.Add(new ResumeProjectionBlock { ClaimId = claimId, ProseRef = $"#related-projects:p{i + 1}" });
+                projection.RelatedWork.Add(link);
+            }
+        }
+        var publicationLinks = related.Where(link => link.Kind == "publication")
+            .Take(preferences.Length == ResumeLength.Concise ? 1 : 3).ToList();
+        var selectedPublications = publicationLinks.Select(link => resume.Publications.Single(item => item.Id == link.SourceId)).ToList();
         if (selectedPublications.Count > 0)
         {
             md.AppendLine("## Selected Recent Publications {#publications}");
@@ -472,6 +513,7 @@ public sealed class SemanticCompressor
                 md.AppendLine();
                 Bind(projection, sourceLedger, $"publication:{publication.Id:N}", $"#publications:p{i + 1}");
                 projection.Publications.Add(publication);
+                projection.RelatedWork.Add(publicationLinks[i]);
             }
         }
 
@@ -504,6 +546,8 @@ public sealed class SemanticCompressor
             .Concat(explicitSkills).Concat(declaredAiSkills).Concat(projection.Experience.SelectMany(role => role.Technologies))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Where(name => !GenericSkillLabels.Contains(name))
+            .Where(name => sourceLedger.Claims.Any(claim => claim.Review == "accepted" && claim.Kind is "skill" or "technology" &&
+                claim.Statement.Equals(name, StringComparison.OrdinalIgnoreCase)))
             .Select(name => resume.Skills.FirstOrDefault(skill =>
                 string.Equals(skill.Name, name, StringComparison.OrdinalIgnoreCase)) ??
                 (sourceLedger.Evidence.Any(e => e.Kind == "technology" && e.Text.Equals(name, StringComparison.OrdinalIgnoreCase))
@@ -528,10 +572,9 @@ public sealed class SemanticCompressor
                     YearsExperience = entry.YearsExperience,
                     ImportSources = [.. entry.ImportSources]
                 });
-                var locator = sourceLedger.Evidence.FirstOrDefault(evidence =>
-                    evidence.Locator == EvidenceLedgerBuilder.SkillLocator(entry.Name) ||
-                    (evidence.Kind == "technology" && evidence.Text.Equals(entry.Name, StringComparison.OrdinalIgnoreCase)))?.Locator;
-                if (locator is not null) Bind(projection, sourceLedger, locator, $"#skills:p{skillParagraph}");
+                var claim = sourceLedger.Claims.FirstOrDefault(claim => claim.Review == "accepted" && claim.Kind is "skill" or "technology" &&
+                    claim.Statement.Equals(entry.Name, StringComparison.OrdinalIgnoreCase));
+                if (claim is not null) projection.Projection!.Blocks.Add(new() { ClaimId = claim.Id, ProseRef = $"#skills:p{skillParagraph}" });
             }
             skillParagraph++;
         }
@@ -541,7 +584,7 @@ public sealed class SemanticCompressor
         {
             md.AppendLine("## Education {#education}");
             var educationParagraph = 1;
-            foreach (var edu in resume.Education.Where(e => !string.IsNullOrWhiteSpace(e.Degree)))
+            foreach (var edu in resume.Education.Where(e => !string.IsNullOrWhiteSpace(e.Degree) && Accepted(sourceLedger, $"education:{e.Id:N}")))
             {
                 var qualification = string.IsNullOrWhiteSpace(edu.FieldOfStudy)
                     ? edu.Degree ?? ""
@@ -593,15 +636,8 @@ public sealed class SemanticCompressor
         return leftNames.Intersect(rightNames).Any();
     }
 
-    private static bool NearDuplicate(string left, string right)
-    {
-        var leftTokens = Tokens(left);
-        var rightTokens = Tokens(right);
-        if (leftTokens.Count == 0 || rightTokens.Count == 0) return false;
-        var intersection = leftTokens.Intersect(rightTokens).Count();
-        var union = leftTokens.Union(rightTokens).Count();
-        return union > 0 && intersection / (double)union >= 0.60;
-    }
+    private static bool NearDuplicate(string left, string right) =>
+        Regex.Replace(left, @"\s+", " ").Trim().Equals(Regex.Replace(right, @"\s+", " ").Trim(), StringComparison.OrdinalIgnoreCase);
 
     private static HashSet<string> Tokens(string text) => text.ToLowerInvariant()
         .Split([' ', '\t', '\r', '\n', ',', '.', ';', ':', '(', ')', '/', '-'], StringSplitOptions.RemoveEmptyEntries)

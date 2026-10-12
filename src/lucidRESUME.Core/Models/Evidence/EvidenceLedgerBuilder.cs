@@ -142,7 +142,8 @@ public static partial class EvidenceLedgerBuilder
             {
                 var interview = experience.InterviewEntries.FirstOrDefault(entry => entry.ReviewedProse == experience.Achievements[index]);
                 Add(ledger, resume, $"{subject}:achievement:{index + 1}", "achievement",
-                    experience.Achievements[index], subject, ConceptsIn(experience.Achievements[index], resume),
+                    experience.Achievements[index], subject, ConceptsIn(experience.Achievements[index], resume)
+                        .Concat(interview?.Skills ?? []).Distinct(StringComparer.OrdinalIgnoreCase),
                     interview is not null ? "author-interview" : method);
                 if (interview is not null)
                 {
@@ -204,9 +205,17 @@ public static partial class EvidenceLedgerBuilder
 
         // Publication links support the author's account; they do not declare skills or role experience.
         foreach (var publication in resume.Publications)
+        {
+            var method = publication.EvidenceMetadata.GetValueOrDefault("provider") == "blog" ? "extracted" : "deterministic";
             Add(ledger, resume, $"publication:{publication.Id:N}", "publication",
                 $"{publication.Name}: {publication.Description}".TrimEnd(' ', ':'),
-                $"publication:{publication.Id:N}", [], externalUri: publication.Url);
+                $"publication:{publication.Id:N}", [], method: method, externalUri: publication.Url);
+            if (method == "extracted")
+                for (var i = 0; i < publication.EvidencePassages.Count; i++)
+                    Add(ledger, resume, $"publication:{publication.Id:N}:passage:{i + 1}", "publication",
+                        publication.EvidencePassages[i].Text, $"publication:{publication.Id:N}", [],
+                        method: "extracted", externalUri: publication.EvidencePassages[i].SourceUri);
+        }
 
         foreach (var skill in resume.Skills)
             Add(ledger, resume, SkillLocator(skill.Name), "skill", skill.Name, null, [skill.Name],
@@ -215,21 +224,32 @@ public static partial class EvidenceLedgerBuilder
         foreach (var entity in resume.Entities.Where(entity => !string.IsNullOrWhiteSpace(entity.Value)))
             AddEntityEvidence(ledger, resume, entity);
 
-        // An appended interview must not reset review decisions or original import provenance.
+        // Preserve decisions and original import supports in linear time. A publication
+        // catalogue can contain thousands of passages; rescanning it per claim is costly.
+        var previousClaims = previous.Claims.ToDictionary(claim => (claim.Id, claim.Statement));
+        var previousEvidence = previous.Evidence.ToDictionary(evidence => evidence.Id);
+        var evidenceById = ledger.Evidence.ToDictionary(evidence => evidence.Id);
         foreach (var claim in ledger.Claims)
         {
-            var old = previous.Claims.FirstOrDefault(c => c.Id == claim.Id && c.Statement == claim.Statement);
-            if (old is null) continue;
-            var supports = previous.Evidence.Where(e => old.EvidenceIds.Contains(e.Id)).ToList();
-            if (supports.Count != old.EvidenceIds.Count) continue;
-            ledger.Evidence.RemoveAll(e => claim.EvidenceIds.Contains(e.Id));
-            foreach (var support in supports)
-                if (ledger.Evidence.All(e => e.Id != support.Id)) ledger.Evidence.Add(support);
+            if (!previousClaims.TryGetValue((claim.Id, claim.Statement), out var old) ||
+                old.EvidenceIds.Any(id => !previousEvidence.ContainsKey(id))) continue;
+            foreach (var id in claim.EvidenceIds) evidenceById.Remove(id);
+            foreach (var id in old.EvidenceIds) evidenceById[id] = previousEvidence[id];
             claim.EvidenceIds = [.. old.EvidenceIds];
             claim.Review = old.Review;
             claim.Origin = old.Origin;
         }
+        ledger.Evidence = evidenceById.Values.ToList();
         resume.EvidenceLedger = ledger;
+        // Content refresh invalidates approval even when the title/description did not change.
+        var publicationReviews = resume.Publications
+            .Where(item => item.EvidenceMetadata.GetValueOrDefault("provider") == "blog")
+            .ToDictionary(item => $"publication:{item.Id:N}", item =>
+                item.EvidenceMetadata.GetValueOrDefault("review") == "accepted" &&
+                item.EvidenceMetadata.GetValueOrDefault("live_url_verified") == "true" ? "accepted" : "required");
+        foreach (var claim in ledger.Claims)
+            if (claim.Review != "rejected" && claim.SubjectId is not null && publicationReviews.TryGetValue(claim.SubjectId, out var review))
+                claim.Review = review;
         return ledger;
     }
 
@@ -327,6 +347,7 @@ public static partial class EvidenceLedgerBuilder
             parts.Add($"{experience.Company}|{experience.Title}|{experience.Location}|{experience.StartDate}|{experience.EndDate}|{experience.IsCurrent}");
             parts.AddRange(experience.Achievements);
             parts.AddRange(experience.Technologies);
+            parts.AddRange(experience.InterviewEntries.Select(entry => System.Text.Json.JsonSerializer.Serialize(entry)));
         }
         foreach (var education in resume.Education)
             parts.Add($"{education.Id:N}|{education.Degree}|{education.FieldOfStudy}|{education.Institution}|{education.StartDate}|{education.EndDate}");
@@ -334,7 +355,9 @@ public static partial class EvidenceLedgerBuilder
             parts.Add($"{project.Id:N}|{project.Name}|{project.Description}|{project.Url}|{project.Date}|{string.Join('|', project.Technologies)}|{string.Join('|', project.EvidenceMetadata.OrderBy(item => item.Key).Select(item => $"{item.Key}={item.Value}"))}");
         parts.AddRange(resume.Projects.SelectMany(project => project.EvidencePassages)
             .Select(passage => $"{passage.Text}|{passage.SourceUri}|{passage.Revision}|{string.Join('|', passage.Skills)}"));
-        parts.AddRange(resume.Publications.Select(item => $"{item.Id:N}|{item.Name}|{item.Description}|{item.Url}|{item.Date}"));
+        parts.AddRange(resume.Publications.Select(item => $"{item.Id:N}|{item.Name}|{item.Description}|{item.Url}|{item.Date}|{string.Join('|', item.EvidenceMetadata.OrderBy(pair => pair.Key).Select(pair => $"{pair.Key}={pair.Value}"))}"));
+        parts.AddRange(resume.Publications.SelectMany(item => item.EvidencePassages)
+            .Select(passage => $"{passage.Text}|{passage.SourceUri}|{passage.Revision}"));
         parts.AddRange(resume.Skills.Select(skill => $"{skill.Name}|{skill.Category}|{skill.YearsExperience}"));
         parts.AddRange(resume.Entities.Select(entity => $"{entity.EntityId:N}|{entity.Value}|{entity.Classification}|{entity.Confidence}"));
         return FastHash(string.Join('\n', parts));

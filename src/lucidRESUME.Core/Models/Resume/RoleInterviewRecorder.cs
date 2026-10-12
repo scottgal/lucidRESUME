@@ -16,6 +16,12 @@ public static class RoleInterviewRecorder
         entry.AcceptedAt = DateTimeOffset.UtcNow;
         entry.Skills = entry.Skills.Where(skill => !string.IsNullOrWhiteSpace(skill)).Select(skill => skill.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        entry.Account = (entry.Account ?? new ContributionAccount()) with
+        {
+            RoleId = roleId, InterviewId = entry.Id, Action = entry.Action,
+            Context = entry.Context, Outcome = entry.Outcome, ReviewedProse = entry.ReviewedProse,
+            Skills = [.. entry.Skills]
+        };
         foreach (var skill in entry.Skills)
             if (!role.Technologies.Contains(skill, StringComparer.OrdinalIgnoreCase)) role.Technologies.Add(skill);
         role.InterviewEntries.Add(entry);

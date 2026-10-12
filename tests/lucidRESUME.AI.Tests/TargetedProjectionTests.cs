@@ -10,6 +10,31 @@ namespace lucidRESUME.AI.Tests;
 public sealed class TargetedProjectionTests
 {
     [Fact]
+    public async Task Review_only_rejections_remove_summary_projects_education_and_skills_from_the_projection()
+    {
+        var source = ResumeDocument.Create("career.md", "text/markdown", 0);
+        source.Personal.Summary = "Worked on billing recovery.";
+        source.Experience.Add(new() { Title = "Engineer", Company = "Example", Achievements = ["Built billing recovery workflows."] });
+        source.Projects.Add(new() { Name = "Billing recovery", Description = "Billing recovery workflows in C#.", Technologies = ["C#"] });
+        source.Skills.Add(new() { Name = "C#" });
+        source.Education.Add(new() { Degree = "BSc", Institution = "Example University" });
+        var ledger = lucidRESUME.Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(source);
+        foreach (var claim in ledger.Claims.Where(claim => claim.Kind is "project" or "skill" or "education" || claim.Statement == source.Personal.Summary))
+            claim.Review = "rejected";
+        var embedder = new EmptyEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }),
+            NullLogger<SemanticCompressor>.Instance);
+        var result = await compressor.CompressAsync(source, new JobDescription { Title = "Engineer", RequiredSkills = ["C#"], Responsibilities = ["billing recovery"] });
+        Assert.Null(result.Projection.Personal.Summary);
+        Assert.Empty(result.Projection.Projects);
+        Assert.Empty(result.Projection.Education);
+        Assert.Empty(result.Projection.Skills);
+        Assert.All(result.Projection.Projection!.Blocks, block => Assert.Equal("accepted", ledger.Claims.Single(claim => claim.Id == block.ClaimId).Review));
+    }
+
+    [Fact]
     public async Task Extended_projection_selects_more_supported_roles_and_retains_generation_preferences()
     {
         var resume = ResumeDocument.Create("career.md", "text/markdown", 0);
@@ -189,6 +214,36 @@ public sealed class TargetedProjectionTests
         Assert.Contains(first.Id, selected);
         Assert.Contains(distinct.Id, selected);
         Assert.DoesNotContain(duplicate.Id, selected);
+    }
+
+    [Fact]
+    public async Task Synthesis_packet_keeps_all_duplicate_and_complementary_claim_bindings_and_rejects_reviewed_out_claims()
+    {
+        var source = ResumeDocument.Create("career.md", "text/markdown", 0);
+        source.Experience.Add(new()
+        {
+            Title = "Engineer", Company = "Example", IsCurrent = true,
+            Achievements = ["Built billing retry queues in C#.", "Built billing retry queues in C#.",
+                "Added billing retry audit trails.", "Owned billing retry architecture for every customer."]
+        });
+        var ledger = lucidRESUME.Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(source);
+        var embedder = new EmptyEmbedder();
+        await new CareerProseAnalyser(embedder).AnalyseAsync(source);
+        ledger.Claims.Single(claim => claim.Statement.StartsWith("Owned billing")).Review = "rejected";
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }),
+            NullLogger<SemanticCompressor>.Instance);
+        var result = await compressor.CompressAsync(source, new JobDescription
+        { Title = "Engineer", RequiredSkills = ["C#"], Responsibilities = ["billing retry queues and audit trails"] });
+        var prose = Assert.Single(Assert.Single(result.Projection.Experience).Achievements);
+        Assert.Contains("C#", prose);
+        Assert.Contains("audit trails", prose);
+        Assert.DoesNotContain("every customer", result.Markdown);
+        var bindings = result.Projection.Projection!.Blocks.Where(block => block.ProseRef.Contains("#experience-")).ToList();
+        Assert.Equal(3, bindings.Count);
+        Assert.Single(bindings.Select(block => block.ProseRef).Distinct());
+        Assert.All(bindings, block => Assert.Equal("accepted", ledger.Claims.Single(claim => claim.Id == block.ClaimId).Review));
     }
 
     private sealed class EmptyEmbedder : IEmbeddingService

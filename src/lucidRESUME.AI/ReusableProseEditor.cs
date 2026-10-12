@@ -33,6 +33,7 @@ internal static class ReusableProseEditor
                 packet.Intent,
                 packet.MaximumWords,
                 packet.Kind,
+                packet.Accounts,
                 claims = packet.Claims.Select(claim => new
                 {
                     claim.Claim.Id,

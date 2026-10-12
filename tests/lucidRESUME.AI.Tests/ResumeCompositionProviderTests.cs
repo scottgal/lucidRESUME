@@ -9,6 +9,16 @@ namespace lucidRESUME.AI.Tests;
 
 public sealed class ResumeCompositionProviderTests
 {
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"sections\":null}")]
+    [InlineData("{\"sections\":[{\"sectionId\":\"role\"}]}")]
+    public void Local_provider_rejects_missing_response_fields_with_a_useful_error(string json)
+    {
+        var error = Assert.Throws<InvalidDataException>(() => LlamaSharpResumeCompositionProvider.ParseBatch(json));
+        Assert.Contains("section", error.Message);
+    }
+
     [Fact]
     public async Task OpenAi_provider_is_stateless_structured_and_evidence_bounded()
     {
