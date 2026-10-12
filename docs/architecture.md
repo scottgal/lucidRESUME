@@ -617,4 +617,4 @@ Native installers are intentionally out of scope for the current release baselin
 
 ---
 
-*Built with .NET 10, Avalonia 11, ONNX Runtime, MailKit, PdfPig, sqlite-vec. Local-first. No cloud required.*
+*Built with .NET 10, Avalonia 12.1.2, ONNX Runtime, MailKit, PdfPig, sqlite-vec. Local-first. No cloud required.*

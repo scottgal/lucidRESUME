@@ -22,7 +22,7 @@ public static class PackageAuditCommand
         };
         command.SetAction(async (result, cancellationToken) =>
         {
-            using var services = ServiceBootstrap.Build(result.GetValue(config)?.FullName);
+            await using var services = ServiceBootstrap.Build(result.GetValue(config)?.FullName);
             var audit = await services.GetRequiredService<NuGetPackageAuditService>()
                 .AuditAsync(result.GetValue(publisher)!, cancellationToken);
             Console.WriteLine($"{audit.PackageCount} packages, {audit.Families.Count} families, {audit.TotalDownloads:N0} cumulative downloads");

@@ -425,10 +425,17 @@ public sealed partial class MarkdownViewer : UserControl
                     var target = link.Url ?? "";
                     var linkButton = new Button
                     {
-                        Content = new TextBlock { Text = linkText, Foreground = Brush("LrAccentBlueBrush"),
-                            TextDecorations = TextDecorations.Underline, FontSize = textBlock.FontSize },
-                        Padding = new Thickness(0), BorderThickness = new Thickness(0),
-                        Background = Brushes.Transparent, Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+                        Content = new TextBlock
+                        {
+                            Text = linkText,
+                            Foreground = Brush("LrAccentBlueBrush"),
+                            TextDecorations = TextDecorations.Underline,
+                            FontSize = textBlock.FontSize
+                        },
+                        Padding = new Thickness(0),
+                        BorderThickness = new Thickness(0),
+                        Background = Brushes.Transparent,
+                        Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
                         Name = target.StartsWith("#ref-", StringComparison.Ordinal) ? "Citation" + target[5..] : null
                     };
                     linkButton.Command = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(async () =>

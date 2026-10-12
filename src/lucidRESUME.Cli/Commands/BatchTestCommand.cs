@@ -37,7 +37,7 @@ public static class BatchTestCommand
                 return;
             }
 
-            using var sp = ServiceBootstrap.Build(config);
+            await using var sp = ServiceBootstrap.Build(config);
             var parser = sp.GetRequiredService<IResumeParser>();
 
             var files = dir.GetFiles("*.pdf").Concat(dir.GetFiles("*.docx"))

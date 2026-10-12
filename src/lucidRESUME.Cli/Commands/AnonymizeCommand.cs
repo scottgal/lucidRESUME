@@ -36,7 +36,7 @@ public static class AnonymizeCommand
             var format = result.GetValue(formatOpt) ?? "markdown";
             var config = result.GetValue(configOpt);
 
-            using var sp = ServiceBootstrap.Build(config?.FullName);
+            await using var sp = ServiceBootstrap.Build(config?.FullName);
             var parser = sp.GetRequiredService<IResumeParser>();
 
             Console.Error.WriteLine($"Parsing {file.Name}...");

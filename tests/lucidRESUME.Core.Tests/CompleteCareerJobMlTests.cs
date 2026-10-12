@@ -31,8 +31,13 @@ public sealed class CompleteCareerJobMlTests
         {
             using var store = new JsonAppStore(path);
             var source = ResumeDocument.Create("career.md", "text/markdown", 0);
-            source.Experience.Add(new WorkExperience { Company = "Example", Title = "Engineer", Technologies = ["SQL"],
-                Achievements = ["Maintained SQL services."] });
+            source.Experience.Add(new WorkExperience
+            {
+                Company = "Example",
+                Title = "Engineer",
+                Technologies = ["SQL"],
+                Achievements = ["Maintained SQL services."]
+            });
             await store.SaveAsync(new AppState { Resumes = [source] });
             var embeddings = new CountingEmbedder();
             var taxonomy = new SkillTaxonomyService(embeddings);

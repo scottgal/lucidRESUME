@@ -210,8 +210,13 @@ public sealed class ApplyInterviewTests
             var source = ResumeDocument.Create("career.md", "text/markdown", 0);
             source.Personal.FullName = "Example Candidate";
             source.Personal.Summary = "Engineering leader building reliable software and developing teams.";
-            source.Experience.Add(new WorkExperience { Title = "Engineer", Company = "Original", IsCurrent = true,
-                Achievements = ["Built reliable software and improved recovery for customer operations."] });
+            source.Experience.Add(new WorkExperience
+            {
+                Title = "Engineer",
+                Company = "Original",
+                IsCurrent = true,
+                Achievements = ["Built reliable software and improved recovery for customer operations."]
+            });
             await store.SaveAsync(new AppState { Resumes = [source], SelectedResumeId = source.ResumeId });
             var embedder = new EmptyEmbedder();
             var taxonomy = new SkillTaxonomyService(embedder);

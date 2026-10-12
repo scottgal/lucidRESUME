@@ -74,7 +74,8 @@ public sealed class ResumeCompositionProviderTests
 
         var progress = new CapturedProgress();
         var result = await provider.RunPassAsync(new CompositionPassRequest(
-            CompositionPass.Tighten, "Head of AI", manifest, [block], [block]) { Progress = progress });
+            CompositionPass.Tighten, "Head of AI", manifest, [block], [block])
+        { Progress = progress });
         Assert.Contains(progress.Messages, message => message.Contains("pass 1/2") && message.Contains("batch 1/1"));
         Assert.Contains(progress.Messages, message => message.Contains("completed batch 1/1"));
 
@@ -126,7 +127,7 @@ public sealed class ResumeCompositionProviderTests
         const string text = "Managed 10+ engineers and trained 200+ developers with 90%+ placements.";
         var handler = new MetricEchoHandler();
         var provider = new OllamaResumeCompositionProvider(new HttpClient(handler), Options.Create(new OllamaOptions
-            { CompositionEnabled = true, BaseUrl = "http://127.0.0.1:11434", Model = "local" }));
+        { CompositionEnabled = true, BaseUrl = "http://127.0.0.1:11434", Model = "local" }));
         var claim = new JobMlClaim { Id = "claim", Subject = "role" };
         var packet = new EvidencePacket("role", "Example", "Edit", 40, [new SelectedClaim(claim, "Example", text, ["e1"], 1, [])], []);
         var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
@@ -145,8 +146,14 @@ public sealed class ResumeCompositionProviderTests
             using var payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
             using var prompt = JsonDocument.Parse(payload.RootElement.GetProperty("messages")[1].GetProperty("content").GetString()!);
             ProtectedSource = prompt.RootElement.GetProperty("sections")[0].GetProperty("immutable_human_source").GetString()!;
-            var response = JsonSerializer.Serialize(new { message = new { content = JsonSerializer.Serialize(new
-                { sections = new[] { new { sectionId = "role", text = ProtectedSource } } }) } });
+            var response = JsonSerializer.Serialize(new
+            {
+                message = new
+                {
+                    content = JsonSerializer.Serialize(new
+                    { sections = new[] { new { sectionId = "role", text = ProtectedSource } } })
+                }
+            });
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(response) };
         }
     }

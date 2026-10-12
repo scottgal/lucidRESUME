@@ -216,11 +216,12 @@
                     <Border Background="{DynamicResource LrCardBgBrush}" CornerRadius="4" Padding="10,6" Margin="0,0,0,4">
                       <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="2">
-                          <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}">
-                            <Run Text="{Binding Title}"/>
-                            <Run Text=" (auto)" Foreground="{DynamicResource LrAccentYellowBrush}" FontSize="10"
-                                 BaselineAlignment="Superscript"/>
-                          </TextBlock>
+                          <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource LrPrimaryTextBrush}"/>
+                            <TextBlock Text="(auto)" FontSize="10" IsVisible="{Binding IsAutoDetected}"
+                                       Foreground="{DynamicResource LrAccentYellowBrush}"/>
+                          </StackPanel>
                           <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource LrTertiaryTextBrush}"
                                      TextWrapping="Wrap"
                                      IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>

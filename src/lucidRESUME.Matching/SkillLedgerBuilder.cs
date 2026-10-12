@@ -231,10 +231,16 @@ public sealed class SkillLedgerBuilder
                         item.SourceReference == id && item.SourceText == source.Text)) continue;
                     entry.Evidence.Add(new SkillEvidence
                     {
-                        ExperienceId = role?.Id, Company = role?.Company, JobTitle = role?.Title,
-                        SourceText = source.Text, SourceReference = id, SourceFingerprint = source.FastHash,
-                        StartDate = role?.StartDate, EndDate = role?.IsCurrent == true ? null : role?.EndDate,
-                        Source = EvidenceSource.JobMlClaim, Confidence = source.Confidence
+                        ExperienceId = role?.Id,
+                        Company = role?.Company,
+                        JobTitle = role?.Title,
+                        SourceText = source.Text,
+                        SourceReference = id,
+                        SourceFingerprint = source.FastHash,
+                        StartDate = role?.StartDate,
+                        EndDate = role?.IsCurrent == true ? null : role?.EndDate,
+                        Source = EvidenceSource.JobMlClaim,
+                        Confidence = source.Confidence
                     });
                 }
             }

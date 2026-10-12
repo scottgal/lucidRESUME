@@ -58,12 +58,27 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
             var source = request.SourceBlocks.Single(block => block.SectionId == current.SectionId);
             var key = ReusableProseStore.Fingerprint(JsonSerializer.Serialize(new
             {
-                version = SystemInstructions + " neutral-tighten-v1", modelIdentity, _options.Model, _options.NumCtx,
-                endpoint = baseUri.ToString(), pass = request.Pass.ToString(), jobBrief,
-                source.Text, source.ClaimIds, source.EvidenceIds, currentDraft = current.Text,
-                packet.Intent, packet.MaximumWords, packet.Kind,
-                claims = packet.Claims.Select(claim => new { claim.Claim.Id, claim.Claim.Subject,
-                    claim.Claim.Statement, skills = claim.Claim.Concepts.All.Order(StringComparer.Ordinal).ToArray() })
+                version = SystemInstructions + " neutral-tighten-v1",
+                modelIdentity,
+                _options.Model,
+                _options.NumCtx,
+                endpoint = baseUri.ToString(),
+                pass = request.Pass.ToString(),
+                jobBrief,
+                source.Text,
+                source.ClaimIds,
+                source.EvidenceIds,
+                currentDraft = current.Text,
+                packet.Intent,
+                packet.MaximumWords,
+                packet.Kind,
+                claims = packet.Claims.Select(claim => new
+                {
+                    claim.Claim.Id,
+                    claim.Claim.Subject,
+                    claim.Claim.Statement,
+                    skills = claim.Claim.Concepts.All.Order(StringComparer.Ordinal).ToArray()
+                })
             }));
             keys[current.SectionId] = key;
             var account = modelIdentity is null ? null : await proseStore!.FindAsync(key, cancellationToken);
@@ -201,14 +216,19 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                     {
                         Key = keys[original.SectionId],
                         SourceFingerprint = ReusableProseStore.Fingerprint(JsonSerializer.Serialize(new { source.Text, source.ClaimIds, source.EvidenceIds, skills = packet.Claims.SelectMany(claim => claim.Claim.Concepts.All).Order(StringComparer.Ordinal).ToArray() })),
-                        SourceText = source.Text, Text = errors.Count == 0 ? candidates[0].Text : original.Text,
+                        SourceText = source.Text,
+                        Text = errors.Count == 0 ? candidates[0].Text : original.Text,
                         RetainedSource = errors.Count > 0,
                         ReviewNotes = errors.Select(error => $"Retained prior wording after rejected {request.Pass} edit: {error}").ToList(),
                         Skills = packet.Claims.SelectMany(claim => claim.Claim.Concepts.All).Distinct().ToList(),
-                        ClaimIds = source.ClaimIds.ToList(), EvidenceIds = source.EvidenceIds.ToList(),
+                        ClaimIds = source.ClaimIds.ToList(),
+                        EvidenceIds = source.EvidenceIds.ToList(),
                         SubjectIds = packet.Claims.Select(claim => claim.Claim.Subject).Distinct().ToList(),
-                        Provider = ProviderId, ModelIdentity = modelIdentity, Pass = request.Pass.ToString(),
-                        JobBrief = jobBrief, MaximumWords = packet.MaximumWords
+                        Provider = ProviderId,
+                        ModelIdentity = modelIdentity,
+                        Pass = request.Pass.ToString(),
+                        JobBrief = jobBrief,
+                        MaximumWords = packet.MaximumWords
                     }, cancellationToken);
                 }
             }

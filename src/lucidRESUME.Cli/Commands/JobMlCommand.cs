@@ -53,7 +53,7 @@ public static class JobMlCommand
             if (resume is not null && directory is not null)
                 throw new ArgumentException("Use either --resume or --resume-dir, not both.");
 
-            using var services = ServiceBootstrap.Build(result.GetValue(configOption)?.FullName);
+            await using var services = ServiceBootstrap.Build(result.GetValue(configOption)?.FullName);
             var transcript = await ResumeInputHelper.LoadAsync(services, resume, directory, cancellationToken);
             var github = result.GetValue(githubOption);
             if (!string.IsNullOrWhiteSpace(github))
@@ -165,7 +165,7 @@ public static class JobMlCommand
                 url.Scheme is not ("http" or "https"))
                 throw new ArgumentException("--url must be an absolute HTTP or HTTPS URL.");
 
-            using var services = ServiceBootstrap.Build();
+            await using var services = ServiceBootstrap.Build();
             var linkedPost = await services.GetRequiredService<LinkedPostImporter>()
                 .ImportAsync(url, cancellationToken);
             if (!claim.Evidence.Any(item => string.Equals(item.Uri?.TrimEnd('/'),

@@ -55,10 +55,14 @@ public sealed class CompleteCareerJobMlService(IAppStore store, CareerRecordJobM
     private static CareerSemanticIndex? CaptureSemanticIndex(JobMlFile file)
     {
         var space = file.Data.SemanticSpaces.SingleOrDefault();
-        return space is null ? null : new CareerSemanticIndex { Model = space.Model,
-            ModelDigest = space.ModelDigest, Normalization = space.Normalization,
+        return space is null ? null : new CareerSemanticIndex
+        {
+            Model = space.Model,
+            ModelDigest = space.ModelDigest,
+            Normalization = space.Normalization,
             Concepts = file.Data.Concepts.Where(concept => concept.Embedding?.Space == space.Id)
-                .ToDictionary(concept => concept.Name, concept => concept.Embedding!.Vector.ToArray(), StringComparer.OrdinalIgnoreCase) };
+                .ToDictionary(concept => concept.Name, concept => concept.Embedding!.Vector.ToArray(), StringComparer.OrdinalIgnoreCase)
+        };
     }
 
 }

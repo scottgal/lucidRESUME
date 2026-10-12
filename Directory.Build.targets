@@ -1,0 +1,15 @@
+<Project>
+  <!-- lucidRESUME only uses the vendored summarizer's text/BERT path. Apply its
+       slim build at evaluation time for restore as well as build; parent project
+       properties alone do not propagate into NuGet's dependency graph. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Mostlylucid.DocSummarizer.Core'">
+    <DefineConstants>$(DefineConstants);SLIM_BUILD</DefineConstants>
+    <!-- The upstream slim conversion branches throw before shared progress code. -->
+    <NoWarn>$(NoWarn);CS0162</NoWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Mostlylucid.DocSummarizer.Core'">
+    <PackageReference Remove="SixLabors.ImageSharp;PDFtoImage;Mostlylucid.LucidRAG.CodeSummarizer" />
+    <ProjectReference Remove="../CodeSummarizer.Core/CodeSummarizer.Core.csproj" />
+    <Compile Remove="Services/DocxTableExtractor.cs;Services/PptxDocumentHandler.cs;Services/PdfPageRenderer.cs;Services/DoclingClient.cs;Scanning/Waves/VlmOcrWave.cs" />
+  </ItemGroup>
+</Project>

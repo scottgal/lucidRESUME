@@ -54,9 +54,12 @@ public sealed class SystemOneInterviewAssessor(HttpClient http, IOptions<Intervi
             string Bound(string text) => NimbleResumeDecisionProvider.Redact(text.Length > 1800 ? text[..1800] : text);
             var state = JsonSerializer.Serialize(new
             {
-                requirement = Bound(request.Requirement), target_role = Bound(request.TargetTitle),
-                suggested_existing_account = Bound(request.ExistingEvidence), context = Bound(request.Context),
-                personal_action = Bound(request.Action), outcome = Bound(request.Outcome)
+                requirement = Bound(request.Requirement),
+                target_role = Bound(request.TargetTitle),
+                suggested_existing_account = Bound(request.ExistingEvidence),
+                context = Bound(request.Context),
+                personal_action = Bound(request.Action),
+                outcome = Bound(request.Outcome)
             });
             var questions = new Dictionary<string, NimbleQuestion>
             {
@@ -95,8 +98,11 @@ public sealed class SystemOneInterviewAssessor(HttpClient http, IOptions<Intervi
             var feedback = $"Contribution: {result.Answers["contribution"].Choice}; outcome: {result.Answers["outcome"].Choice}. Suggested follow-up; facts remain yours to review.";
             return InterviewAssessmentRules.Render(request, probe, feedback) with
             {
-                Provider = _options.Provider, Model = result.Model, Probability = probability,
-                Probabilities = answer.Probabilities, UsedModel = true
+                Provider = _options.Provider,
+                Model = result.Model,
+                Probability = probability,
+                Probabilities = answer.Probabilities,
+                UsedModel = true
             };
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }

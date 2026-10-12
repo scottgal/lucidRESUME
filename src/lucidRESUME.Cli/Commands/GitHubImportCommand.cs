@@ -26,7 +26,7 @@ public static class GitHubImportCommand
         {
             var username = result.GetValue(usernameOpt)!;
             var configPath = result.GetValue(configOpt)?.FullName;
-            using var sp = ServiceBootstrap.Build(configPath);
+            await using var sp = ServiceBootstrap.Build(configPath);
             var importer = sp.GetRequiredService<GitHubSkillImporter>();
 
             Console.WriteLine($"Importing skills from github.com/{username}...\n");

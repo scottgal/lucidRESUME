@@ -63,7 +63,8 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
                     .FirstOrDefault();
                 if (reviewed != default)
                     entries.Add(new CoverageEntry(new(competency.Name, competency.Priority), reviewed.ReviewedProse,
-                        reviewed.Section, 1) { IsDirectMatch = true });
+                        reviewed.Section, 1)
+                    { IsDirectMatch = true });
                 else
                     entries.Add(await MatchSkillAsync(competency.Name, competency.Priority, achievementEvidence, ct, EmbedOnceAsync,
                         competency.Name + ": " + competency.Description));

@@ -34,7 +34,7 @@ public static class EvidenceCommand
             var output = result.GetValue(outputOpt);
             var config = result.GetValue(configOpt);
 
-            using var sp = ServiceBootstrap.Build(config?.FullName);
+            await using var sp = ServiceBootstrap.Build(config?.FullName);
             var parser = sp.GetRequiredService<IResumeParser>();
             var ledgerBuilder = sp.GetRequiredService<SkillLedgerBuilder>();
 

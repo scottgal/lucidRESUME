@@ -28,7 +28,7 @@ public static class MatchCommand
             var jobText = result.GetValue(jobOpt)!;
             var config = result.GetValue(configOpt);
 
-            using var sp = ServiceBootstrap.Build(config);
+            await using var sp = ServiceBootstrap.Build(config);
             var parser = sp.GetRequiredService<IResumeParser>();
             var jdParser = sp.GetRequiredService<IJobSpecParser>();
             var ledgerBuilder = sp.GetRequiredService<SkillLedgerBuilder>();

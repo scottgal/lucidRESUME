@@ -393,8 +393,16 @@ public sealed class SemanticCompressor
                 md.AppendLine($"- **{role.Title}**, {role.Company} ({FormatDateRange(role.StartDate, role.EndDate, role.IsCurrent)})");
                 md.AppendLine();
                 Bind(projection, sourceLedger, $"experience:{role.Id:N}:role", $"#additional-experience:p{i + 1}");
-                projection.Experience.Add(new WorkExperience { Id = role.Id, Title = role.Title, Company = role.Company,
-                    StartDate = role.StartDate, EndDate = role.EndDate, IsCurrent = role.IsCurrent, IsCompact = true });
+                projection.Experience.Add(new WorkExperience
+                {
+                    Id = role.Id,
+                    Title = role.Title,
+                    Company = role.Company,
+                    StartDate = role.StartDate,
+                    EndDate = role.EndDate,
+                    IsCurrent = role.IsCurrent,
+                    IsCompact = true
+                });
             }
         }
 

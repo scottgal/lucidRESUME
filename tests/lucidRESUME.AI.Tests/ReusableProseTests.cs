@@ -18,8 +18,13 @@ public sealed class ReusableProseTests
         {
             var handler = new EchoHandler();
             var options = Options.Create(new OllamaOptions { CompositionEnabled = true, Model = "example:latest" });
-            var claim = new JobMlClaim { Id = "claim", Subject = "experience:role", Statement = "Built C# APIs.",
-                Concepts = new() { Skills = ["C#"] } };
+            var claim = new JobMlClaim
+            {
+                Id = "claim",
+                Subject = "experience:role",
+                Statement = "Built C# APIs.",
+                Concepts = new() { Skills = ["C#"] }
+            };
             var packet = new EvidencePacket("role", "Engineer", "Edit precisely", 40,
                 [new SelectedClaim(claim, "Engineer", claim.Statement, ["e1"], 1, [])], [], "experience");
             var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");

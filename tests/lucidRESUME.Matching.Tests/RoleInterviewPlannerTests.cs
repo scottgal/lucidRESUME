@@ -23,8 +23,13 @@ public sealed class RoleInterviewPlannerTests
     public void Conflicting_delivery_and_cancellation_accounts_require_status_clarification()
     {
         var resume = ResumeDocument.Create("cv.md", "text/markdown", 0);
-        var role = new WorkExperience { Title = "Lead", Company = "Example", Achievements =
-            ["Led a team delivering MVP within 90 days.", "They changed product direction and the team was no longer required."] };
+        var role = new WorkExperience
+        {
+            Title = "Lead",
+            Company = "Example",
+            Achievements =
+            ["Led a team delivering MVP within 90 days.", "They changed product direction and the team was no longer required."]
+        };
         resume.Experience.Add(role);
         Assert.True(RoleEvidenceQuality.NeedsStatusClarification(role));
         var status = Assert.Single(RoleInterviewPlanner.PlanCompleteTranscript(resume), topic => topic.Key.EndsWith(":status"));

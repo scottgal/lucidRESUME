@@ -23,10 +23,23 @@ internal static class ReusableProseEditor
             var packet = request.Manifest.Sections.Single(section => section.SectionId == current.SectionId);
             var key = ReusableProseStore.Fingerprint(JsonSerializer.Serialize(new
             {
-                provider, modelIdentity, instructions, request.Pass, brief, source, current,
-                packet.Intent, packet.MaximumWords, packet.Kind,
-                claims = packet.Claims.Select(claim => new { claim.Claim.Id, claim.Claim.Subject,
-                    claim.Claim.Statement, skills = claim.Claim.Concepts.All.Order(StringComparer.Ordinal).ToArray() })
+                provider,
+                modelIdentity,
+                instructions,
+                request.Pass,
+                brief,
+                source,
+                current,
+                packet.Intent,
+                packet.MaximumWords,
+                packet.Kind,
+                claims = packet.Claims.Select(claim => new
+                {
+                    claim.Claim.Id,
+                    claim.Claim.Subject,
+                    claim.Claim.Statement,
+                    skills = claim.Claim.Concepts.All.Order(StringComparer.Ordinal).ToArray()
+                })
             }));
             keys[current.SectionId] = key;
             var account = await store.FindAsync(key, ct);
@@ -43,7 +56,8 @@ internal static class ReusableProseEditor
         var ids = pending.Select(block => block.SectionId).ToHashSet();
         var draft = await generate(request with
         {
-            JobDescription = brief, CurrentBlocks = pending,
+            JobDescription = brief,
+            CurrentBlocks = pending,
             SourceBlocks = request.SourceBlocks.Where(block => ids.Contains(block.SectionId)).ToList(),
             Manifest = request.Manifest with { Sections = request.Manifest.Sections.Where(section => ids.Contains(section.SectionId)).ToList() }
         });
@@ -61,13 +75,21 @@ internal static class ReusableProseEditor
             warnings.AddRange(notes);
             await store.SaveAsync(new ReusableProseAccount
             {
-                Key = keys[current.SectionId], SourceFingerprint = ReusableProseStore.Fingerprint(JsonSerializer.Serialize(source)),
-                SourceText = source.Text, Text = chosen.Text,
+                Key = keys[current.SectionId],
+                SourceFingerprint = ReusableProseStore.Fingerprint(JsonSerializer.Serialize(source)),
+                SourceText = source.Text,
+                Text = chosen.Text,
                 Skills = packet.Claims.SelectMany(claim => claim.Claim.Concepts.All).Distinct().ToList(),
-                ClaimIds = source.ClaimIds.ToList(), EvidenceIds = source.EvidenceIds.ToList(),
+                ClaimIds = source.ClaimIds.ToList(),
+                EvidenceIds = source.EvidenceIds.ToList(),
                 SubjectIds = packet.Claims.Select(claim => claim.Claim.Subject).Distinct().ToList(),
-                Provider = provider, ModelIdentity = modelIdentity, Pass = request.Pass.ToString(), JobBrief = brief,
-                MaximumWords = packet.MaximumWords, RetainedSource = errors.Count > 0, ReviewNotes = notes
+                Provider = provider,
+                ModelIdentity = modelIdentity,
+                Pass = request.Pass.ToString(),
+                JobBrief = brief,
+                MaximumWords = packet.MaximumWords,
+                RetainedSource = errors.Count > 0,
+                ReviewNotes = notes
             }, ct);
         }
         return new(result, warnings);

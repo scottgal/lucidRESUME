@@ -407,9 +407,13 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
             var updated = JsonSerializer.Deserialize<ResumeDocument>(original)!;
             var accepted = RoleInterviewRecorder.Accept(updated, roleId, new RoleInterviewEntry
             {
-                TopicKey = topic.Key, Skills = InterviewSkills.Split([',', '\n'], StringSplitOptions.RemoveEmptyEntries).ToList(),
-                Requirement = InterviewRequirement, Context = InterviewContext.Trim(), Action = InterviewAction.Trim(),
-                Outcome = InterviewOutcome.Trim(), ReviewedProse = prose,
+                TopicKey = topic.Key,
+                Skills = InterviewSkills.Split([',', '\n'], StringSplitOptions.RemoveEmptyEntries).ToList(),
+                Requirement = InterviewRequirement,
+                Context = InterviewContext.Trim(),
+                Action = InterviewAction.Trim(),
+                Outcome = InterviewOutcome.Trim(),
+                ReviewedProse = prose,
                 Assessment = _assessment?.InputHash == InterviewAssessmentRules.Hash(AssessmentRequest()) ? _assessment : null
             });
             if (!accepted)

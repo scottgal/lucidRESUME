@@ -18,8 +18,11 @@ public sealed class GitHubCareerEvidenceTests
     [InlineData(0, false)]
     public async Task Readme_skills_reach_the_career_with_source_passages_and_observed_contribution(long commits, bool eligible)
     {
-        var options = Options.Create(new GitHubImportOptions { ReadmeAnalysisMaxRepositories = 0,
-            DeepAnalysisMaxRepositories = 0 });
+        var options = Options.Create(new GitHubImportOptions
+        {
+            ReadmeAnalysisMaxRepositories = 0,
+            DeepAnalysisMaxRepositories = 0
+        });
         using var http = new HttpClient(new Handler(commits)) { BaseAddress = new Uri("https://api.github.com/") };
         var client = new GitHubApiClient(http, options, NullLogger<GitHubApiClient>.Instance);
         var importer = new GitHubSkillImporter(client, options, null!, NullLogger<GitHubSkillImporter>.Instance);
@@ -75,10 +78,14 @@ public sealed class GitHubCareerEvidenceTests
                 var p when p.Contains("/contributors?") => new[] { new { login = "alex", contributions = commits, type = "User" },
                     new { login = "other", contributions = 10L, type = "User" } },
                 var p when p.EndsWith("/languages") => new Dictionary<string, long> { ["Python"] = 1000 },
-                var p when p.EndsWith("/readme") => new { content = Convert.ToBase64String(Encoding.UTF8.GetBytes(
+                var p when p.EndsWith("/readme") => new
+                {
+                    content = Convert.ToBase64String(Encoding.UTF8.GetBytes(
                     "# Workflow product\n\nThe product uses Docker containers with PostgreSQL for persistent workflow state. " +
                     "It provides a Python API for processing queued work and recovering from interrupted operations.")),
-                    html_url = "https://github.com/alex/product/blob/main/docs/Readme.md", sha = "readme-blob" },
+                    html_url = "https://github.com/alex/product/blob/main/docs/Readme.md",
+                    sha = "readme-blob"
+                },
                 _ => throw new InvalidOperationException(path)
             };
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)

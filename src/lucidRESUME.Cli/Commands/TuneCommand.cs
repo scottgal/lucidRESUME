@@ -30,7 +30,7 @@ public static class TuneCommand
 
         cmd.SetAction(async (parseResult, ct) =>
         {
-            using var services = ServiceBootstrap.Build();
+            await using var services = ServiceBootstrap.Build();
             var registry = services.GetRequiredService<TemplateRegistry>();
 
             if (parseResult.GetValue(listOpt))

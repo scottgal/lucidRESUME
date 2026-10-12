@@ -24,7 +24,7 @@ dotnet test tests/lucidRESUME.Matching.Tests
 dotnet test tests/lucidRESUME.Core.Tests --filter "FullyQualifiedName~SqliteAppStoreTests"
 ```
 
-Target framework is **.NET 10**. Avalonia 11.3.
+Target framework is **.NET 10**. Avalonia 12.1.2.
 
 ## UX Testing
 
@@ -41,7 +41,7 @@ dotnet run --project src/lucidRESUME/lucidRESUME.csproj -- --ux-mcp
 
 ## Architecture
 
-Local-first desktop app. Zero external services required by default. All user data stored in a single SQLite database at `%AppData%/lucidRESUME/data.db` (auto-migrates from `data.json` on first launch). JSON import/export available for backup and portability. No cloud, no accounts.
+Local-first desktop app. Zero external services required by default. Structured state is stored in a SQLite database at `%AppData%/lucidRESUME/data.db` (auto-migrates from `data.json` on first launch). Generated document files live in `generated-resumes/` and reusable prose in `prose-library/` alongside the database. JSON import/export covers structured state; a full backup must include the archive directories. No account is required.
 
 ### Dependency Rule
 

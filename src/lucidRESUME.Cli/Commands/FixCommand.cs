@@ -36,7 +36,7 @@ public static class FixCommand
             var config = result.GetValue(configOpt);
             var dryRun = result.GetValue(dryRunOpt);
 
-            using var sp = ServiceBootstrap.Build(config?.FullName);
+            await using var sp = ServiceBootstrap.Build(config?.FullName);
             var parser = sp.GetRequiredService<IResumeParser>();
             var quality = sp.GetRequiredService<IResumeQualityAnalyser>();
 

@@ -46,7 +46,7 @@ public static class ParseCommand
                 return;
             }
 
-            using var services = ServiceBootstrap.Build(config?.FullName);
+            await using var services = ServiceBootstrap.Build(config?.FullName);
             var resume = await ResumeInputHelper.LoadAsync(services, file, directory, ct);
 
             var json = JsonSerializer.Serialize(resume, PrettyJson);

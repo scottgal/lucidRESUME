@@ -45,8 +45,17 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
             if (!index.TryGet(group.Key, out var passage)) continue;
             var selected = group.Where(binding => claims.ContainsKey(binding.ClaimId)).Select(binding => claims[binding.ClaimId])
                 .Where(claim => claim.Kind is "achievement" or "summary" or "project" || group.Key.StartsWith("#summary:")).Select(claim => new SelectedClaim(
-                    new JobMlClaim { Id = claim.Id, Subject = claim.SubjectId ?? "career", Statement = claim.Statement, Concepts = new JobMlClaimConcepts { Skills = claim.Concepts.Concat(source.Experience.SelectMany(role => role.InterviewEntries)
-                        .Where(entry => entry.ReviewedProse == claim.Statement).SelectMany(entry => entry.Skills)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() } },
+                    new JobMlClaim
+                    {
+                        Id = claim.Id,
+                        Subject = claim.SubjectId ?? "career",
+                        Statement = claim.Statement,
+                        Concepts = new JobMlClaimConcepts
+                        {
+                            Skills = claim.Concepts.Concat(source.Experience.SelectMany(role => role.InterviewEntries)
+                        .Where(entry => entry.ReviewedProse == claim.Statement).SelectMany(entry => entry.Skills)).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+                        }
+                    },
                     passage.Heading ?? "", passage.Text.TrimStart('-', ' '), claim.EvidenceIds, 1, [])).ToList();
             if (selected.Count == 0) continue;
             var words = Regex.Matches(passage.Text, @"\S+").Count;
@@ -56,7 +65,8 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
         }
         if (packets.Count == 0) return;
         var manifest = new ProjectionManifest(ledger.SourceRevision, MarkdownEvidenceIndex.Fingerprint(job.RawText),
-            DateTimeOffset.UtcNow, requirements, packets, [], [], "source-bound") { TargetTitle = job.Title };
+            DateTimeOffset.UtcNow, requirements, packets, [], [], "source-bound")
+        { TargetTitle = job.Title };
         var result = await composer.ComposeAsync(manifest, BuildJobBrief(job), new CompilationOptions
         { ComposeProse = true, CompositionProvider = options.Value.Provider }, ct, progress);
         ct.ThrowIfCancellationRequested();

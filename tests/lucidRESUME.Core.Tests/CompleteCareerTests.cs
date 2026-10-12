@@ -120,8 +120,14 @@ public sealed class CompleteCareerTests
     private static ResumeDocument Source(string company, string skill)
     {
         var source = ResumeDocument.Create(company + ".md", "text/markdown", 0);
-        source.Experience.Add(new WorkExperience { Title = "Engineer", Company = company,
-            StartDate = new DateOnly(2023, 1, 1), IsCurrent = true, Technologies = [skill] });
+        source.Experience.Add(new WorkExperience
+        {
+            Title = "Engineer",
+            Company = company,
+            StartDate = new DateOnly(2023, 1, 1),
+            IsCurrent = true,
+            Technologies = [skill]
+        });
         source.Skills.Add(new Skill { Name = skill });
         return source;
     }

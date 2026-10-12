@@ -325,8 +325,13 @@ public sealed class GitHubSkillImporter
     private static List<ProjectEvidencePassage> ReadmeEvidencePassages(GitHubReadmeSnapshot? readme) =>
         readme is null ? [] : System.Text.RegularExpressions.Regex.Split(readme.Markdown, @"\r?\n\s*\r?\n")
             .Select(text => text.Trim()).Where(text => text.Length > 0)
-            .Select(text => new ProjectEvidencePassage { Text = text, SourceUri = readme.SourceUri,
-                Revision = readme.BlobSha, Skills = SkillTaxonomy.FindCanonicalMentions(text).ToList() })
+            .Select(text => new ProjectEvidencePassage
+            {
+                Text = text,
+                SourceUri = readme.SourceUri,
+                Revision = readme.BlobSha,
+                Skills = SkillTaxonomy.FindCanonicalMentions(text).ToList()
+            })
             .Where(passage => passage.Skills.Count > 0).DistinctBy(passage => passage.Text).ToList();
 
     private static Dictionary<string, string> RepositoryMetadata(GitHubProjectProfile profile) =>

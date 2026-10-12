@@ -28,8 +28,12 @@ public sealed class ResumeOutputExporterTests
         var projection = ResumeDocument.Create("out.md", "text/markdown", 0);
         projection.Publications.Add(publication);
         projection.RawMarkdown = "## Selected Recent Publications {#publications}\n\n- [Agent architecture](https://example.com/updated-agents)";
-        projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
-            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#publications:p1" }] };
+        projection.Projection = new ResumeProjectionInfo
+        {
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
+            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#publications:p1" }]
+        };
         var artifact = new ResumeArtifactBuilder().Build(source, projection, new JobDescription { Title = "Engineer" }, "ats-classic");
         Assert.Single(artifact.Publications);
         using var stream = new MemoryStream(await new DocxExporter().ExportAsync(artifact));
@@ -52,9 +56,13 @@ public sealed class ResumeOutputExporterTests
         projection.Personal.Summary = "Built reliable APIs.";
         projection.Experience.Add(role);
         projection.GenerationWarnings.Add("Source wording retained for one rejected edit.");
-        projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
+        projection.Projection = new ResumeProjectionInfo
+        {
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
             Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#summary:p1" },
-                new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#role:p1" }] };
+                new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#role:p1" }]
+        };
         var artifact = new ResumeArtifactBuilder().Build(source, projection, new JobDescription { Title = "Engineer" }, "ats-classic");
         var file = new JobMlParser().Parse(artifact.JobMlSource!);
         Assert.Single(file.Data.Claims);

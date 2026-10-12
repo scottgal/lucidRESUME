@@ -9,7 +9,7 @@ on:
       version:
         description: 'Release version, without leading v (for example, 1.0.0)'
         required: true
-        default: '2.4.0'
+        default: '2.5.0'
 
 permissions:
   contents: write
@@ -39,6 +39,25 @@ jobs:
         run: dotnet format lucidRESUME.sln --verify-no-changes --no-restore --severity warn
       - name: Test
         run: dotnet test lucidRESUME.sln -c Release --no-build
+      - name: Setup Python for workflow validation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install desktop test dependencies
+        run: sudo apt-get update && sudo apt-get install -y xvfb libice6 libsm6 libfontconfig1
+      - name: Validate offline CLI workflows
+        run: python3 scripts/validate-release-cli.py --output artifacts/cli-e2e
+      - name: Validate native client workflows
+        run: xvfb-run -a python3 scripts/validate-release-client.py --output artifacts/native-e2e
+      - name: Upload source workflow evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-source-e2e
+          path: |
+            artifacts/cli-e2e
+            artifacts/native-e2e
+          if-no-files-found: warn
       - name: Audit dependencies
         run: dotnet list lucidRESUME.sln package --vulnerable --include-transitive
 
@@ -197,7 +216,13 @@ jobs:
             exit 1
           fi
 
-      - name: Smoke-test packaged macOS app
+      - name: Setup Python for packaged desktop validation
+        if: startsWith(matrix.rid, 'osx-')
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate packaged macOS workflows
         if: ${{ startsWith(matrix.rid, 'osx-') }}
         shell: bash
         run: |
@@ -208,12 +233,17 @@ jobs:
             echo "Skipping launch test for ${{ matrix.rid }} on $host_arch; bundle signature was still verified."
             exit 0
           fi
-          data_dir="$(mktemp -d)"
-          output_dir="$(mktemp -d)"
-          LUCIDRESUME_DATA_DIR="$data_dir" \
-            LUCIDRESUME_Startup__AutoDownloadModels=false \
-            artifacts/bundle/lucidRESUME.app/Contents/MacOS/lucidRESUME \
-            --ux-test --script "$GITHUB_WORKSPACE/ux-scripts/all-pages.yaml" --output "$output_dir"
+          python3 scripts/validate-release-client.py \
+            --app artifacts/bundle/lucidRESUME.app/Contents/MacOS/lucidRESUME \
+            --output artifacts/packaged-e2e
+
+      - name: Upload packaged workflow evidence
+        if: always() && startsWith(matrix.rid, 'osx-')
+        uses: actions/upload-artifact@v7
+        with:
+          name: packaged-e2e-${{ matrix.rid }}
+          path: artifacts/packaged-e2e
+          if-no-files-found: warn
 
       - name: Create archive
         shell: pwsh
@@ -329,6 +359,14 @@ jobs:
             echo
             echo "---"
             echo
+            sed -n '1,$p' docs/jobml-transcript-extension-0.1.md
+            echo
+            echo "---"
+            echo
+            sed -n '1,$p' docs/complete-career-workflow.md
+            echo
+            echo "---"
+            echo
             sed -n '1,$p' docs/jobml-package-extension-0.1.md
             echo
             echo "---"
@@ -360,12 +398,32 @@ jobs:
           cp README.md docs/architecture.md docs/product-assets.md docs/jobml-web-compiler.md \
             docs/jobml-0.1.md docs/jobml-0.1-specification.md \
             docs/cjobml-0.1-specification.md docs/jobml-github-extension-0.1.md \
-            docs/jobml-package-extension-0.1.md docs/resume-output-design.md \
+            docs/jobml-package-extension-0.1.md docs/jobml-transcript-extension-0.1.md \
+            docs/complete-career-workflow.md docs/resume-output-design.md \
             docs/nimble-parsing.md docs/jev-parsing-experiment.md docs/chrome-evidence-filler.md \
             docs/research/2026-09-26-resume-cv-ats-review.md docs/jobml-0.1.schema.json \
             src/lucidRESUME/Resources/user-manual.md "$out_dir/"
+          cp -R docs/screenshots "$out_dir/screenshots"
+          # Preserve source-relative paths as well as the legacy flat entry points.
+          mkdir -p "$out_dir/docs/screenshots" "$out_dir/docs/reviews" "$out_dir/src/lucidRESUME/Resources"
+          cp -R docs/screenshots/. "$out_dir/docs/screenshots/"
+          for document in "$out_dir"/*.md "$out_dir"/*.json; do
+            basename="$(basename "$document")"
+            if [ -f "docs/$basename" ]; then cp "$document" "$out_dir/docs/$basename"; fi
+          done
+          cp src/lucidRESUME/Resources/user-manual.md "$out_dir/src/lucidRESUME/Resources/"
+          cp docs/reviews/2026-10-12-v2.5-validation.md "$out_dir/docs/reviews/"
+          cp LICENSE "$out_dir/"
+          for document in docs/release.md docs/layout-detection.md \
+            docs/research/2026-09-26-resume-cv-ats-review.md \
+            extensions/lucidresume-chrome/README.md src/Mostlylucid.Avalonia.UITesting/README.md; do
+            mkdir -p "$out_dir/$(dirname "$document")"
+            cp "$document" "$out_dir/$document"
+          done
           if [ -f "$release_notes" ]; then
-            cp "$release_notes" "$out_dir/release-notes.md"
+            mkdir -p "$out_dir/docs/release-notes"
+            cp "$release_notes" "$out_dir/$release_notes"
+            sed 's|(../reviews/|(docs/reviews/|g' "$release_notes" > "$out_dir/release-notes.md"
           fi
           (cd artifacts/docs && zip -qr "../release/${name}.zip" "$name")
           tar -czf "artifacts/release/${name}.tar.gz" -C artifacts/docs "$name"
@@ -529,7 +587,7 @@ jobs:
           | Cloud AI | Off | Add Anthropic or OpenAI API keys with user secrets, environment variables, or the Profile page. |
           | PDF layout | Local parser fallback | Enable Docling for ML-based layout extraction on complex PDFs. |
           | Embeddings and NER | Auto-download on first run | Allow the first-run model download, or pre-populate the app data model cache. |
-          | Data store | Local SQLite database | Back up \`data.db\` from the app data folder for migration or restore. |
+          | Data store | Local SQLite database | Back up the app data folder, including \`data.db\`, \`generated-resumes\` and \`prose-library\`. |
           | Email tracking | Off | Configure IMAP host, port, username, and app password in Profile. |
 
           ### Useful Commands

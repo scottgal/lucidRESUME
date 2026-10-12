@@ -40,6 +40,70 @@ jobs:
       - name: Test
         run: dotnet test lucidRESUME.sln -c Release --no-build --verbosity normal
 
+      - name: Setup Python for native workflow validation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Linux desktop test dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb libice6 libsm6 libfontconfig1
+
+      - name: Offline CLI end-to-end workflows
+        run: python3 scripts/validate-release-cli.py --output artifacts/cli-e2e
+
+      - name: Upload CLI workflow evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cli-e2e-${{ matrix.os }}
+          path: artifacts/cli-e2e
+          if-no-files-found: warn
+
+      - name: Native client end-to-end workflows
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            xvfb-run -a python3 scripts/validate-release-client.py --output artifacts/native-e2e
+          else
+            python3 scripts/validate-release-client.py --output artifacts/native-e2e
+          fi
+
+      - name: Upload native workflow evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-e2e-${{ matrix.os }}
+          path: artifacts/native-e2e
+          if-no-files-found: warn
+
+      - name: Local web publish and compile round trip
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p artifacts/web-e2e
+          dotnet samples/lucidRESUME.Web.Sample/bin/Release/net10.0/lucidRESUME.Web.Sample.dll \
+            --urls http://127.0.0.1:19825 \
+            --LucidResumeCompiler:SnapshotDirectory="$RUNNER_TEMP/release-web/jobml" \
+            --LucidResumeWeb:PublicationDirectory="$RUNNER_TEMP/release-web/publications" \
+            --LucidResumeCompiler:RequireAuthenticatedWriter=false \
+            --LucidResumeWeb:PublishCompiledResumes=true > artifacts/web-e2e/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:19825/resume/api/status > /dev/null; then break; fi
+            sleep 1
+          done
+          python3 scripts/validate-release-web.py --output artifacts/web-e2e
+
+      - name: Upload web workflow evidence
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-e2e
+          path: artifacts/web-e2e
+          if-no-files-found: warn
+
       - name: Audit dependencies
         run: dotnet list lucidRESUME.sln package --vulnerable --include-transitive
 

@@ -14,17 +14,34 @@ public sealed class RoleInterviewTests
     public async Task Aggregate_matching_keeps_other_sources_reviewed_interview_skills_and_rejected_claims_rejected()
     {
         var first = ResumeDocument.Create("first.md", "text/markdown", 0);
-        var retained = new WorkExperience { Company = "Example", Title = "Engineer", StartDate = new DateOnly(2025, 1, 1),
-            IsCurrent = true, Achievements = ["Maintained SQL APIs.", "Built recovery workflows.", "Reviewed service designs."] };
+        var retained = new WorkExperience
+        {
+            Company = "Example",
+            Title = "Engineer",
+            StartDate = new DateOnly(2025, 1, 1),
+            IsCurrent = true,
+            Achievements = ["Maintained SQL APIs.", "Built recovery workflows.", "Reviewed service designs."]
+        };
         first.Experience.Add(retained);
         first.Skills.Add(new Skill { Name = "SQL" });
         var second = ResumeDocument.Create("second.md", "text/markdown", 0);
-        var other = new WorkExperience { Company = "Example", Title = "Engineer", StartDate = retained.StartDate,
-            IsCurrent = true, Achievements = ["Supported operations."] };
+        var other = new WorkExperience
+        {
+            Company = "Example",
+            Title = "Engineer",
+            StartDate = retained.StartDate,
+            IsCurrent = true,
+            Achievements = ["Supported operations."]
+        };
         second.Experience.Add(other);
         second.Skills.Add(new Skill { Name = "Terraform" });
-        RoleInterviewRecorder.Accept(second, other.Id, new RoleInterviewEntry { TopicKey = $"role:{other.Id:N}:scope",
-            Action = "Designed tracing", ReviewedProse = "Designed OpenTelemetry tracing for service recovery.", Skills = ["OpenTelemetry"] });
+        RoleInterviewRecorder.Accept(second, other.Id, new RoleInterviewEntry
+        {
+            TopicKey = $"role:{other.Id:N}:scope",
+            Action = "Designed tracing",
+            ReviewedProse = "Designed OpenTelemetry tracing for service recovery.",
+            Skills = ["OpenTelemetry"]
+        });
         var embedder = new EmptyEmbedder();
         var taxonomy = new SkillTaxonomyService(embedder);
         var skills = new SkillLedgerBuilder(embedder, taxonomy);
@@ -82,9 +99,12 @@ public sealed class RoleInterviewTests
         var updated = JsonSerializer.Deserialize<ResumeDocument>(JsonSerializer.Serialize(resume))!;
         var entry = new RoleInterviewEntry
         {
-            Skills = ["OpenTelemetry"], TopicKey = $"role:{role.Id:N}:delivery",
-            Requirement = "AWS", Context = "During recurring production incidents",
-            Action = "Automated recovery", Outcome = "Reduced outages",
+            Skills = ["OpenTelemetry"],
+            TopicKey = $"role:{role.Id:N}:delivery",
+            Requirement = "AWS",
+            Context = "During recurring production incidents",
+            Action = "Automated recovery",
+            Outcome = "Reduced outages",
             ReviewedProse = "Reduced AWS outages by automating recovery."
         };
         Assert.True(RoleInterviewRecorder.Accept(updated, role.Id, entry));

@@ -47,6 +47,13 @@ actions:
     value: page-apply
 
   - type: Navigate
+    value: generated
+  - type: Wait
+    value: "800"
+  - type: Screenshot
+    value: page-generated
+
+  - type: Navigate
     value: pipeline
   - type: Wait
     value: "800"

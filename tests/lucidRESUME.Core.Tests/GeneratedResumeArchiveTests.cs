@@ -45,8 +45,12 @@ public sealed class GeneratedResumeArchiveTests
             projection.Personal.FullName = source.Personal.FullName;
             projection.Experience.Add(role);
             projection.RawMarkdown = "## Experience {#role}\n\nBuilt reliable APIs with audited recovery.";
-            projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
-                Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#role:p1" }] };
+            projection.Projection = new ResumeProjectionInfo
+            {
+                SourceResumeId = source.ResumeId,
+                SourceRevision = ledger.SourceRevision,
+                Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#role:p1" }]
+            };
             var job = new JobDescription { Title = "Platform Engineer", Company = "Target company", RawText = "Reliable APIs" };
             var artifact = new ResumeArtifactBuilder().Build(source, projection, job, "ats-classic");
             GeneratedResume saved;

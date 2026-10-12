@@ -14,17 +14,34 @@ public sealed class TargetedProjectionTests
     {
         var resume = ResumeDocument.Create("source.md", "text/markdown", 0);
         resume.Personal.Summary = "Engineering leader building reliable software and developing teams.";
-        var consultant = new WorkExperience { Title = "AI Development Consultant", Company = "Current client", IsCurrent = true,
-            StartDate = new DateOnly(2026, 1, 1), Achievements = ["Consulting on systems using Code LLMs."] };
-        var practice = new WorkExperience { Title = "Technical Consultant", Company = "Practice", IsCurrent = true,
-            StartDate = new DateOnly(2012, 1, 1), Achievements = [
+        var consultant = new WorkExperience
+        {
+            Title = "AI Development Consultant",
+            Company = "Current client",
+            IsCurrent = true,
+            StartDate = new DateOnly(2026, 1, 1),
+            Achievements = ["Consulting on systems using Code LLMs."]
+        };
+        var practice = new WorkExperience
+        {
+            Title = "Technical Consultant",
+            Company = "Practice",
+            IsCurrent = true,
+            StartDate = new DateOnly(2012, 1, 1),
+            Achievements = [
                 "Managed distributed development teams.",
                 "Reduced deployment times through cloud migrations.",
                 "Modernised enterprise software architecture.",
-                "Designed and deployed Azure OpenAI recommendation engines using vector embeddings."] };
+                "Designed and deployed Azure OpenAI recommendation engines using vector embeddings."]
+        };
         resume.Experience.AddRange([consultant, practice]);
-        for (var i = 0; i < 7; i++) resume.Experience.Add(new WorkExperience { Title = "Engineer", Company = "Other " + i,
-            StartDate = new DateOnly(2025 - i, 1, 1), Achievements = ["Built production software."] });
+        for (var i = 0; i < 7; i++) resume.Experience.Add(new WorkExperience
+        {
+            Title = "Engineer",
+            Company = "Other " + i,
+            StartDate = new DateOnly(2025 - i, 1, 1),
+            Achievements = ["Built production software."]
+        });
         var embedder = new EmptyEmbedder();
         var taxonomy = new SkillTaxonomyService(embedder);
         var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
@@ -46,8 +63,12 @@ public sealed class TargetedProjectionTests
         var source = ResumeDocument.Create("career.md", "text/markdown", 0);
         source.Personal.FullName = "Example Author";
         var authored = ResumeDocument.Create("story.md", "text/markdown", 0);
-        authored.Publications.Add(new Project { Name = "Agent engineering articles", Description = "AI architecture and agent memory.",
-            Url = "https://example.com/ai" });
+        authored.Publications.Add(new Project
+        {
+            Name = "Agent engineering articles",
+            Description = "AI architecture and agent memory.",
+            Url = "https://example.com/ai"
+        });
         var state = new lucidRESUME.Core.Persistence.AppState { Resumes = [source, authored], SelectedResumeId = source.ResumeId };
         var aggregate = state.BuildAggregateResume()!;
         var embedder = new EmptyEmbedder();
@@ -69,12 +90,29 @@ public sealed class TargetedProjectionTests
     [Fact]
     public void Detailed_selection_avoids_duplicate_employment_and_fills_the_slot_with_distinct_work()
     {
-        var first = new WorkExperience { Title = "Senior Backend Developer", Company = "Very Jane Ltd",
-            StartDate = new DateOnly(2013, 8, 1), EndDate = new DateOnly(2015, 6, 1), Achievements = ["Built payment services."] };
-        var duplicate = new WorkExperience { Title = "Contract Senior Developer", Company = "Jane.com",
-            StartDate = first.StartDate, EndDate = first.EndDate, Achievements = ["Built payment services for the same client."] };
-        var distinct = new WorkExperience { Title = "Engineer", Company = "Another client",
-            StartDate = new DateOnly(2016, 1, 1), Achievements = ["Built reliable APIs."] };
+        var first = new WorkExperience
+        {
+            Title = "Senior Backend Developer",
+            Company = "Very Jane Ltd",
+            StartDate = new DateOnly(2013, 8, 1),
+            EndDate = new DateOnly(2015, 6, 1),
+            Achievements = ["Built payment services."]
+        };
+        var duplicate = new WorkExperience
+        {
+            Title = "Contract Senior Developer",
+            Company = "Jane.com",
+            StartDate = first.StartDate,
+            EndDate = first.EndDate,
+            Achievements = ["Built payment services for the same client."]
+        };
+        var distinct = new WorkExperience
+        {
+            Title = "Engineer",
+            Company = "Another client",
+            StartDate = new DateOnly(2016, 1, 1),
+            Achievements = ["Built reliable APIs."]
+        };
         var selected = SemanticCompressor.SelectDetailedRoleIds([first, duplicate, distinct],
             new Dictionary<Guid, double> { [first.Id] = 10, [duplicate.Id] = 9, [distinct.Id] = 8 }, maximumRelevantRoles: 2);
         Assert.Equal(2, selected.Count);

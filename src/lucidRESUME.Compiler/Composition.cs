@@ -153,7 +153,8 @@ public sealed class ResumeCompositionOrchestrator(
                 };
                 var draft = await provider.RunPassAsync(
                     new CompositionPassRequest(pass, jobDescription, passManifest, editableSource,
-                        current.Where(block => editableSectionIds.Contains(block.SectionId)).ToList()) { Progress = progress }, cancellationToken);
+                        current.Where(block => editableSectionIds.Contains(block.SectionId)).ToList())
+                    { Progress = progress }, cancellationToken);
                 var returned = draft.Blocks
                     .GroupBy(block => block.SectionId, StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);

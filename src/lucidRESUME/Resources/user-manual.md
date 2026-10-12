@@ -828,9 +828,10 @@ The main database is `data.db` (SQLite). You can back it up by copying this file
 
 ### Export & Backup
 
-- **JSON export**: File > Export JSON - full backup of all data
+- **JSON export**: File > Export JSON - structured state backup
 - **JSON import**: File > Import JSON - restore from backup
-- The JSON file includes resumes, jobs, applications, profile, and settings
+- The JSON file includes resumes, the complete career, archive metadata, jobs, applications, profile and settings
+- Close the app and back up the whole app data directory to preserve generated Word/PDF files and rendered pages. Include `data.db`, `generated-resumes/` and `prose-library/`; database or JSON backup alone does not contain the archive files.
 
 ---
 

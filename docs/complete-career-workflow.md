@@ -122,3 +122,11 @@ still requires concrete production-agent, evaluation, safe-action and outcome
 accounts. The full solution passed 597 tests at this validation checkpoint. Screenshots
 show the native client with private-copy data; no test interview answers were added
 to the user's live career.
+
+## Back up the complete workspace
+
+Close the app before copying its app data directory. Preserve `data.db`,
+`generated-resumes/` and `prose-library/` together. JSON export or a database-only
+backup preserves structured records and archive metadata, but does not embed the
+archived Word/PDF files or rendered images. Prose cache files are derived and can
+be regenerated; archived document files are needed to reopen those exact versions.

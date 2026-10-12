@@ -22,8 +22,12 @@ public sealed class ResumeProjectionEditorTests
         var projection = ResumeDocument.Create("projected.md", "text/markdown", 0);
         projection.Personal = new PersonalInfo();
         projection.Experience.Add(new WorkExperience { Id = role.Id, Achievements = [original] });
-        projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
-            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#role:p1" }] };
+        projection.Projection = new ResumeProjectionInfo
+        {
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
+            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#role:p1" }]
+        };
         projection.SetDoclingOutput("## Engineer {#role}\n\n- " + original + "\n", null, null);
         var editor = new ResumeProjectionEditor(new ResumeCompositionOrchestrator([new Editor(edit)], new CompositionValidator()),
             Options.Create(new TailoringOptions { Provider = "test" }));
@@ -55,8 +59,12 @@ public sealed class ResumeProjectionEditorTests
         var projection = ResumeDocument.Create("out.md", "text/markdown", 0);
         projection.Experience.AddRange([new WorkExperience { Id = first.Id, Achievements = [original] },
             new WorkExperience { Id = second.Id, Achievements = [original] }]);
-        projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
-            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#first:p1" }] };
+        projection.Projection = new ResumeProjectionInfo
+        {
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
+            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#first:p1" }]
+        };
         projection.SetDoclingOutput("## First {#first}\n\n- " + original + "\n\n## Second {#second}\n\n- " + original, null, null);
         var editor = new ResumeProjectionEditor(new ResumeCompositionOrchestrator([new Editor(edit)], new CompositionValidator()),
             Options.Create(new TailoringOptions { Provider = "test" }));
@@ -81,8 +89,12 @@ public sealed class ResumeProjectionEditorTests
         var claim = ledger.Claims.Single(claim => claim.Id.EndsWith(":personal:summary", StringComparison.Ordinal));
         var projection = ResumeDocument.Create("out.md", "text/markdown", 0);
         projection.Personal = new PersonalInfo { Summary = source.Personal.Summary };
-        projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
-            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#summary:p1" }] };
+        projection.Projection = new ResumeProjectionInfo
+        {
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
+            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#summary:p1" }]
+        };
         projection.SetDoclingOutput("## Summary {#summary}\n\n" + source.Personal.Summary, null, null);
         const string edit = "Engineer building reliable services.";
         var editor = new ResumeProjectionEditor(new ResumeCompositionOrchestrator([new Editor(edit)], new CompositionValidator()),

@@ -26,7 +26,9 @@ public sealed class RepositoryContribution
         var highest = humans.Count == 0 ? 0 : humans.Max(c => c.Contributions);
         return new RepositoryContribution
         {
-            Observed = true, Complete = complete, CandidateCommits = candidate,
+            Observed = true,
+            Complete = complete,
+            CandidateCommits = candidate,
             ObservedCommits = humans.Sum(c => c.Contributions),
             CandidateRank = candidate > 0 ? 1 + humans.Count(c => c.Contributions > candidate) : null,
             IsMainContributor = complete ? candidate > 0 && candidate == highest : null

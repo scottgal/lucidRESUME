@@ -79,19 +79,29 @@ public sealed class InterviewAssessorTests
     }
 
     private static SystemOneInterviewAssessor Create(HttpMessageHandler handler, string provider = "ollama") => new(new HttpClient(handler),
-        Options.Create(new InterviewOptions { Enabled = true, Provider = provider, Model = provider == "ollama" ? "nimble" : "clef-flash",
-            CloudflareAccountId = "account123", ApiKey = "test-secret" }));
+        Options.Create(new InterviewOptions
+        {
+            Enabled = true,
+            Provider = provider,
+            Model = provider == "ollama" ? "nimble" : "clef-flash",
+            CloudflareAccountId = "account123",
+            ApiKey = "test-secret"
+        }));
 
     private static string Response(string provider, string probe, double probability = .96)
     {
         object Answer(string choice, string[] choices, double p) => new
         { type = "choice", choice, confidence = p, probabilities = choices.ToDictionary(key => key, key => key == choice ? p : (1 - p) / (choices.Length - 1)) };
-        object response = new { model = provider == "ollama" ? "nimble" : "clef-flash", answers = new Dictionary<string, object>
+        object response = new
         {
-            ["next_probe"] = Answer(probe, ["context", "contribution", "decision", "outcome", "verification", "relevance", "review", "skip"], probability),
-            ["contribution"] = Answer("concrete", ["missing", "vague", "concrete"], .96),
-            ["outcome"] = Answer("observed", ["missing", "intended", "observed"], .96)
-        }};
+            model = provider == "ollama" ? "nimble" : "clef-flash",
+            answers = new Dictionary<string, object>
+            {
+                ["next_probe"] = Answer(probe, ["context", "contribution", "decision", "outcome", "verification", "relevance", "review", "skip"], probability),
+                ["contribution"] = Answer("concrete", ["missing", "vague", "concrete"], .96),
+                ["outcome"] = Answer("observed", ["missing", "intended", "observed"], .96)
+            }
+        };
         return JsonSerializer.Serialize(provider == "cloudflare" ? new { success = true, result = response } : response);
     }
     private static HttpResponseMessage Json(string body) => new(HttpStatusCode.OK)

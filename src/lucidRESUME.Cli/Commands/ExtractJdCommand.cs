@@ -40,7 +40,7 @@ public static class ExtractJdCommand
             if (string.IsNullOrWhiteSpace(jobText) && jobFile is { Exists: true })
                 jobText = await File.ReadAllTextAsync(jobFile.FullName, ct);
 
-            using var sp = ServiceBootstrap.Build(config?.FullName);
+            await using var sp = ServiceBootstrap.Build(config?.FullName);
             var jobParser = sp.GetRequiredService<IJobSpecParser>();
 
             Core.Models.Jobs.JobDescription jd;

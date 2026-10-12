@@ -179,8 +179,12 @@ public sealed class AppState
         }
         var inputs = previous is null ? reviewedInputs : new List<ResumeDocument> { previous };
         if (record is not null) inputs.AddRange(reviewedInputs);
-        var composition = new AppState { Resumes = inputs, Overrides = Overrides,
-            SelectedResumeId = record?.Transcript.ResumeId ?? SelectedResumeId };
+        var composition = new AppState
+        {
+            Resumes = inputs,
+            Overrides = Overrides,
+            SelectedResumeId = record?.Transcript.ResumeId ?? SelectedResumeId
+        };
         var transcript = composition.ComposeImportedEvidence()!;
         transcript.ResumeId = record?.Transcript.ResumeId ?? Guid.NewGuid();
         transcript.FileName = "Complete career transcript";
@@ -206,11 +210,15 @@ public sealed class AppState
                 if (decisions.TryGetValue((claim.Kind, claim.SubjectId, claim.Statement), out var review) && review == "rejected")
                     claim.Review = review;
         }
-        CompleteCareer = new CompleteCareerRecord { Transcript = transcript,
+        CompleteCareer = new CompleteCareerRecord
+        {
+            Transcript = transcript,
             ImportRevisions = Resumes.ToDictionary(r => r.ResumeId, Fingerprint),
             SemanticIndex = record?.SemanticIndex,
             ReviewWarnings = warnings.Distinct().ToList(),
-            OverridesRevision = Fingerprint(Overrides), UpdatedAt = DateTimeOffset.UtcNow };
+            OverridesRevision = Fingerprint(Overrides),
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
     }
 
     private static string Fingerprint<T>(T value) =>

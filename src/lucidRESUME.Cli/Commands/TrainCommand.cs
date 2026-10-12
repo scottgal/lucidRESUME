@@ -47,7 +47,7 @@ public static class TrainCommand
                 return;
             }
 
-            using var services = ServiceBootstrap.Build(config?.FullName);
+            await using var services = ServiceBootstrap.Build(config?.FullName);
             var registry = services.GetRequiredService<TemplateRegistry>();
 
             var searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;

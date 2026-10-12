@@ -182,7 +182,7 @@ public sealed class PointerSimulator
             {
                 _mouseDevice,
                 (ulong)Environment.TickCount64,
-                window,
+                ResolveInputRoot(window),
                 new Point(x, y),
                 new Vector(deltaX, deltaY),
                 (int)(_activeButtons | _activeKeyModifiers)
@@ -212,7 +212,7 @@ public sealed class PointerSimulator
             {
                 _mouseDevice,
                 (ulong)Environment.TickCount64,
-                window,
+                ResolveInputRoot(window),
                 Enum.ToObject(b.RawPointerEventType, rawType),
                 position,
                 delta,
@@ -271,7 +271,7 @@ public sealed class PointerSimulator
             {
                 _touchDevice,
                 (ulong)Environment.TickCount64,
-                window,
+                ResolveInputRoot(window),
                 Enum.ToObject(b.RawPointerEventType, rawType),
                 position,
                 Enum.ToObject(b.RawInputModifiersType, (int)_activeKeyModifiers),
@@ -291,7 +291,7 @@ public sealed class PointerSimulator
             {
                 _mouseDevice,
                 (ulong)Environment.TickCount64,
-                window,
+                ResolveInputRoot(window),
                 Enum.ToObject(b.RawPointerEventType, rawType),
                 position,
                 Enum.ToObject(b.RawInputModifiersType, (int)(_activeButtons | _activeKeyModifiers))
@@ -299,6 +299,20 @@ public sealed class PointerSimulator
             b.ProcessInputMethod.Invoke(_inputManager, new[] { args });
             _lastPosition = position;
         });
+    }
+
+    // Avalonia 12 moved IInputRoot from TopLevel onto its presentation source.
+    // Keep compatibility with Avalonia 11, where the Window itself was the root.
+    private static object ResolveInputRoot(Window window)
+    {
+        var rootType = Bindings.Value.RawPointerCtor.GetParameters()[2].ParameterType;
+        if (rootType.IsInstanceOfType(window)) return window;
+        var property = typeof(TopLevel).GetProperty("InputRoot",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        var root = property?.GetValue(window);
+        return root is not null && rootType.IsInstanceOfType(root)
+            ? root
+            : throw new InvalidOperationException("Cannot resolve the window's Avalonia input root.");
     }
 
     public void SetKeyboardModifiers(bool ctrl, bool shift, bool alt, bool meta)

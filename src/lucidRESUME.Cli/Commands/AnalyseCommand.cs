@@ -46,7 +46,7 @@ public static class AnalyseCommand
                 return;
             }
 
-            using var services = ServiceBootstrap.Build(config?.FullName);
+            await using var services = ServiceBootstrap.Build(config?.FullName);
             var resumeParser = services.GetRequiredService<IResumeParser>();
             var jobParser = services.GetRequiredService<IJobSpecParser>();
 

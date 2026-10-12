@@ -57,7 +57,7 @@ public static class GenerateCommand
             var includeCompactJobMl = result.GetValue(compactJobMlOpt);
             var fullJobMl = result.GetValue(fullJobMlOpt);
 
-            using var sp = ServiceBootstrap.Build(config?.FullName);
+            await using var sp = ServiceBootstrap.Build(config?.FullName);
             var resume = await ResumeInputHelper.LoadAsync(sp, file, resumeDirectory, ct);
             if (!string.IsNullOrWhiteSpace(fullJobMl))
             {

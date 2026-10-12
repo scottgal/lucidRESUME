@@ -226,10 +226,14 @@ public sealed class CareerRecordJobMlBuilder(
                         ["role_id"] = role.Id.ToString("N"),
                         ["entries"] = role.InterviewEntries.Select(entry => new Dictionary<string, object?>
                         {
-                            ["id"] = entry.Id.ToString("N"), ["topic"] = entry.TopicKey,
-                            ["requirement"] = entry.Requirement, ["context"] = entry.Context,
-                            ["action"] = entry.Action, ["outcome"] = entry.Outcome,
-                            ["reviewed_prose"] = entry.ReviewedProse, ["skills"] = entry.Skills,
+                            ["id"] = entry.Id.ToString("N"),
+                            ["topic"] = entry.TopicKey,
+                            ["requirement"] = entry.Requirement,
+                            ["context"] = entry.Context,
+                            ["action"] = entry.Action,
+                            ["outcome"] = entry.Outcome,
+                            ["reviewed_prose"] = entry.ReviewedProse,
+                            ["skills"] = entry.Skills,
                             ["accepted_at"] = entry.AcceptedAt.ToString("O")
                         }).ToList()
                     }).ToList()

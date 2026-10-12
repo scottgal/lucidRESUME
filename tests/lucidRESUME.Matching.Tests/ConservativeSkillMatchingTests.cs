@@ -78,7 +78,8 @@ public sealed class ConservativeSkillMatchingTests
         resume.Skills.Add(new Skill { Name = "Python" });
         resume.Experience.Add(new WorkExperience
         {
-            StartDate = new DateOnly(2010, 1, 1), EndDate = new DateOnly(2020, 1, 1),
+            StartDate = new DateOnly(2010, 1, 1),
+            EndDate = new DateOnly(2020, 1, 1),
             Achievements = ["Built financial modeling spreadsheets for annual investment planning."]
         });
         var ledger = await new SkillLedgerBuilder(new SimilarEmbedder()).BuildAsync(resume);

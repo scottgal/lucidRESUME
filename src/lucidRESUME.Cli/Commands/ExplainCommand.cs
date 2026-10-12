@@ -48,7 +48,7 @@ public static class ExplainCommand
                 return;
             }
 
-            using var sp = ServiceBootstrap.Build(config?.FullName);
+            await using var sp = ServiceBootstrap.Build(config?.FullName);
             var parser = sp.GetRequiredService<IResumeParser>();
             var jobParser = sp.GetRequiredService<IJobSpecParser>();
             var ledgerBuilder = sp.GetRequiredService<SkillLedgerBuilder>();
