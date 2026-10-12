@@ -23,7 +23,13 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
 
-        _conn = new SqliteConnection($"Data Source={dbPath}");
+        // The store owns one long-lived connection. Pooling only retains a file
+        // handle after disposal, which prevents moving/deleting the store on Windows.
+        _conn = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = dbPath,
+            Pooling = false
+        }.ToString());
         _conn.Open();
         _conn.LoadVector();
 

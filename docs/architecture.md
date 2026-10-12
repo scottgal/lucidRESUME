@@ -565,7 +565,7 @@ User secrets (`dotnet user-secrets`) for API keys. Environment variables with `L
 
 ## 11. Testing
 
-597 tests across 12 projects at the 2026-10-12 validation checkpoint. Tests favour direct service instantiation and fixed
+598 tests across 12 projects at the 2026-10-12 validation checkpoint. Tests favour direct service instantiation and fixed
 fixtures, with fake HTTP handlers where a provider boundary must be exercised.
 
 | Project | What it tests |

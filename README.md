@@ -501,12 +501,12 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test lucidRESUME.sln    # 597 tests across 12 projects
+dotnet test lucidRESUME.sln    # 598 tests across 12 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 120 | Persistence, models, reviewed transcript overlays, multi-resume, export, linked posts |
+| Core.Tests | 121 | Persistence, models, reviewed transcript overlays, multi-resume, export, linked posts |
 | Extraction.Tests | 25 | NER, recognizers, RRF fusion pipeline |
 | AI.Tests | 79 | Providers, embeddings, bounded decisions, deterministic projection, gated live OpenAI checks |
 | Matching.Tests | 99 | Skill scoring, filters, voting, job-search resilience, projection quality |

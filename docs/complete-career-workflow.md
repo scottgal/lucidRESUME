@@ -119,7 +119,7 @@ cost; the client displays pass and batch progress.
 The tested Morena output was a plausible evidence-grounded draft, with a two-page
 PDF and four-page Word document including references. A strong final application
 still requires concrete production-agent, evaluation, safe-action and outcome
-accounts. The full solution passed 597 tests at this validation checkpoint. Screenshots
+accounts. The full solution passed 598 tests at this validation checkpoint. Screenshots
 show the native client with private-copy data; no test interview answers were added
 to the user's live career.
 

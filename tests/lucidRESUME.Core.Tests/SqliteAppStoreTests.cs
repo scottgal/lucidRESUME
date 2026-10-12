@@ -24,6 +24,17 @@ public class SqliteAppStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task Disposing_store_releases_the_database_file()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"lucidresume_disposal_{Guid.NewGuid():N}.db");
+        using (var store = new SqliteAppStore(path))
+            await store.SaveAsync(new AppState());
+
+        File.Delete(path);
+        Assert.False(File.Exists(path));
+    }
+
+    [Fact]
     public void Aggregate_applies_company_and_stable_role_career_anchors()
     {
         var microsoft = new WorkExperience
