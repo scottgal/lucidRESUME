@@ -277,7 +277,7 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$bundle"
           for native_library in libe_sqlite3.dylib vec0.dylib; do
             test -s "$payload/$native_library"
-            lipo -verify_arch "$expected_arch" "$payload/$native_library"
+            lipo "$payload/$native_library" -verify_arch "$expected_arch"
             codesign --verify --strict --verbose=2 "$payload/$native_library"
             otool -L "$payload/$native_library"
           done
