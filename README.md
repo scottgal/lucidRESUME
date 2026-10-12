@@ -438,8 +438,12 @@ For developers who want to build from source:
 ```bash
 git clone https://github.com/scottgal/lucidRESUME
 cd lucidRESUME
-dotnet run --project src/lucidRESUME/lucidRESUME.csproj
+./run.sh Release
 ```
+
+The launcher builds and starts the desktop app (Release by default). Use
+`./run.sh Debug` for a debug build. Additional arguments are passed to the app,
+for example `./run.sh Release --storage-audit`.
 
 Requires [.NET 10 SDK](https://dotnet.microsoft.com/download). The default solution is desktop-only, so `dotnet build lucidRESUME.sln` and `dotnet test lucidRESUME.sln` do not require mobile workloads. See [docs/release.md](docs/release.md) for the release workflow.
 
