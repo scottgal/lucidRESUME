@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using lucidRESUME.AI;
@@ -26,6 +27,43 @@ public partial class App : Application
     private IServiceProvider? _provider;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
+
+    private void Settings_OnClick(object? sender, EventArgs e)
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow.DataContext: MainWindowViewModel vm })
+            vm.NavigateCommand.Execute("Profile");
+    }
+
+    private async void About_OnClick(object? sender, EventArgs e)
+    {
+        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime { MainWindow: { } owner }) return;
+        using var icon = new Avalonia.Media.Imaging.Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://lucidRESUME/Assets/lucidresume.png")));
+        var close = new Button { Content = "Close", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center };
+        var dialog = new Window
+        {
+            Title = "About lucidRESUME",
+            Width = 360,
+            Height = 330,
+            CanResize = false,
+            Icon = owner.Icon,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = new StackPanel
+            {
+                Margin = new Thickness(28),
+                Spacing = 14,
+                Children =
+                {
+                    new Image { Source = icon, Height = 96 },
+                    new TextBlock { Text = "lucidRESUME", FontSize = 24, FontWeight = Avalonia.Media.FontWeight.SemiBold, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center },
+                    new TextBlock { Text = $"Version {typeof(App).Assembly.GetName().Version?.ToString(3)}", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center },
+                    new TextBlock { Text = "Your career. Clear evidence. Better resumes.", TextAlignment = Avalonia.Media.TextAlignment.Center },
+                    close
+                }
+            }
+        };
+        close.Click += (_, _) => dialog.Close();
+        await dialog.ShowDialog(owner);
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {
@@ -64,6 +102,7 @@ public partial class App : Application
         {
             var mainWindow = _provider.GetRequiredService<MainWindow>();
             desktop.MainWindow = mainWindow;
+            mainWindow.Opened += (_, _) => MacApplicationIcon.Apply();
 
         }
 

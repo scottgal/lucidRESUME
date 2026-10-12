@@ -8,6 +8,29 @@ namespace lucidRESUME.AI.Tests;
 
 public sealed class ResumeProjectionEditorTests
 {
+    [Fact]
+    public void Job_brief_retains_detailed_competencies_and_distinguishes_same_title_jobs()
+    {
+        var database = new JobDescription
+        {
+            Title = "Platform Engineer",
+            RequiredSkills = ["C#"],
+            Competencies = [new("Reliability", "Own PostgreSQL backups and recovery drills.", Core.Models.Coverage.RequirementPriority.Required)]
+        };
+        var accessibility = new JobDescription
+        {
+            Title = "Platform Engineer",
+            RequiredSkills = ["C#"],
+            Competencies = [new("Reliability", "Own accessible interfaces and keyboard navigation.", Core.Models.Coverage.RequirementPriority.Required)]
+        };
+        var databaseBrief = ResumeProjectionEditor.BuildJobBrief(database);
+        var accessibilityBrief = ResumeProjectionEditor.BuildJobBrief(accessibility);
+        Assert.Contains("PostgreSQL backups and recovery drills", databaseBrief);
+        Assert.Contains("accessible interfaces and keyboard navigation", accessibilityBrief);
+        Assert.NotEqual(databaseBrief, accessibilityBrief);
+        Assert.NotEqual(databaseBrief.Split("Job fingerprint: ")[1], accessibilityBrief.Split("Job fingerprint: ")[1]);
+    }
+
     [Theory]
     [InlineData("Supported the service migration and improved recovery.", true)]
     [InlineData("Led the service migration and improved recovery.", false)]

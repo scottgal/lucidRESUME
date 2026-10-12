@@ -141,6 +141,7 @@ jobs:
           contents="$bundle/Contents"
           app_payload="$contents/Resources/app"
           mkdir -p "$contents/MacOS" "$app_payload"
+          cp src/lucidRESUME/Assets/lucidresume.icns "$contents/Resources/lucidresume.icns"
           cp -R "artifacts/publish/${{ matrix.rid }}/." "$app_payload/"
           cat > "$contents/MacOS/lucidRESUME" <<'LAUNCHER'
           #!/bin/sh
@@ -156,6 +157,7 @@ jobs:
             <key>CFBundleDisplayName</key><string>lucidRESUME</string>
             <key>CFBundleExecutable</key><string>lucidRESUME</string>
             <key>CFBundleIdentifier</key><string>net.mostlylucid.lucidresume</string>
+            <key>CFBundleIconFile</key><string>lucidresume.icns</string>
             <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
             <key>CFBundleName</key><string>lucidRESUME</string>
             <key>CFBundlePackageType</key><string>APPL</string>

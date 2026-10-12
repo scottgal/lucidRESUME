@@ -7,6 +7,7 @@
         x:DataType="vm:MainWindowViewModel"
         x:Class="lucidRESUME.MainWindow"
         Title="lucidRESUME" Width="1200" Height="800"
+        Icon="avares://lucidRESUME/Assets/lucidresume.png"
         MinWidth="900" MinHeight="600"
         DragDrop.AllowDrop="True">
 

@@ -151,11 +151,18 @@ public sealed class SemanticCompressor
         // Competency retrieval ranks actual role accounts; it never establishes coverage.
         var competencyVectors = new List<float[]>();
         foreach (var competency in jd.Competencies.Where(c => c.Priority != Core.Models.Coverage.RequirementPriority.Preferred))
-            competencyVectors.Add(await _embedder.EmbedAsync(competency.Name + ": " + competency.Description, ct));
+        {
+            var vector = await _embedder.EmbedAsync(competency.Name + ": " + competency.Description, ct);
+            if (vector.Length > 0) competencyVectors.Add(vector);
+        }
         var ignored = Tokens(string.Join(' ', new CoverageOptions().StopWords.Concat(new[]
             { "and", "the", "for", "are", "you", "our", "can", "has", "this", "that", "will", "from", "need", "work", "teams", "systems", "platform", "engineering", "technical", "built", "build", "designed", "design", "develop", "lead", "leadership", "production" })));
-        var targetTokens = Tokens(string.Join(' ', jd.Competencies.Where(c => c.Priority != Core.Models.Coverage.RequirementPriority.Preferred)
-            .Select(c => c.Description))).Except(ignored).ToHashSet();
+        // Structured competency extraction is optional. The original job and its
+        // responsibilities must still drive evidence selection when no model is available.
+        var targetTokens = Tokens(string.Join(' ', new[] { jd.Title ?? "", jd.RawText }
+            .Concat(jd.RequiredSkills).Concat(jd.Responsibilities)
+            .Concat(jd.Competencies.Where(c => c.Priority != Core.Models.Coverage.RequirementPriority.Preferred)
+                .Select(c => c.Name + ": " + c.Description)))).Except(ignored).ToHashSet();
         var roleTokens = resume.Experience.Where(IsUsableRole).Select(role => Tokens(string.Join(' ', role.Achievements))).ToList();
         double LexicalRelevance(string text)
         {
@@ -169,7 +176,7 @@ public sealed class SemanticCompressor
             var scores = new List<double>();
             foreach (var achievement in role.Achievements)
             {
-                var vector = await _embedder.EmbedAsync(achievement, ct);
+                var vector = competencyVectors.Count > 0 ? await _embedder.EmbedAsync(achievement, ct) : [];
                 var score = competencyVectors.Where(query => query.Length > 0 && query.Length == vector.Length)
                     .Select(query => (double)_embedder.CosineSimilarity(query, vector))
                     .Where(double.IsFinite).DefaultIfEmpty(0).Max();
@@ -180,7 +187,7 @@ public sealed class SemanticCompressor
                 relevance[achievement] = score;
                 scores.Add(score);
             }
-            if (competencyVectors.Count > 0)
+            if (competencyVectors.Count > 0 || targetTokens.Count > 0)
                 roleScores[role.Id] = roleScores.GetValueOrDefault(role.Id) +
                     scores.OrderDescending().Take(2).DefaultIfEmpty(0).Average() * 24;
         }
@@ -265,7 +272,7 @@ public sealed class SemanticCompressor
         // Compressed summary - targeted to the JD
         if (!string.IsNullOrWhiteSpace(resume.Personal.Summary))
         {
-            var summaryTerms = jd.RequiredSkills.Concat(jd.PreferredSkills)
+            var summaryTerms = jd.RequiredSkills.Concat(jd.PreferredSkills).Concat(targetTokens)
                 .Concat(roleProfile is null ? [] : _taxonomy.GetRoleSkills(roleProfile))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var summary = SelectSummary(CleanSummary(resume.Personal.Summary), summaryTerms,

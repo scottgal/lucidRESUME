@@ -10,6 +10,49 @@ namespace lucidRESUME.AI.Tests;
 public sealed class TargetedProjectionTests
 {
     [Fact]
+    public async Task Different_jobs_select_different_achievements_without_competencies_or_embeddings()
+    {
+        var resume = ResumeDocument.Create("career.md", "text/markdown", 0);
+        var role = new WorkExperience
+        {
+            Title = "Software Engineer",
+            Company = "Example",
+            IsCurrent = true,
+            StartDate = new DateOnly(2020, 1, 1),
+            Achievements = ["Built internal APIs in C#.", "Delivered observability using OpenTelemetry.",
+                "Implemented cloud deployment pipelines.",
+                "Optimised PostgreSQL queries and database backups with recovery drills.",
+                "Improved accessible interfaces with keyboard navigation and screen reader testing."]
+        };
+        resume.Experience.Add(role);
+        var embedder = new EmptyEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }),
+            NullLogger<SemanticCompressor>.Instance);
+        var database = await compressor.CompressAsync(resume, new JobDescription
+        {
+            Title = "Platform Engineer",
+            RawText = "Own PostgreSQL queries, database backups and recovery drills.",
+            Responsibilities = ["Own PostgreSQL queries, database backups and recovery drills."]
+        });
+        var accessibility = await compressor.CompressAsync(resume, new JobDescription
+        {
+            Title = "Platform Engineer",
+            RawText = "Improve accessible interfaces, keyboard navigation and screen reader testing.",
+            Responsibilities = ["Improve accessible interfaces, keyboard navigation and screen reader testing."]
+        });
+        var databaseRole = Assert.Single(database.Projection.Experience);
+        var accessibilityRole = Assert.Single(accessibility.Projection.Experience);
+        Assert.Contains("PostgreSQL", databaseRole.Achievements[0]);
+        Assert.Contains("accessible interfaces", accessibilityRole.Achievements[0]);
+        Assert.DoesNotContain(databaseRole.Achievements, text => text.Contains("screen reader"));
+        Assert.DoesNotContain(accessibilityRole.Achievements, text => text.Contains("PostgreSQL"));
+        Assert.Equal(5, role.Achievements.Count);
+        Assert.All(database.Projection.Projection!.Blocks, block => Assert.Contains(resume.EvidenceLedger!.Claims, claim => claim.Id == block.ClaimId));
+    }
+
+    [Fact]
     public async Task Ai_target_retains_current_specialist_role_and_concrete_ai_account_in_experience()
     {
         var resume = ResumeDocument.Create("source.md", "text/markdown", 0);

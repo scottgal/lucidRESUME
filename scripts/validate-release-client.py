@@ -46,6 +46,7 @@ class Client:
         self.output = output
         self.pending = {}
         self.counter = 0
+        self.reader_closed = False
         env = os.environ.copy()
         env.update(LUCIDRESUME_DATA_DIR=str(output / 'data'),
                    LUCIDRESUME_Startup__AutoDownloadModels='false',
@@ -73,8 +74,13 @@ class Client:
                     self.pending[message['id']].put(message)
             except ValueError:
                 pass
+        self.reader_closed = True
+        for response in list(self.pending.values()):
+            response.put({'error': 'Client output ended; inspect client-stderr.log for startup errors.'})
 
     def call(self, tool, **arguments):
+        if self.reader_closed or self.proc.poll() is not None:
+            raise RuntimeError('Client exited; inspect client-stderr.log for startup errors.')
         self.counter += 1
         number = self.counter
         response = self.pending[number] = queue.Queue()
@@ -358,6 +364,28 @@ def main():
         result = client.call('ui_run_script', path=str(REPO / 'ux-scripts/jobml-linked-editor.yaml'))
         assert 'Result: PASS' in result, result
 
+    def contrasting_jobs():
+        selections = []
+        for skill in ['PostgreSQL', 'OpenTelemetry']:
+            client.nav('Apply')
+            client.set('JobTitle', 'Senior Platform Engineer')
+            client.set('Company', 'Targeting Example')
+            client.set('JobDescriptionText', f'Senior Platform Engineer\nOwn {skill} systems. Hands-on experience with {skill} is required.')
+            client.click('ProjectResumeButton')
+            client.wait('IsTailoring', 'False')
+            if client.get('HasInterview') == 'True':
+                client.click('type=Button text="Project with current evidence"')
+                client.wait('IsTailoring', 'False')
+            assert client.get('HasResult') == 'True', client.get('StatusMessage')
+            assert client.get('ErrorMessage') == 'null', client.get('ErrorMessage')
+            with sqlite3.connect(output / 'data/data.db') as db:
+                entry = json.loads(db.execute('select data from generated_resumes order by rowid desc limit 1').fetchone()[0])
+            achievements = [a for role in entry['Resume']['Experience'] for a in role['Achievements']]
+            assert achievements and skill in achievements[0], (skill, achievements)
+            selections.append(achievements)
+            client.shot('targeted-' + skill.lower())
+        assert selections[0] != selections[1], 'Different jobs produced identical achievement selections.'
+
     try:
         case('empty-navigation', navigate)
         if case('docx-import-review-dedup', imported):
@@ -372,6 +400,7 @@ def main():
         case('restart-persistence', restart)
         case('jobml-draft-selection-drift', run_linked_editor)
         case('pdf-import-round-trip', pdf_import)
+        case('different-jobs-different-evidence', contrasting_jobs)
     finally:
         client.close()
     report['passed'] = all(item['status'] == 'passed' for item in report['cases'])

@@ -141,7 +141,7 @@ public sealed class ReusableProseTests
         var brief = ResumeProjectionEditor.BuildJobBrief(job);
         Assert.Contains("Evaluation", brief);
         Assert.Contains("Agent safety", brief);
-        Assert.True(brief.Length < 500);
+        Assert.True(brief.Length < 3100);
         Assert.DoesNotContain(job.RawText, brief);
     }
 

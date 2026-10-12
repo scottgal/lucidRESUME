@@ -13,19 +13,25 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
 {
     internal static string BuildJobBrief(JobDescription job)
     {
-        static string Short(string text)
+        static string Short(string text, int maximum = 300)
         {
             var clean = Regex.Replace(text, @"\s+", " ").Trim();
-            return clean.Length > 140 ? clean[..140] : clean;
+            return clean.Length > maximum ? clean[..maximum] : clean;
         }
         var requirements = job.RequiredSkills.Concat(job.Competencies.Where(c =>
                 c.Priority == Core.Models.Coverage.RequirementPriority.Required).Select(c => c.Name))
-            .Distinct(StringComparer.OrdinalIgnoreCase).Take(16).Select(Short);
+            .Distinct(StringComparer.OrdinalIgnoreCase).Take(16).Select(text => Short(text));
         var responsibilities = job.Competencies.Where(c => c.Priority != Core.Models.Coverage.RequirementPriority.Preferred)
-            .Select(c => c.Name).Concat(job.Responsibilities).Distinct(StringComparer.OrdinalIgnoreCase).Take(10).Select(Short);
-        var preferred = job.PreferredSkills.Take(6).Select(Short);
-        var brief = $"Target: {Short(job.Title ?? "")}\nRequired: {string.Join("; ", requirements)}\nResponsibilities: {string.Join("; ", responsibilities)}\nPreferred: {string.Join("; ", preferred)}";
-        return brief.Length > 3000 ? brief[..3000] : brief;
+            .Select(c => c.Name + ": " + c.Description).Concat(job.Responsibilities)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Take(10).Select(text => Short(text));
+        var preferred = job.PreferredSkills.Take(6).Select(text => Short(text));
+        var brief = $"Target: {Short(job.Title ?? "")}\nCompany: {Short(job.Company ?? "")}\nRequired: {string.Join("; ", requirements)}\nResponsibilities: {string.Join("; ", responsibilities)}\nPreferred: {string.Join("; ", preferred)}\nJob context: {Short(job.RawText, 2000)}";
+        // Include the complete input identity even when a long brief is bounded;
+        // different jobs with identical headings must not share job-specific prose.
+        var identity = string.Join('\n', new[] { job.Title ?? "", job.Company ?? "", job.RawText }
+            .Concat(job.RequiredSkills).Concat(job.PreferredSkills).Concat(job.Responsibilities)
+            .Concat(job.Competencies.Select(c => $"{c.Priority}: {c.Name}: {c.Description}")));
+        return Short(brief, 3000) + "\nJob fingerprint: " + MarkdownEvidenceIndex.Fingerprint(identity);
     }
 
     public async Task EditAsync(ResumeDocument source, ResumeDocument projection, JobDescription job, CancellationToken ct = default, IProgress<string>? progress = null)
