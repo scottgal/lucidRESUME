@@ -106,7 +106,13 @@ class Client:
     def wait(self, path, expected, timeout=90):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            result = self.get(path)
+            # A command can finish navigating after the preceding RPC returns.
+            # Missing properties are transient only while this bounded wait runs.
+            response = self.call('ui_get', path='CurrentPage.' + path)
+            result = response.split(' = ', 1)[-1]
+            if 'Property not found' in response:
+                time.sleep(.2)
+                continue
             if result == str(expected):
                 return
             time.sleep(.2)

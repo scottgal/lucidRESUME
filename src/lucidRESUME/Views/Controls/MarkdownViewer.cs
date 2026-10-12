@@ -200,11 +200,13 @@ public sealed partial class MarkdownViewer : UserControl
         {
             if (item is not ListItemBlock listItem) continue;
 
-            var itemPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            // Constrain prose to the remaining width so long and nested list items wrap.
+            var itemPanel = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*") };
             var bullet = list.IsOrdered
                 ? new TextBlock { Text = $"{index++}.", FontSize = 14, Foreground = Brush("LrAccentBlueBrush"), VerticalAlignment = VerticalAlignment.Top, MinWidth = 20 }
                 : new TextBlock { Text = "\u2022", FontSize = 14, Foreground = Brush("LrAccentBlueBrush"), VerticalAlignment = VerticalAlignment.Top, MinWidth = 14 };
 
+            bullet.Margin = new Thickness(0, 0, 8, 0);
             itemPanel.Children.Add(bullet);
 
             var contentPanel = new StackPanel { Spacing = 2 };
@@ -214,6 +216,7 @@ public sealed partial class MarkdownViewer : UserControl
                 if (ctrl != null)
                     contentPanel.Children.Add(ctrl);
             }
+            Grid.SetColumn(contentPanel, 1);
             itemPanel.Children.Add(contentPanel);
             panel.Children.Add(itemPanel);
         }

@@ -136,6 +136,8 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                         evidence_ids = claim.EvidenceIds
                     }),
                     purpose_details_to_preserve = CompositionValidator.PurposeDetails(source.Text),
+                    numeric_transitions_to_preserve = ProseNumericTransitions.Extract(source.Text)
+                        .Select(transition => Protect(current.SectionId, $"from {transition.From} {transition.FromUnit} to {transition.To} {transition.ToUnit}")),
                     maximum_words = packet.MaximumWords
                 };
             }).ToList();

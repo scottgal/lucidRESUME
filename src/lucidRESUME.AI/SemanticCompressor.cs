@@ -286,7 +286,9 @@ public sealed class SemanticCompressor
         if (invalidRoleCount > 0)
             projection.GenerationWarnings.Add($"{invalidRoleCount} imported role entries have missing or malformed title/company fields. Retained in the source transcript; excluded from resume selection and role interviews until reviewed.");
 
-        // Compressed summary - targeted to the JD
+        // Insert the summary after selecting role evidence, so its source facts follow the job.
+        var summaryInsertion = md.Length;
+        string? careerSummary = null;
         if (!string.IsNullOrWhiteSpace(resume.Personal.Summary) && Accepted(sourceLedger, "personal:summary"))
         {
             var summaryTerms = jd.RequiredSkills.Concat(jd.PreferredSkills).Concat(targetTokens)
@@ -296,11 +298,7 @@ public sealed class SemanticCompressor
                 roleProfile is "CTO" or "VP of Engineering" or "Head of Engineering", budget.SummaryWords);
             if (!string.IsNullOrWhiteSpace(summary))
             {
-                md.AppendLine("## Summary {#summary}");
-                md.AppendLine(summary);
-                md.AppendLine();
-                Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
-                projection.Personal.Summary = summary;
+                careerSummary = summary;
             }
         }
 
@@ -403,6 +401,37 @@ public sealed class SemanticCompressor
             projection.Experience.Add(projectedExperience);
             includedRoles++;
 
+        }
+
+        if (careerSummary is not null)
+        {
+            var selectedAccountsForSummary = projection.Experience.SelectMany(role => role.Achievements.Select(text =>
+                    (Role: role, Text: text, Relevance: LexicalRelevance(text))))
+                .Where(item => item.Relevance > 0 && Regex.Matches(item.Text, @"\S+").Count <= budget.SummaryWords / 2)
+                .OrderByDescending(item => item.Relevance).Take(2).ToList();
+            var summary = careerSummary;
+            if (selectedAccountsForSummary.Count == 2)
+            {
+                summary = string.Join(" ", selectedAccountsForSummary.Select(item => item.Text.Trim().TrimEnd('.') + "."));
+                var includePersonal = LexicalRelevance(careerSummary) >= selectedAccountsForSummary.Max(item => item.Relevance) &&
+                    Regex.Matches(careerSummary + " " + summary, @"\S+").Count <= budget.SummaryWords;
+                if (includePersonal)
+                {
+                    summary = careerSummary + " " + summary;
+                    Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
+                }
+                foreach (var item in selectedAccountsForSummary)
+                {
+                    var selectedParagraph = projection.Experience.Single(role => role.Id == item.Role.Id).Achievements.IndexOf(item.Text);
+                    var firstParagraph = string.IsNullOrEmpty(FormatDateRange(item.Role.StartDate, item.Role.EndDate, item.Role.IsCurrent)) ? 1 : 2;
+                    var proseRef = $"#experience-{item.Role.Id:N}:p{selectedParagraph + firstParagraph}";
+                    foreach (var binding in projection.Projection.Blocks.Where(block => block.ProseRef == proseRef).ToList())
+                        projection.Projection.Blocks.Add(new() { ClaimId = binding.ClaimId, ProseRef = "#summary:p1" });
+                }
+            }
+            else Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
+            projection.Personal.Summary = summary;
+            md.Insert(summaryInsertion, $"## Summary {{#summary}}\n{summary}\n\n");
         }
 
         var earlierRoles = new List<WorkExperience>();
@@ -524,7 +553,7 @@ public sealed class SemanticCompressor
             .Where(m => m.IsMatched)
             .Select(m => resumeLedger.Find(m.MatchedResumeSkill!))
             .Where(e => e is not null)
-            .Select(entry => entry!.SkillName);
+            .Select(entry => entry!.SkillName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var demonstratedConcepts = projection.Projection.Blocks
             .Select(block => sourceLedger.Claims.FirstOrDefault(claim => claim.Id == block.ClaimId))
             .Where(claim => claim is not null)
@@ -542,9 +571,15 @@ public sealed class SemanticCompressor
             ? resume.Skills.Where(skill => Accepted(sourceLedger, EvidenceLedgerBuilder.SkillLocator(skill.Name)) &&
                 Regex.IsMatch(skill.Category ?? "", @"\b(AI|ML)\b", RegexOptions.IgnoreCase)).Select(skill => skill.Name)
             : [];
+        var relevantAccountConcepts = projection.Projection.Blocks.Select(block => sourceLedger.Claims.FirstOrDefault(claim => claim.Id == block.ClaimId))
+            .Where(claim => claim is not null && Tokens(claim.Statement).Except(ignored).Intersect(targetTokens).Count() >= 2)
+            .SelectMany(claim => claim!.Concepts).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var jobSkillContext = string.Join(' ', new[] { jd.Title ?? "", jd.RawText }.Concat(jd.RequiredSkills).Concat(jd.PreferredSkills).Concat(jd.Responsibilities));
         var skillsByCategory = priorityLeadership.Concat(matchedSkillNames).Concat(demonstratedConcepts)
-            .Concat(explicitSkills).Concat(declaredAiSkills).Concat(projection.Experience.SelectMany(role => role.Technologies))
+            .Concat(explicitSkills).Concat(declaredAiSkills).Concat(relevantAccountConcepts)
             .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(name => matchedSkillNames.Contains(name) ||
+                SkillTaxonomy.MentionsEquivalent(jobSkillContext, name) || priorityLeadership.Contains(name) || declaredAiSkills.Contains(name))
             .Where(name => !GenericSkillLabels.Contains(name))
             .Where(name => sourceLedger.Claims.Any(claim => claim.Review == "accepted" && claim.Kind is "skill" or "technology" &&
                 claim.Statement.Equals(name, StringComparison.OrdinalIgnoreCase)))

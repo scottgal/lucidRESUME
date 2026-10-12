@@ -246,6 +246,41 @@ public sealed class TargetedProjectionTests
         Assert.All(bindings, block => Assert.Equal("accepted", ledger.Claims.Single(claim => claim.Id == block.ClaimId).Review));
     }
 
+    [Fact]
+    public async Task Summary_and_skills_follow_selected_job_evidence_instead_of_reusing_the_whole_career()
+    {
+        var source = ResumeDocument.Create("career.md", "text/markdown", 0);
+        source.Personal.Summary = "Software engineer building internal AI agent runtimes.";
+        source.Experience.Add(new()
+        {
+            Title = "Engineer", Company = "Example", IsCurrent = true,
+            Technologies = ["PostgreSQL", "Python", "PyTorch"],
+            Achievements = ["Designed PostgreSQL reporting queries and database backup recovery drills.",
+                "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.",
+                "Built a Python document-classification prototype using PyTorch; never deployed to production."]
+        });
+        var embedder = new EmptyEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }),
+            NullLogger<SemanticCompressor>.Instance);
+        var result = await compressor.CompressAsync(source, new JobDescription
+        {
+            Title = "Database Platform Engineer", RequiredSkills = ["PostgreSQL"],
+            Responsibilities = ["Design PostgreSQL reporting queries, database backup recovery drills and optimise measured test latency."]
+        }, generationOptions: new() { Detail = ResumeDetail.Thorough });
+        Assert.Contains("PostgreSQL", result.Projection.Personal.Summary);
+        Assert.DoesNotContain("AI agent", result.Projection.Personal.Summary);
+        Assert.Contains(result.Projection.Skills, skill => skill.Name == "PostgreSQL");
+        Assert.DoesNotContain(result.Projection.Skills, skill => skill.Name is "Python" or "PyTorch");
+        var summaryClaims = result.Projection.Projection!.Blocks.Where(block => block.ProseRef == "#summary:p1").ToList();
+        Assert.True(summaryClaims.Count >= 2);
+        Assert.All(summaryClaims, block => Assert.Contains(source.EvidenceLedger!.Claims,
+            claim => claim.Id == block.ClaimId && claim.Kind == "achievement" && claim.Review == "accepted"));
+        Assert.Equal("Software engineer building internal AI agent runtimes.", source.Personal.Summary);
+        Assert.Equal(3, source.Experience[0].Achievements.Count);
+    }
+
     private sealed class EmptyEmbedder : IEmbeddingService
     {
         public Task<float[]> EmbedAsync(string text, CancellationToken ct = default) => Task.FromResult(Array.Empty<float>());

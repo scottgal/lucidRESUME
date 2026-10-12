@@ -1,0 +1,5 @@
+{
+  "embedding_mode": "lexical fallback; no vector model or skill proficiency inference",
+  "jobs_select_different_evidence": true,
+  "validator_policy": "selected-facts-purpose-measurements-v5"
+}

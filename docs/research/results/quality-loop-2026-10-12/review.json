@@ -1,0 +1,26 @@
+{
+  "baseline_policy": "selected-facts-purpose-v4",
+  "broader_screen_policy": "selected-facts-purpose-measurements-v5",
+  "targeted_repair_policy": "selected-facts-purpose-measurements-scope-v6",
+  "review": "Luna model review against synthetic source facts; not blind human ratings",
+  "broader_screen_findings": [
+    "Prototype cancellation omitted the unimplemented queue object.",
+    "Passive deployment status became a dangling action.",
+    "Measured test latency became a causal reduction."
+  ],
+  "targeted_review": "No remaining factual blocker in the four targeted replays; all retain source wording.",
+  "full_career_review": "Distinct relevant summaries and global skills; no major factual drift. AI summary could lead with runtime rather than unknown evaluation outcome.",
+  "tests": {
+    "full_suite_before_final_four_regressions": 664,
+    "compiler_final": 70,
+    "ai_final": 109,
+    "desktop_final": 13,
+    "covered_total": 668,
+    "native_workflow_groups": 15
+  },
+  "limits": [
+    "The broader v5 screen is historical; v6 replay covers only the affected prototype and metric families.",
+    "Full-career evaluation uses lexical fallback, not a vector model.",
+    "Safe source retention is not a successful rewrite."
+  ]
+}

@@ -1,0 +1,197 @@
+[
+  {
+    "fixture": "internal-agent",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Asked to stabilise an internal support agent after its pilot. Using C#/.NET, split Azure OpenAI calls from tool execution, added per-tool allow-lists, bounded retries and runbook retrieval from Qdrant. Released to internal operations in production; it was not customer-facing. Pair-programmed with three engineers and personally reviewed tool-permission edge cases. Ticket reduction and answer accuracy have not been measured.",
+    "text": "Asked to stabilise an internal support agent after its pilot. Using C#/.NET, split Azure OpenAI calls from tool execution, added per-tool allow-lists, bounded retries and runbook retrieval from Qdrant. Released to internal operations in production; it was not customer-facing. Pair-programmed with three engineers and personally reviewed tool-permission edge cases. Ticket reduction and answer accuracy have not been measured.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 removed source qualifier \u0027not\u0027.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027internal-agent-3\u0027.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: stabilised, post-pilot, service, only, metrics, remain.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 removed source qualifier \u0027not\u0027.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027internal-agent-3\u0027.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027internal-agent-4\u0027."
+    ],
+    "elapsed_ms": 10811,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "internal-agent",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Asked to stabilise an internal support agent after its pilot. Using C#/.NET, split Azure OpenAI calls from tool execution, added per-tool allow-lists, bounded retries and runbook retrieval from Qdrant. Released to internal operations in production; it was not customer-facing. Pair-programmed with three engineers and personally reviewed tool-permission edge cases. Ticket reduction and answer accuracy have not been measured.",
+    "text": "Asked to stabilise an internal support agent after its pilot. Using C#/.NET, split Azure OpenAI calls from tool execution and added per-tool allow-lists with bounded retries plus runbook retrieval via Qdrant. Released to internal operations in production; it was not customer-facing. Pair-programmed with three engineers and personally reviewed tool-permission edge cases. Ticket reduction and answer accuracy have not been measured.",
+    "Used": true,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced I/my into prose with an implied subject. Preserve the source\u0027s grammatical person.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 removed source qualifier \u0027not\u0027.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: post-pilot, included, adding, via, releasing, remained, non-customer-facing, pair-programming, reviewing, remain."
+    ],
+    "elapsed_ms": 9951,
+    "unchanged_source": false,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "offline-evaluation",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "In a 120-task offline test, manual review found 14 fewer tool-selection errors. The test did not measure production availability. A separate pilot showed no change in customer resolution time; the production effect remains unknown.",
+    "text": "In a 120-task offline test, manual review found 14 fewer tool-selection errors. The test did not measure production availability; a separate pilot showed no change in customer resolution time.",
+    "Used": true,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 removed source qualifier \u0027not\u0027.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027offline-evaluation-1\u0027."
+    ],
+    "elapsed_ms": 6663,
+    "unchanged_source": false,
+    "hard_errors": [],
+    "quality_findings": [
+      "Missing source distinction: \\bunknown\\b"
+    ]
+  },
+  {
+    "fixture": "offline-evaluation",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "In a 120-task offline test, manual review found 14 fewer tool-selection errors. The test did not measure production availability. A separate pilot showed no change in customer resolution time; the production effect remains unknown.",
+    "text": "In a 120-task offline test, manual review found 14 fewer tool-selection errors. The test did not measure production availability. A separate pilot showed no change in customer resolution time; the production effect remains unknown.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: reduce, identified, mistakes, assessment.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: testing, identified, via, reducing, them, 14."
+    ],
+    "elapsed_ms": 6746,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "personal-deployment",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Led three engineers through the release plan and personally deployed the C# service. The team wrote most adapters. Reviewed the rollback drill but did not operate it. Deployment duration and incident rates were not measured.",
+    "text": "Led three engineers through the release plan and personally deployed the C# service. The team wrote most adapters. Reviewed the rollback drill but did not operate it; deployment duration and incident rates were unmeasured.",
+    "Used": true,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced I/my into prose with an implied subject. Preserve the source\u0027s grammatical person.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027personal-deployment-3\u0027."
+    ],
+    "elapsed_ms": 6091,
+    "unchanged_source": false,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "personal-deployment",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Led three engineers through the release plan and personally deployed the C# service. The team wrote most adapters. Reviewed the rollback drill but did not operate it. Deployment duration and incident rates were not measured.",
+    "text": "Led three engineers through the release plan and personally deployed the C# service. The team wrote most adapters. Reviewed the rollback drill but did not operate it. Deployment duration and incident rates were not measured.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced I/my into prose with an implied subject. Preserve the source\u0027s grammatical person.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate\u0027s action.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027personal-deployment-2\u0027.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 introduced I/my into prose with an implied subject. Preserve the source\u0027s grammatical person.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate\u0027s action.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027personal-deployment-2\u0027."
+    ],
+    "elapsed_ms": 6027,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "incident-log",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "The retry log stored the request ID and tool name. Operations used it to see which calls failed, not why. This let responders find jobs to replay; it did not identify root cause.",
+    "text": "The retry log stored the request ID and tool name. Operations used it to see which calls failed, not why; this let responders find jobs to replay but did not identify root cause.",
+    "Used": true,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced I/my into prose with an implied subject. Preserve the source\u0027s grammatical person.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027incident-log-1\u0027."
+    ],
+    "elapsed_ms": 4606,
+    "unchanged_source": false,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "incident-log",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "The retry log stored the request ID and tool name. Operations used it to see which calls failed, not why. This let responders find jobs to replay; it did not identify root cause.",
+    "text": "The retry log stored the request ID and tool name. Operations used it to see which calls failed, not why. This let responders find jobs to replay; it did not identify root cause.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027incident-log-1\u0027.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: enable, ids, names, decision, allowed, locating, specific.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate\u0027s action.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: support, incident, diagnosis, ids, names, data, rather, than, locate, reveal, failures, occurred."
+    ],
+    "elapsed_ms": 6189,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "metric-attribution",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms. For a separate batch workload, memory use rose from 180 MB to 240 MB. Neither test established production performance.",
+    "text": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms. For a separate batch workload, memory use rose from 180 MB to 240 MB. Neither test established production performance.",
+    "Used": true,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: reducing, however, saw, rise."
+    ],
+    "elapsed_ms": 7094,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "metric-attribution",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms. For a separate batch workload, memory use rose from 180 MB to 240 MB. Neither test established production performance.",
+    "text": "Optimised PostgreSQL queries, reducing measured test latency from 240 ms to 180 ms. For a separate batch workload, memory use rose from 180 MB to 240 MB. Neither test established production performance.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 7341,
+    "unchanged_source": false,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "prototype-cancelled",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Built a Python/FastAPI document-classification prototype using PyTorch. It ran on synthetic documents only and was never deployed to production. Proposed a human review queue, but the project was cancelled before that queue was implemented.",
+    "text": "Built a Python/FastAPI document-classification prototype using PyTorch that ran on synthetic documents only and was never deployed to production. Proposed a human review queue, but the project was cancelled before implementation.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 6643,
+    "unchanged_source": false,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "prototype-cancelled",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Built a Python/FastAPI document-classification prototype using PyTorch. It ran on synthetic documents only and was never deployed to production. Proposed a human review queue, but the project was cancelled before that queue was implemented.",
+    "text": "Built a Python/FastAPI document-classification prototype using Pytorch, which ran on synthetic documents only and was never deployed to production. Proposed a human review queue; the project was cancelled before that queue was implemented.",
+    "Used": true,
+    "Warnings": [],
+    "elapsed_ms": 6743,
+    "unchanged_source": false,
+    "hard_errors": [],
+    "quality_findings": []
+  }
+]

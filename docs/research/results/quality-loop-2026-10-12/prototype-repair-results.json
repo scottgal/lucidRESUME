@@ -1,0 +1,37 @@
+[
+  {
+    "fixture": "prototype-cancelled",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Built a Python/FastAPI document-classification prototype using PyTorch. It ran on synthetic documents only and was never deployed to production. Proposed a human review queue, but the project was cancelled before that queue was implemented.",
+    "text": "Built a Python/FastAPI document-classification prototype using PyTorch. It ran on synthetic documents only and was never deployed to production. Proposed a human review queue, but the project was cancelled before that queue was implemented.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 obscured what was not implemented. Retain that cancellation preceded implementation of the queue.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 obscured what was not implemented. Retain that cancellation preceded implementation of the queue.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 removed source qualifier \u0027never\u0027.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 dropped the substance of selected claim \u0027prototype-cancelled-1\u0027."
+    ],
+    "elapsed_ms": 8535,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "prototype-cancelled",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Built a Python/FastAPI document-classification prototype using PyTorch. It ran on synthetic documents only and was never deployed to production. Proposed a human review queue, but the project was cancelled before that queue was implemented.",
+    "text": "Built a Python/FastAPI document-classification prototype using PyTorch. It ran on synthetic documents only and was never deployed to production. Proposed a human review queue, but the project was cancelled before that queue was implemented.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 obscured what was not implemented. Retain that cancellation preceded implementation of the queue.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 changed a passive deployment status into a dangling action. Retain \u0027was never deployed\u0027.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 obscured what was not implemented. Retain that cancellation preceded implementation of the queue."
+    ],
+    "elapsed_ms": 5637,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  }
+]

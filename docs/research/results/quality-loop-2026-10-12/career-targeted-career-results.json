@@ -1,0 +1,61 @@
+[
+  {
+    "job": "applied-ai",
+    "elapsed_ms": 77900,
+    "selected_claims": [
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:0a2a33b6fd4948509baeb0ef0d380ce1:achievement:1",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:4d03d2a11b344e1ea03521503ffb6bcb:achievement:1",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:4d03d2a11b344e1ea03521503ffb6bcb:achievement:2",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:4d03d2a11b344e1ea03521503ffb6bcb:achievement:3",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:a29021df2b1d416ea649b77e4e93d088:achievement:2",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:a29021df2b1d416ea649b77e4e93d088:achievement:3"
+    ],
+    "provider": "ollama",
+    "GenerationWarnings": [],
+    "progress": [
+      "Tightening prose (pass 1/2) \u00B7 batch 1/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 1/3 in 7s",
+      "Tightening prose (pass 1/2) \u00B7 batch 2/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 2/3 in 17s",
+      "Tightening prose (pass 1/2) \u00B7 batch 3/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 3/3 in 17s",
+      "Polishing prose (pass 2/2) \u00B7 batch 1/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 1/3 in 7s",
+      "Polishing prose (pass 2/2) \u00B7 batch 2/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 2/3 in 16s",
+      "Polishing prose (pass 2/2) \u00B7 batch 3/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 3/3 in 14s"
+    ],
+    "quality_findings": []
+  },
+  {
+    "job": "database-platform",
+    "elapsed_ms": 45097,
+    "selected_claims": [
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:0a2a33b6fd4948509baeb0ef0d380ce1:achievement:1",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:4d03d2a11b344e1ea03521503ffb6bcb:achievement:1",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:4d03d2a11b344e1ea03521503ffb6bcb:achievement:4",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:a29021df2b1d416ea649b77e4e93d088:achievement:1",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:a29021df2b1d416ea649b77e4e93d088:achievement:2",
+      "claim:3bf9f0f1ca8d4528abc43127f8ebcfe0:experience:a29021df2b1d416ea649b77e4e93d088:achievement:3"
+    ],
+    "provider": "ollama",
+    "GenerationWarnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#summary:p1\u0027 introduced unsupported descriptive content: query, performance, reducing."
+    ],
+    "progress": [
+      "Reusing 4 validated prose account(s) \u00B7 Tighten",
+      "Tightening prose (pass 1/2) \u00B7 batch 1/2 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 1/2 in 5s",
+      "Tightening prose (pass 1/2) \u00B7 batch 2/2 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 2/2 in 9s",
+      "Polishing prose (pass 2/2) \u00B7 batch 1/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 1/3 in 5s",
+      "Polishing prose (pass 2/2) \u00B7 batch 2/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 2/3 in 13s",
+      "Polishing prose (pass 2/2) \u00B7 batch 3/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 3/3 in 12s"
+    ],
+    "quality_findings": []
+  }
+]

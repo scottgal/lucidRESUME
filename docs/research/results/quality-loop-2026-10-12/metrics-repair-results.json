@@ -1,0 +1,37 @@
+[
+  {
+    "fixture": "metric-attribution",
+    "tone": "Direct",
+    "detail": "Brief",
+    "source": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms. For a separate batch workload, memory use rose from 180 MB to 240 MB. Neither test established production performance.",
+    "text": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms. For a separate batch workload, memory use rose from 180 MB to 240 MB. Neither test established production performance.",
+    "Used": true,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 removed the measured status of a result. Preserve what was measured rather than strengthening its causal interpretation.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced unsupported descriptive content: reducing, conversely, saw, rise."
+    ],
+    "elapsed_ms": 16284,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  },
+  {
+    "fixture": "metric-attribution",
+    "tone": "Expressive",
+    "detail": "Thorough",
+    "source": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms. For a separate batch workload, memory use rose from 180 MB to 240 MB. Neither test established production performance.",
+    "text": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms. For a separate batch workload, memory use rose from 180 MB to 240 MB. Neither test established production performance.",
+    "Used": false,
+    "Warnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced I/my into prose with an implied subject. Preserve the source\u0027s grammatical person.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate\u0027s action.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#role:p1\u0027 introduced target-role term \u0027optimise\u0027 without selected evidence.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 removed the measured status of a result. Preserve what was measured rather than strengthening its causal interpretation.",
+      "Retained prior wording after rejected HumanVoice edit: Section \u0027#role:p1\u0027 introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate\u0027s action."
+    ],
+    "elapsed_ms": 11966,
+    "unchanged_source": true,
+    "hard_errors": [],
+    "quality_findings": []
+  }
+]

@@ -420,3 +420,71 @@ The repeated case reused both passes in 15 ms. Results and model identity are in
 and [`prose-synthesis-fixes-run-2026-10-12.json`](results/prose-synthesis-fixes-run-2026-10-12.json).
 Tone remains deliberately bounded and some variants share sentences; these twelve
 examples do not establish quality across a complete career or arbitrary providers.
+
+### 8.2 Broader quality loop: scope, measurements and job relevance
+
+The next iteration expanded from two complementary-fact shapes to six authored
+synthetic families: internal production agents, manual offline evaluation, personal
+deployment versus team construction, incident replay versus root-cause diagnosis,
+two directed measurements with different units, and a cancelled document prototype.
+Each was evaluated with Direct/Brief and Expressive/Thorough instructions using
+qwen3.5:4b. An independent Luna review compared the actual text with the sources.
+The executable and repeatable commands are documented in the
+[evaluation guide](../../tools/lucidRESUME.ProseEvaluation/README.md).
+
+The baseline changed seven of twelve passages but dropped “production effect
+remains unknown” from an otherwise accurately described offline result. The first
+correction retained that limitation; review then caught a different error:
+“To measure test latency, PostgreSQL queries were optimised from 240 ms to 180 ms.”
+This gives the action an unstated purpose and makes queries, rather than latency,
+the apparent measured quantity. Number presence alone would accept that sentence.
+The final gates require a source-stated purpose for that opening and preserve
+directed `from/to` measurements with their units, including reversed wording such
+as “fell to 180 ms from 240 ms”. They also preserve explicit team construction and
+personal deployment/ship/evaluation actions. Technical-name casing follows the
+accepted source concepts. These are conservative lexical and structural checks,
+not general numerical or causal entailment.
+
+A second experiment projected one three-role synthetic career against an applied
+AI leadership job and a database platform job through the full compressor and
+local writer. The initial outputs selected different role evidence, yet reused an
+AI-focused personal summary and included unrelated prototype tools in both global
+skills lists. This was a selection failure outside sentence rewriting. Summary
+sources now include suitable selected accounts with the original claim bindings;
+the personal introduction must compete on relevance. Global skills require job
+support, a matched skill or an explicit leadership/AI priority rather than inheriting
+every role tool. Role metadata and the definitive career retain all accepted detail.
+
+These fixtures informed the implementation and now form a regression set. They
+are not an untouched benchmark, and Luna's review is a model review rather than a
+blinded human preference study. The full-career experiment deliberately uses lexical
+fallback without a vector model; it makes no claim about embedding accuracy.
+Future cases should include long careers, sparse descriptions, conflicting dates,
+multiple quantities sharing units, and paraphrases outside these guarded forms.
+
+The broader twelve-case checkpoint used policy v5 and changed seven passages;
+its automated distinction checks were clean, but Luna still identified ambiguous
+queue implementation, dangling “never deploying”, and a measured result rewritten
+as causal reduction. Policy v6 adds targeted guards for those forms. Four targeted
+replays (two prototype and two metric cases) retain the original source wording,
+with no remaining factual blocker in Luna's review. This is a targeted repair, not
+a fresh twelve-case v6 benchmark. Across the broad screen with those four outputs
+replaced by their repaired counterparts, four passages change and eight retain
+source text. Safe fallbacks are not counted as prose improvements.
+
+The twelve-project suite passed 664 tests before these last four regression tests
+were added; the affected Compiler, AI and desktop test projects then passed with
+70, 109 and 13 tests respectively, bringing the covered total to 668. All fifteen
+native client workflow groups pass with isolated SQLite, including archive Word/PDF
+rendering, evidence bindings and persistence. The native writer-unavailable path
+and actual local-model career evaluations are separate checks. Visual inspection
+also found clipped list items in the preview; constrained list columns now wrap
+long bullets, verified in a fresh client run and screenshot.
+
+Synthetic baseline, checkpoint, targeted repair and full-career artifacts are in
+[`results/quality-loop-2026-10-12`](results/quality-loop-2026-10-12). The broader
+checkpoint reused both prose passes in 17 ms, whereas uncached full-career
+projections took approximately 78 s and 45 s under concurrent validation load.
+These timings demonstrate cache reuse, not a measured speed improvement. Tone
+remains conservative; the AI summary still leads with evaluation rather than its
+stronger runtime account, a stylistic selection issue for a future iteration.

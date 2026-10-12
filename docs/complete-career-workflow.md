@@ -169,6 +169,14 @@ combines compatible facts within a role, then asks the writer to synthesize natu
 prose. Exact duplicates retain all their evidence bindings. Changing jobs or tone
 reuses unchanged analysis; rejected claims and changed skills invalidate selection.
 
+When two suitable selected accounts fit the summary budget, the summary draws on
+those job-relevant facts and carries their original claim bindings. A generic
+personal introduction is retained alongside them only when it is at least as
+relevant as the strongest selected account. Skills are filtered against the job,
+matched skills and explicit leadership/AI priorities; an incidental tool in a
+selected role does not automatically enter the global skills list. The complete
+career and role technology records retain the source detail.
+
 The client and prose evaluation use the same writing policy for Direct, Understated
 and Expressive tone and Brief/Balanced/Thorough detail. Detail changes how selected
 facts are combined; it does not permit an action's purpose or uncertainty to disappear.
@@ -184,7 +192,14 @@ still fail the normal binding checks. Outcome limitations use explicit activity
 subjects, rather than an ambiguous “environment, which did not measure”. These
 conservative checks retain human prose
 when an edit is ambiguous; they are not a general semantic entailment model.
+Checks also retain unknown outcomes and explicit team construction, protect personal
+deployment/review actions from reassignment, and preserve directed numeric changes
+with their units. A measured result cannot supply an unstated purpose opening.
 Embeddings help retrieve passages and do not establish proficiency.
+
+Long bullets wrap within the native preview, including their evidence links.
+
+![Projected resume with wrapped evidence-linked bullets](screenshots/projected-resume-wrapped.png)
 
 In **Profile**, **Refresh career prose analysis** updates this derived index. The
 first projection can also build it automatically. Missing models leave lexical

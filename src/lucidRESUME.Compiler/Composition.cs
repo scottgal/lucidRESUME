@@ -4,7 +4,7 @@ namespace lucidRESUME.Compiler;
 
 public sealed class CompositionValidator
 {
-    public const string PolicyVersion = "selected-facts-purpose-v4";
+    public const string PolicyVersion = "selected-facts-purpose-measurements-scope-v6";
     private static readonly Regex Number = new(@"(?<![\w-])\d+(?:[.,]\d+)*(?:%\+?|x|\+)?", RegexOptions.Compiled);
     private static readonly Regex Word = new(@"[\p{L}\p{N}][\p{L}\p{N}+#.-]{2,}", RegexOptions.Compiled);
     private static readonly Regex Purpose = new(
@@ -14,14 +14,19 @@ public sealed class CompositionValidator
         @"\b(?:in|within) (?:a|an|the) (?:\w+ ){0,3}environment,\s*which (?:did not|didn't|does not|doesn't) measure\b",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex LeadingPurpose = new(@"^\s*To ([^,;.!?]+)[,;]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex ExplicitPurpose = new(@"\bto (?:enable|allow|support|reduce|improve|inspect|find|recover|measure|ensure|stabilise|stabilize|identify|help|provide|prevent)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex PersonalPronoun = new(@"(?<![\p{L}\p{N}/])(?:I|my)(?![\p{L}\p{N}/])", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex CollectivePronoun = new(@"\b(?:we|our)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex TeamConstruction = new(@"\bteam (?:wrote|built|implemented|developed|created)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex PassiveTeamConstruction = new(@"\b(?:written|built|implemented|developed|created) by (?:the )?team\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex ImplementationObject = new(@"\bbefore (?:that|the|a|an) ([\p{L}-]+(?: [\p{L}-]+){0,3}) was implemented\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly (string Action, Regex Personal, Regex Team)[] PersonalActions =
         new[] { ("reviewed", "review"), ("designed", "design"), ("built", "build"), ("implemented", "implement"),
-                ("developed", "develop"), ("tested", "test"), ("operated", "operate") }
+                ("developed", "develop"), ("tested", "test"), ("operated", "operate"), ("deployed", "deploy"),
+                ("shipped", "ship"), ("launched", "launch"), ("evaluated", "evaluate") }
             .Select(action => (action.Item1,
-                new Regex(@"\b(?:led|managed|headed|directed)\b[^.;!?]{0,80}\bteam\b[^.;!?]{0,40}\band " + action.Item1 + @"\b", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-                new Regex(@"\bteam\b[^.;!?]{0,24}\bto " + action.Item2 + @"\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)))
+                new Regex(@"\b(?:led|managed|headed|directed)\b[^.;!?]{0,80}\b(?:team|engineers)\b[^.;!?]{0,40}\band (?:personally )?" + action.Item1 + @"\b", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+                new Regex(@"\b(?:team|engineers)\b[^.;!?]{0,24}\bto " + action.Item2 + @"\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)))
             .ToArray();
     private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -61,11 +66,23 @@ public sealed class CompositionValidator
                 errors.Add($"Section '{block.SectionId}' introduced I/my into prose with an implied subject. Preserve the source's grammatical person.");
             if (!CollectivePronoun.IsMatch(original.Text) && CollectivePronoun.IsMatch(block.Text))
                 errors.Add($"Section '{block.SectionId}' introduced we/our and changed the contribution to a collective actor. Preserve the source's grammatical person.");
+            if (TeamConstruction.IsMatch(original.Text) && !TeamConstruction.IsMatch(block.Text) && !PassiveTeamConstruction.IsMatch(block.Text))
+                errors.Add($"Section '{block.SectionId}' removed the team's explicit contribution. Retain which work the team wrote or built rather than assigning it to the candidate.");
+            foreach (Match implementation in ImplementationObject.Matches(original.Text))
+                if (!Regex.IsMatch(block.Text, @"\bbefore[^.;!?]{0,80}\b" + Regex.Escape(implementation.Groups[1].Value) + @"\b[^.;!?]{0,40}\bimplement(?:ed|ation)\b", RegexOptions.IgnoreCase))
+                    errors.Add($"Section '{block.SectionId}' obscured what was not implemented. Retain that cancellation preceded implementation of the {implementation.Groups[1].Value}.");
+            if (Regex.IsMatch(original.Text, @"\bwas never deployed\b", RegexOptions.IgnoreCase) &&
+                Regex.IsMatch(block.Text, @"\bnever deploying\b", RegexOptions.IgnoreCase))
+                errors.Add($"Section '{block.SectionId}' changed a passive deployment status into a dangling action. Retain 'was never deployed'.");
+            if (Regex.IsMatch(original.Text, @"\bmeasured (?:test )?(?:latency|performance|memory|throughput)\b", RegexOptions.IgnoreCase) &&
+                !Regex.IsMatch(block.Text, @"\bmeasured\b", RegexOptions.IgnoreCase))
+                errors.Add($"Section '{block.SectionId}' removed the measured status of a result. Preserve what was measured rather than strengthening its causal interpretation.");
             var leadingPurpose = LeadingPurpose.Match(block.Text);
             if (leadingPurpose.Success)
             {
                 var purposeWords = Words(leadingPurpose.Groups[1].Value);
-                if (purposeWords.Count >= 2 && purposeWords.Intersect(Words(original.Text)).Count() < purposeWords.Count * .75)
+                if (PurposeDetails(original.Text).Count == 0 && !ExplicitPurpose.IsMatch(original.Text) ||
+                    purposeWords.Count >= 2 && purposeWords.Intersect(Words(original.Text)).Count() < purposeWords.Count * .75)
                     errors.Add($"Section '{block.SectionId}' introduced an unsupported purpose opening. Use a purpose stated in the source, or start with the candidate's action.");
             }
             if (Regex.IsMatch(block.Text, @"\b(led|lead|owned|directed)\b", RegexOptions.IgnoreCase) &&
@@ -79,6 +96,9 @@ public sealed class CompositionValidator
             if (Regex.IsMatch(original.Text, tentative, RegexOptions.IgnoreCase) &&
                 !Regex.IsMatch(block.Text, tentative, RegexOptions.IgnoreCase))
                 errors.Add($"Section '{block.SectionId}' removed intended or uncertain outcome status.");
+            if (Regex.IsMatch(original.Text, @"\bunknown\b", RegexOptions.IgnoreCase) &&
+                !Regex.IsMatch(block.Text, @"\b(?:unknown|unmeasured|not (?:yet )?(?:known|established|measured))\b", RegexOptions.IgnoreCase))
+                errors.Add($"Section '{block.SectionId}' removed an explicitly unknown outcome. Retain what remains unknown, including its production scope.");
             const string assistance = @"\b(helped|assisted|supported|contributed|contribution)\b";
             if (Regex.IsMatch(original.Text, assistance, RegexOptions.IgnoreCase) &&
                 !Regex.IsMatch(block.Text, assistance, RegexOptions.IgnoreCase))
@@ -127,9 +147,15 @@ public sealed class CompositionValidator
                 .Where(x => !allowedNumbers.Contains(CanonicalNumber(x))).Distinct();
             foreach (var value in introduced) errors.Add($"Section '{block.SectionId}' introduced numeric fact '{value}'.");
             if (packet.Kind != "summary")
+            {
                 foreach (var value in allowedNumbers.Where(value =>
                     !Number.Matches(block.Text).Any(number => CanonicalNumber(number.Value) == value)))
                     errors.Add($"Section '{block.SectionId}' removed numeric fact '{value}'.");
+                var transitions = ProseNumericTransitions.Extract(block.Text).ToHashSet();
+                foreach (var transition in ProseNumericTransitions.Extract(original.Text).Distinct())
+                    if (!transitions.Contains(transition))
+                        errors.Add($"Section '{block.SectionId}' changed or omitted a directed measurement: from {transition.From} {transition.FromUnit} to {transition.To} {transition.ToUnit}. Retain its direction and units.");
+            }
             var selectedClaims = packet.Claims.Where(x => original.ClaimIds.Contains(x.Claim.Id, StringComparer.OrdinalIgnoreCase));
             var allowedFacts = Words(original.Text + " " + string.Join(' ', selectedClaims.SelectMany(x =>
                 x.Claim.Concepts.All.Append(x.Claim.Statement))));
@@ -161,7 +187,7 @@ public sealed class CompositionValidator
         .Select(match => match.Groups[1].Value.Trim()).ToArray();
     private static string CanonicalNumber(string value) => value.Replace(",", string.Empty, StringComparison.Ordinal);
     private static HashSet<string> Words(string value) => Word.Matches(value)
-        .Select(x => CanonicalWord(x.Value)).Where(x => !StopWords.Contains(x)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        .Select(x => CanonicalWord(x.Value)).Where(x => x.Length >= 3 && !StopWords.Contains(x)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     private static string CanonicalWord(string value) => value.TrimEnd('.').ToLowerInvariant() switch
     {
@@ -269,8 +295,15 @@ public sealed class ResumeCompositionOrchestrator(
                     var packet = editableManifest.Sections.Single(section =>
                         section.SectionId.Equals(sourceBlock.SectionId, StringComparison.OrdinalIgnoreCase));
                     var sectionManifest = manifest with { Sections = [packet] };
+                    var candidate = candidates[0];
+                    foreach (var skill in packet.Claims.SelectMany(claim => claim.Claim.Concepts.All).Distinct(StringComparer.OrdinalIgnoreCase))
+                    {
+                        var pattern = @"(?<![\p{L}\p{N}])" + Regex.Escape(skill) + @"(?![\p{L}\p{N}])";
+                        if (Regex.IsMatch(sourceBlock.Text, pattern, RegexOptions.IgnoreCase))
+                            candidate = candidate with { Text = Regex.Replace(candidate.Text, pattern, _ => skill, RegexOptions.IgnoreCase) };
+                    }
                     var errors = validator.Validate(
-                        new CompositionDraft([candidates[0]], draft.Warnings), [sourceBlock], sectionManifest);
+                        new CompositionDraft([candidate], draft.Warnings), [sourceBlock], sectionManifest);
                     if (errors.Count > 0)
                     {
                         next.Add(currentBlock);
@@ -278,7 +311,7 @@ public sealed class ResumeCompositionOrchestrator(
                         warnings.Add($"Discarded {pass} edit for '{sourceBlock.SectionId}': {string.Join(" ", errors)}");
                         continue;
                     }
-                    next.Add(candidates[0]);
+                    next.Add(candidate);
                     acceptedSections++;
                 }
                 foreach (var unexpected in returned.Keys.Where(id =>
