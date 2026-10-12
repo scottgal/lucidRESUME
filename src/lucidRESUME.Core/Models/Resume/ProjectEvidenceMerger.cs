@@ -26,6 +26,9 @@ public static class ProjectEvidenceMerger
             }
 
             existing.Url ??= observation.Url;
+            var humanTechnologies = existing.EvidenceMetadata.GetValueOrDefault("human_declared_technologies")
+                ?? System.Text.Json.JsonSerializer.Serialize(existing.Technologies);
+            existing.EvidencePassages = observation.EvidencePassages;
             existing.Technologies = existing.Technologies.Concat(observation.Technologies)
                 .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             foreach (var (key, value) in observation.EvidenceMetadata)
@@ -35,6 +38,7 @@ public static class ProjectEvidenceMerger
             // not suppress the human-authored project or its ledger claim.
             existing.EvidenceMetadata["eligible_for_personal_evidence"] = "true";
             existing.EvidenceMetadata["human_prose_preserved"] = "true";
+            existing.EvidenceMetadata["human_declared_technologies"] = humanTechnologies;
         }
     }
 

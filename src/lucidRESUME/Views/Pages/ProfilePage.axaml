@@ -233,8 +233,11 @@
           <Border Grid.Column="0" Background="{DynamicResource LrAccentBlueBrush}" CornerRadius="3,0,0,3" MinHeight="1"/>
           <StackPanel Grid.Column="1" Margin="20,16" Spacing="12">
             <TextBlock Text="AI Provider" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource LrPrimaryTextBrush}"/>
-            <TextBlock Text="OpenAI is the primary full-strength provider. Local LLamaSharp/grug support is an experimental offline option. Projection and export remain deterministic."
+            <TextBlock Text="OpenAI is the primary full-strength provider. Local LLamaSharp/grug support is an experimental offline option. Generation selects evidence and can edit the selected prose; export preserves its source links."
                        TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
+
+            <CheckBox Content="Edit generated resume prose using the selected provider" IsChecked="{Binding ComposeResumeProse}"/>
+            <TextBlock Text="Edits retain source links and fall back to source prose when validation fails. Restart after saving provider settings." TextWrapping="Wrap" FontSize="11"/>
 
             <!-- Provider selector -->
             <StackPanel Spacing="4">

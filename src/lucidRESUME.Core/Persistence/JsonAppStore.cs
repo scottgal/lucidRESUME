@@ -83,11 +83,13 @@ public sealed class JsonAppStore : IAppStore, IDisposable
         using var stream = File.OpenRead(_filePath);
         var state = await JsonSerializer.DeserializeAsync<AppState>(stream, Options, ct) ?? new AppState();
         state.NormalizeResumes();
+        if (state.CompleteCareer is null && state.Resumes.Count > 0) await SaveCoreAsync(state, ct);
         return state;
     }
 
     private async Task SaveCoreAsync(AppState state, CancellationToken ct)
     {
+        state.ReconcileCompleteTranscript();
         state.NormalizeResumes();
         state.LastSaved = DateTimeOffset.UtcNow;
 

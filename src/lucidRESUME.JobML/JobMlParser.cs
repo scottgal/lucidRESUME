@@ -140,6 +140,12 @@ public sealed class JobMlParser
     public string SerializeYaml(JobMlRoot root)
     {
         ArgumentNullException.ThrowIfNull(root);
-        return _serializer.Serialize(root).TrimEnd();
+        // Numeric vectors remain fully portable, but one scalar per line makes a
+        // complete career's machine area hundreds of thousands of editor lines.
+        return Regex.Replace(_serializer.Serialize(root),
+            @"(?m)^(?<indent> *)vector:\r?\n(?<items>(?: *- +[-+0-9.eE]+\r?\n)+)",
+            match => match.Groups["indent"].Value + "vector: [" + string.Join(", ",
+                Regex.Matches(match.Groups["items"].Value, @"(?m)^ *- +(?<number>[-+0-9.eE]+)")
+                    .Select(item => item.Groups["number"].Value)) + "]\n").TrimEnd();
     }
 }

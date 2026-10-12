@@ -9,6 +9,7 @@ public static class ProductAssetInventory
     public static readonly string[] RequiredRelativePaths =
     [
         "Resources/taxonomies/skill-taxonomy.txt",
+        "Resources/taxonomies/equivalences.txt",
         "Resources/taxonomies/skill-priorities.txt",
         "Resources/taxonomies/role-archetypes.txt",
         "Resources/github-language-map.txt",

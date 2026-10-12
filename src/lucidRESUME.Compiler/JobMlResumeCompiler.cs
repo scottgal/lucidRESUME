@@ -60,12 +60,12 @@ public sealed class JobMlResumeCompiler(
             foreach (var claim in candidates)
             {
                 var subjectName = entities.GetValueOrDefault(claim.Subject)?.Name ?? claim.Subject;
-                var (score, reason, direct) = await ScoreAsync(requirement, claim, subjectName, concepts, cancellationToken);
-                if (subjectAffinities.TryGetValue(claim.Subject, out var roleAffinity))
+                var prose = ResolveProse(claim, reconciled, index) ?? claim.Statement;
+                var (score, reason, direct) = await ScoreAsync(requirement, claim, prose, subjectName, concepts, cancellationToken);
+                // Role affinity can rank relevant work, but cannot manufacture a requirement match.
+                if (score >= options.RelatedThreshold && subjectAffinities.TryGetValue(claim.Subject, out var roleAffinity))
                 {
-                    score = score * .75 + roleAffinity * .25;
-                    if (roleAffinity >= .9 && claim.Type == "achievement")
-                        score = Math.Max(score, options.RelatedThreshold + .08);
+                    score = Math.Max(score, score * .75 + roleAffinity * .25);
                     reason += $"; role affinity {roleAffinity:F2}";
                 }
                 if (score >= options.RelatedThreshold)
@@ -94,7 +94,9 @@ public sealed class JobMlResumeCompiler(
             sections.AddRange(additional);
             selected.AddRange(additional.SelectMany(packet => packet.Claims));
         }
-        var gaps = requirements.Where(r => matches.All(m => m.RequirementId != r.Id || m.Kind == MatchKind.None))
+        // Related passages are useful context, not confirmation of a must-have.
+        var gaps = requirements.Where(r => matches.All(m => m.RequirementId != r.Id ||
+                (r.Kind == RequirementKind.Required ? m.Kind != MatchKind.Direct : m.Kind == MatchKind.None)))
             .Select(r => r.Text).ToList();
         var manifest = new ProjectionManifest(
             completeResume.Revision,
@@ -358,18 +360,18 @@ public sealed class JobMlResumeCompiler(
     }
 
     private async Task<(double Score, string Reason, bool Direct)> ScoreAsync(
-        CompilerRequirement requirement, JobMlClaim claim, string subjectName,
+        CompilerRequirement requirement, JobMlClaim claim, string prose, string subjectName,
         IReadOnlyDictionary<string, HashSet<string>> conceptTerms, CancellationToken cancellationToken)
     {
         var requirementTokens = Tokens(requirement.Text);
         var claimTerms = claim.Concepts.All.SelectMany(id => conceptTerms.GetValueOrDefault(id, [id]))
-            .Append(subjectName).Append(claim.Statement).ToList();
+            .Append(subjectName).Append(claim.Statement).Append(prose).ToList();
         var claimTokens = Tokens(string.Join(' ', claimTerms));
         var intersection = requirementTokens.Intersect(claimTokens).Count();
         var lexical = intersection == 0 ? 0 : intersection / (double)Math.Max(1, requirementTokens.Count);
         var requirementPhrases = EquivalentRequirementPhrases(requirement.Text);
         var direct = claim.Concepts.All.Any(id => conceptTerms.GetValueOrDefault(id, [id])
-            .Any(term => ContainsSupportedTerm(claim.Statement, term) &&
+            .Any(term => ContainsSupportedTerm(claim.Statement + " " + prose, term) &&
                          requirementPhrases.Any(phrase => ContainsStandaloneTerm(phrase, term))));
         if (direct) return (Math.Max(.92, lexical), "concept name or alias appears in the requirement", true);
         if (lexical >= .35) return (Math.Min(.88, .55 + lexical * .3), "shared terms", false);

@@ -23,7 +23,9 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
     private CancellationTokenSource? _autosaveCancellation;
     private CancellationTokenSource? _previewCancellation;
     private int _previewGeneration;
+    private readonly lucidRESUME.Export.CompleteCareerJobMlService? _completeCareer;
     private Guid? _linkedResumeId;
+    private string? _linkedSnapshot;
     private IReadOnlyList<string> _documentPreviewPaths = [];
     private string? _documentPreviewDirectory;
     private readonly IResumeExporter _docxExporter;
@@ -61,15 +63,17 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
     public bool CanGoToNextDocumentPage => DocumentPreviewPage < DocumentPreviewPageCount;
 
     public JobMlEditorPageViewModel(JobMlWorkspacePath workspacePath, IAppStore store,
-        IEnumerable<IResumeExporter> exporters, MorphDocxPreviewService morphPreview)
+        IEnumerable<IResumeExporter> exporters, MorphDocxPreviewService morphPreview,
+        lucidRESUME.Export.CompleteCareerJobMlService? completeCareer = null)
     {
+        _completeCareer = completeCareer;
         _draftPath = workspacePath.DraftPath;
         _store = store;
         _docxExporter = exporters.First(exporter => exporter.Format == ExportFormat.Docx);
         _morphPreview = morphPreview;
         if (File.Exists(_draftPath))
         {
-            SetDocument(File.ReadAllText(_draftPath));
+            SetDocument(File.ReadAllText(_draftPath), markDirty: false);
             HumanTabIndex = 0;
             StatusMessage = "Recovered the autosaved JobML workspace.";
         }
@@ -90,6 +94,10 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
     partial void OnHumanMarkdownChanged(string value) => UpdateFromEditors();
     partial void OnJobMlTextChanged(string value) => UpdateFromEditors();
     partial void OnSelectedTemplateChanged(ResumeTemplate value) => QueueDocumentPreview();
+    partial void OnHumanTabIndexChanged(int value)
+    {
+        if (value == 0) QueueDocumentPreview();
+    }
 
     partial void OnSelectedEvidenceChanged(JobMlEvidenceItem? value)
     {
@@ -180,6 +188,11 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
             markdown = existing.Markdown;
         }
 
+        if (HasLinkedResume && existing?.Data.Header.Profile == "career_record")
+        {
+            StatusMessage = "The complete career already contains its claim and source links. Add role evidence in the transcript builder.";
+            return;
+        }
         var draft = JobMlDraftGenerator.Generate(markdown);
         SetDocument(_parser.Serialize(draft));
         StatusMessage = $"Generated {draft.Data.Claims.Count} derived claims. Review is required before they count as direct coverage.";
@@ -206,6 +219,7 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
                 };
                 resolution.Evidence.Selector = new JobMlTextSelector { Exact = resolution.CurrentText! };
                 resolution.Evidence.State = "valid";
+                if (resolution.Evidence.Type == "prose") claim.Claim.Statement = resolution.CurrentText!;
                 accepted++;
             }
 
@@ -230,6 +244,19 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
         StatusMessage = claims.Count == 0 ? "No draft claims await review." : $"Explicitly accepted {claims.Count} draft claim(s).";
     }
 
+    public async Task LoadCompleteCareerAsync()
+    {
+        if (_completeCareer is null || IsDirty) return;
+        try
+        {
+            StatusMessage = "Loading complete career JobML…";
+            var career = await _completeCareer.GetAsync();
+            if (career?.JobMlSource is not null) TryLoadMarkdown(career.JobMlSource, career.ResumeId, career.OutputTemplateId);
+            else StatusMessage = "Import career evidence to start your complete transcript.";
+        }
+        catch (Exception ex) { StatusMessage = $"Could not open the complete transcript: {ex.Message}"; }
+    }
+
     public bool TryLoadMarkdown(string markdown, Guid resumeId, string? templateId = null)
     {
         if (IsDirty)
@@ -238,15 +265,16 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
             return false;
         }
 
-        var file = JobMlDraftGenerator.Generate(markdown);
+        var file = _parser.TryParse(markdown, out var saved, out _) ? saved! : JobMlDraftGenerator.Generate(markdown);
         CurrentPath = null;
         _linkedResumeId = resumeId;
+        _linkedSnapshot = markdown.Contains("```jobml", StringComparison.OrdinalIgnoreCase) ? markdown : null;
         HasLinkedResume = true;
-        HumanTabIndex = 0;
+        HumanTabIndex = 2;
         ClearDocumentPreview();
         SelectedTemplate = ResumeTemplateCatalog.Get(templateId);
-        SetDocument(_parser.Serialize(file));
-        StatusMessage = "Loaded résumé prose and generated reviewable JobML draft claims.";
+        SetDocument(_parser.Serialize(file), markDirty: false);
+        StatusMessage = "Loaded the complete career JobML, including claims, skills, sources and semantic index.";
         return true;
     }
 
@@ -258,6 +286,7 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
 
     private void QueueDocumentPreview()
     {
+        if (HumanTabIndex != 0) return;
         _previewCancellation?.Cancel();
         _previewCancellation?.Dispose();
         _previewCancellation = new CancellationTokenSource();
@@ -412,27 +441,42 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
 
         var revision = MarkdownEvidenceIndex.Fingerprint(DocumentText);
         var updated = false;
-        await _store.MutateAsync(state =>
+        string? publishError = null;
+        try
         {
-            var resume = state.Resumes.FirstOrDefault(candidate => candidate.ResumeId == resumeId);
-            if (resume is null) return;
-            resume.CanonicalMarkdown = file!.Markdown;
-            resume.RawMarkdown = file.Markdown;
-            resume.JobMlSource = DocumentText;
-            resume.JobMlRevision = revision;
-            resume.OutputTemplateId = SelectedTemplate.Id;
-            resume.LastModifiedAt = DateTimeOffset.UtcNow;
-            updated = true;
-        });
+            await _store.MutateAsync(state =>
+            {
+                var resume = state.CompleteCareer?.Transcript.ResumeId == resumeId
+                    ? state.CompleteCareer.Transcript
+                    : state.Resumes.FirstOrDefault(candidate => candidate.ResumeId == resumeId);
+                if (resume is null) return;
+                if (_linkedSnapshot is not null && resume.JobMlSource != _linkedSnapshot)
+                {
+                    publishError = "The complete career changed while the editor was open. Save this draft and reopen the latest transcript before publishing.";
+                    return;
+                }
+                lucidRESUME.Core.Models.Evidence.ReviewedEvidenceSnapshot.ApplyProseEdits(resume, file!);
+                resume.CanonicalMarkdown = file!.Markdown;
+                resume.RawMarkdown = file.Markdown;
+                resume.JobMlSource = DocumentText;
+                resume.JobMlRevision = revision;
+                lucidRESUME.Core.Models.Evidence.ReviewedEvidenceSnapshot.Apply(resume);
+                resume.OutputTemplateId = SelectedTemplate.Id;
+                resume.LastModifiedAt = DateTimeOffset.UtcNow;
+                updated = true;
+            });
 
+        }
+        catch (InvalidDataException ex) { publishError = ex.Message; }
         if (!updated)
         {
-            StatusMessage = "Publish failed: the linked résumé no longer exists.";
+            StatusMessage = publishError ?? "Publish failed: the linked résumé no longer exists.";
             return;
         }
 
         await SaveWorkspaceAsync(DocumentText, CancellationToken.None);
         IsDirty = false;
+        _linkedSnapshot = DocumentText;
         if (SnapshotPublished is not null)
             await SnapshotPublished();
         StatusMessage = $"Published reviewed snapshot {revision[8..]} to My CV.";
@@ -472,6 +516,9 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
     private void UpdateFromEditors()
     {
         if (_syncingEditors) return;
+        if (_parser.TryParse(DocumentText, out var previous, out _) &&
+            HumanMarkdown.TrimEnd() == previous!.Markdown.TrimEnd() &&
+            JobMlText.TrimEnd() == _parser.SerializeYaml(previous.Data).TrimEnd()) return;
 
         var combined = ComposeRawDocument(HumanMarkdown, JobMlText);
         _refreshing = true;

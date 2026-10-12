@@ -2,6 +2,7 @@ using System.Text;
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Resume;
+using lucidRESUME.Core.Persistence;
 using lucidRESUME.JobML;
 using lucidRESUME.Matching;
 
@@ -20,7 +21,7 @@ public sealed class CareerRecordJobMlBuilder(
         ["Lead Developer", "Head of Engineering", "CTO", "VP of Engineering"];
 
     public async Task<JobMlFile> BuildAsync(ResumeDocument transcript,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CareerSemanticIndex? semanticIndex = null)
     {
         ArgumentNullException.ThrowIfNull(transcript);
         var ledger = EvidenceLedgerBuilder.EnsureCurrent(transcript);
@@ -58,14 +59,18 @@ public sealed class CareerRecordJobMlBuilder(
         var conceptIds = conceptNames.ToDictionary(name => name, name => StableId("concept", name),
             StringComparer.OrdinalIgnoreCase);
         var conceptVectors = new Dictionary<string, float[]>(StringComparer.OrdinalIgnoreCase);
+        var descriptor = embeddings as IEmbeddingSpaceDescriptor;
+        var reuseIndex = descriptor is not null && !string.IsNullOrWhiteSpace(descriptor.ModelDigest) && semanticIndex is not null &&
+            semanticIndex.Model == descriptor.ModelId && semanticIndex.ModelDigest == descriptor.ModelDigest &&
+            semanticIndex.Normalization == descriptor.Normalization;
         foreach (var concept in conceptNames)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            conceptVectors[concept] = await embeddings.EmbedAsync(concept, cancellationToken);
+            conceptVectors[concept] = reuseIndex && semanticIndex!.Concepts.TryGetValue(concept, out var cached)
+                ? cached.ToArray() : await embeddings.EmbedAsync(concept, cancellationToken);
         }
 
         var dimensions = conceptVectors.Values.Select(vector => vector.Length).FirstOrDefault(length => length > 0);
-        var descriptor = embeddings as IEmbeddingSpaceDescriptor;
         var spaceId = StableId("space", descriptor?.ModelId ?? embeddings.GetType().Name);
         var root = new JobMlRoot
         {
@@ -179,8 +184,14 @@ public sealed class CareerRecordJobMlBuilder(
             foreach (var role in DefaultRoleCentroids)
             {
                 var seeds = taxonomy.GetRoleSkills(role).OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToList();
-                var vector = await taxonomy.GetRoleCentroidAsync(role, cancellationToken);
-                if (vector.Length != dimensions) continue;
+                var vectors = seeds.Select(seed => conceptVectors[seed]).Where(vector => vector.Length == dimensions).ToList();
+                if (vectors.Count == 0) continue;
+                var vector = new float[dimensions];
+                foreach (var seedVector in vectors)
+                    for (var index = 0; index < dimensions; index++) vector[index] += seedVector[index];
+                var magnitude = MathF.Sqrt(vector.Sum(value => value * value));
+                if (magnitude > 1e-8f)
+                    for (var index = 0; index < dimensions; index++) vector[index] /= magnitude;
                 root.RoleCentroids.Add(new JobMlRoleCentroid
                 {
                     Id = StableId("role", role),
@@ -202,8 +213,28 @@ public sealed class CareerRecordJobMlBuilder(
         var packages = transcript.Projects
             .Where(project => project.EvidenceMetadata.GetValueOrDefault("provider") == "nuget")
             .Select(project => ProjectObservation(project)).ToList();
-        if (repositories.Count == 0 && packages.Count == 0) return null;
-        var extensions = new Dictionary<string, object?>();
+        var extensions = new Dictionary<string, object?>
+        {
+            ["lucidresume.transcript"] = new Dictionary<string, object?>
+            {
+                ["version"] = "0.1",
+                ["retained_source_narrative"] = transcript.RawMarkdown,
+                ["narrative_policy"] = "Retained source material is not automatically an accepted claim or skill.",
+                ["role_interviews"] = transcript.Experience.Where(role => role.InterviewEntries.Count > 0)
+                    .Select(role => new Dictionary<string, object?>
+                    {
+                        ["role_id"] = role.Id.ToString("N"),
+                        ["entries"] = role.InterviewEntries.Select(entry => new Dictionary<string, object?>
+                        {
+                            ["id"] = entry.Id.ToString("N"), ["topic"] = entry.TopicKey,
+                            ["requirement"] = entry.Requirement, ["context"] = entry.Context,
+                            ["action"] = entry.Action, ["outcome"] = entry.Outcome,
+                            ["reviewed_prose"] = entry.ReviewedProse, ["skills"] = entry.Skills,
+                            ["accepted_at"] = entry.AcceptedAt.ToString("O")
+                        }).ToList()
+                    }).ToList()
+            }
+        };
         if (repositories.Count > 0)
             extensions["lucidresume.github"] = new Dictionary<string, object?>
             {
@@ -279,7 +310,12 @@ public sealed class CareerRecordJobMlBuilder(
             .Where(value => !string.IsNullOrWhiteSpace(value));
         builder.AppendLine(string.Join(" · ", contact));
 
-        foreach (var group in claims.GroupBy(claim => claim.SubjectId ?? "career-record", StringComparer.OrdinalIgnoreCase))
+        var groups = claims.GroupBy(claim => claim.SubjectId ?? "career-record", StringComparer.OrdinalIgnoreCase)
+            .OrderBy(group => group.Key == "personal" ? 0 : group.Key.StartsWith("experience:") ? 1
+                : group.Key.StartsWith("project:") ? 2 : group.Key.StartsWith("publication:") ? 3
+                : group.Key.StartsWith("education:") ? 4 : 5)
+            .ThenByDescending(group => FindExperience(group.Key, transcript)?.StartDate);
+        foreach (var group in groups)
         {
             var subject = group.Key;
             builder.AppendLine().Append("## ")
@@ -298,9 +334,11 @@ public sealed class CareerRecordJobMlBuilder(
             .Select(group => ((Guid?)group.Key.SourceResumeId, new JobMlSource
             {
                 Id = StableId("source", group.Key.SourceResumeId.ToString("N")),
-                Type = "resume",
+                Type = group.All(record => record.ExtractionMethod == "author-interview") ? "interview" : "resume",
                 Name = group.Key.SourceName,
-                Summary = $"Imported career source containing {group.Count()} retained evidence passages.",
+                Summary = group.All(record => record.ExtractionMethod == "author-interview")
+                    ? "Author-reviewed role interview. Candidate-declared evidence, not independently verified."
+                    : $"Imported career source containing {group.Count()} retained evidence passages.",
                 Fingerprint = EvidenceLedgerBuilder.FastHash(string.Join('\n', group.Select(record => record.FastHash)))
             })).ToList();
         result.AddRange(ledger.Evidence.Where(record => Uri.TryCreate(record.ExternalUri, UriKind.Absolute, out _))
@@ -340,6 +378,7 @@ public sealed class CareerRecordJobMlBuilder(
     {
         "experience" => "experience",
         "project" => "project",
+        "publication" => "project",
         "education" => "education",
         _ => "person"
     };
@@ -354,6 +393,9 @@ public sealed class CareerRecordJobMlBuilder(
 
     private static Project? FindProject(string subject, ResumeDocument transcript)
     {
+        if (subject.StartsWith("publication:", StringComparison.OrdinalIgnoreCase))
+            return Guid.TryParse(subject["publication:".Length..], out var publicationId)
+                ? transcript.Publications.FirstOrDefault(item => item.Id == publicationId) : null;
         if (!subject.StartsWith("project:", StringComparison.OrdinalIgnoreCase)) return null;
         return Guid.TryParse(subject["project:".Length..], out var id)
             ? transcript.Projects.FirstOrDefault(project => project.Id == id)

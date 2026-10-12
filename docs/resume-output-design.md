@@ -17,8 +17,10 @@ records. Inferred records remain review-required. An optional AI authoring step 
 also offer a clearly labelled prose draft or sample. It does not publish prose or
 create accepted evidence. A person must review and edit it.
 
-Rendering does not call a model, reparse its own output, rewrite human prose, or
-infer provenance. Human prose and cJobML references are emitted together from one
+Selection builds a source-bound projection. Optional prose editing then runs two
+bounded passes over selected passages; it cannot add ledger claims. Preview and
+export use that reviewed projection without another model call or provenance
+inference. Prose and cJobML references are emitted together from one
 revisioned projection whose blocks already carry ledger claim IDs. Full JobML may
 retain more detail than the role-specific prose, but every claim must still trace
 to reviewed human or external evidence.
@@ -120,9 +122,167 @@ export LUCIDRESUME_OpenAi__Model=gpt-5.6-luna
 ```
 
 OpenAI is optional for ingestion-time extraction and authoring drafts. AI output
-is displayed as a suggestion. It cannot publish prose, create accepted claims, or
-run during projection and export. The implementation follows the OpenAI Responses API
+is displayed in the generated preview. It cannot publish a career record or create
+accepted claims. Editing can run during generation; export only renders the existing
+projection. The implementation follows the OpenAI Responses API
 structured-output guidance:
 https://developers.openai.com/api/docs/guides/structured-outputs
 
 API keys are never written into an exported resume or JobML artifact.
+
+
+## Role interviews before projection
+
+The desktop Project Resume flow runs requirement coverage before selecting the
+resume. `RoleInterviewPlanner` prioritizes required gaps, then responsibilities,
+then preferred requirements. It asks for a real example when a must-have has only
+related evidence, a skill has no descriptive account, or a relevant role lacks
+concrete action/outcome detail. Its English action/outcome cues are conservative
+interview triggers, not a judgment that a claim is true, complete or well written.
+The UI presents one topic at a time, retains every outstanding requirement, and
+recalculates after a reviewed answer.
+
+The interview asks about the situation/scope, the person's contribution and
+choices, and the outcome. This adapts the situation, action and result probes in
+[OPM's Structured Interview Guide](https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/guide.pdf)
+for candidate-owned evidence authoring, rather than applicant scoring. A metric is
+optional: concrete qualitative outcomes are useful. Blank, unknown and skipped
+answers create no claims. The draft button only assembles the person's words;
+the person edits and reviews the prose before it is accepted.
+
+Acceptance appends an achievement and an interview record to the selected
+`WorkExperience`. The record retains the target requirement, raw context/action/
+outcome answers, reviewed prose and acceptance time. The evidence ledger records
+an `author-interview` passage with a separate interview source identity; portable
+JobML labels it as a candidate declaration, never independent verification or text
+extracted from the uploaded CV. Existing claims keep their review decisions and
+original provenance. The transcript updater retains existing prose and links,
+reuses stable or unambiguous existing role identities, and checks for concurrent
+source edits before saving. No public career-record endpoint is republished by
+this local save; publishing remains a separate action.
+
+Related compiler matches remain usable for selection but do not close required
+requirement gaps. Role affinity cannot create a requirement match on its own.
+Matching reads linked human passages as well as the concise machine statement.
+Bounded editing rejects newly introduced leadership/ownership wording and removal
+of selected uncertainty/negation qualifiers, and otherwise falls back section by
+section to accepted prose. These rules improve fidelity but are not a general
+semantic entailment proof or a guarantee of perfect prose.
+
+Validation includes synthetic VP Engineering, Platform Engineer and AI Director
+projections, unrelated must-have counterexamples, editing guardrails, and a
+save/reload/export test for role identity, custom transcript prose, interview
+provenance and existing review decisions. The single-claim projection fixture
+cannot establish whole-career narrative quality; richer candidate examples remain
+necessary for that evaluation.
+
+
+## Evidence-led skill matching
+
+Skill identity comes from exact normalized names or the shipped, audited
+`Resources/taxonomies/equivalences.txt` file. Legacy domain taxonomy associations
+remain available for discovery, but do not establish equivalence. For example,
+financial modeling does not establish Python, IaC does not establish Terraform,
+and Helm does not establish Kubernetes. The equivalence asset rejects ambiguous
+alias assignments rather than silently choosing the first mapping.
+
+Skill-ledger matching reports `Equivalent`, `Related`, or `Missing`. Only an
+explicit equivalent skill with ledger evidence counts toward required coverage.
+A declaration in a skills section is still a declaration; it is not proof of
+proficiency, and the interview asks for a concrete role account. Semantic retrieval
+can populate `SuggestedResumeSkill` and `NearMisses`, but leaves the requirement
+in `Gaps` and cannot inherit the suggested skill's years or evidence strength.
+Retrieval failure does not prevent explicit matching or gap reporting.
+
+Role evidence and calculated skill dates now use complete phrases or audited
+synonyms, never embedding similarity. The raw achievement keyword fallback that
+borrowed an unrelated ledger entry's metadata was removed. Skill coverage retains
+related prose for interview context without counting it as covered. Responsibility
+overlap is a related-account suggestion and does not establish coverage.
+
+Career recommendations ask whether an adjacent skill has a genuine supporting
+example; they do not advise renaming a related skill to satisfy a requirement.
+EmbeddingGemma 2 remains an evaluation candidate for retrieval. No embedding model
+switch or claim of improved matching accuracy is made by these changes.
+
+The representation separates identity, relationships, and role evidence. This is
+consistent with the concept distinctions in [ESCO skills and competences](https://esco.ec.europa.eu/en/classification/skill-main)
+and the skills, knowledge, and work-activity dimensions of the [O*NET Content Model](https://www.onetcenter.org/content.html).
+These external classifications are research references; they have not been imported
+as authoritative product data.
+
+
+## Morena regression and full transcript builder
+
+The supplied Morena Head of Applied AI Engineering advert is a permanent parsing
+fixture. Its sectioned requirements remain seven required competency groups,
+seven responsibility groups and nine preferred examples, with the source text
+retained for each group. Semantic retrieval suggests relevant role accounts; it
+cannot establish that a broad competency is satisfied. The desktop labels these
+as an evidence review rather than presenting keyword coverage as job eligibility.
+The same parser runs for pasted and scraped adverts.
+
+Build complete transcript is available from the resume page and the generation
+page without a target job. For every role it covers scope, delivery, decisions and
+tools, outcomes, leadership, and reliability/learning. Saved topic identities make
+it resumable. Named skills are recorded as candidate declarations on that role;
+they are not independent verification. In aggregate views, saving locates the
+original source document that owns the selected role, preserving imported text.
+Skipping creates no evidence and remains unanswered on a later session.
+
+Generation uses Tailoring.ComposeProse (default true) and the configured writing
+provider. Profile exposes the toggle; saving an Ollama writer enables its composition
+adapter. Restart after changing provider settings. OpenAI, local Ollama and local
+LlamaSharp composition adapters are supported; unavailable providers retain source
+prose and report a warning. This release does not install a new model or change
+live personal records. Editing preserves claim identities, role bindings, source
+qualifiers and numeric results, and rejects unsupported ownership or target terms.
+These are conservative checks, not a full semantic verification system; users
+must inspect the generated preview.
+
+Optional real-time interview assessment uses the Interview settings section.
+Disabled (the default), it uses local rules. With Enabled=true and Provider=ollama,
+BaseUrl must be local HTTP and Model can be an installed SystemOne decision model
+such as nimble. The runtime must support /v1/systemone. Provider=cloudflare accepts
+Model=clef or clef-flash, CloudflareAccountId and an ApiKey supplied through secrets
+or environment. Cloud assessment sends bounded, contact-redacted answer context
+to Cloudflare. Neither provider invents interview prose: it chooses from explicit
+follow-up questions and assesses answer detail. Invalid, uncertain, timed-out or
+unavailable model responses fall back to local rules; assessments do not verify
+facts or score competence. No model/runtime migration is performed automatically.
+
+
+Quality regression checks also cover numeric-marker restoration, retention of the
+substantive contribution (a team-size fragment cannot replace a delivery account),
+and a source claim reused in both summary and experience with one claim identity
+and citations at both passages. Possible duplicate compact employment entries are
+flagged for reconciliation; their underlying records are retained. Accounts that
+mention both a delivered milestone and cancellation trigger a delivery-status
+question. Status-sensitive claims stay out of the projection until clarified.
+Import reconciliation maps original source evidence and review decisions into the persisted complete career. Matching reads accepted concepts directly from that career ledger; it does not read each imported document. Interview prose and raw answers are saved to the canonical role. Completed dimensions survive later imports.
+
+Author-confirmed personal story updates can be stored as a separate source and a `PersonalInfoOverrides.Summary` overlay, preserving imported accounts. Publication records survive aggregation, receive source-bound external-link claims, and appear as up to three selected links in tailored Word/PDF output. Their article vocabulary supplies no skill concepts or dated role evidence. Publication titles and destinations are kept out of prose rewriting. Explicit relative time qualifiers such as “past year” are retained by the editorial validation gate.
+
+
+Generated resumes are now saved separately from imported career evidence. The desktop archive retains the job, frozen generated document, full career evidence, original DOCX/PDF exports and rendered PDF pages. Word preview renders the saved DOCX. Reopening a version does not regenerate its prose. Numbered JobML citations select the saved claims and original source excerpts in the evidence panel; publication links remain clickable. Generated documents never become new career evidence automatically.
+
+Native client validation used a private copy of all 21 imported sources. The legacy inputs contain 42 imported rows, of which 25 have malformed title/company fields; those remain in the source archives. The saved complete career contains the remaining 17 role identities. The Morena run selects six detailed roles and six compact chronology entries, preserves the author's agentic-products statement and three linked articles, and produces a two-page PDF. The current Word renderer produces four pages including references, so pagination differs between formats. Archive reopening, Word/PDF rendering, page navigation, zoom and citation-to-original-source navigation were exercised through the native UI test bridge.
+
+Local prose editing currently makes sequential batches of up to three passages through two passes. With the 9.7B local Qwen model this takes several minutes. The client now displays pass and batch progress; provider logs capture per-batch wall time and prompt/output token counts without recording source text. Evidence validation still runs for every returned passage.
+
+
+Prose reuse is now stored as role-linked accounts under the local `prose-library` directory. Each record contains original and edited prose, explicitly supported skills, subject/claim/evidence IDs, source fingerprint, model digest and editing purpose. It is derived wording and never imported into the skill evidence ledger. The Tighten pass is job neutral and can be reused across jobs; HumanVoice uses a short deterministic brief of parsed requirements and responsibilities. Exact variants are keyed by source content, evidence bindings, skills, instructions, word budget, pass, model identity and applicable job brief. Every cached edit is revalidated against the current source and job. Rejected edits retain the existing wording with review notes, rather than repeatedly generating the same rejected wording. Updating source facts, skills, instructions or the local model invalidates the affected variants.
+
+Coverage memoizes each unique evidence string for the duration of an analysis, avoiding repeated embedding-service calls for each competency. ONNX inference and loading run off the UI thread; its bounded cache now holds 4096 vectors and partitions by model/vocabulary file signature so repaired or changed models do not reuse lexical fallback vectors. Career selection still runs for each job; cached prose never establishes skill coverage.
+
+
+The full career JobML is materialised and saved per career revision. It contains the complete claims, source links, review states, concepts, embedding-space identity and vectors, including observations still awaiting review. The editor preserves this machine area, publishes reviewed achievement/summary edits back to structured career prose, and rejects stale publication after concurrent changes. Original import text remains an evidence archive. Numeric vectors use flow sequences to keep the machine editor manageable; full precision survives round trips. A separate derived semantic index reuses unchanged concept vectors only when model ID, digest and normalization match.
+
+GitHub README passages and repository technology observations are persisted with source URLs, fingerprints, contributor counts/rank/share, project age and recency. They nominate skills for review, rather than automatically establishing personal experience. A candidate must have observed commits for personal-evidence eligibility; unknown or zero contribution stays observation-only. README skill claims require author review. Main-contributor status remains unknown when bounded contributor pagination is incomplete. Repository age and activity span are never converted to personal skill-years.
+
+The final private native benchmark used this persisted career: initial new prose bindings 164.89 seconds; identical-job reuse 1.75 seconds including archive writes. The model stage starts within a second; first-time local prose editing remains the main cost.
+
+
+## Complete career workflow and screenshots
+
+See [complete career workflow](complete-career-workflow.md) for migration, full JobML editing, raw interview retention, GitHub review gates, generated archive previews and the measured reuse performance. The portable raw narrative and interview fields are documented in [transcript extension 0.1](jobml-transcript-extension-0.1.md).

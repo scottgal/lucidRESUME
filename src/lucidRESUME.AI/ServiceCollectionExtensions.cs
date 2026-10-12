@@ -17,6 +17,8 @@ public static class ServiceCollectionExtensions
         services.Configure<TailoringOptions>(config.GetSection("Tailoring"));
         services.Configure<EmbeddingOptions>(config.GetSection("Embedding"));
         services.Configure<NimbleOptions>(config.GetSection("Nimble"));
+        services.Configure<InterviewOptions>(config.GetSection("Interview"));
+        services.AddHttpClient<IInterviewAssessor, SystemOneInterviewAssessor>();
 
         if (config.GetSection("Nimble").GetValue<bool>("Enabled"))
         {
@@ -105,7 +107,11 @@ public static class ServiceCollectionExtensions
 
         // Embedding indexer + deterministic semantic compression
         services.AddSingleton<EmbeddingIndexer>();
-        services.AddSingleton<SemanticCompressor>();
+        services.AddSingleton(_ => new ReusableProseStore(Path.Combine(Core.Configuration.AppDataPaths.Root, "prose-library")));
+        services.AddSingleton<CompositionValidator>();
+        services.AddTransient<ResumeCompositionOrchestrator>();
+        services.AddTransient<ResumeProjectionEditor>();
+        services.AddTransient<SemanticCompressor>();
 
         // Embedding: ONNX by default (fully local), Ollama if explicitly configured
         var embeddingProvider = config.GetSection("Embedding").GetValue<string>("Provider") ?? "onnx";

@@ -22,6 +22,15 @@ public sealed class PdfExporter : IResumeExporter
 
     public Task<byte[]> ExportAsync(ResumeDocument resume, CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+        return Task.FromResult(CreateDocument(resume).GeneratePdf());
+    }
+
+    /// <summary>Page images generated alongside the PDF from exactly the same frozen document layout.</summary>
+    public IReadOnlyList<byte[]> RenderPages(ResumeDocument resume) => CreateDocument(resume).GenerateImages().ToList();
+
+    private static IDocument CreateDocument(ResumeDocument resume)
+    {
         var template = ExportArtifact.Template(resume);
         var compact = ExportArtifact.CompactJobMl(resume);
         var document = Document.Create(container =>
@@ -52,9 +61,7 @@ public sealed class PdfExporter : IResumeExporter
             PDFUA_Conformance = PDFUA_Conformance.PDFUA_1
         });
 
-        var bytes = document.GeneratePdf();
-
-        return Task.FromResult(bytes);
+        return document;
     }
 
     private static void ComposeIdentity(IContainer container, ResumeDocument resume, ResumeTemplate template)
@@ -325,7 +332,7 @@ public sealed class PdfExporter : IResumeExporter
             var text = reference.PlainText;
             if (uriToken is not null)
                 text = text.Replace(uriToken + ".", "", StringComparison.Ordinal).TrimEnd();
-            col.Item().SemanticParagraph().Section($"ref-{reference.Number}").PaddingTop(3).Text(text).FontSize(7).LineHeight(1.15f)
+            col.Item().SemanticParagraph().Section($"ref-{reference.Number}").PaddingTop(1).Text(text).FontSize(7).LineHeight(1.05f)
                 .FontColor(Colors.Grey.Darken2);
             if (Uri.TryCreate(reference.Evidence.Uri, UriKind.Absolute, out var uri))
                 col.Item().SemanticParagraph().PaddingLeft(12).Hyperlink(uri.ToString()).Text(uri.ToString())

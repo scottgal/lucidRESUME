@@ -1,0 +1,42 @@
+# Audited synonyms only. Domain files contain associations, not equivalences.
+# Keep products, standards, services, broader skills and narrower skills distinct.
+python: python3, python 3
+javascript: js, ecmascript
+typescript: ts
+c#: csharp, c sharp
+c++: cpp, c plus plus
+go: golang
+rust: rustlang
+r: r programming
+html: html5
+css: css3
+aws: amazon web services
+azure: microsoft azure
+gcp: google cloud, google cloud platform
+kubernetes: k8s, k8s cluster
+infrastructure as code: iac
+ci/cd: continuous integration and continuous delivery
+github actions: github ci
+gitlab ci: gitlab pipelines
+mongodb: mongo
+cassandra: apache cassandra
+oracle: oracle database, oracle db
+react: reactjs, react.js
+vue: vuejs, vue.js
+express: expressjs, express.js
+jwt: json web token, json web tokens
+penetration testing: pen testing
+machine learning: ml
+natural language processing: nlp
+computer vision: computer vision processing
+scikit-learn: sklearn
+rest: restful, rest api
+crm: customer relationship management
+cpa: certified public accountant
+cfa: chartered financial analyst
+cfp: certified financial planner
+cma: certified management accountant
+gaap: generally accepted accounting principles, us gaap
+gdpr: general data protection regulation
+hiring: recruitment, recruiting, team recruitment, recruit senior developers, recruited senior developers, hired engineering team
+release management: release lifecycle

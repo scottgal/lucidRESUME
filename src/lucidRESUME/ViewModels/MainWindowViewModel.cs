@@ -49,6 +49,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         MyDataPageViewModel myDataPage,
         CareerPlannerPageViewModel careerPlannerPage,
         HelpPageViewModel helpPage,
+        GeneratedResumesPageViewModel generatedResumesPage,
         StartupHealthCheck? healthCheck = null,
         SearchWatchPoller? watchPoller = null)
     {
@@ -63,8 +64,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             ["Apply"] = applyPage,
             ["Pipeline"] = pipelinePage,
             ["Profile"] = profilePage,
+            ["Generated"] = generatedResumesPage,
             ["Help"] = helpPage
         };
+        applyPage.OpenArchive = () => Navigate("Generated");
         _currentPage = resumePage;
         _healthCheck = healthCheck;
         _watchPoller = watchPoller;
@@ -206,6 +209,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         if (!_pages.TryGetValue(page, out var vm)) return;
         SelectedNav = page;
         CurrentPage = vm;
+        if (vm is JobMlEditorPageViewModel editor) _ = editor.LoadCompleteCareerAsync();
     }
 
     /// <summary>Show a transient page (not in nav) like Import Review.</summary>

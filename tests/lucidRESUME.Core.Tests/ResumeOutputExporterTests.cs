@@ -14,6 +14,58 @@ namespace lucidRESUME.Core.Tests;
 public sealed class ResumeOutputExporterTests
 {
     [Fact]
+    public async Task Publication_links_survive_artifact_and_word_export_and_invalidate_stale_ledger()
+    {
+        var source = ResumeDocument.Create("career.md", "text/markdown", 0);
+        var publication = new Project { Name = "Agent architecture", Url = "https://example.com/agents" };
+        source.Publications.Add(publication);
+        var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
+        var originalRevision = ledger.SourceRevision;
+        publication.Url = "https://example.com/updated-agents";
+        ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
+        Assert.NotEqual(originalRevision, ledger.SourceRevision);
+        var claim = Assert.Single(ledger.Claims, item => item.Kind == "publication");
+        var projection = ResumeDocument.Create("out.md", "text/markdown", 0);
+        projection.Publications.Add(publication);
+        projection.RawMarkdown = "## Selected Recent Publications {#publications}\n\n- [Agent architecture](https://example.com/updated-agents)";
+        projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
+            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#publications:p1" }] };
+        var artifact = new ResumeArtifactBuilder().Build(source, projection, new JobDescription { Title = "Engineer" }, "ats-classic");
+        Assert.Single(artifact.Publications);
+        using var stream = new MemoryStream(await new DocxExporter().ExportAsync(artifact));
+        using var document = WordprocessingDocument.Open(stream, false);
+        Assert.Contains(document.MainDocumentPart!.HyperlinkRelationships, item => item.Uri.ToString() == publication.Url);
+        Assert.Empty(new OpenXmlValidator().Validate(document));
+        Assert.NotEmpty(await new PdfExporter().ExportAsync(artifact));
+    }
+
+    [Fact]
+    public async Task Reused_source_claim_has_one_identity_and_citations_in_summary_and_role()
+    {
+        var source = ResumeDocument.Create("cv.md", "text/markdown", 0);
+        var role = new WorkExperience { Title = "Engineer", Company = "Example", Achievements = ["Built reliable APIs."] };
+        source.Experience.Add(role);
+        var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
+        var claim = ledger.Claims.Single(claim => claim.Kind == "achievement");
+        var projection = ResumeDocument.Create("out.md", "text/markdown", 0);
+        projection.RawMarkdown = "## Summary {#summary}\n\nBuilt reliable APIs.\n\n## Experience {#role}\n\nBuilt reliable APIs.";
+        projection.Personal.Summary = "Built reliable APIs.";
+        projection.Experience.Add(role);
+        projection.GenerationWarnings.Add("Source wording retained for one rejected edit.");
+        projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
+            Blocks = [new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#summary:p1" },
+                new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#role:p1" }] };
+        var artifact = new ResumeArtifactBuilder().Build(source, projection, new JobDescription { Title = "Engineer" }, "ats-classic");
+        var file = new JobMlParser().Parse(artifact.JobMlSource!);
+        Assert.Single(file.Data.Claims);
+        Assert.Equal(2, file.Data.Claims[0].Evidence.Count(evidence => evidence.Type == "prose"));
+        Assert.Equal(2, CJobMlProjector.Project(file).Anchors.Count);
+        Assert.Single(artifact.GenerationWarnings);
+        Assert.NotEmpty(await new DocxExporter().ExportAsync(artifact));
+        Assert.NotEmpty(await new PdfExporter().ExportAsync(artifact));
+    }
+
+    [Fact]
     public async Task DocxExport_ContainsHumanResumeAndCompactScientificReferences()
     {
         var resume = CreateResume(ResumeTemplateCatalog.ModernProfessionalId);

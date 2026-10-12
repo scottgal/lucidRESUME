@@ -29,4 +29,5 @@
     <ProjectReference Include="..\..\src\lucidRESUME.JobSpec\lucidRESUME.JobSpec.csproj" />
   </ItemGroup>
 
+  <ItemGroup><Content Include="../fixtures/jobs/morena-head-applied-ai.txt" Link="Fixtures/morena-head-applied-ai.txt" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
 </Project>

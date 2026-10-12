@@ -19,6 +19,7 @@ public sealed class JobDescription
     public SalaryRange? Salary { get; set; }
 
     // Extracted requirements
+    public List<JobCompetency> Competencies { get; set; } = [];
     public List<string> RequiredSkills { get; set; } = [];
     public List<string> PreferredSkills { get; set; } = [];
     public int? RequiredYearsExperience { get; set; }

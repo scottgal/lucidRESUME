@@ -24,6 +24,14 @@ public sealed partial class MarkdownViewer : UserControl
     public static readonly StyledProperty<string?> ScrollToAnchorProperty =
         AvaloniaProperty.Register<MarkdownViewer, string?>(nameof(ScrollToAnchor));
 
+    public static readonly StyledProperty<System.Windows.Input.ICommand?> LinkCommandProperty =
+        AvaloniaProperty.Register<MarkdownViewer, System.Windows.Input.ICommand?>(nameof(LinkCommand));
+    public System.Windows.Input.ICommand? LinkCommand
+    {
+        get => GetValue(LinkCommandProperty);
+        set => SetValue(LinkCommandProperty, value);
+    }
+
     public string? Markdown
     {
         get => GetValue(MarkdownProperty);
@@ -351,6 +359,23 @@ public sealed partial class MarkdownViewer : UserControl
             _anchors[match.Groups[1].Value] = anchor;
             return anchor;
         }
+        // JobML paragraph IDs bind prose to evidence. Preserve the visible prose
+        // while rendering only supported native Markdown controls.
+        var paragraph = Regex.Match(text, @"^\s*<p\b(?<attributes>[^>]*)>(?<body>[\s\S]*?)</p>\s*$", RegexOptions.IgnoreCase);
+        if (paragraph.Success)
+        {
+            var body = System.Net.WebUtility.HtmlDecode(paragraph.Groups["body"].Value.Trim());
+            var blocks = Markdig.Markdown.Parse(body, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+            var panel = new StackPanel { Spacing = 4 };
+            foreach (var block in blocks)
+            {
+                var child = RenderBlock(block, body);
+                if (child is not null) panel.Children.Add(child);
+            }
+            var id = Regex.Match(paragraph.Groups["attributes"].Value, "\\bid\\s*=\\s*[\"'](?<id>[^\"']+)[\"']", RegexOptions.IgnoreCase);
+            if (id.Success) _anchors[id.Groups["id"].Value] = panel;
+            return panel;
+        }
         return null;
     }
 
@@ -397,11 +422,29 @@ public sealed partial class MarkdownViewer : UserControl
 
                 case LinkInline link:
                     var linkText = GetInlineText(link);
-                    textBlock.Inlines!.Add(new Run(linkText)
+                    var target = link.Url ?? "";
+                    var linkButton = new Button
                     {
-                        Foreground = Brush("LrAccentBlueBrush"),
-                        TextDecorations = TextDecorations.Underline
+                        Content = new TextBlock { Text = linkText, Foreground = Brush("LrAccentBlueBrush"),
+                            TextDecorations = TextDecorations.Underline, FontSize = textBlock.FontSize },
+                        Padding = new Thickness(0), BorderThickness = new Thickness(0),
+                        Background = Brushes.Transparent, Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+                        Name = target.StartsWith("#ref-", StringComparison.Ordinal) ? "Citation" + target[5..] : null
+                    };
+                    linkButton.Command = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(async () =>
+                    {
+                        if (target.StartsWith('#'))
+                        {
+                            if (LinkCommand?.CanExecute(target) == true) LinkCommand.Execute(target);
+                            else ScrollTo(target[1..]);
+                        }
+                        else if (Uri.TryCreate(target, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http")
+                        {
+                            var topLevel = TopLevel.GetTopLevel(this);
+                            if (topLevel is not null) await topLevel.Launcher.LaunchUriAsync(uri);
+                        }
                     });
+                    textBlock.Inlines!.Add(new InlineUIContainer(linkButton));
                     break;
 
                 case LineBreakInline:

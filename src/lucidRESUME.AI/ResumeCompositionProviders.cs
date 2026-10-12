@@ -9,11 +9,13 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
 {
     private readonly HttpClient _http;
     private readonly OpenAiOptions _options;
+    private readonly ReusableProseStore? _proseStore;
     public string ProviderId => "openai";
     public bool IsAvailable => _options.IsConfigured;
 
-    public OpenAiResumeCompositionProvider(HttpClient http, IOptions<OpenAiOptions> options)
+    public OpenAiResumeCompositionProvider(HttpClient http, IOptions<OpenAiOptions> options, ReusableProseStore? proseStore = null)
     {
+        _proseStore = proseStore;
         _http = http;
         _options = options.Value;
         _http.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
@@ -21,8 +23,15 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
             _http.DefaultRequestHeaders.Authorization = new("Bearer", _options.ApiKey);
     }
 
-    public async Task<CompositionDraft> RunPassAsync(CompositionPassRequest request,
-        CancellationToken cancellationToken = default)
+    public Task<CompositionDraft> RunPassAsync(CompositionPassRequest request,
+        CancellationToken cancellationToken = default) => _proseStore is null
+        ? RunUncachedAsync(request, cancellationToken)
+        : ReusableProseEditor.RunAsync(request, _proseStore, ProviderId,
+            $"{_options.BaseUrl}|{_options.Model}|{_options.MaxTokens}", SystemInstructions(request.Pass),
+            pending => RunUncachedAsync(pending, cancellationToken), cancellationToken);
+
+    private async Task<CompositionDraft> RunUncachedAsync(CompositionPassRequest request,
+        CancellationToken cancellationToken)
     {
         var body = new
         {
@@ -34,14 +43,13 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
             {
                 pass = request.Pass.ToString(),
                 immutable_human_sources = request.SourceBlocks,
-                current_draft = request.CurrentBlocks,
+                current_draft = request.CurrentBlocks.Where(block => request.SourceBlocks.Single(source => source.SectionId == block.SectionId).Text != block.Text),
+                target_role = request.Pass == CompositionPass.Tighten ? "" : request.JobDescription,
                 section_briefs = request.Manifest.Sections.Select(x => new
                 {
                     x.SectionId,
                     x.Intent,
-                    x.MaximumWords,
-                    allowed_emphasis = x.RequirementIds.Select(id => request.Manifest.Requirements
-                        .First(requirement => requirement.Id == id).Text)
+                    x.MaximumWords
                 })
             }),
             text = new
@@ -94,12 +102,16 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
     private static string SystemInstructions(CompositionPass pass) => $"""
         You are performing the {pass} editing pass on a resume compiled from a verified career ledger.
         This is editing, never blank-page generation. Use only facts, numbers, names, dates, technologies,
-        claim IDs and evidence IDs present in immutable_human_sources. allowed_emphasis controls emphasis only.
+        claim IDs and evidence IDs present in immutable_human_sources. The job brief controls emphasis only.
         Follow each section brief. Preserve the candidate's first-person/third-person stance, vocabulary and
         concrete voice. A role section is a selective account for this vacancy, not a compressed list of every
         duty in the source. Combine overlapping evidence and foreground the most relevant outcome, but retain
         the factual substance represented by every supplied claim ID. Do not add generic leadership language,
         hype, fabricated scale or missing requirements. Do not use em dashes.
+        Preserve who did the work: helping or collaborating must not become leading or owning.
+        Preserve qualifiers, negation and causality. An intended benefit must not become an achieved result.
+        Prefer an action, its concrete object and a supported outcome. Qualitative outcomes are useful;
+        never force a number into a passage. Avoid repeating the same outcome in multiple sections.
         For Tighten, remove repetition, setup and low-value detail while keeping names, outcomes and useful
         technical specifics. For HumanVoice, keep the tightened length, remove stock phrases such as "proven
         track record", "passionate", "results-driven", "leveraged" and "spearheaded", and favour direct,
@@ -182,6 +194,9 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
             rather than lists of every duty. Tighten means combine overlap and remove repetition, setup and
             filler. HumanVoice means keep the tightened length and remove stock AI wording while preserving
             the source's stance and rhythm. Prefer direct, natural UK English. Never use an em dash.
+            Preserve personal versus team contribution, qualifiers, negation and causality. Helping must
+            not become leading; intended benefits must not become achieved results. Qualitative outcomes
+            are useful; never force a metric or generic claims of leadership into the prose.
             Return exactly one JSON object shaped as
             {"sections":[{"sectionId":"the supplied id","text":"edited prose"}],"warnings":[]}.
             Return every supplied section exactly once and no additional sections.

@@ -2,7 +2,7 @@ namespace lucidRESUME.Matching;
 
 /// <summary>
 /// Loads industry skill taxonomies from text files.
-/// Each taxonomy maps canonical terms to aliases, enabling the matcher
+/// Legacy domain files retain related terms for discovery; only equivalences.txt enables the matcher
 /// to recognise "k8s" as "kubernetes", "AWS" as "amazon web services", etc.
 ///
 /// Taxonomies are loaded lazily on first use and cached.
@@ -10,6 +10,17 @@ namespace lucidRESUME.Matching;
 /// </summary>
 public sealed class SkillTaxonomy
 {
+    private static readonly Lazy<TaxonomyFile> Equivalences = new(() =>
+    {
+        var directory = Path.Combine(AppContext.BaseDirectory, "Resources", "taxonomies");
+        if (!Directory.Exists(directory))
+            directory = Path.Combine(Path.GetDirectoryName(typeof(SkillTaxonomy).Assembly.Location)!, "Resources", "taxonomies");
+        var path = Path.Combine(directory, "equivalences.txt");
+        if (!File.Exists(path))
+            throw new FileNotFoundException("The audited skill equivalences asset is missing.", path);
+        return ParseTaxonomyFile(path, strict: true);
+    });
+
     private static readonly Lazy<Dictionary<string, TaxonomyFile>> AllTaxonomies = new(LoadAll);
 
     /// <summary>
@@ -21,17 +32,10 @@ public sealed class SkillTaxonomy
         var lower = term.ToLowerInvariant().Trim();
         // A canonical name takes precedence over the same word used as an alias
         // in another taxonomy (for example, Salesforce is also a CRM alias).
+        if (Equivalences.Value.AliasToCanonical.TryGetValue(lower, out var equivalent))
+            return equivalent;
         foreach (var tax in AllTaxonomies.Value.Values)
-        {
-            if (tax.CanonicalToAliases.ContainsKey(lower))
-                return lower;
-        }
-
-        foreach (var tax in AllTaxonomies.Value.Values)
-        {
-            if (tax.AliasToCanonical.TryGetValue(lower, out var canonical))
-                return canonical;
-        }
+            if (tax.CanonicalToAliases.ContainsKey(lower)) return lower;
         return null;
     }
 
@@ -46,25 +50,19 @@ public sealed class SkillTaxonomy
         var canonical = Canonicalize(lower) ?? lower;
 
         var result = new List<string> { canonical };
-        foreach (var tax in AllTaxonomies.Value.Values)
-        {
-            if (tax.CanonicalToAliases.TryGetValue(canonical, out var aliases))
-            {
-                result.AddRange(aliases);
-                break; // found in this taxonomy
-            }
-        }
+        if (Equivalences.Value.CanonicalToAliases.TryGetValue(canonical, out var aliases))
+            result.AddRange(aliases);
         return result;
     }
 
     /// <summary>
-    /// Check if two terms are equivalent according to any taxonomy.
+    /// Check if two terms are identical or audited synonyms.
     /// "kubernetes" and "k8s" → true, "python" and "java" → false.
     /// </summary>
     public static bool AreEquivalent(string a, string b)
     {
-        var ca = Canonicalize(a.ToLowerInvariant()) ?? a.ToLowerInvariant();
-        var cb = Canonicalize(b.ToLowerInvariant()) ?? b.ToLowerInvariant();
+        var ca = Canonicalize(a) ?? a.Trim().ToLowerInvariant();
+        var cb = Canonicalize(b) ?? b.Trim().ToLowerInvariant();
         return string.Equals(ca, cb, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -76,26 +74,32 @@ public sealed class SkillTaxonomy
     public static IReadOnlySet<string> FindCanonicalMentions(string text)
     {
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var taxonomy in AllTaxonomies.Value.Values)
-            foreach (var (phrase, canonical) in taxonomy.AliasToCanonical)
-            {
-                if (phrase.Length < 3) continue;
-                var start = 0;
-                while ((start = text.IndexOf(phrase, start, StringComparison.OrdinalIgnoreCase)) >= 0)
-                {
-                    var before = start == 0 || !char.IsLetterOrDigit(text[start - 1]);
-                    var end = start + phrase.Length;
-                    var after = end == text.Length || !char.IsLetterOrDigit(text[end]);
-                    if (before && after)
-                    {
-                        result.Add(canonical);
-                        break;
-                    }
-                    start++;
-                }
-            }
+        var phrases = AllTaxonomies.Value.Values.SelectMany(t => t.CanonicalToAliases.Keys)
+            .Concat(Equivalences.Value.AliasToCanonical.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
+        foreach (var phrase in phrases)
+            if (ContainsPhrase(text, phrase)) result.Add(Canonicalize(phrase) ?? phrase);
         return result;
     }
+
+    /// <summary>Associations are suggestions only; they never establish equivalence.</summary>
+    public static bool AreRelated(string a, string b)
+    {
+        if (AreEquivalent(a, b)) return false;
+        var left = Canonicalize(a) ?? a.Trim().ToLowerInvariant();
+        var right = Canonicalize(b) ?? b.Trim().ToLowerInvariant();
+        return AllTaxonomies.Value.Values.Any(t =>
+            t.CanonicalToAliases.Any(pair =>
+                (pair.Key == left && pair.Value.Contains(right, StringComparer.OrdinalIgnoreCase)) ||
+                (pair.Key == right && pair.Value.Contains(left, StringComparer.OrdinalIgnoreCase))));
+    }
+
+    public static bool ContainsPhrase(string text, string phrase) =>
+        !string.IsNullOrWhiteSpace(phrase) && System.Text.RegularExpressions.Regex.IsMatch(text,
+            @"(?<![\p{L}\p{N}+#])" + System.Text.RegularExpressions.Regex.Escape(phrase.Trim()) + @"(?![\p{L}\p{N}+#])",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    public static bool MentionsEquivalent(string text, string skill) =>
+        GetAliases(skill).Any(alias => ContainsPhrase(text, alias));
 
     /// <summary>Returns all loaded taxonomy names (for diagnostics).</summary>
     public static IReadOnlyList<string> LoadedTaxonomies =>
@@ -123,6 +127,7 @@ public sealed class SkillTaxonomy
         foreach (var file in Directory.GetFiles(taxDir, "*.txt").Order(StringComparer.Ordinal))
         {
             var name = Path.GetFileNameWithoutExtension(file);
+            if (name == "equivalences") continue;
             var tax = ParseTaxonomyFile(file);
             if (tax.AliasToCanonical.Count > 0)
                 result[name] = tax;
@@ -131,7 +136,7 @@ public sealed class SkillTaxonomy
         return result;
     }
 
-    private static TaxonomyFile ParseTaxonomyFile(string path)
+    private static TaxonomyFile ParseTaxonomyFile(string path, bool strict = false)
     {
         var aliasToCanonical = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var canonicalToAliases = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
@@ -151,12 +156,17 @@ public sealed class SkillTaxonomy
                 .Where(a => a.Length > 0)
                 .ToList();
 
-            // Map canonical to itself
-            aliasToCanonical.TryAdd(canonical, canonical);
+            void Register(string term)
+            {
+                if (strict && aliasToCanonical.TryGetValue(term, out var existing) && existing != canonical)
+                    throw new InvalidDataException($"Ambiguous skill equivalence '{term}': '{existing}' and '{canonical}'.");
+                aliasToCanonical.TryAdd(term, canonical);
+            }
+            Register(canonical);
 
             // Map each alias to the canonical
             foreach (var alias in aliases)
-                aliasToCanonical.TryAdd(alias, canonical);
+                Register(alias);
 
             // Store reverse mapping
             canonicalToAliases[canonical] = aliases;

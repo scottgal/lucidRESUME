@@ -8,15 +8,18 @@
   <Grid ColumnDefinitions="*,*" Margin="16,12">
 
     <!-- LEFT: job input form -->
-    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0">
+    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" Margin="0,0,12,0" IsEnabled="{Binding !IsTailoring}">
 
       <!-- Header -->
-      <TextBlock Grid.Row="0" Text="Project Resume" FontSize="18" FontWeight="Bold"
-                 Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,16"/>
+      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
+        <TextBlock Text="Generate Resume" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+        <Button Content="Build complete transcript" Command="{Binding BuildCompleteTranscriptCommand}"/>
+        <Button x:Name="ViewGeneratedArchive" Content="Archive" Command="{Binding ViewArchiveCommand}"/>
+      </StackPanel>
 
       <!-- Projection invariant -->
       <Border Grid.Row="1" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10">
-        <TextBlock Text="Human prose stays human-owned. JobML adds evidence-linked machine detail. Projection never re-infers or rewrites either one."
+        <TextBlock Text="Your career transcript supplies the facts. Generation selects relevant evidence and can edit its prose while retaining source links."
                    Foreground="{DynamicResource LrAccentPeachBrush}" FontSize="12" TextWrapping="Wrap"/>
       </Border>
 
@@ -24,15 +27,11 @@
       <Border Grid.Row="2" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
               IsVisible="{Binding HasCoverage}">
         <StackPanel Orientation="Horizontal" Spacing="12">
-          <TextBlock Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="12" VerticalAlignment="Center">
-            <Run Text="Coverage:"/>
-            <Run Text="{Binding CoveragePercent}" FontWeight="Bold"/>
-            <Run Text="%"/>
-          </TextBlock>
+          <TextBlock Text="{Binding CoverageLabel}" Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="12" VerticalAlignment="Center"/>
           <TextBlock Foreground="{DynamicResource LrAccentRedBrush}" FontSize="12" VerticalAlignment="Center"
                      IsVisible="{Binding GapCount}">
             <Run Text="{Binding GapCount}"/>
-            <Run Text="required gap(s)"/>
+            <Run Text="unconfirmed must-have(s)"/>
           </TextBlock>
           <Border Background="{DynamicResource LrBadgeBgBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
                   IsVisible="{Binding CompanyTypeLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
@@ -119,12 +118,48 @@
 
       <!-- Empty state -->
       <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
-                  IsVisible="{Binding !HasResult}">
+                  IsVisible="{Binding ShowEmptyResult}">
         <TextBlock Text="Projected resume will appear here." Foreground="{DynamicResource LrSecondaryTextBrush}"
                    FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
         <TextBlock Text="Fill in the form and click Project Resume." Foreground="{DynamicResource LrSubtleTextBrush}"
                    FontSize="13" HorizontalAlignment="Center"/>
       </StackPanel>
+
+      <ScrollViewer Grid.Row="1" IsVisible="{Binding HasInterview}" Background="{DynamicResource LrPageBgBrush}">
+        <StackPanel Spacing="10" Margin="12" IsEnabled="{Binding !IsTailoring}">
+          <TextBlock Text="Build your role transcript" FontSize="18" FontWeight="Bold"/>
+          <TextBlock Text="{Binding InterviewRemaining, StringFormat='Remaining topics: {0}'}" FontSize="12"/>
+          <TextBlock Text="{Binding InterviewRequirement}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding InterviewReason}" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding InterviewEvidence}" TextWrapping="Wrap" FontStyle="Italic"/>
+          <TextBlock Text="{Binding InterviewProbe}" TextWrapping="Wrap"/>
+          <TextBlock Text="Which role is this example from?"/>
+          <ComboBox x:Name="InterviewRole" ItemsSource="{Binding InterviewRoles}" SelectedItem="{Binding SelectedInterviewRole}" HorizontalAlignment="Stretch"/>
+          <TextBlock Text="What was the situation, scope or challenge?" TextWrapping="Wrap"/>
+          <TextBox x:Name="InterviewContext" Text="{Binding InterviewContext}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="65"/>
+          <TextBlock Text="What did you personally do? Include your decisions, tools and contribution alongside the team's." TextWrapping="Wrap"/>
+          <TextBox x:Name="InterviewAction" Text="{Binding InterviewAction}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="65"/>
+          <TextBlock Text="What changed as a result? Use a reliable metric or a concrete qualitative outcome. Leave unknown details blank." TextWrapping="Wrap"/>
+          <TextBox x:Name="InterviewOutcome" Text="{Binding InterviewOutcome}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="65"/>
+          <Border Background="{DynamicResource LrCardBgBrush}" Padding="10" CornerRadius="6">
+            <StackPanel Spacing="6">
+              <TextBlock Text="Suggested next question" FontWeight="SemiBold"/>
+              <ProgressBar IsVisible="{Binding IsAssessingInterview}" IsIndeterminate="True"/>
+              <TextBlock x:Name="InterviewNextQuestion" Text="{Binding InterviewNextQuestion}" TextWrapping="Wrap"/>
+              <TextBlock Text="{Binding InterviewFeedback}" TextWrapping="Wrap" FontSize="11"/>
+              <Button Content="Assess answer now" Command="{Binding AssessInterviewCommand}"/>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Which skills and tools did you actually use? Separate names with commas; saving records them for this role." TextWrapping="Wrap"/>
+          <TextBox Text="{Binding InterviewSkills}" PlaceholderText="e.g. Azure Service Bus, C#, OpenTelemetry"/>
+          <Button Content="Assemble a prose draft" Command="{Binding DraftInterviewProseCommand}"/>
+          <TextBlock Text="Edit and review the account below. Saving adds it to the selected role's complete transcript for future resumes." TextWrapping="Wrap"/>
+          <TextBox x:Name="InterviewReviewedProse" Text="{Binding InterviewProse}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100"/>
+          <Button Content="Save reviewed prose to role" Command="{Binding AcceptInterviewCommand}" IsEnabled="{Binding !IsTailoring}"/>
+          <Button Content="Skip this question" Command="{Binding SkipInterviewCommand}" IsEnabled="{Binding !IsTailoring}"/>
+          <Button Content="Project with current evidence" IsVisible="{Binding !IsTranscriptBuilder}" Command="{Binding ProjectWithCurrentEvidenceCommand}" IsEnabled="{Binding !IsTailoring}"/>
+        </StackPanel>
+      </ScrollViewer>
 
       <!-- Result -->
       <Border Grid.Row="1" Background="{DynamicResource LrPageBgBrush}" CornerRadius="4"

@@ -48,9 +48,11 @@ public sealed class ResumeArtifactBuilder
         result.Education = projection.Education;
         result.Skills = projection.Skills;
         result.Projects = projection.Projects;
+        result.Publications = projection.Publications;
         result.Certifications = projection.Certifications;
         result.EvidenceLedger = ledger;
         result.Projection = projectionInfo;
+        result.GenerationWarnings.AddRange(projection.GenerationWarnings);
 
         foreach (var entity in source.Entities) result.AddEntity(entity);
         return result;
@@ -136,7 +138,9 @@ public sealed class ResumeArtifactBuilder
                     });
             }
 
-            root.Claims.Add(claim);
+            var existing = root.Claims.FirstOrDefault(item => item.Id == claim.Id);
+            if (existing is null) root.Claims.Add(claim);
+            else existing.Evidence.Add(claim.Evidence[0]); // The same source claim can support multiple passages.
         }
 
         root.Concepts.AddRange(root.Claims.SelectMany(claim => claim.Concepts.Skills)

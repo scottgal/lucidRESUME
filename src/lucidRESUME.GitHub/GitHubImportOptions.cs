@@ -19,5 +19,6 @@ public sealed class GitHubImportOptions
     /// All eligible repositories still receive metadata and language observations.
     /// </summary>
     public int ReadmeAnalysisMaxRepositories { get; set; } = 20;
+    public int ContributionAnalysisMaxRepositories { get; set; } = 50;
     public string? PersonalAccessToken { get; set; }
 }

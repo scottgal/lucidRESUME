@@ -12,6 +12,7 @@
 
     <!-- Toolbar -->
     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="16,8">
+      <Button Content="Build complete transcript" Command="{Binding BuildCompleteTranscriptCommand}" IsVisible="{Binding HasResume}"/>
       <Button x:Name="ImportResumeButton" Content="Import Resume…" Command="{Binding ImportResumeCommand}"/>
       <ComboBox x:Name="ResumeSelector" ItemsSource="{Binding ResumeItems}" SelectedItem="{Binding SelectedResumeItem}"
                 Width="220" VerticalAlignment="Center" FontSize="11" Padding="6,3"

@@ -5,6 +5,13 @@ namespace lucidRESUME.AI.Tests;
 public sealed class ProjectEvidenceSelectionTests
 {
     [Fact]
+    public void Generic_platform_word_is_insufficient_to_select_a_personal_blog_for_an_ai_role()
+    {
+        var project = new Project { Name = "Personal blog", Description = "Developed a website and blog platform from scratch." };
+        Assert.Empty(SemanticCompressor.SelectRelevantProjects([project], new HashSet<string>(["AI", "platform", "evaluation"])));
+    }
+
+    [Fact]
     public void Repository_and_package_evidence_is_not_forced_into_an_unrelated_projection()
     {
         var projects = EvidenceProjects();

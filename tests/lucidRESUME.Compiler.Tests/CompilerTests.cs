@@ -6,8 +6,66 @@ using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.Compiler.Tests;
 
-public sealed class CompilerTests
+public sealed class CompilerTests(Xunit.Abstractions.ITestOutputHelper output)
 {
+    [Theory]
+    [InlineData("VP Engineering", "TypeScript", "Terraform")]
+    [InlineData("Senior Platform Engineer", "AWS", "Kubernetes")]
+    [InlineData("Engineering Director, AI Products", "AWS", "Python")]
+    public async Task Role_specific_projections_keep_supported_prose_and_expose_unsupported_must_haves(
+        string title, string supported, string missing)
+    {
+        var file = new JobMlParser().Parse(Fixture.Source);
+        var snapshot = new JobMlSnapshot("fixture", DateTimeOffset.UtcNow, Fixture.Source, file, []);
+        var job = new JobDescription { Title = title, RequiredSkills = [supported, missing] };
+        var compiler = new JobMlResumeCompiler(new FakeJobParser(job),
+            new ResumeCompositionOrchestrator([], new CompositionValidator()));
+        var result = await compiler.CompileAsync(snapshot, title + " requires " + supported + " and " + missing);
+        output.WriteLine(result.HumanMarkdown);
+        output.WriteLine("Gaps: " + string.Join(", ", result.Manifest.Gaps));
+        Assert.Contains("Led a 15 engineer TypeScript team", result.HumanMarkdown);
+        Assert.Contains(missing, result.Manifest.Gaps);
+        Assert.DoesNotContain(missing, result.HumanMarkdown);
+        Assert.DoesNotContain(supported, result.Manifest.Gaps);
+    }
+
+    [Theory]
+    [InlineData("Supported a team migration.", "Led a team migration.", "ownership")]
+    [InlineData("Proposed a migration to reduce outages.", "Delivered a migration to reduce outages.", "qualifier")]
+    [InlineData("Developed agentic products over the past year.", "Developed agentic products.", "qualifier")]
+    [InlineData("Did not own the service.", "Owned the service.", "qualifier")]
+    public void Editorial_pass_rejects_strengthened_ownership_and_removed_qualifiers(string human, string edited, string expected)
+    {
+        var claim = new JobMlClaim { Id = "work", Subject = "role", Statement = human };
+        var selected = new SelectedClaim(claim, "Example", human, ["e1"], .9, []);
+        var packet = new EvidencePacket("role", "Example", "tighten", 80, [selected], []);
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "lexical");
+        var source = new CompositionBlock("role", human, ["work"], ["e1"]);
+        var errors = new CompositionValidator().Validate(new CompositionDraft([source with { Text = edited }], []), [source], manifest);
+        Assert.Contains(errors, error => error.Contains(expected, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task High_role_affinity_cannot_fill_an_unrelated_requirement_gap()
+    {
+        var file = new JobMlParser().Parse(Fixture.Source);
+        file.Data.RoleCentroids.Add(new JobMlRoleCentroid { Name = "VP Engineering", Vector = [1, 0] });
+        var snapshot = new JobMlSnapshot("fixture", DateTimeOffset.UtcNow, Fixture.Source, file, []);
+        var compiler = new JobMlResumeCompiler(new FakeJobParser(),
+            new ResumeCompositionOrchestrator([], new CompositionValidator()), new UnrelatedEmbedding());
+        var result = await compiler.CompileAsync(snapshot, "VP Engineering with Terraform");
+        Assert.Contains("Terraform", result.Manifest.Gaps);
+        var requirement = result.Manifest.Requirements.Single(r => r.Text == "Terraform");
+        Assert.DoesNotContain(result.Manifest.Matches, m => m.RequirementId == requirement.Id);
+    }
+
+    private sealed class UnrelatedEmbedding : IEmbeddingService
+    {
+        public Task<float[]> EmbedAsync(string text, CancellationToken ct = default) =>
+            Task.FromResult(text == "Terraform" ? new float[] { 0, 1 } : new float[] { 1, 0 });
+        public float CosineSimilarity(float[] a, float[] b) => a.Zip(b).Sum(pair => pair.First * pair.Second);
+    }
+
     [Fact]
     public async Task Snapshot_store_rejects_drift_and_publishes_immutable_revision()
     {
@@ -672,6 +730,31 @@ public sealed class CompilerTests
 
         Assert.Equal("Led a 15 engineer team.", result.Blocks.Single().Text);
         Assert.Contains(result.Warnings, x => x.Contains("numeric fact '40'"));
+    }
+
+    [Fact]
+    public void Number_preservation_cannot_replace_the_contribution_with_an_orphan_fragment()
+    {
+        const string text = "Managed an engineering team of 10+ developers through a complete re-architecture of the production system.";
+        var claim = new JobMlClaim { Id = "team", Subject = "role", Statement = text };
+        var selected = new SelectedClaim(claim, "Example", text, ["e1"], 1, []);
+        var packet = new EvidencePacket("role", "Example", "tighten", 40, [selected], [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "test");
+        var source = new CompositionBlock("role", text, ["team"], ["e1"]);
+        var errors = new CompositionValidator().Validate(new CompositionDraft([source with { Text = "10+ developers" }], []), [source], manifest);
+        Assert.Contains(errors, error => error.Contains("fragment"));
+    }
+
+    [Fact]
+    public void Editor_cannot_drop_a_selected_numeric_result()
+    {
+        var claim = new JobMlClaim { Id = "result", Subject = "role", Statement = "Accelerated validation by 80% using K6." };
+        var selected = new SelectedClaim(claim, "Example", claim.Statement, ["e1"], 1, []);
+        var packet = new EvidencePacket("role", "Example", "tighten", 40, [selected], [], "experience");
+        var manifest = new ProjectionManifest("source", "job", DateTimeOffset.UtcNow, [], [packet], [], [], "lexical");
+        var source = new CompositionBlock("role", claim.Statement, ["result"], ["e1"]);
+        var errors = new CompositionValidator().Validate(new CompositionDraft([source with { Text = "Accelerated validation using K6." }], []), [source], manifest);
+        Assert.Contains(errors, error => error.Contains("removed numeric fact '80%'"));
     }
 
     [Fact]

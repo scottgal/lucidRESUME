@@ -3,6 +3,7 @@ using lucidRESUME.Core.Models.Skills;
 using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.GitHub.Models;
 using lucidRESUME.Matching;
+using lucidRESUME.JobML;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Mostlylucid.DocSummarizer;
@@ -52,6 +53,7 @@ public sealed class GitHubSkillImporter
         var skipped = 0;
         var deeplyAnalysed = 0;
         var readmesAnalysed = 0;
+        var contributionsAnalysed = 0;
 
         var observedAt = DateTimeOffset.UtcNow;
         foreach (var repo in allRepos
@@ -61,6 +63,19 @@ public sealed class GitHubSkillImporter
         {
             var meetsEvidenceThreshold = repo.Size >= _options.MinRepoSizeKb;
             var mayUseAsPersonalEvidence = meetsEvidenceThreshold && (!repo.Fork || _options.IncludeForks);
+            var contribution = new RepositoryContribution();
+            if (mayUseAsPersonalEvidence && contributionsAnalysed < Math.Max(0, _options.ContributionAnalysisMaxRepositories))
+            {
+                try
+                {
+                    contributionsAnalysed++;
+                    contribution = await _client.GetRepositoryContributionAsync(username, repo.Name, username, ct);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex) { warnings.Add($"Contribution evidence unavailable for '{repo.Name}': {ex.Message}"); }
+            }
+            // Owning a repository alone does not establish that its code is the candidate's work.
+            mayUseAsPersonalEvidence &= contribution.Observed && contribution.CandidateCommits > 0;
             if (!mayUseAsPersonalEvidence) skipped++;
 
             // Check rate budget: need 2 calls per repo (languages + readme)
@@ -95,7 +110,7 @@ public sealed class GitHubSkillImporter
                     {
                         Company = repo.Name,
                         SourceText = $"{lang} ({fraction:P0} of {repo.Name})",
-                        StartDate = DateOnly.FromDateTime(repo.CreatedAt.DateTime),
+                        StartDate = null, // Repository age is not the candidate's experience duration.
                         EndDate = DateOnly.FromDateTime(repo.PushedAt.DateTime),
                         Source = EvidenceSource.GitHubRepository,
                         Confidence = ComputeConfidence(fraction, repo),
@@ -114,7 +129,7 @@ public sealed class GitHubSkillImporter
                     {
                         Company = repo.Name,
                         SourceText = $"Topic '{topic}' on {repo.Name}",
-                        StartDate = DateOnly.FromDateTime(repo.CreatedAt.DateTime),
+                        StartDate = null, // Repository age is not the candidate's experience duration.
                         EndDate = DateOnly.FromDateTime(repo.PushedAt.DateTime),
                         Source = EvidenceSource.GitHubRepository,
                         Confidence = 0.7,
@@ -124,16 +139,18 @@ public sealed class GitHubSkillImporter
 
             // Extract skills from README via lucidRAG DocSummarizer
             string? readme = null;
+            GitHubReadmeSnapshot? readmeSnapshot = null;
             ReadmeExtractionResult? readmeResult = null;
-            if (readmesAnalysed < Math.Max(0, _options.ReadmeAnalysisMaxRepositories))
             {
                 try
                 {
                     readmesAnalysed++;
-                    readme = await _client.GetRepoReadmeAsync(username, repo.Name, ct);
+                    readmeSnapshot = await _client.GetRepoReadmeSnapshotAsync(username, repo.Name, ct);
+                    readme = readmeSnapshot?.Markdown;
                     if (readme is { Length: > 100 })
                     {
-                        readmeResult = await _readmeExtractor.ExtractAsync(readme, repo.Name, ct);
+                        readmeResult = await _readmeExtractor.ExtractAsync(readme, repo.Name, ct,
+                            summarize: readmesAnalysed <= Math.Max(0, _options.ReadmeAnalysisMaxRepositories));
                         foreach (var (skill, confidence) in mayUseAsPersonalEvidence ? readmeResult.Skills : [])
                         {
                             var entry = GetOrCreate(skillMap, skill);
@@ -143,7 +160,7 @@ public sealed class GitHubSkillImporter
                                 {
                                     Company = repo.Name,
                                     SourceText = $"README of {repo.Name}",
-                                    StartDate = DateOnly.FromDateTime(repo.CreatedAt.DateTime),
+                                    StartDate = null, // Repository age is not the candidate's experience duration.
                                     EndDate = DateOnly.FromDateTime(repo.PushedAt.DateTime),
                                     Source = EvidenceSource.GitHubRepository,
                                     Confidence = confidence,
@@ -157,6 +174,7 @@ public sealed class GitHubSkillImporter
                     warnings.Add($"Rate limited fetching README for '{repo.Name}'. Resets at {ex.ResetsAt:HH:mm UTC}.");
                     // Continue to next repo: languages and metadata remain useful.
                 }
+                catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
                 {
                     _logger.LogDebug(ex, "Failed to process README for {Repo}", repo.Name);
@@ -187,6 +205,7 @@ public sealed class GitHubSkillImporter
             if (languages != null)
                 technologies.AddRange(languages.Keys.Select(GitHubLanguageMap.ToCanonical).Distinct());
             technologies.AddRange(repo.Topics);
+            technologies.AddRange(readmeResult?.Skills.Select(skill => skill.Skill) ?? []);
 
             // Use lucidRAG summary or first paragraph of README as description
             var description = repo.Description;
@@ -218,10 +237,11 @@ public sealed class GitHubSkillImporter
             var readmeSkillNames = readmeResult?.Skills.Select(s => s.Skill).ToList() ?? [];
 
             var (engineering, assessment, classification) = RepositoryAssessmentService.Assess(
-                repo, tree, readme is { Length: > 100 }, repoSkills.Count, observedAt);
+                repo, tree, readme is { Length: > 100 }, repoSkills.Count, observedAt, contribution);
             var projectProfile = new GitHubProjectProfile
             {
                 Name = repo.Name,
+                Contribution = contribution,
                 Description = description,
                 Summary = readmeResult?.Summary,
                 Url = repo.HtmlUrl,
@@ -255,14 +275,22 @@ public sealed class GitHubSkillImporter
             // selected into a short resume unless the target role matches their content.
             var auditSummary = RepositoryAssessmentService.SearchableSummary(projectProfile);
             var metadata = RepositoryMetadata(projectProfile);
+            if (readme is not null)
+            {
+                metadata["readme_markdown"] = readme;
+                metadata["readme_fingerprint"] = MarkdownEvidenceIndex.Fingerprint(readme);
+                metadata["readme_source_uri"] = readmeSnapshot?.SourceUri ?? repo.HtmlUrl;
+                metadata["readme_blob_sha"] = readmeSnapshot?.BlobSha ?? "unknown";
+            }
+            metadata["engineering_observations"] = auditSummary;
             metadata["eligible_for_personal_evidence"] = projectProfile.EligibleForPersonalEvidence.ToString().ToLowerInvariant();
             projects.Add(new Project
             {
                 Id = EvidenceLedgerBuilder.StableGuid($"github:{repo.HtmlUrl}"),
                 Name = repo.Name,
-                Description = string.Join(' ', new[] { description, auditSummary }
-                    .Where(value => !string.IsNullOrWhiteSpace(value))),
+                Description = description,
                 Technologies = distinctTechs,
+                EvidencePassages = ReadmeEvidencePassages(readmeSnapshot),
                 Url = repo.HtmlUrl,
                 Date = DateOnly.FromDateTime(repo.PushedAt.DateTime),
                 ImportSources = ["GitHub repository audit"],
@@ -294,10 +322,23 @@ public sealed class GitHubSkillImporter
         };
     }
 
+    private static List<ProjectEvidencePassage> ReadmeEvidencePassages(GitHubReadmeSnapshot? readme) =>
+        readme is null ? [] : System.Text.RegularExpressions.Regex.Split(readme.Markdown, @"\r?\n\s*\r?\n")
+            .Select(text => text.Trim()).Where(text => text.Length > 0)
+            .Select(text => new ProjectEvidencePassage { Text = text, SourceUri = readme.SourceUri,
+                Revision = readme.BlobSha, Skills = SkillTaxonomy.FindCanonicalMentions(text).ToList() })
+            .Where(passage => passage.Skills.Count > 0).DistinctBy(passage => passage.Text).ToList();
+
     private static Dictionary<string, string> RepositoryMetadata(GitHubProjectProfile profile) =>
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["provider"] = "github",
+            ["contributions_observed"] = profile.Contribution.Observed.ToString().ToLowerInvariant(),
+            ["contributions_complete"] = profile.Contribution.Complete.ToString().ToLowerInvariant(),
+            ["candidate_commits"] = profile.Contribution.CandidateCommits.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["candidate_rank"] = profile.Contribution.CandidateRank?.ToString() ?? "unknown",
+            ["main_contributor"] = profile.Contribution.IsMainContributor?.ToString().ToLowerInvariant() ?? "unknown",
+            ["observed_commit_share"] = profile.Contribution.ObservedCommitShare?.ToString("F4", System.Globalization.CultureInfo.InvariantCulture) ?? "unknown",
             ["repository_class"] = profile.RepositoryClass,
             ["fork"] = profile.IsFork.ToString().ToLowerInvariant(),
             ["archived"] = profile.IsArchived.ToString().ToLowerInvariant(),

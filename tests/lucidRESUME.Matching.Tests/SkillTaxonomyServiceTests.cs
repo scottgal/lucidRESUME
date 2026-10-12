@@ -24,7 +24,8 @@ public sealed class SkillTaxonomyServiceTests
             "Recruited senior developers and drove the ASP.NET release lifecycle.");
 
         Assert.Contains("hiring", concepts);
-        Assert.Contains("release ownership", concepts);
+        Assert.Contains("release management", concepts);
+        Assert.DoesNotContain("release ownership", concepts);
         Assert.DoesNotContain("commercial judgement", concepts);
         Assert.DoesNotContain("stakeholder communication", concepts);
     }

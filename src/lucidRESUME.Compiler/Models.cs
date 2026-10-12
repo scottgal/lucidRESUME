@@ -68,7 +68,10 @@ public sealed record CompositionPassRequest(
     string JobDescription,
     ProjectionManifest Manifest,
     IReadOnlyList<CompositionBlock> SourceBlocks,
-    IReadOnlyList<CompositionBlock> CurrentBlocks);
+    IReadOnlyList<CompositionBlock> CurrentBlocks)
+{
+    public IProgress<string>? Progress { get; init; }
+}
 
 public interface IResumeCompositionProvider
 {

@@ -36,6 +36,9 @@ public static class TailoringPromptBuilder
         sb.AppendLine("- Never select the largest, strongest, or most recent-looking value merely because it appears in one source.");
         sb.AppendLine("- Map every substantive output claim to the exact evidence catalogue IDs that support it.");
         sb.AppendLine("- Use conventional headings and a single-column reading order.");
+        sb.AppendLine("- Write direct, concrete prose: the candidate's action, the work or problem, and the supported outcome. Prefer relevant examples over generic claims of proficiency.");
+        sb.AppendLine("- Preserve personal versus team contribution, uncertainty, and causality. Never turn helped into led, a team result into an individual result, or an intended benefit into an achieved outcome.");
+        sb.AppendLine("- A qualitative outcome is valid. Do not force metrics, repeat keywords, or add stock phrases such as proven track record or results-driven.");
         sb.AppendLine();
 
         // Company-type tone guidance
@@ -72,7 +75,7 @@ public static class TailoringPromptBuilder
 
             if (gaps.Count > 0)
             {
-                sb.AppendLine("### Not covered - do NOT fabricate; omit or note as developing:");
+                sb.AppendLine("### Not covered - do NOT fabricate or imply developing proficiency; omit unsupported claims:");
                 foreach (var e in gaps)
                     sb.AppendLine($"- {e.Requirement.Text} (not covered in resume)");
             }

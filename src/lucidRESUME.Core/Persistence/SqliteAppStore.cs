@@ -40,6 +40,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         cmd.CommandText = """
             CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS resumes (id TEXT PRIMARY KEY, data TEXT NOT NULL, imported_at TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS generated_resumes (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS profile (id INTEGER PRIMARY KEY CHECK (id = 1), data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS saved_searches (id TEXT PRIMARY KEY, data TEXT NOT NULL);
@@ -201,15 +202,29 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
                 state.SelectedResumeId = resumeId;
         }
 
+        using (var cmd = _conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT data FROM generated_resumes";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var entry = JsonSerializer.Deserialize<Models.Resume.GeneratedResume>(reader.GetString(0), JsonOpts);
+                if (entry is not null) state.GeneratedResumes.Add(entry);
+            }
+        }
+
         state.Overrides = LoadMetaJson<Models.Profile.UserOverrides>("user_overrides") ?? new();
         state.EmployerProfile = LoadMetaJson<Models.Jobs.EmployerProfile>("employer_profile");
 
+        state.CompleteCareer = LoadMetaJson<CompleteCareerRecord>("complete_career");
         state.NormalizeResumes();
+        if (state.CompleteCareer is null && state.Resumes.Count > 0) SaveCore(state);
         return state;
     }
 
     private void SaveCore(AppState state)
     {
+        state.ReconcileCompleteTranscript();
         state.NormalizeResumes();
         state.LastSaved = DateTimeOffset.UtcNow;
         using var tx = _conn.BeginTransaction();
@@ -223,6 +238,16 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             cmd.Parameters.AddWithValue("$id", resume.ResumeId.ToString());
             cmd.Parameters.AddWithValue("$data", JsonSerializer.Serialize(resume, JsonOpts));
             cmd.Parameters.AddWithValue("$imported_at", resume.CreatedAt.ToString("O"));
+            cmd.ExecuteNonQuery();
+        }
+
+        Execute("DELETE FROM generated_resumes");
+        foreach (var entry in state.GeneratedResumes)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO generated_resumes (id, data) VALUES ($id, $data)";
+            cmd.Parameters.AddWithValue("$id", entry.Id.ToString());
+            cmd.Parameters.AddWithValue("$data", JsonSerializer.Serialize(entry, JsonOpts));
             cmd.ExecuteNonQuery();
         }
 
@@ -289,6 +314,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             UpsertMeta("selected_resume_id", selectedResumeId.ToString());
         else
             Execute("DELETE FROM app_meta WHERE key = 'selected_resume_id'");
+        UpsertMeta("complete_career", JsonSerializer.Serialize(state.CompleteCareer, JsonOpts));
         UpsertMeta("user_overrides", JsonSerializer.Serialize(state.Overrides, JsonOpts));
         if (state.EmployerProfile is not null)
             UpsertMeta("employer_profile", JsonSerializer.Serialize(state.EmployerProfile, JsonOpts));

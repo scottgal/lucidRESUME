@@ -108,7 +108,7 @@ public static class ExplainCommand
                     {
                         var nearMiss = matchResult.NearMisses.FirstOrDefault(nm => nm.RequiredSkill == m.RequiredSkill);
                         return nearMiss != null
-                            ? $"Strengthen evidence for '{m.RequiredSkill}' — you have '{nearMiss.ClosestResumeSkill}' (similarity {nearMiss.Similarity:P0})"
+                            ? $"'{nearMiss.ClosestResumeSkill}' may be related to '{m.RequiredSkill}'. Describe actual use of '{m.RequiredSkill}', your contribution and outcome; otherwise keep this as a gap."
                             : $"Missing '{m.RequiredSkill}' — no related skill found in resume";
                     }),
             };

@@ -1,0 +1,104 @@
+Morena
+Head of Applied AI Engineering
+London, United Kingdom (Remote)
+
+About the role
+Morena is leading the search for a Head of Applied AI Engineering to take technical ownership of a rapidly growing production AI platform.
+This is a hands-on engineering leadership role for someone who has already built and operated sophisticated AI systems in production and is ready to define the architecture, engineering standards, evaluation strategy, and technical direction for the next stage of growth.
+You will work on agentic systems that reason across complex workflows, retrieve and maintain context, use tools, modify application state, and make decisions under real-world production constraints.
+This is not a research-only role and it is not about building simple chat interfaces. You will be expected to remain close to the code while providing technical direction across the broader engineering organization.
+
+What you'll own
+AI platform architecture
+Design and evolve the shared platform used to build production AI agents across multiple product areas.
+Define reusable foundations for agent orchestration, context construction, retrieval, memory, tool execution, state management, structured workflows, safety controls, human escalation, evaluation, observability, and model access and routing.
+Give product engineers a reliable foundation for developing new AI capabilities without rebuilding the same infrastructure for every use case.
+
+Production AI systems
+Become the senior technical owner for existing production agent systems while helping teams build new ones on top of the shared platform.
+Improve the current architecture while identifying which capabilities should become reusable platform primitives.
+Reason comfortably about systems where AI can perform consequential actions rather than simply generate text.
+
+Evaluation and experimentation
+Establish how the organization measures whether an AI system is actually improving.
+Build evaluation approaches combining deterministic checks, curated evaluation datasets, simulation, model-based evaluation, human review, regression testing, and production outcome analysis.
+Define how changes move from offline evaluation into controlled production experiments.
+Ensure major architectural or model changes are supported by evidence across quality, reliability, safety, latency, and cost.
+
+Production learning
+Create a strong feedback loop between production behavior and engineering improvement.
+Use failed tool calls, poor outcomes, unusual traces, incidents, escalations, and successful interactions to inform new evaluation cases, architectural improvements, model decisions, tool design, reliability controls, and platform capabilities.
+Strengthen the platform as the organization learns from operating it at scale.
+
+Safety and reliability
+Define how AI systems perform actions safely in production.
+Cover authorization, input and output validation, idempotency, state transitions, audit trails, recovery mechanisms, human-in-the-loop workflows, failure handling, provider resilience, monitoring and tracing, and incident response.
+Operate in environments where reliability, privacy, traceability, and careful rollout matter.
+
+Model strategy
+Own the technical framework for choosing and operating models.
+Evaluate systems based on measurable trade-offs across task quality, reliability, latency, cost, and operational complexity.
+Design routing, fallback, caching, and provider-resilience strategies.
+Lead experimentation with fine-tuning or deployment of specialized open-weight models where appropriate.
+
+Technical leadership
+Set the technical direction for applied AI engineering and become a trusted escalation point for difficult architecture and production decisions.
+Work closely with senior engineering, product, and domain leaders while maintaining enough technical depth to personally build critical parts of the platform.
+Help grow a small, highly capable Applied AI engineering team.
+
+What we're looking for
+Strong software engineering background
+Approximately 8+ years of professional software engineering experience with active contribution to production systems.
+Strong fundamentals across APIs, distributed systems, databases, queues, concurrency, observability, testing, failure recovery, and production reliability.
+
+Production agent experience
+Personally designed or shipped a meaningful AI agent or agentic system used in production.
+Ideally the system did more than answer questions: multi-step reasoning, tool or service interaction, maintained context, changed application state, or operated inside a complex workflow.
+
+Agent architecture depth
+Deep reasoning about agent harnesses and runtimes, orchestration, context engineering, retrieval, memory, tool design, structured workflows, state, error recovery, and escalation.
+Understanding that many apparent model problems are actually problems with data, context, tools, architecture, or evaluation.
+
+Evaluation experience
+Built or meaningfully contributed to evaluation systems for probabilistic products.
+Experience with evaluation dataset construction, automated evaluators, human evaluation, simulations, regression detection, noisy metrics, and offline versus production performance.
+
+Safe agent actions
+Engineering required to allow an AI system to take real actions safely.
+Reasoning about authorization, validation, idempotency, auditability, recovery, state management, and escalation.
+
+Model judgment
+Understanding of strengths and weaknesses of modern frontier and open-weight models.
+Ability to distinguish when a better model is needed versus better tooling, context, architecture, data, or evaluation.
+Technical depth to lead fine-tuning or self-hosted and open-weight model work when justified.
+
+Engineering leadership
+Led a small technical team or operated as a senior technical leader responsible for direction and quality of other engineers' work.
+Comfortable setting technical direction, reviewing architecture, developing engineers, raising standards, resolving disagreements, making decisions under ambiguity, and addressing performance issues when necessary.
+Continues to lead from inside the engineering work.
+
+What sets you apart
+Building internal AI platforms, SDKs, runtimes, harnesses, or tool frameworks.
+High-volume transactional or customer-facing AI systems.
+Healthcare, fintech, insurance, or other high-stakes domains.
+Fine-tuning, distillation, or deployment of open-weight models.
+Long-term agent memory or personalization systems.
+Voice AI, streaming, or latency-sensitive applications.
+Working directly with major AI model providers.
+Building AI evaluation infrastructure used by multiple teams.
+Translating AI research into reliable production systems.
+
+The environment
+High ownership in fast-moving product environments. Difficult technical problems with small, highly capable teams.
+Significant autonomy and hands-on engineering. Direct influence over architecture and product direction.
+Building systems already operating in production rather than starting from a blank slate.
+Comfort moving between debugging production behavior, reviewing agent abstractions, designing evaluation strategy, writing production code, and making larger architectural decisions.
+
+Location and working style
+Full-time remote position aligned with the United Kingdom.
+Candidates should be based in the UK or within a compatible European time zone and able to maintain regular working-hour overlap with the London-based team.
+Designed for a senior technical leader who can operate independently in a distributed environment while collaborating closely with engineering and product leadership.
+
+Compensation and benefits
+$200k–$400k per year, plus equity. Full details discussed with qualified candidates during the Morena screening process.
+Health-related benefits where applicable, paid time off, professional development support, home-office and work equipment support.

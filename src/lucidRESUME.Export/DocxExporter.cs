@@ -177,8 +177,8 @@ public sealed class DocxExporter : IResumeExporter
                         paragraph.Append(new Hyperlink(
                             new Run(new RunProperties(
                                     new Color { Val = template.AccentHex },
-                                    new Underline { Val = UnderlineValues.Single },
-                                    new FontSize { Val = "20" }),
+                                    new FontSize { Val = "20" },
+                                    new Underline { Val = UnderlineValues.Single }),
                                 new Text(publication.Name)))
                         { Id = relationship.Id });
                     }

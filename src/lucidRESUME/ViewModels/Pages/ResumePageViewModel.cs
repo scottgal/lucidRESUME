@@ -22,6 +22,7 @@ namespace lucidRESUME.ViewModels.Pages;
 
 public sealed partial class ResumePageViewModel : ViewModelBase
 {
+    private readonly lucidRESUME.Export.CompleteCareerJobMlService? _completeCareer;
     private readonly IResumeParser _parser;
     private readonly IDocumentImageCache _imageCache;
     private readonly IAppStore _store;
@@ -45,6 +46,14 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
     /// <summary>Set by the shell to transfer the selected résumé into the reversible JobML editor.</summary>
     public Func<string, Guid, string, bool>? OpenInJobMl { get; set; }
+
+    public Action<ResumeDocument>? OpenTranscriptBuilder { get; set; }
+
+    [RelayCommand]
+    private void BuildCompleteTranscript()
+    {
+        if (Resume is not null) OpenTranscriptBuilder?.Invoke(Resume);
+    }
 
     // LibreOffice-generated page image paths (fallback when Docling unavailable)
     private string[] _libreOfficePageImages = [];
@@ -140,8 +149,10 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         SkillLedgerBuilder ledgerBuilder,
         IEnumerable<IResumeExporter> exporters,
         IResumeDecisionProvider? decisionProvider = null,
-        IOptions<NimbleOptions>? nimbleOptions = null)
+        IOptions<NimbleOptions>? nimbleOptions = null,
+        lucidRESUME.Export.CompleteCareerJobMlService? completeCareer = null)
     {
+        _completeCareer = completeCareer;
         _parser = parser;
         _imageCache = imageCache;
         _store = store;
@@ -246,7 +257,7 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
             // Merge into the single unified candidate document
             var state = await _store.LoadAsync();
-            var target = state.SelectedResume;
+            var target = state.GetCompleteTranscript();
             if (target == null)
             {
                 target = Core.Models.Resume.ResumeDocumentMerger.CreateReviewTarget(incoming);
@@ -459,14 +470,14 @@ public sealed partial class ResumePageViewModel : ViewModelBase
         if (Resume is null || _markdownExporter is null || OpenInJobMl is null) return;
         try
         {
-            var markdown = !string.IsNullOrWhiteSpace(Resume.CanonicalMarkdown)
-                ? Resume.CanonicalMarkdown
-                : !string.IsNullOrWhiteSpace(Resume.RawMarkdown)
-                    ? Resume.RawMarkdown
-                    : Encoding.UTF8.GetString(await _markdownExporter.ExportAsync(Resume));
-            var loaded = OpenInJobMl(markdown!, Resume.ResumeId, Resume.OutputTemplateId);
+            var career = _completeCareer is null ? (await _store.LoadAsync()).GetCompleteTranscript()
+                : await _completeCareer.GetAsync();
+            if (career is null) return;
+            var markdown = career.JobMlSource ?? career.CanonicalMarkdown ?? career.RawMarkdown
+                ?? Encoding.UTF8.GetString(await _markdownExporter.ExportAsync(career));
+            var loaded = OpenInJobMl(markdown, career.ResumeId, career.OutputTemplateId);
             StatusMessage = loaded
-                ? "Opened this résumé in the JobML editor."
+                ? "Opened the complete career transcript in the JobML editor."
                 : "JobML editor opened without replacing its unsaved workspace.";
         }
         catch (Exception ex)

@@ -11,5 +11,7 @@ public sealed record CoverageEntry(
     float Score                // 0–1 match confidence
 )
 {
-    public bool IsCovered => Evidence is not null;
+    public bool IsCovered => Evidence is not null && IsDirectMatch;
+    /// <summary>Direct term evidence. Semantic/keyword overlap remains a suggested account to confirm.</summary>
+    public bool IsDirectMatch { get; init; }
 }

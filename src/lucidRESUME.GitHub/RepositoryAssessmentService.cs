@@ -18,7 +18,7 @@ public static class RepositoryAssessmentService
 
     public static (RepositoryEngineeringSignals Signals, RepositoryAssessment Assessment, string Classification)
         Assess(GitHubRepo repository, GitHubTree? tree, bool hasReadme, int skillCount,
-            DateTimeOffset? observedAt = null)
+            DateTimeOffset? observedAt = null, RepositoryContribution? contribution = null)
     {
         var paths = tree?.Entries
             .Where(entry => entry.Type.Equals("blob", StringComparison.OrdinalIgnoreCase))
@@ -84,6 +84,16 @@ public static class RepositoryAssessmentService
         if (tree?.Truncated == true) reasons.Add("GitHub tree response was truncated; file observations are incomplete.");
         if (tree is null) reasons.Add("Deep repository tree was not inspected; structural signals are unknown.");
 
+        if (contribution is not null)
+        {
+            var attribution = !contribution.Observed ? .15 : contribution.CandidateCommits == 0 ? .05
+                : contribution.IsMainContributor == true ? 1d
+                : .35 + .65 * Math.Sqrt(contribution.ObservedCommitShare ?? 0);
+            strength *= attribution;
+            reasons.Add(!contribution.Observed ? "Candidate contribution evidence is unavailable; personal attribution is unknown."
+                : $"Observed {contribution.CandidateCommits} linked candidate commits; rank {contribution.CandidateRank?.ToString() ?? "unknown"}; " +
+                    $"main contributor: {contribution.IsMainContributor?.ToString() ?? "unknown"}. Commit counts indicate attribution, not quality or years of experience.");
+        }
         return (signals, new RepositoryAssessment
         {
             Originality = originality,

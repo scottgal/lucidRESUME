@@ -183,6 +183,13 @@
         </Panel>
         <Panel>
           <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
+                  IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Generated}"/>
+          <Button x:Name="GeneratedArchiveNav" Classes="nav-btn" Command="{Binding NavigateCommand}" CommandParameter="Generated">
+            <TextBlock Text="Generated resumes" Margin="24,0,0,0"/>
+          </Button>
+        </Panel>
+        <Panel>
+          <Border CornerRadius="4" Background="{DynamicResource LrNavHoverBgBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Pipeline}"/>
           <Border CornerRadius="4,0,0,4" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LrNavAccentBrush}"
                   IsVisible="{Binding SelectedNav, Converter={StaticResource NavIsActive}, ConverterParameter=Pipeline}"/>

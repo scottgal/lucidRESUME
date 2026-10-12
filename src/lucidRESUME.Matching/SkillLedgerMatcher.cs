@@ -4,33 +4,12 @@ using lucidRESUME.Core.Models.Skills;
 namespace lucidRESUME.Matching;
 
 /// <summary>
-/// Matches a resume skill ledger against a JD skill ledger using multi-vector similarity.
-/// Each skill is embedded, then we compute how well the resume's evidence covers the JD's requirements.
+/// Matches explicit resume skill evidence against JD requirements using audited equivalences.
+/// Embeddings retrieve related suggestions only; they never satisfy a requirement.
 /// </summary>
 public sealed class SkillLedgerMatcher
 {
     private readonly IEmbeddingService _embedder;
-    private const float SemanticMatchThreshold = 0.58f; // catches "NoSQL" ↔ "MongoDB" (0.59), "AI/ML" ↔ "ML.NET"
-
-    // Stop words loaded from Resources/stopwords.txt
-    private static readonly Lazy<HashSet<string>> StopWords = new(() =>
-    {
-        var path = Path.Combine(AppContext.BaseDirectory, "Resources", "stopwords.txt");
-        if (!File.Exists(path))
-            path = Path.Combine(Path.GetDirectoryName(typeof(SkillLedgerMatcher).Assembly.Location)!, "Resources", "stopwords.txt");
-        if (File.Exists(path))
-        {
-            return new HashSet<string>(
-                File.ReadAllLines(path)
-                    .Where(l => !string.IsNullOrWhiteSpace(l) && !l.TrimStart().StartsWith('#'))
-                    .Select(l => l.Trim()),
-                StringComparer.OrdinalIgnoreCase);
-        }
-        // Fallback if file not found
-        return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        { "with", "and", "the", "for", "from", "that", "this", "have", "been", "experience", "strong" };
-    });
-
     public SkillLedgerMatcher(IEmbeddingService embedder)
     {
         _embedder = embedder;
@@ -40,121 +19,55 @@ public sealed class SkillLedgerMatcher
         SkillLedger resumeLedger, JdSkillLedger jdLedger, CancellationToken ct = default,
         Core.Models.Resume.ResumeDocument? resumeDoc = null)
     {
-        // Embed all resume skills
-        var resumeEmbeddings = new Dictionary<string, float[]>();
-        foreach (var entry in resumeLedger.Entries)
-        {
-            var emb = await _embedder.EmbedAsync(entry.SkillName, ct);
-            resumeEmbeddings[entry.SkillName] = emb;
-        }
-
-        // Embed all JD requirements
-        foreach (var req in jdLedger.Requirements)
-        {
-            req.Embedding ??= await _embedder.EmbedAsync(req.SkillName, ct);
-        }
-
-        // Match each JD requirement to the best resume skill
-        // JD ledger now provides clean skill names (not full sentences)
         var matches = new List<SkillMatch>();
         foreach (var req in jdLedger.Requirements)
         {
-            SkillLedgerEntry? bestEntry = null;
-            float bestSim = 0;
-            string? bestResumeName = null;
-            bool substringMatch = false;
-
-            var reqLower = req.SkillName.ToLowerInvariant();
-
-            foreach (var (name, emb) in resumeEmbeddings)
+            ct.ThrowIfCancellationRequested();
+            // A declared/reviewed skill and an audited synonym establish identity.
+            // Related terms and semantic proximity can only propose an interview topic.
+            var direct = resumeLedger.Entries
+                .Where(entry => entry.Evidence.Count > 0 && SkillTaxonomy.AreEquivalent(req.SkillName, entry.SkillName))
+                .OrderByDescending(entry => entry.Strength).FirstOrDefault();
+            string? suggestion = null;
+            float similarity = 0;
+            if (direct is null)
             {
-                var nameLower = name.ToLowerInvariant();
-
-                // Fast path: substring match (works well now that JD terms are clean)
-                // "C#" == "C#", "Azure" in "Microsoft Azure", "Docker" == "Docker"
-                if (reqLower.Contains(nameLower) || nameLower.Contains(reqLower))
+                var related = resumeLedger.Entries.FirstOrDefault(entry => entry.Evidence.Count > 0 &&
+                    SkillTaxonomy.AreRelated(req.SkillName, entry.SkillName));
+                suggestion = related?.SkillName;
+                try
                 {
-                    var entry = resumeLedger.Find(name);
-                    if (entry is not null && (bestEntry is null || !substringMatch || entry.Strength > bestEntry.Strength))
+                    // Persisted vectors have no guaranteed model identity. Recompute through
+                    // the provider cache rather than comparing vectors from different spaces.
+                    var query = await _embedder.EmbedAsync(req.SkillName, ct);
+                    foreach (var entry in resumeLedger.Entries.Where(entry => entry.Evidence.Count > 0 &&
+                                 (related is null || ReferenceEquals(entry, related))))
                     {
-                        bestSim = Math.Max(bestSim, 0.85f);
-                        bestResumeName = name;
-                        bestEntry = entry;
-                        substringMatch = true;
-                    }
-                    continue;
-                }
-
-                // Taxonomy path: "k8s" matches "kubernetes", "AWS" matches "amazon web services"
-                if (!substringMatch && SkillTaxonomy.AreEquivalent(reqLower, nameLower))
-                {
-                    var entry = resumeLedger.Find(name);
-                    if (entry is not null)
-                    {
-                        bestSim = Math.Max(bestSim, 0.82f);
-                        bestResumeName = name;
-                        bestEntry = entry;
-                        substringMatch = true; // treat taxonomy match as definitive
-                        continue;
+                        var vector = await _embedder.EmbedAsync(entry.SkillName, ct);
+                        if (query.Length == 0 || query.Length != vector.Length) continue;
+                        var score = _embedder.CosineSimilarity(query, vector);
+                        if (!float.IsFinite(score) || score < 0 || (related is null && score < 0.6f) || score <= similarity) continue;
+                        similarity = score;
+                        if (related is null) suggestion = entry.SkillName;
                     }
                 }
-
-                // Semantic path: embedding similarity
-                if (req.Embedding is not null)
-                {
-                    var sim = _embedder.CosineSimilarity(req.Embedding, emb);
-                    if (sim > bestSim && !substringMatch)
-                    {
-                        bestSim = sim;
-                        bestResumeName = name;
-                        bestEntry = resumeLedger.Find(name);
-                    }
-                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+                catch { /* Retrieval is optional; explicit matches and gaps still work. */ }
             }
-
-            // Fallback: search raw resume experience achievements for JD requirement words
-            // "payment systems" → found in "Stripe Connect and Hyperwallet payment systems"
-            if (!substringMatch && bestSim < SemanticMatchThreshold && resumeDoc is not null)
-            {
-                var reqWords = reqLower.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                    .Where(w => w.Length > 3 && !StopWords.Value.Contains(w))
-                    .ToList();
-
-                foreach (var exp in resumeDoc.Experience)
-                {
-                    foreach (var ach in exp.Achievements)
-                    {
-                        var achLower = ach.ToLowerInvariant();
-                        var hits = reqWords.Count(w => achLower.Contains(w));
-
-                        if (hits >= 2 || (reqWords.Count == 1 && hits >= 1))
-                        {
-                            var snippet = ach.Length > 60 ? ach[..57] + "..." : ach;
-                            bestSim = 0.65f;
-                            bestResumeName = $"(evidence: {snippet})";
-                            // Find or create a ledger entry for context
-                            bestEntry = resumeLedger.Entries.FirstOrDefault() ?? new SkillLedgerEntry { SkillName = "?" };
-                            substringMatch = true;
-                            break;
-                        }
-                    }
-                    if (substringMatch) break;
-                }
-            }
-
-            var isMatch = (substringMatch || bestSim >= SemanticMatchThreshold) && bestEntry is not null;
-
             matches.Add(new SkillMatch
             {
                 RequiredSkill = req.SkillName,
                 Importance = req.Importance,
-                MatchedResumeSkill = isMatch ? bestResumeName : null,
-                Similarity = bestSim,
-                IsMatched = isMatch,
-                EvidenceStrength = isMatch ? bestEntry!.Strength : 0,
-                CalculatedYears = isMatch ? bestEntry!.CalculatedYears : 0,
-                EvidenceCount = isMatch ? bestEntry!.Evidence.Count : 0,
-                RoleCount = isMatch ? bestEntry!.RoleCount : 0,
+                MatchedResumeSkill = direct?.SkillName,
+                SuggestedResumeSkill = suggestion,
+                MatchKind = direct is not null ? SkillMatchKind.Equivalent :
+                    suggestion is not null ? SkillMatchKind.Related : SkillMatchKind.Missing,
+                Similarity = direct is not null ? 1 : similarity,
+                IsMatched = direct is not null,
+                EvidenceStrength = direct?.Strength ?? 0,
+                CalculatedYears = direct?.CalculatedYears ?? 0,
+                EvidenceCount = direct?.Evidence.Count ?? 0,
+                RoleCount = direct?.RoleCount ?? 0,
             });
         }
 
@@ -187,8 +100,8 @@ public sealed class SkillLedgerMatcher
             Matches = matches,
             Gaps = matches.Where(m => !m.IsMatched && m.Importance == SkillImportance.Required)
                 .Select(m => m.RequiredSkill).ToList(),
-            NearMisses = matches.Where(m => !m.IsMatched && m.Similarity >= 0.6f)
-                .Select(m => new NearMiss(m.RequiredSkill, m.MatchedResumeSkill ?? "", m.Similarity))
+            NearMisses = matches.Where(m => !m.IsMatched && m.SuggestedResumeSkill is not null)
+                .Select(m => new NearMiss(m.RequiredSkill, m.SuggestedResumeSkill!, m.Similarity))
                 .ToList(),
         };
     }
@@ -206,7 +119,7 @@ public sealed class LedgerMatchResult
     /// <summary>Required skills with no match in the resume.</summary>
     public List<string> Gaps { get; init; } = [];
 
-    /// <summary>Skills that are close but below the match threshold - potential bridge skills.</summary>
+    /// <summary>Related skills to investigate in an interview; these remain gaps.</summary>
     public List<NearMiss> NearMisses { get; init; } = [];
 }
 
@@ -215,6 +128,8 @@ public sealed class SkillMatch
     public string RequiredSkill { get; init; } = "";
     public SkillImportance Importance { get; init; }
     public string? MatchedResumeSkill { get; init; }
+    public string? SuggestedResumeSkill { get; init; }
+    public SkillMatchKind MatchKind { get; init; }
     public float Similarity { get; init; }
     public bool IsMatched { get; init; }
     public double EvidenceStrength { get; init; }
@@ -222,5 +137,7 @@ public sealed class SkillMatch
     public int EvidenceCount { get; init; }
     public int RoleCount { get; init; }
 }
+
+public enum SkillMatchKind { Missing, Equivalent, Related }
 
 public sealed record NearMiss(string RequiredSkill, string ClosestResumeSkill, float Similarity);

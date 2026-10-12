@@ -8,6 +8,27 @@ namespace lucidRESUME.Matching.Tests;
 
 public class ResumeCoverageAnalyserTests
 {
+    [Fact]
+    public async Task Coverage_embeds_each_unique_account_once_across_requirements_and_duplicate_sources()
+    {
+        var embedder = new CountingEmbedder();
+        var analyser = new ResumeCoverageAnalyser(new CompanyClassifier(Options.Create(new CompanyClassifierOptions())),
+            Options.Create(new CoverageOptions()), embedder);
+        var resume = ResumeWith();
+        resume.Experience = [new() { Achievements = ["Built reliable customer services.", "Built reliable customer services."] }];
+        await analyser.AnalyseAsync(resume, JobWith(["Agent orchestration", "Evaluation datasets"], []));
+        Assert.Equal(1, embedder.Calls["Built reliable customer services."]);
+        Assert.All(embedder.Calls.Values, count => Assert.Equal(1, count));
+    }
+
+    private sealed class CountingEmbedder : lucidRESUME.Core.Interfaces.IEmbeddingService
+    {
+        public Dictionary<string, int> Calls { get; } = [];
+        public Task<float[]> EmbedAsync(string text, CancellationToken ct = default)
+        { Calls[text] = Calls.GetValueOrDefault(text) + 1; return Task.FromResult(new float[] { 1, 0 }); }
+        public float CosineSimilarity(float[] a, float[] b) => 1;
+    }
+
     private static ResumeCoverageAnalyser CreateSut() =>
         new(new CompanyClassifier(Options.Create(new CompanyClassifierOptions())),
             Options.Create(new CoverageOptions()));
@@ -26,6 +47,26 @@ public class ResumeCoverageAnalyserTests
         j.RequiredSkills.AddRange(required);
         j.PreferredSkills.AddRange(preferred);
         return j;
+    }
+
+    [Fact]
+    public async Task Skill_in_role_prose_is_preferred_to_a_bare_label()
+    {
+        var resume = ResumeWith("AWS");
+        resume.Experience.Add(new WorkExperience
+        { Achievements = ["Reduced AWS outages by automating recovery."] });
+        var report = await CreateSut().AnalyseAsync(resume, JobWith(["AWS"], []));
+        Assert.Equal("Experience[0].Achievements[0]", Assert.Single(report.Entries).EvidenceSection);
+    }
+
+    [Theory]
+    [InlineData("Go", "Django")]
+    [InlineData("Java", "JavaScript")]
+    [InlineData("C", "C++")]
+    public async Task Partial_technology_names_do_not_count_as_evidence(string required, string skill)
+    {
+        var report = await CreateSut().AnalyseAsync(ResumeWith(skill), JobWith([required], []));
+        Assert.Single(report.RequiredGaps);
     }
 
     [Fact]
@@ -67,7 +108,7 @@ public class ResumeCoverageAnalyserTests
     }
 
     [Fact]
-    public async Task Responsibility_MatchedByKeyword_IsCovered()
+    public async Task Responsibility_MatchedByKeyword_IsASuggestedAccount()
     {
         var resume = ResumeDocument.Create("cv.pdf", "application/pdf", 0);
         var exp = new WorkExperience { Company = "Acme" };
@@ -80,7 +121,8 @@ public class ResumeCoverageAnalyserTests
         var report = await CreateSut().AnalyseAsync(resume, job);
 
         var entry = Assert.Single(report.Entries, e => e.Requirement.Priority == RequirementPriority.Responsibility);
-        Assert.True(entry.IsCovered);
+        Assert.False(entry.IsCovered);
+        Assert.NotNull(entry.Evidence);
     }
 
     [Fact]

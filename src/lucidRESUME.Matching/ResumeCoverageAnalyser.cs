@@ -3,6 +3,7 @@ using lucidRESUME.Core.Models.Coverage;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Resume;
 using Microsoft.Extensions.Options;
+using System.Text.RegularExpressions;
 
 namespace lucidRESUME.Matching;
 
@@ -24,6 +25,12 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
     public async Task<CoverageReport> AnalyseAsync(ResumeDocument resume, JobDescription job,
         CancellationToken ct = default)
     {
+        var vectors = new Dictionary<string, Task<float[]>>(StringComparer.Ordinal);
+        Task<float[]> EmbedOnceAsync(string text)
+        {
+            if (vectors.TryGetValue(text, out var vector)) return vector;
+            return vectors[text] = _embedder!.EmbedAsync(text, ct);
+        }
         var companyType = _classifier.Classify(job);
         job.CompanyType = companyType;
 
@@ -41,18 +48,38 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
                 (Text: a, Section: $"Experience[{ei}].Achievements[{ai}]")))
             .ToList();
 
-        var allSkillEvidence = skillEvidence.Concat(techEvidence).ToList();
+        // A role account is more useful for authoring than a bare technology label.
+        var allSkillEvidence = achievementEvidence.Concat(techEvidence).Concat(skillEvidence).ToList();
 
         var entries = new List<CoverageEntry>();
+        if (job.Competencies.Count > 0)
+        {
+            foreach (var competency in job.Competencies.OrderBy(c => c.Priority))
+            {
+                var reviewed = resume.Experience.SelectMany((role, ri) => role.InterviewEntries
+                    .Where(answer => answer.Requirement.Equals(competency.Name, StringComparison.OrdinalIgnoreCase) &&
+                                     role.Achievements.Contains(answer.ReviewedProse, StringComparer.Ordinal))
+                    .Select(answer => (answer.ReviewedProse, Section: $"Experience[{ri}].Achievements[{role.Achievements.IndexOf(answer.ReviewedProse)}]")))
+                    .FirstOrDefault();
+                if (reviewed != default)
+                    entries.Add(new CoverageEntry(new(competency.Name, competency.Priority), reviewed.ReviewedProse,
+                        reviewed.Section, 1) { IsDirectMatch = true });
+                else
+                    entries.Add(await MatchSkillAsync(competency.Name, competency.Priority, achievementEvidence, ct, EmbedOnceAsync,
+                        competency.Name + ": " + competency.Description));
+            }
+            return new CoverageReport(entries.AsReadOnly(), companyType, DateTimeOffset.UtcNow);
+        }
+
 
         foreach (var req in job.RequiredSkills)
-            entries.Add(await MatchSkillAsync(req, RequirementPriority.Required, allSkillEvidence, ct));
+            entries.Add(await MatchSkillAsync(req, RequirementPriority.Required, allSkillEvidence, ct, EmbedOnceAsync));
 
         foreach (var pref in job.PreferredSkills)
-            entries.Add(await MatchSkillAsync(pref, RequirementPriority.Preferred, allSkillEvidence, ct));
+            entries.Add(await MatchSkillAsync(pref, RequirementPriority.Preferred, allSkillEvidence, ct, EmbedOnceAsync));
 
         foreach (var resp in job.Responsibilities)
-            entries.Add(await MatchResponsibilityAsync(resp, achievementEvidence, ct));
+            entries.Add(await MatchResponsibilityAsync(resp, achievementEvidence, ct, EmbedOnceAsync));
 
         return new CoverageReport(entries.AsReadOnly(), companyType, DateTimeOffset.UtcNow);
     }
@@ -61,33 +88,32 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
         string requirement,
         RequirementPriority priority,
         IReadOnlyList<(string Text, string Section)> evidence,
-        CancellationToken ct)
+        CancellationToken ct, Func<string, Task<float[]>> embed, string? retrievalText = null)
     {
         var req = new JdRequirement(requirement, priority);
 
         // 1. Exact (case-insensitive) match
-        var exact = evidence.FirstOrDefault(e =>
-            e.Text.Contains(requirement, StringComparison.OrdinalIgnoreCase));
+        var exact = evidence.FirstOrDefault(e => SkillTaxonomy.MentionsEquivalent(e.Text, requirement));
         if (exact != default)
-            return new CoverageEntry(req, exact.Text, exact.Section, 1.0f);
+            return new CoverageEntry(req, exact.Text, exact.Section, 1.0f) { IsDirectMatch = true };
 
         // 2. Semantic match if embedder available
         if (_embedder is not null)
         {
             try
             {
-                var reqVec = await _embedder.EmbedAsync(requirement, ct);
+                var reqVec = await embed(retrievalText ?? requirement);
                 float bestScore = 0f;
                 (string Text, string Section) bestMatch = default;
 
                 foreach (var e in evidence)
                 {
-                    var eVec = await _embedder.EmbedAsync(e.Text, ct);
+                    var eVec = await embed(e.Text);
                     var score = _embedder.CosineSimilarity(reqVec, eVec);
                     if (score > bestScore) { bestScore = score; bestMatch = e; }
                 }
 
-                if (bestScore >= _options.SkillSemanticThreshold)
+                if (bestScore >= (retrievalText is null ? _options.SkillSemanticThreshold : .3f))
                     return new CoverageEntry(req, bestMatch.Text, bestMatch.Section, bestScore);
             }
             catch
@@ -102,7 +128,7 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
     private async Task<CoverageEntry> MatchResponsibilityAsync(
         string responsibility,
         IReadOnlyList<(string Text, string Section)> achievements,
-        CancellationToken ct)
+        CancellationToken ct, Func<string, Task<float[]>> embed)
     {
         var req = new JdRequirement(responsibility, RequirementPriority.Responsibility);
 
@@ -135,12 +161,12 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
         {
             try
             {
-                var reqVec = await _embedder.EmbedAsync(responsibility, ct);
+                var reqVec = await embed(responsibility);
                 float bestScore = 0f;
 
                 foreach (var ach in achievements)
                 {
-                    var achVec = await _embedder.EmbedAsync(ach.Text, ct);
+                    var achVec = await embed(ach.Text);
                     var score = _embedder.CosineSimilarity(reqVec, achVec);
                     if (score > bestScore) { bestScore = score; bestMatch = ach; }
                 }

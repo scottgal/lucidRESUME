@@ -6,6 +6,9 @@ namespace lucidRESUME.AI;
 /// </summary>
 public sealed class TailoringOptions
 {
+    /// <summary>Offer bounded source-backed prose editing during generation.</summary>
+    public bool ComposeProse { get; set; } = true;
+
     /// <summary>LLM provider: llamasharp, ollama, anthropic, or openai.</summary>
     public string Provider { get; set; } = "llamasharp";
 
@@ -42,7 +45,7 @@ public sealed class TailoringOptions
         ["Consultancy"] = "Tone: emphasise structured problem-solving, stakeholder management, " +
                           "frameworks, and on-time delivery across engagements.",
         ["Finance"] = "Tone: emphasise accuracy, compliance awareness, quantified impact, " +
-                          "and regulated-environment experience. Every bullet should have a number.",
+                          "and regulated-environment experience. Use a number only when supported by the source; concrete qualitative outcomes are equally useful.",
         ["Public"] = "Tone: emphasise service delivery, accessibility, stakeholder diversity, " +
                           "and policy/compliance alignment.",
         ["Academic"] = "Tone: emphasise research rigour, publications, teaching, and methodological depth.",

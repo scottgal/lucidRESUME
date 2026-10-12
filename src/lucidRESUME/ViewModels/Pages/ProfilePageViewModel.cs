@@ -72,6 +72,7 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
 
     // ── AI Provider Settings ────────────────────────────────────────────────
     public IReadOnlyList<string> AiProviders { get; } = ["openai", "anthropic", "ollama", "llamasharp"];
+    [ObservableProperty] private bool _composeResumeProse = true;
     [ObservableProperty] private string _aiProvider = "openai";
     [ObservableProperty] private string _anthropicApiKey = "";
     [ObservableProperty] private string _openAiApiKey = "";
@@ -266,10 +267,13 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             // Store projects and profile data into the resume
             await _store.MutateAsync(state =>
             {
-                var resume = state.SelectedResume ?? Core.Models.Resume.ResumeDocument.Create(
+                var resume = state.GetCompleteTranscript() ?? Core.Models.Resume.ResumeDocument.Create(
                     "profile-enrichment", "application/vnd.lucidresume.profile", 0);
 
                 ProjectEvidenceMerger.MergeAuditObservations(resume, result.Projects);
+                resume.JobMlSource = null;
+                resume.JobMlRevision = null;
+                lucidRESUME.Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
 
                 // Enrich PersonalInfo from GitHub profile
                 if (result.Profile is { } profile)
@@ -317,9 +321,12 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             var result = await _nuGetPackageAudit.AuditAsync(NuGetPublisher.Trim());
             await _store.MutateAsync(state =>
             {
-                var resume = state.SelectedResume ?? Core.Models.Resume.ResumeDocument.Create(
+                var resume = state.GetCompleteTranscript() ?? Core.Models.Resume.ResumeDocument.Create(
                     "profile-enrichment", "application/vnd.lucidresume.profile", 0);
                 ProjectEvidenceMerger.MergeAuditObservations(resume, result.Projects);
+                resume.JobMlSource = null;
+                resume.JobMlRevision = null;
+                lucidRESUME.Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
                 state.AddOrReplaceResume(resume, select: true);
             });
             NuGetImportStatus = $"Imported {result.PackageCount} packages as {result.Families.Count} searchable product families ({result.TotalDownloads:N0} registry downloads observed)";
@@ -349,6 +356,8 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                 if (doc.RootElement.TryGetProperty("Tailoring", out var tailoring) &&
                     tailoring.TryGetProperty("Provider", out var provider))
                     AiProvider = provider.GetString() ?? "openai";
+                if (doc.RootElement.TryGetProperty("Tailoring", out var editing) && editing.TryGetProperty("ComposeProse", out var compose))
+                    ComposeResumeProse = compose.GetBoolean();
                 if (doc.RootElement.TryGetProperty("Anthropic", out var anthropic) &&
                     anthropic.TryGetProperty("ApiKey", out var aKey))
                     legacyAnthropicKey = aKey.GetString() ?? "";
@@ -438,8 +447,9 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
 
             var settings = new Dictionary<string, object>
             {
-                ["Tailoring"] = new Dictionary<string, string>
+                ["Tailoring"] = new Dictionary<string, object>
                 {
+                    ["ComposeProse"] = ComposeResumeProse,
                     ["Provider"] = AiProvider,
                     ["ExtractionProvider"] = AiProvider
                 },
@@ -459,8 +469,9 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                     ["BaseUrl"] = nimbleUri.ToString().TrimEnd('/'),
                     ["Model"] = "nimble"
                 },
-                ["Ollama"] = new Dictionary<string, string>
+                ["Ollama"] = new Dictionary<string, object>
                 {
+                    ["CompositionEnabled"] = ComposeResumeProse && AiProvider == "ollama",
                     ["Model"] = AiProvider == "ollama" ? SelectedModel : "",
                     ["ExtractionModel"] = AiProvider == "ollama" ? SelectedModel : ""
                 },

@@ -82,6 +82,18 @@ public sealed class JobSpecParser : IJobSpecParser
         // Fuse all signals via RRF
         var fused = JdFieldFuser.Fuse(allCandidates, _fusionOpts);
         ApplyFusedFields(job, fused);
+        var outline = JobAdvertOutline.Extract(text);
+        if (outline.Count > 0)
+        {
+            job.Competencies = outline;
+            job.RequiredSkills = outline.Where(c => c.Priority == Core.Models.Coverage.RequirementPriority.Required)
+                .Select(c => c.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            job.PreferredSkills = outline.Where(c => c.Priority == Core.Models.Coverage.RequirementPriority.Preferred)
+                .Select(c => c.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            job.Responsibilities = outline.Where(c => c.Priority == Core.Models.Coverage.RequirementPriority.Responsibility)
+                .Select(c => c.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
 
         _logger.LogInformation(
             "JD parsed: {Title} at {Company}, {SkillCount} skills ({PreferredCount} preferred), {Total} candidates from {Layers} layers",
@@ -169,8 +181,8 @@ public sealed class JobSpecParser : IJobSpecParser
             return fallback;
         }
 
-        var job = JobDescription.Create(result.Markdown, new JobSource { Type = JobSourceType.Url, Url = url });
-        ExtractFields(job, result.Markdown);
+        var job = await ParseFromTextAsync(result.Markdown, ct);
+        job.Source = new JobSource { Type = JobSourceType.Url, Url = url };
         ApplyStructuredData(job, result.StructuredData);
         return job;
     }

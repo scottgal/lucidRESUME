@@ -299,3 +299,22 @@ The next implementation stage SHOULD add commit attribution, direct dependency
 inspection, actual workflow conclusions, community metrics, release records,
 package-registry relationships, and versioned OpenSSF Scorecard results before
 promoting repository observations into reviewable JobML claims.
+
+
+## Desktop implementation checkpoint: 2026-10-12
+
+The desktop importer scans README passages for technology candidates independently
+of the bounded BERT-summary pass. It retains the actual README URL and blob/content
+fingerprints, project age/activity and contributor observations. Contributor analysis
+is bounded by repository and page limits; candidate commits, observed share/rank,
+result completeness and main-contributor status remain observations. Incomplete
+results leave main-contributor status unknown. Ownership alone does not establish
+personal contribution, and repository creation dates do not establish skill-years.
+
+Imports update the saved complete career, retaining observation-only projects.
+README and repository technology claims require author review before satisfying job
+requirements. Zero or unknown candidate contributions are observation-only.
+Existing human-declared project technologies remain separate from extracted
+repository candidates. The extension specification above describes a broader
+interchange model; an uncollected signal remains unknown rather than being implied
+by a desktop audit. See [complete career workflow](complete-career-workflow.md).

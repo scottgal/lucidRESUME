@@ -9,6 +9,31 @@ public class JobSpecParserTests
     private readonly JobSpecParser _parser = new(NullLogger<JobSpecParser>.Instance);
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Morena_advert_preserves_competency_groups_and_separates_optional_experience(bool withLinkedInChrome)
+    {
+        var text = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures", "morena-head-applied-ai.txt"));
+        if (withLinkedInChrome) text = "Company logo for, Morena.\nMorena\n\n" + text;
+        var job = await _parser.ParseFromTextAsync(text);
+        Assert.Equal("Head of Applied AI Engineering", job.Title);
+        Assert.Equal("Morena", job.Company);
+        Assert.Equal(7, job.RequiredSkills.Count);
+        Assert.Equal(7, job.Responsibilities.Count);
+        Assert.Equal(9, job.PreferredSkills.Count);
+        Assert.Contains("Production agent experience", job.RequiredSkills);
+        Assert.Contains("Evaluation experience", job.RequiredSkills);
+        Assert.Contains("Safe agent actions", job.RequiredSkills);
+        Assert.Contains("Model judgment", job.RequiredSkills);
+        Assert.Contains(job.PreferredSkills, skill => skill.Contains("Fine-tuning"));
+        Assert.DoesNotContain(job.RequiredSkills, skill => skill.Contains("Compensation") || skill.Contains("equity"));
+        var safety = Assert.Single(job.Competencies, competency => competency.Name == "Safety and reliability");
+        Assert.Contains("idempotency", safety.Description);
+        Assert.Contains("human-in-the-loop", safety.Description);
+        Assert.Equal(text, job.RawText);
+    }
+
+    [Theory]
     [InlineData("file:///private/etc/passwd")]
     [InlineData("ftp://example.com/job.txt")]
     public async Task ParseFromUrl_RejectsNonHttpSchemes(string url)

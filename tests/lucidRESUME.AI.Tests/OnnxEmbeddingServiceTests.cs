@@ -76,6 +76,26 @@ public class OnnxEmbeddingServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Model_file_changes_invalidate_cached_fallback_vectors()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "lucid-embedding-" + Guid.NewGuid());
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var model = Path.Combine(directory, "model.onnx");
+            using var service = new OnnxEmbeddingService(Options.Create(new EmbeddingOptions
+            { OnnxModelPath = model, VocabPath = Path.Combine(directory, "vocab.txt") }), NullLogger<OnnxEmbeddingService>.Instance);
+            var first = await service.EmbedAsync("reusable evidence");
+            Assert.Same(first, await service.EmbedAsync("reusable evidence"));
+            await File.WriteAllBytesAsync(model, [1, 2, 3]);
+            var afterChange = await service.EmbedAsync("reusable evidence");
+            Assert.NotSame(first, afterChange);
+            Assert.Same(afterChange, await service.EmbedAsync("reusable evidence"));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
     public async Task MissingModel_FallsBackToNormalisedLexicalVectors()
     {
         var opts = Options.Create(new EmbeddingOptions

@@ -21,10 +21,11 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IEmbeddingSpaceDes
     private readonly ILogger<OnnxEmbeddingService> _logger;
     private readonly string _modelPath;
     private readonly string _vocabPath;
-    private readonly ConcurrentDictionary<string, float[]> _cache = new();
+    private readonly ConcurrentDictionary<(string Signature, string Text), float[]> _cache = new();
     private string? _failedModelSignature;
+    private string? _loadedModelSignature;
     private static readonly object LoadLock = new();
-    private const int MaxCacheEntries = 500;
+    private const int MaxCacheEntries = 4096;
     private const int MaxSequenceLength = 256;
 
     public string ModelId => _session is null
@@ -47,14 +48,20 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IEmbeddingSpaceDes
 
     private bool TryEnsureLoaded()
     {
-        if (_session != null && _tokenizer != null) return true;
         var signature = ModelSignature();
+        if (_session != null && _tokenizer != null && signature == _loadedModelSignature) return true;
         if (signature == _failedModelSignature) return false;
 
         lock (LoadLock)
         {
-            if (_session != null && _tokenizer != null) return true;
             signature = ModelSignature();
+            if (_session != null && _tokenizer != null && signature == _loadedModelSignature) return true;
+            if (_session is not null)
+            {
+                _session.Dispose();
+                _session = null;
+                _tokenizer = null;
+            }
             if (signature == _failedModelSignature) return false;
 
             try
@@ -62,6 +69,7 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IEmbeddingSpaceDes
                 if (!File.Exists(_modelPath) || !File.Exists(_vocabPath))
                     throw new FileNotFoundException("The ONNX model or vocabulary is not installed.");
                 LoadModel();
+                _loadedModelSignature = signature;
                 _failedModelSignature = null;
                 return true;
             }
@@ -95,20 +103,24 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IEmbeddingSpaceDes
 
     public Task<float[]> EmbedAsync(string text, CancellationToken ct = default)
     {
-        if (_cache.TryGetValue(text, out var cached))
-            return Task.FromResult(cached);
-
-        var result = TryEnsureLoaded() ? Embed(text) : EmbedLexically(text);
-
-        // Evict ~10% when cache full
-        if (_cache.Count >= MaxCacheEntries)
+        ct.ThrowIfCancellationRequested();
+        var signature = ModelSignature();
+        if (_cache.TryGetValue((signature, text), out var cached)) return Task.FromResult(cached);
+        // Inference and model loading must not run on the Avalonia UI thread.
+        return Task.Run(() =>
         {
-            var keys = _cache.Keys.Take(MaxCacheEntries / 10).ToList();
-            foreach (var k in keys) _cache.TryRemove(k, out _);
-        }
-        _cache[text] = result;
-
-        return Task.FromResult(result);
+            lock (LoadLock)
+            {
+                ct.ThrowIfCancellationRequested();
+                signature = ModelSignature();
+                if (_cache.TryGetValue((signature, text), out var existing)) return existing;
+                var result = TryEnsureLoaded() ? Embed(text) : EmbedLexically(text);
+                if (_cache.Count >= MaxCacheEntries)
+                    foreach (var key in _cache.Keys.Take(MaxCacheEntries / 10)) _cache.TryRemove(key, out _);
+                _cache[(signature, text)] = result;
+                return result;
+            }
+        }, ct);
     }
 
     private string ModelSignature()

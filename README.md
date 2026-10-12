@@ -103,9 +103,10 @@ a link highlights both the supporting prose and machine reference. As prose
 changes, claims are marked `valid`, `changed`, `missing`, or `ambiguous`;
 inferred claims never become evidence without explicit acceptance. Markdown may
 be shorter for a particular role while JobML retains higher-resolution external
-evidence. Its default **Document** tab is a debounced live DOCX projection through
-the selected output template, rendered by Morph beside those evidence links. It
-does not re-extract or reinterpret the ledger. See the
+evidence. The editor opens the complete career in the fast **Markdown** preview.
+Choose **Document** to request the DOCX projection through the selected output
+template, rendered by Morph beside those evidence links. It does not re-extract
+or reinterpret the ledger. See the
 [JobML specification](docs/jobml-0.1-specification.md),
 [cJobML publication specification](docs/cjobml-0.1-specification.md),
 [implementation profile](docs/jobml-0.1.md), and
@@ -172,8 +173,8 @@ Every major job site wants your email, your browsing history, and permission to 
 
 ![Jobs page with Looking/Hiring toggle](docs/screenshots/jobs-page.png)
 
-- Multi-vector cosine similarity between resume and JD skill ledgers
-- 3-layer matching: substring -> embedding similarity -> achievement-text keyword search
+- Accepted skill evidence and audited equivalences determine requirement coverage
+- Embedding similarity retrieves related evidence and adjacent skills; it does not establish a required skill
 - Per-skill match detail with similarity scores, evidence strength, calculated years
 
 ### Career Direction
@@ -181,6 +182,42 @@ Every major job site wants your email, your browsing history, and permission to 
 - **Career planner**: 4 gap types (PresentationGap, WeakEvidence, AdjacentSkill, TrueGap)
 - **Effort/impact ranking**: Low (rewording), Medium (side project), High (new learning)
 - **Search query generator**: suggests job searches from your strongest skill communities
+
+### Guided role evidence
+
+Project Resume checks the target requirements before generating. Missing evidence,
+related matches for must-haves, bare skill labels, and thin relevant role accounts
+open a focused interview. Choose the source role, describe the context, your personal
+contribution and the outcome, then edit and review the prose before saving it.
+Qualitative outcomes are valid; unknown details can stay blank. Skip a question or
+project with the current evidence at any point.
+
+Reviewed answers are saved on that role in the complete career record, with a
+separate candidate-declared interview source. Existing source text, custom transcript
+prose, evidence links and review decisions are retained. Coverage is checked again
+so future role-specific resumes can reuse the new account. The current desktop
+interview presents one outstanding question at a time, with local rules and optional
+SystemOne decision-model assessment; it is authoring assistance,
+not a measure of competence or eligibility.
+
+The **Build complete transcript** action works without a job description. It guides
+each role through scope, delivery, decisions/tools, outcomes, leadership and
+reliability, saves reviewed prose and named skills to the source role, and resumes
+unanswered topics later. Generation optionally tightens source-bound prose with
+your configured writer; rejected edits retain source wording and show a warning.
+See [generation and interview settings](docs/resume-output-design.md#morena-regression-and-full-transcript-builder).
+
+### Complete career record and saved output
+
+The complete career is a persisted authoritative record, separate from imported source files and generated resumes. Legacy imports are composed and deduplicated once; malformed employment headers stay in their original archives. Imports and reviewed interviews update the career at save time. Tailoring, coverage and career planning read its saved roles, claims, supported skill concepts and original evidence bindings; they do not reconstruct the career or rescan imported resumes for each job. Removing an input archive does not silently retract facts from the career. Invalid legacy JobML is retained in the archive with migration warnings and its claims require review.
+
+The JobML editor opens this complete career, preserving the full claims/sources and semantic index instead of generating a new draft from one selected resume. Its transcript extension retains source narrative and complete role interview answers alongside reviewed prose and skills; retained narrative does not automatically become accepted evidence. Reviewed role prose and summary edits publish back to the career without rewriting imports. Structural role/profile changes use their dedicated editors. Vectors use compact YAML sequences and a persisted model/digest-specific semantic index; unchanged concepts survive career updates without embedding again. Word rendering is requested from the Document tab rather than on each editor load.
+
+GitHub import fetches README content for repositories beyond the optional local-summary limit. It stores exact technology passages, actual README URLs, content/blob fingerprints, project age/activity and bounded contributor observations (candidate commit count/share/rank, completeness and main-contributor status). README and repository technology nominations require review before satisfying job requirements. Zero observed candidate contributions remain observation-only; repository age never becomes personal years of experience. Commit counts are an attribution signal, not a measure of contribution quality. See [GitHub contributor API semantics](https://docs.github.com/en/rest/repos/repos#list-repository-contributors).
+
+Native desktop measurements on the private full-career test corpus: a fresh local two-pass prose edit took 164.89 seconds; repeating the same job using the saved career and validated prose accounts took 1.75 seconds, including generated-archive persistence. These are local measurements, not latency guarantees for new jobs or models.
+
+See [the complete career workflow](docs/complete-career-workflow.md) for the editor, role interviews, archive, screenshots and migration details.
 
 ### Evidence Projection
 - Treats the complete human career transcript and its canonical ledger as source data
@@ -464,22 +501,22 @@ lucidRESUME (Avalonia UI: My CV, JobML Editor, My Data, Career, Jobs, Add Job, P
 ## Tests
 
 ```bash
-dotnet test lucidRESUME.sln    # 479 tests across 12 projects
+dotnet test lucidRESUME.sln    # 597 tests across 12 projects
 ```
 
 | Project | Tests | Coverage |
 |---------|-------|----------|
-| Core.Tests | 101 | Persistence, models, reviewed transcript overlays, multi-resume, export, linked posts |
+| Core.Tests | 120 | Persistence, models, reviewed transcript overlays, multi-resume, export, linked posts |
 | Extraction.Tests | 25 | NER, recognizers, RRF fusion pipeline |
-| AI.Tests | 46 | Providers, embeddings, bounded decisions, deterministic projection, gated live OpenAI checks |
-| Matching.Tests | 64 | Skill scoring, filters, voting, job-search resilience, projection quality |
-| JobSpec.Tests | 16 | JD parsing, deterministic flattened-title extraction, salary extraction |
+| AI.Tests | 79 | Providers, embeddings, bounded decisions, deterministic projection, gated live OpenAI checks |
+| Matching.Tests | 99 | Skill scoring, filters, voting, job-search resilience, projection quality |
+| JobSpec.Tests | 18 | JD parsing, deterministic flattened-title extraction, salary extraction |
 | EmailTracker.Tests | 25 | Classifier, matcher |
-| GitHub.Tests | 44 | Language map, repository assessment, package families, LinkedIn parsing, reviewed document merge |
-| JobML.Tests | 29 | Parsing, validation, drift, reversible links, cJobML projection |
-| Compiler.Tests | 24 | Deterministic evidence selection, compact chronology and projection orchestration |
-| Web.Tests | 5 | ASP.NET Core endpoint and projection control |
-| App.Tests | 2 | Native operating-system credential storage |
+| GitHub.Tests | 48 | Language map, repository assessment, package families, LinkedIn parsing, reviewed document merge |
+| JobML.Tests | 33 | Parsing, validation, drift, reversible links, cJobML projection |
+| Compiler.Tests | 35 | Deterministic evidence selection, compact chronology and projection orchestration |
+| Web.Tests | 6 | ASP.NET Core endpoint and projection control |
+| App.Tests | 11 | Native credentials, complete-career projection and generated archive |
 | Avalonia.UITesting.Tests | 98 | Input, scripts, locators, screenshots, REPL |
 
 The Chrome evidence filler has a separate TypeScript suite:

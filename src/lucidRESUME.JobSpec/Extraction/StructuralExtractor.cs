@@ -95,6 +95,18 @@ public static partial class StructuralExtractor
         if (firstLine is null) return;
 
         var clean = firstLine.TrimStart('#').Trim();
+        var header = lines.Where(line => !string.IsNullOrWhiteSpace(line))
+            .Select(line => line.TrimStart('#').Trim())
+            .Where(line => !Regex.IsMatch(line, @"^(?:company )?logo(?: for)?(?:,|:|$)", RegexOptions.IgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase).Take(4).ToList();
+        if (header.Count >= 2 && !LooksLikeRoleTitle(header[0]) && LooksLikeRoleTitle(header[1]) &&
+            header[0].Length < 80 && !header[0].EndsWith('.') && !header[0].Contains(':'))
+        {
+            candidates.Add(new("title", header[1], .95, "structural"));
+            candidates.Add(new("company", header[0], .9, "structural"));
+            return;
+        }
+
         foreach (var sep in new[] { " - ", " – ", " — ", " | ", " at " })
         {
             var parts = clean.Split(sep, 2, StringSplitOptions.TrimEntries);
@@ -307,6 +319,9 @@ public static partial class StructuralExtractor
             }
 
             if (!inSection) continue;
+            if (JobAdvertOutline.SectionKind(line) is not null)
+            { inSection = false; continue; }
+
 
             if (string.IsNullOrWhiteSpace(line)) { blanks++; if (blanks > 1) inSection = false; continue; }
             if (line.StartsWith('#') || (line.Length < 50 && line.EndsWith(':')))

@@ -24,6 +24,7 @@ public sealed class WorkExperience
     public bool IsCareerAnchor { get; set; }
 
     public List<string> Achievements { get; set; } = [];
+    public List<RoleInterviewEntry> InterviewEntries { get; set; } = [];
     public List<string> Technologies { get; set; } = [];
 
     /// <summary>Import sources that contributed to this entry (e.g. "executive-resume.docx", "LinkedIn").</summary>

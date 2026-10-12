@@ -43,9 +43,9 @@ public sealed class CareerPlanner
         // Classify each gap
         foreach (var skillMatch in match.Matches.Where(m => !m.IsMatched))
         {
-            // Check if this is a TRUE gap or a PRESENTATION gap
+            // Suggestions remain gaps even when a relationship is known.
             var isNearMiss = match.NearMisses.Any(nm =>
-                nm.RequiredSkill == skillMatch.RequiredSkill && nm.Similarity >= 0.6f);
+                nm.RequiredSkill == skillMatch.RequiredSkill);
 
             var nearSkill = match.NearMisses
                 .FirstOrDefault(nm => nm.RequiredSkill == skillMatch.RequiredSkill);
@@ -58,12 +58,12 @@ public sealed class CareerPlanner
 
             if (isNearMiss && nearSkill is not null)
             {
-                // PRESENTATION GAP - you have adjacent skill, need to surface it
-                recommendation.GapType = GapType.PresentationGap;
-                recommendation.Advice = $"You have '{nearSkill.ClosestResumeSkill}' (similarity {nearSkill.Similarity:P0}) - " +
-                    $"strengthen this by adding specific {skillMatch.RequiredSkill} achievements, " +
-                    $"or use the JD's exact terminology in your resume.";
-                recommendation.Effort = EffortLevel.Low;
+                // Related evidence needs clarification before it can support this requirement.
+                recommendation.GapType = GapType.AdjacentSkill;
+                recommendation.Advice = $"Your '{nearSkill.ClosestResumeSkill}' evidence may be related to " +
+                    $"{skillMatch.RequiredSkill}. Describe a specific example of using {skillMatch.RequiredSkill}, " +
+                    "including your contribution and outcome. If you have not used it, keep this as a gap.";
+                recommendation.Effort = EffortLevel.Medium;
                 recommendation.Impact = skillMatch.Importance == SkillImportance.Required ? 0.8 : 0.4;
             }
             else
@@ -109,7 +109,7 @@ public sealed class CareerPlanner
                 Importance = skillMatch.Importance,
                 Advice = $"You have {skillMatch.RequiredSkill} but evidence is thin " +
                     $"({skillMatch.EvidenceCount} mentions, {skillMatch.CalculatedYears:F1} years). " +
-                    $"Add specific achievements or quantified outcomes.",
+                    $"Add specific achievements and observed outcomes.",
                 Effort = EffortLevel.Low,
                 Impact = 0.5,
             });

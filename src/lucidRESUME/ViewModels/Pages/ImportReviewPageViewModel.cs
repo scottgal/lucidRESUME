@@ -12,6 +12,7 @@ public sealed partial class ImportReviewPageViewModel : ViewModelBase
     private readonly ResumeDocumentMerger _merger;
     private ResumeDocument? _target;
     private ImportPreview? _preview;
+    private string? _originalTarget;
 
     /// <summary>Set by the resume page before navigating here.</summary>
     public Action? OnApplied { get; set; }
@@ -49,6 +50,7 @@ public sealed partial class ImportReviewPageViewModel : ViewModelBase
     public void LoadPreview(ResumeDocument target, ImportPreview preview)
     {
         _target = target;
+        _originalTarget = System.Text.Json.JsonSerializer.Serialize(target);
         _preview = preview;
 
         SourceName = preview.SourceName;
@@ -71,7 +73,16 @@ public sealed partial class ImportReviewPageViewModel : ViewModelBase
     {
         if (_target == null || _preview == null) return;
         ResumeDocumentMerger.ApplyPreview(_target, _preview);
-        await _store.MutateAsync(s => s.AddOrReplaceResume(_target, select: true));
+        try
+        {
+            await _store.MutateAsync(s =>
+            {
+                if (s.CompleteCareer is not null && System.Text.Json.JsonSerializer.Serialize(s.CompleteCareer.Transcript) != _originalTarget)
+                    throw new InvalidOperationException("The career changed during import review. Reopen the import against the latest transcript.");
+                s.SaveReviewedImport(_target, _preview.Incoming);
+            });
+        }
+        catch (InvalidOperationException ex) { SourceName = ex.Message; return; }
         OnApplied?.Invoke();
     }
 
@@ -93,7 +104,16 @@ public sealed partial class ImportReviewPageViewModel : ViewModelBase
         foreach (var p in _preview.NewProjects) p.IsAccepted = true;
 
         ResumeDocumentMerger.ApplyPreview(_target, _preview);
-        await _store.MutateAsync(s => s.AddOrReplaceResume(_target, select: true));
+        try
+        {
+            await _store.MutateAsync(s =>
+            {
+                if (s.CompleteCareer is not null && System.Text.Json.JsonSerializer.Serialize(s.CompleteCareer.Transcript) != _originalTarget)
+                    throw new InvalidOperationException("The career changed during import review. Reopen the import against the latest transcript.");
+                s.SaveReviewedImport(_target, _preview.Incoming);
+            });
+        }
+        catch (InvalidOperationException ex) { SourceName = ex.Message; return; }
         OnApplied?.Invoke();
     }
 

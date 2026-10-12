@@ -7,6 +7,10 @@ namespace lucidRESUME.Core.Models.Resume;
 public sealed class ResumeDocument
 {
     public Guid ResumeId { get; set; }
+
+    /// <summary>Transient source snapshots for reviewed matching of a merged view; never exported or persisted.</summary>
+    [JsonIgnore] public IReadOnlyList<ResumeDocument> AggregateEvidenceSources { get; set; } = [];
+    [JsonIgnore] public IReadOnlyDictionary<Guid, Guid> AggregateRoleIds { get; set; } = new Dictionary<Guid, Guid>();
     public string FileName { get; set; } = "";
     public string ContentType { get; set; } = "";
     public long FileSizeBytes { get; set; }

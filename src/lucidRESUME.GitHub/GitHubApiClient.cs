@@ -66,7 +66,10 @@ public sealed class GitHubApiClient
         return allRepos;
     }
 
-    public async Task<string?> GetRepoReadmeAsync(string owner, string repo, CancellationToken ct)
+    public async Task<string?> GetRepoReadmeAsync(string owner, string repo, CancellationToken ct) =>
+        (await GetRepoReadmeSnapshotAsync(owner, repo, ct))?.Markdown;
+
+    public async Task<GitHubReadmeSnapshot?> GetRepoReadmeSnapshotAsync(string owner, string repo, CancellationToken ct)
     {
         try
         {
@@ -77,11 +80,15 @@ public sealed class GitHubApiClient
             {
                 var base64 = content.GetString()?.Replace("\n", "");
                 if (base64 != null)
-                    return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+                    return new GitHubReadmeSnapshot(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64)),
+                        doc.RootElement.TryGetProperty("html_url", out var uri) ? uri.GetString() : null,
+                        doc.RootElement.TryGetProperty("sha", out var sha) ? sha.GetString() : null);
             }
         }
         catch (OperationCanceledException) { throw; }
-        catch (Exception) { /* no README, bad base64, etc. */ }
+        catch (GitHubRateLimitException) { throw; }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound) { }
+        catch (FormatException) { }
         return null;
     }
 
@@ -90,6 +97,24 @@ public sealed class GitHubApiClient
         var response = await GetAsync($"repos/{owner}/{repo}/languages", ct);
         return (await response.Content.ReadFromJsonAsync<Dictionary<string, long>>(ct))
                ?? new Dictionary<string, long>();
+    }
+
+    public async Task<RepositoryContribution> GetRepositoryContributionAsync(
+        string owner, string repo, string candidate, CancellationToken ct)
+    {
+        var contributors = new List<GitHubContributor>();
+        const int maximumPages = 10;
+        for (var page = 1; page <= maximumPages; page++)
+        {
+            EnsureBudget();
+            using var response = await GetAsync($"repos/{owner}/{repo}/contributors?anon=1&per_page=100&page={page}", ct);
+            if (response.StatusCode == HttpStatusCode.NoContent)
+                return RepositoryContribution.Assess(candidate, contributors, complete: true);
+            var items = await response.Content.ReadFromJsonAsync<List<GitHubContributor>>(ct) ?? [];
+            contributors.AddRange(items);
+            if (items.Count < 100) return RepositoryContribution.Assess(candidate, contributors, complete: true);
+        }
+        return RepositoryContribution.Assess(candidate, contributors, complete: false);
     }
 
     public async Task<GitHubTree> GetRepoTreeAsync(
@@ -130,3 +155,5 @@ public sealed class GitHubApiClient
         return response;
     }
 }
+
+public sealed record GitHubReadmeSnapshot(string Markdown, string? SourceUri, string? BlobSha);

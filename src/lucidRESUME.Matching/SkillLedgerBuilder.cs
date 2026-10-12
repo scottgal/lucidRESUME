@@ -9,7 +9,7 @@ namespace lucidRESUME.Matching;
 /// <summary>
 /// Builds a SkillLedger from a ResumeDocument by scanning all sections
 /// and cross-referencing skills with experience date ranges.
-/// Uses embeddings for semantic skill matching (e.g., "K8s" ≈ "Kubernetes").
+/// Uses explicit skill names and audited synonyms to attribute role evidence.
 /// </summary>
 public sealed class SkillLedgerBuilder
 {
@@ -24,11 +24,16 @@ public sealed class SkillLedgerBuilder
         _taxonomy = taxonomy;
     }
 
-    public async Task<SkillLedger> BuildAsync(ResumeDocument resume, CancellationToken ct = default)
+    public Task<SkillLedger> BuildAsync(ResumeDocument resume, CancellationToken ct = default)
     {
+        if (resume.ContentType == Core.Persistence.CompleteCareerRecord.ContentType)
+            return Task.FromResult(BuildFromCompleteTranscript(resume));
+        if (resume.AggregateEvidenceSources.Count > 0)
+            return BuildAggregateAsync(resume, ct);
         if (!string.IsNullOrWhiteSpace(resume.JobMlSource))
-            return BuildFromReviewedJobMl(resume);
+            return Task.FromResult(BuildFromReviewedJobMl(resume));
 
+        ct.ThrowIfCancellationRequested();
         var ledger = new SkillLedger();
         var entries = new Dictionary<string, SkillLedgerEntry>(StringComparer.OrdinalIgnoreCase);
         var evidenceLedger = Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
@@ -81,7 +86,7 @@ public sealed class SkillLedgerBuilder
             }
         }
 
-        // 1c. Discover skills from taxonomy centroid matching over full resume text
+        // 1c. Discover explicit vocabulary mentions over full resume text
         // This finds skills mentioned in prose that NER and the skills section missed
         if (_taxonomy is not null && resume.RawMarkdown is not null)
         {
@@ -110,14 +115,6 @@ public sealed class SkillLedgerBuilder
             }
         }
 
-        // Pre-embed all known skill names (from Skills section + NER + taxonomy) for semantic matching
-        var skillEmbeddings = new Dictionary<string, float[]>();
-        foreach (var skillName in entries.Keys.ToList())
-        {
-            try { skillEmbeddings[skillName] = await _embedder.EmbedAsync(skillName, ct); }
-            catch { /* embedding failure is non-fatal */ }
-        }
-
         // 2. Scan experience entries for skill mentions
         foreach (var exp in resume.Experience.Where(exp =>
                      !exp.ImportSources.Contains("LLM extraction", StringComparer.OrdinalIgnoreCase)))
@@ -139,7 +136,7 @@ public sealed class SkillLedgerBuilder
                 });
             }
 
-            // Achievement bullets - semantic + substring matching
+            // Achievement bullets - complete phrases and audited synonyms
             foreach (var achievement in exp.Achievements)
             {
                 foreach (var concept in SkillTaxonomy.FindCanonicalMentions(achievement))
@@ -159,8 +156,7 @@ public sealed class SkillLedgerBuilder
                             Confidence = 0.90
                         });
                 }
-                var matchedSkills = await FindSkillMentionsAsync(
-                    achievement, entries.Keys.ToList(), skillEmbeddings, ct);
+                var matchedSkills = FindSkillMentions(achievement, entries.Keys.ToList());
                 foreach (var (skillName, confidence) in matchedSkills)
                 {
                     var entry = GetOrCreate(entries, skillName);
@@ -182,8 +178,7 @@ public sealed class SkillLedgerBuilder
         // 3. Scan summary for skill mentions (semantic)
         if (!string.IsNullOrEmpty(resume.Personal.Summary))
         {
-            var summaryMatches = await FindSkillMentionsAsync(
-                resume.Personal.Summary, entries.Keys.ToList(), skillEmbeddings, ct);
+            var summaryMatches = FindSkillMentions(resume.Personal.Summary, entries.Keys.ToList());
             foreach (var (skillName, _) in summaryMatches)
             {
                 var entry = GetOrCreate(entries, skillName);
@@ -212,7 +207,62 @@ public sealed class SkillLedgerBuilder
             .ToList();
         ledger.Issues = issues;
 
-        return ledger;
+        return Task.FromResult(ledger);
+    }
+
+    // Concepts and their source bindings are persisted at ingestion/interview time.
+    // No imported-document parsing, vocabulary scanning or embedding is needed here.
+    private static SkillLedger BuildFromCompleteTranscript(ResumeDocument resume)
+    {
+        var entries = new Dictionary<string, SkillLedgerEntry>(StringComparer.OrdinalIgnoreCase);
+        var evidence = resume.EvidenceLedger.Evidence.ToDictionary(item => item.Id, StringComparer.OrdinalIgnoreCase);
+        var roles = resume.Experience.ToDictionary(role => $"experience:{role.Id:N}", StringComparer.OrdinalIgnoreCase);
+        foreach (var claim in resume.EvidenceLedger.Claims.Where(claim => claim.Review == "accepted"))
+        {
+            if (claim.EvidenceIds.Count == 0 || claim.EvidenceIds.Any(id => !evidence.ContainsKey(id))) continue;
+            roles.TryGetValue(claim.SubjectId ?? "", out var role);
+            foreach (var concept in claim.Concepts)
+            {
+                var entry = GetOrCreate(entries, concept);
+                foreach (var id in claim.EvidenceIds)
+                {
+                    var source = evidence[id];
+                    if (entry.Evidence.Any(item => item.ExperienceId == role?.Id &&
+                        item.SourceReference == id && item.SourceText == source.Text)) continue;
+                    entry.Evidence.Add(new SkillEvidence
+                    {
+                        ExperienceId = role?.Id, Company = role?.Company, JobTitle = role?.Title,
+                        SourceText = source.Text, SourceReference = id, SourceFingerprint = source.FastHash,
+                        StartDate = role?.StartDate, EndDate = role?.IsCurrent == true ? null : role?.EndDate,
+                        Source = EvidenceSource.JobMlClaim, Confidence = source.Confidence
+                    });
+                }
+            }
+        }
+        foreach (var entry in entries.Values) CalculateYears(entry);
+        return new SkillLedger { Entries = entries.Values.OrderByDescending(entry => entry.Strength).ToList() };
+    }
+
+    private async Task<SkillLedger> BuildAggregateAsync(ResumeDocument aggregate, CancellationToken ct)
+    {
+        var result = new SkillLedger();
+        foreach (var source in aggregate.AggregateEvidenceSources)
+        {
+            var ledger = await BuildAsync(source, ct);
+            foreach (var evidence in ledger.Entries.SelectMany(entry => entry.Evidence))
+                if (evidence.ExperienceId is { } originalId && aggregate.AggregateRoleIds.TryGetValue(originalId, out var roleId))
+                    evidence.ExperienceId = roleId;
+            MergeEvidence(result, ledger.Entries);
+            result.Issues.AddRange(ledger.Issues);
+        }
+        foreach (var entry in result.Entries)
+        {
+            entry.Evidence = entry.Evidence.GroupBy(evidence => (evidence.ExperienceId, evidence.Source, evidence.SourceText))
+                .Select(group => group.OrderByDescending(evidence => evidence.Confidence).First()).ToList();
+            CalculateYears(entry);
+        }
+        result.Entries = result.Entries.OrderByDescending(entry => entry.Strength).ToList();
+        return result;
     }
 
     private static SkillLedger BuildFromReviewedJobMl(ResumeDocument resume)
@@ -248,10 +298,18 @@ public sealed class SkillLedgerBuilder
                 continue;
 
             entities.TryGetValue(claim.Subject, out var entity);
-            var experience = entity is null
-                ? null
-                : resume.Experience.FirstOrDefault(e =>
-                    string.Equals(e.Company, entity.Name, StringComparison.OrdinalIgnoreCase));
+            var linkedRoles = resume.Experience.Where(role => claim.Evidence.Any(evidence =>
+                    (evidence.Id ?? "").Contains($"experience:{role.Id:N}:", StringComparison.OrdinalIgnoreCase) ||
+                    (evidence.Ref ?? "").Contains($"experience:{role.Id:N}:", StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+            var experience = linkedRoles.Count == 1 ? linkedRoles[0] : null;
+            if (experience is null && entity is not null)
+            {
+                var namedRoles = resume.Experience.Where(role =>
+                    string.Equals($"{role.Title} · {role.Company}", entity.Name, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(role.Company, entity.Name, StringComparison.OrdinalIgnoreCase)).ToList();
+                if (namedRoles.Count == 1) experience = namedRoles[0];
+            }
 
             foreach (var conceptId in claim.Concepts.Skills)
             {
@@ -414,45 +472,11 @@ public sealed class SkillLedgerBuilder
         return entry;
     }
 
-    /// <summary>
-    /// Hybrid skill matching: substring (fast, exact) + embedding similarity (semantic).
-    /// Returns matched skills with confidence scores.
-    /// "K8s" in text matches "Kubernetes" in skills via embedding similarity.
-    /// </summary>
-    private async Task<List<(string skill, double confidence)>> FindSkillMentionsAsync(
-        string text, List<string> knownSkills,
-        Dictionary<string, float[]> skillEmbeddings, CancellationToken ct)
-    {
-        var matches = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        var lower = text.ToLowerInvariant();
-
-        // Fast pass: exact substring matching (high confidence)
-        foreach (var skill in knownSkills.Where(s => s.Length >= 2))
-        {
-            if (lower.Contains(skill.ToLowerInvariant()))
-                matches.TryAdd(skill, 0.85);
-        }
-
-        // Semantic pass: embed the text and compare against skill embeddings
-        // Only for skills NOT already matched by substring
-        if (skillEmbeddings.Count > 0 && text.Length > 20)
-        {
-            try
-            {
-                var textEmb = await _embedder.EmbedAsync(text, ct);
-                foreach (var (skill, emb) in skillEmbeddings)
-                {
-                    if (matches.ContainsKey(skill)) continue; // already matched
-                    var sim = _embedder.CosineSimilarity(textEmb, emb);
-                    if (sim >= 0.75f) // semantic match threshold
-                        matches.TryAdd(skill, sim * 0.8); // slightly lower confidence than exact
-                }
-            }
-            catch { /* embedding failure non-fatal */ }
-        }
-
-        return matches.Select(kv => (kv.Key, kv.Value)).ToList();
-    }
+    // Only explicit names or audited synonyms can attribute dated role evidence.
+    private static List<(string skill, double confidence)> FindSkillMentions(
+        string text, List<string> knownSkills) => knownSkills
+        .Where(skill => SkillTaxonomy.MentionsEquivalent(text, skill))
+        .Select(skill => (skill, 0.85)).ToList();
 
     private static void CalculateYears(SkillLedgerEntry entry)
     {

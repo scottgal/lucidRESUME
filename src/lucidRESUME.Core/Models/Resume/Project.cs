@@ -6,6 +6,7 @@ public sealed class Project
     public string Name { get; set; } = "";
     public string? Description { get; set; }
     public List<string> Technologies { get; set; } = [];
+    public List<ProjectEvidencePassage> EvidencePassages { get; set; } = [];
     public string? Url { get; set; }
     public DateOnly? Date { get; set; }
 
@@ -17,4 +18,12 @@ public sealed class Project
     /// These values support retrieval and audit; they are not human prose or claims.
     /// </summary>
     public Dictionary<string, string> EvidenceMetadata { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+}
+
+public sealed class ProjectEvidencePassage
+{
+    public string Text { get; set; } = "";
+    public string? SourceUri { get; set; }
+    public string? Revision { get; set; }
+    public List<string> Skills { get; set; } = [];
 }

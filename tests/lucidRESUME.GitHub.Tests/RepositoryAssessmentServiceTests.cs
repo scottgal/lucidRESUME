@@ -77,6 +77,21 @@ public sealed class RepositoryAssessmentServiceTests
         Assert.Contains(assessment.Reasons, reason => reason.Contains("archived", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public void Main_contributor_ranks_above_a_small_contribution_to_the_same_project()
+    {
+        var repo = Repository("product", false, 20000, DateTimeOffset.UtcNow.AddYears(-2), DateTimeOffset.UtcNow);
+        var tree = Tree("src/App.csproj", "tests/AppTests.cs", ".github/workflows/ci.yml");
+        var main = RepositoryContribution.Assess("alex", [new GitHubContributor { Login = "alex", Contributions = 1000 },
+            new GitHubContributor { Login = "other", Contributions = 5 }], true);
+        var minor = RepositoryContribution.Assess("other", [new GitHubContributor { Login = "alex", Contributions = 1000 },
+            new GitHubContributor { Login = "other", Contributions = 5 }], true);
+        var primary = RepositoryAssessmentService.Assess(repo, tree, true, 8, contribution: main).Assessment;
+        var secondary = RepositoryAssessmentService.Assess(repo, tree, true, 8, contribution: minor).Assessment;
+        Assert.True(primary.EvidenceStrength > secondary.EvidenceStrength);
+        Assert.Contains(primary.Reasons, reason => reason.Contains("not quality or years"));
+    }
+
     private static GitHubRepo Repository(string name, bool fork, int size,
         DateTimeOffset created, DateTimeOffset pushed) => new()
         {

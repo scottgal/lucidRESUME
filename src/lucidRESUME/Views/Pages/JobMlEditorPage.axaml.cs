@@ -57,7 +57,7 @@ public partial class JobMlEditorPage : UserControl
             EvidenceList.SelectedItem = item;
             if (selectHuman && item.SourceStart >= 0)
             {
-                HumanTabs.SelectedIndex = 0;
+                HumanTabs.SelectedIndex = 1;
                 SelectRange(HumanEditor, item.SourceStart, item.SourceLength);
             }
             if (selectJobMl && item.JobMlStart >= 0)

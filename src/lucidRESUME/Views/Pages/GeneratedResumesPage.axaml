@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:vm="using:lucidRESUME.ViewModels.Pages" xmlns:model="using:lucidRESUME.Core.Models.Resume"
+ xmlns:export="using:lucidRESUME.Export" xmlns:controls="using:lucidRESUME.Views.Controls"
+ x:Class="lucidRESUME.Views.Pages.GeneratedResumesPage" x:DataType="vm:GeneratedResumesPageViewModel">
+ <Grid RowDefinitions="Auto,Auto,*" Margin="16" RowSpacing="8">
+  <StackPanel Orientation="Horizontal" Spacing="12">
+   <TextBlock Text="Generated resumes" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+   <Button x:Name="ReloadArchiveButton" Content="Refresh" Command="{Binding ReloadCommand}"/>
+   <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Width="100"/>
+  </StackPanel>
+  <StackPanel Grid.Row="1" Spacing="4">
+   <TextBlock Text="{Binding Status}" TextWrapping="Wrap" FontSize="11"/>
+   <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource LrAccentRedBrush}" TextWrapping="Wrap"/>
+  </StackPanel>
+  <Grid Grid.Row="2" ColumnDefinitions="180,8,*,8,240">
+   <ListBox x:Name="GeneratedResumeList" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry}">
+    <ListBox.ItemTemplate><DataTemplate x:DataType="model:GeneratedResume">
+     <StackPanel Spacing="4" Margin="4,6"><TextBlock Text="{Binding Label}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+      <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" FontSize="10"/>
+     </StackPanel>
+    </DataTemplate></ListBox.ItemTemplate>
+   </ListBox>
+   <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto,Auto" RowSpacing="8" IsVisible="{Binding HasSelection}">
+    <WrapPanel>
+     <Button x:Name="PreviewArchivedPdf" Content="PDF preview" Command="{Binding SetFormatCommand}" CommandParameter="PDF" Margin="0,0,6,4"/>
+     <Button x:Name="PreviewArchivedWord" Content="Word preview" Command="{Binding SetFormatCommand}" CommandParameter="Word" Margin="0,0,6,4"/>
+    </WrapPanel>
+    <TabControl Grid.Row="1" FontSize="12">
+     <TabItem FontSize="12" Header="Rendered pages">
+      <Border Background="#3A3A40" Padding="8"><ScrollViewer HorizontalScrollBarVisibility="Auto"><Image x:Name="ArchivedPageImage" Width="{Binding PreviewWidth}" Source="{Binding CurrentPageImage}" Stretch="Uniform" VerticalAlignment="Top"/></ScrollViewer></Border>
+     </TabItem>
+     <TabItem FontSize="12" Header="Text and citations">
+      <controls:MarkdownViewer x:Name="ArchivedResumeText" Markdown="{Binding Markdown}" LinkCommand="{Binding FollowCitationCommand}"/>
+     </TabItem>
+     <TabItem FontSize="12" Header="Review notes"><ScrollViewer><TextBlock Text="{Binding Warnings}" TextWrapping="Wrap"/></ScrollViewer></TabItem>
+    </TabControl>
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+     <Button Content="−" Command="{Binding ZoomOutCommand}"/>
+     <Button Content="+" Command="{Binding ZoomInCommand}"/>
+     <Button Content="‹" Command="{Binding PreviousPageCommand}"/>
+     <TextBlock VerticalAlignment="Center"><Run Text="{Binding PreviewFormat}"/><Run Text="  "/><Run Text="{Binding PageNumber}"/><Run Text=" / "/><Run Text="{Binding PageCount}"/></TextBlock>
+     <Button Content="›" Command="{Binding NextPageCommand}"/>
+    </StackPanel>
+    <WrapPanel Grid.Row="3">
+     <Button Content="Save Word…" Command="{Binding ExportCommand}" CommandParameter="docx" Margin="0,0,6,4"/>
+     <Button Content="Save PDF…" Command="{Binding ExportCommand}" CommandParameter="pdf" Margin="0,0,6,4"/>
+     <Button Content="Save JobML…" Command="{Binding ExportCommand}" CommandParameter="jobml" Margin="0,0,6,4"/>
+    </WrapPanel>
+   </Grid>
+   <Grid Grid.Column="4" RowDefinitions="Auto,160,Auto,*" RowSpacing="6" IsVisible="{Binding HasSelection}">
+    <TextBlock Text="JobML evidence" FontWeight="Bold" FontSize="15"/>
+    <ListBox x:Name="ArchivedEvidenceList" Grid.Row="1" ItemsSource="{Binding Evidence}" SelectedItem="{Binding SelectedEvidence}">
+     <ListBox.ItemTemplate><DataTemplate x:DataType="export:ArchivedEvidence"><TextBlock Text="{Binding Label}" TextWrapping="Wrap" FontSize="11"/></DataTemplate></ListBox.ItemTemplate>
+    </ListBox>
+    <TextBlock Grid.Row="2" Text="Original evidence saved with this version" FontSize="10" TextWrapping="Wrap"/>
+    <controls:MarkdownViewer x:Name="ArchivedEvidenceText" Grid.Row="3" Markdown="{Binding EvidenceMarkdown}"/>
+   </Grid>
+  </Grid>
+ </Grid>
+</UserControl>

@@ -43,10 +43,10 @@ public static class JdFieldFuser
             switch (fieldType)
             {
                 case "title":
-                    result.Title = fused.FirstOrDefault();
+                    result.Title = fused.FirstOrDefault(candidate => candidate.Sources.Contains("structural")) ?? fused.FirstOrDefault();
                     break;
                 case "company":
-                    result.Company = fused.FirstOrDefault();
+                    result.Company = fused.FirstOrDefault(candidate => candidate.Sources.Contains("structural")) ?? fused.FirstOrDefault();
                     break;
                 case "location":
                     result.Location = fused.FirstOrDefault();

@@ -45,7 +45,7 @@ Local-first desktop app. Zero external services required by default. All user da
 
 ### Dependency Rule
 
-Everything depends inward on `Core`. `Core` depends only on `Microsoft.Data.Sqlite` and `sqlite-vec`. Never add outward dependencies from Core.
+Everything depends inward on `Core`. `Core` references the independent `JobML` interchange model/parser project, `Microsoft.Data.Sqlite` and `sqlite-vec`. Keep service, provider and UI dependencies out of Core.
 
 ```
 lucidRESUME (Avalonia app shell - DI wiring, Views, ViewModels)
@@ -62,6 +62,22 @@ lucidRESUME (Avalonia app shell - DI wiring, Views, ViewModels)
   ├── Avalonia.UITesting  UI automation (REPL, MCP, scripts, ImportFile, PasteJob)
   └── Core           Domain models, interfaces, persistence (SQLite + sqlite-vec)
 ```
+
+### Complete career and generated archives
+
+`AppState.CompleteCareer` is the authoritative persisted transcript. Reconcile
+imports and overrides at save time; generation and matching must read the saved
+career rather than rebuild from imported resumes. Accepted concepts establish
+skill coverage. Embeddings are derived retrieval aids and cannot satisfy a required
+skill by similarity alone. GitHub README/technology nominations require review,
+and project age must not become personal skill-years.
+
+Full career JobML preserves claims, sources, review states, semantic indexes and
+raw role interviews. Publish reviewed prose back with revision checks. Generated
+resumes retain frozen evidence and actual DOCX/PDF exports in a separate archive;
+they must not automatically become new input evidence. Derived reusable prose is
+validated against its current source and bindings on every cache hit.
+See [complete career workflow](docs/complete-career-workflow.md).
 
 ### MVVM Pattern
 

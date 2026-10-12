@@ -84,14 +84,16 @@ xattr -dr com.apple.quarantine ./lucidRESUME.app
 
 ### Unified Candidate Document
 
-All imports merge into a **single candidate document**. Whether you import a DOCX resume, a LinkedIn archive, or GitHub repos, the data is merged using semantic matching (embedding cosine similarity):
+Reviewed imports update a **saved complete career record**, separate from original
+source files and generated resumes. Roles, skills, projects and evidence are
+composed and deduplicated at save time. Generation and matching read this record;
+they do not reconstruct your career from every imported resume for each job.
 
-- **Experience**: matched by company name + date overlap
-- **Skills**: matched by name (handles aliases like "K8s" ≈ "Kubernetes")
-- **Education**: matched by institution
-- **Projects**: matched by name
-
-Each element tracks which imports contributed to it (e.g. "LinkedIn + executive-resume.docx").
+Existing installations compose their legacy imports once when the updated app
+loads the data. Malformed roles remain in the original source archives, and invalid
+legacy JobML produces review warnings. Removing an import archive does not silently
+remove facts already incorporated into the career. Review or correct those facts
+in the career itself.
 
 ### Import Review
 
@@ -193,12 +195,19 @@ The editor has three linked areas:
 Select a link card to highlight both the supporting prose and its JobML reference.
 Moving the caret through linked prose or a JobML reference selects the other side.
 
-After an imported resume is opened in JobML, **Document** is selected by default.
-The template selector changes typography, spacing, and pagination. Editing prose
-waits briefly, exports the current Markdown to DOCX, and renders its pages with
-Morph. This preview follows the current editor text; it is not a frozen image of
-the originally imported file. Template rendering never reruns extraction or asks
-an LLM to reinterpret the resume.
+Opening **JobML Editor** loads the complete career: prose, claims, sources, skill
+concepts, review decisions and the semantic index. **Markdown** is the default
+preview. Choose **Document** to request the Word-layout preview; rendering is
+performed on demand rather than on every editor load. Paragraphs with JobML claim
+anchors are visible in the Markdown preview.
+
+**Publish** writes reviewed achievement and summary edits back to the career,
+retaining original imports. Use dedicated profile and role editors for structural
+changes. If another action has changed the career, reload before publishing; stale
+edits are blocked. The full JobML transcript extension also retains source narrative
+and role interview answers. Retained material is not automatically accepted evidence.
+
+![Complete career in the JobML editor](../../../docs/screenshots/complete-career-editor.png)
 
 ### Extracting and reviewing links
 
@@ -232,8 +241,8 @@ attribution are reviewed.
 
 An AI provider may offer a clearly labelled draft or sample during an explicit
 authoring step. That output is not accepted prose and does not enter the ledger
-as fact. You must review, edit, and accept it. Projection and export never ask a
-model to make the text look human or to invent missing coverage.
+as fact. You must review, edit, and accept it. Optional editing may improve selected wording, but projection and export never
+ask a model to invent missing coverage.
 
 The saved source artifact contains normal Markdown followed by one fenced `jobml`
 block. Published Markdown, Word, and PDF
@@ -326,7 +335,7 @@ In Hiring mode:
 The Jobs page shows all saved job descriptions with match scores. Each job card displays:
 
 - **Company** and **title**
-- **Match score** - overall fit percentage
+- **Match score** - semantic evidence coverage; not overall fit or eligibility
 - **Required coverage** - what percentage of required skills you match
 - **Preferred coverage** - what percentage of nice-to-haves you match
 - **Salary** (if detected)
@@ -334,11 +343,11 @@ The Jobs page shows all saved job descriptions with match scores. Each job card 
 
 ### Match Scoring
 
-Matching uses a 3-layer approach:
-
-1. **Substring match** - exact or partial text match (fast, high precision)
-2. **Embedding similarity** - semantic matching via cosine similarity (catches "NoSQL" matching "MongoDB")
-3. **Achievement-text search** - keyword search in your actual bullet points (catches "payment systems" when you have Stripe experience)
+Matching reads accepted skills and evidence from the saved complete career.
+Exact concepts and audited equivalents establish requirement coverage. Embedding
+similarity retrieves related evidence and adjacent skills for review, but a nearby
+vector does not establish a must-have skill. Docker evidence alone does not prove
+Kubernetes experience. Review gaps separately from the displayed percentage.
 
 <!-- help:jobs-career-plan -->
 ### Career Plan Panel
@@ -457,7 +466,9 @@ The career planner generates job search queries from your skill communities:
 2. Navigate to **Project**
 3. The system queries your skill ledger for evidence matching the JD
 4. **Semantic compression** selects only relevant roles and bullets
-5. Markdown and JobML are rendered together from those selected ledger claim IDs
+5. Review any gap interview, then generate from the available evidence
+6. Optional source-bound editing tightens prose; rejected edits retain source wording
+7. Markdown and JobML render from the selected claim IDs and the result is saved to **Generated resumes**
 
 > **Important:** Project is a projection, not a generation step. Evidence extraction
 > happens when sources are ingested or explicitly reviewed. Rendering never asks a
@@ -468,6 +479,32 @@ If you ask an AI provider for a draft or sample, the result remains an authoring
 suggestion. Review and edit it as human prose, then reconcile its evidence before
 accepting it. The desktop **Project** renderer never re-infers evidence while it
 renders a role-specific document.
+
+### Fill gaps in the complete transcript
+
+**Build complete transcript** works without a job description. For each role it
+asks about scope, delivery, decisions/tools, outcomes, leadership and reliability.
+Describe your context, personal contribution and outcome, then review the prose
+and named skills before saving. Raw answers and reviewed prose stay attached to
+that role. Completed topics survive later imports. Unknown details may stay blank;
+you can skip a question or generate with current evidence.
+
+### Reopen generated resumes
+
+Open **Generated resumes** to select a saved version. **PDF preview** shows the
+saved PDF; **Word preview** renders its saved DOCX. Use the page and zoom controls,
+or **Text and citations** to inspect prose. Select a numbered evidence reference
+to see the claim and its original source excerpt. The archive retains the job,
+frozen career evidence and exported documents; reopening does not regenerate them.
+Generated resumes never automatically become new career evidence. Word and PDF
+pagination can differ.
+
+![Generated PDF and evidence panel](../../../docs/screenshots/generated-resume-pdf.png)
+
+Repeated generation can reuse validated prose accounts linked to source facts,
+skills and evidence. Changed sources, instructions or model identity invalidate
+affected variants. Fresh local-model prose editing can still take several minutes;
+pass and batch progress shows where time is spent.
 
 ### Complete resume and web compiler
 
@@ -657,7 +694,8 @@ Choose **System**, **Light**, or **Dark** from the dropdown at the top of the Pr
 Enter your GitHub username and click **Import** to extract searchable evidence from your public repos:
 - Languages reported by GitHub Linguist, weighted by code bytes
 - Topics from repo metadata
-- README analysis via lucidRAG (BERT mode, no LLM needed)
+- README passage extraction for imported repositories, with optional bounded BERT summaries
+- Observed candidate commit count, share and rank, plus completeness and main-contributor status
 - Per-project profiles with technologies, skills, and time ranges
 - Original/fork status, repository age, activity span and recency
 - A bounded repository-tree audit for tests, CI, release workflows, package
@@ -667,6 +705,12 @@ Archived and small repositories remain visible because they can be useful
 historical or experimental evidence. Forks and repositories below the evidence
 threshold do not contribute personal skills or selectable projects by default.
 Each assessment records when it was observed.
+
+Imports update the complete career rather than only the selected resume. README
+and repository technology candidates require review before satisfying requirements.
+Zero or unknown candidate contributions remain observation-only. Main-contributor
+status stays unknown when contributor pagination is incomplete. Project age does
+not become your personal years of experience.
 
 Run the audit again to refresh these observations. lucidRESUME keeps stable
 provider-derived IDs and updates matching repository records in place.
@@ -762,8 +806,9 @@ The Profile page includes an aspect voting system for fine-tuning:
 
 - Check that skills are being extracted correctly on the My CV page
 - Import additional resume variants to enrich the skill ledger
-- The matcher uses a 0.58 similarity threshold - some legitimate matches may be below this
-- Achievement-text fallback catches skills mentioned in bullets but not in the Skills section
+- Review pending claims and their evidence in the complete JobML record
+- Use role interviews to add specific, supported accounts of missing skills
+- Related embedding results remain adjacent gaps until actual evidence supports the required skill
 
 ### Email scanning not finding matches
 

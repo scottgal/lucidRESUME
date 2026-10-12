@@ -182,21 +182,19 @@ SkillLedgerEntry
 | Summary | Mentioned in the summary/profile | 0.60 |
 | NerExtracted | Detected by NER model | varies |
 
-### Semantic Skill Matching
+### Accepted skill coverage and semantic retrieval
 
-Skills in achievement bullets are matched both by substring AND embedding similarity:
+For the complete career, `SkillLedgerBuilder` reads accepted persisted claims and
+skill concepts with original evidence bindings. It does not scan imported resumes
+or use embedding similarity to create personal skill evidence at generation time.
+Audited equivalences can establish aliases; related technologies remain adjacent
+skills. Docker does not establish Kubernetes, and one .NET version does not establish
+experience with another version merely because their vectors are close.
 
-```
-Achievement: "Deployed Docker Compose for container orchestration"
-Skills list includes: "Kubernetes"
-
-Substring match: "Kubernetes" not in text → miss
-Embedding match: embed("Deployed Docker Compose for container orchestration")
-                  vs embed("Kubernetes")
-                  cosine = 0.78 → match at 0.78 × 0.8 = 0.62 confidence
-```
-
-This catches: "K8s" ↔ "Kubernetes", ".NET Framework" ↔ ".NET 8", "Stripe Connect" ↔ "Payment systems"
+Embeddings retrieve related passages and projects and support gap analysis. The
+saved `CareerSemanticIndex` records model ID, digest, normalization and concept
+vectors; reuse requires the same embedding space. Role centroids are derived from
+available vectors. Derived semantic artefacts never become accepted claims.
 
 ### Consistency Checking
 
@@ -220,7 +218,9 @@ The importer reads repository metadata, Linguist language byte totals, topics,
 README content, and dates. For a bounded number of repositories it also inspects
 a revision-pinned recursive tree for tests, workflows, release automation,
 package manifests, documentation, and browser-extension structure. README
-extraction uses lucidRAG BERT summaries plus the shared skill taxonomy. The
+passages are scanned directly with the shared taxonomy for all imported repositories;
+optional lucidRAG BERT summaries are bounded separately. Contributor observations
+record candidate commits, share, rank, completeness and main-contributor status. The
 output contributes candidate ledger evidence and searchable project profiles.
 
 These signals are not interchangeable:
@@ -311,13 +311,14 @@ Louvain algorithm clusters skills into natural neighborhoods:
 
 ### Resume ↔ JD Matching
 
-Both sides produce skill ledgers. Matching is multi-vector cosine similarity:
+Both sides produce skill ledgers. Accepted concepts and audited equivalences
+determine coverage; cosine similarity can retrieve adjacent evidence:
 
 ```
 Resume Ledger          JD Ledger
 [C# : 0.85]          [C# : Required]     → cosine = 0.95 ✓
 [Azure : 0.72]        [AWS : Required]     → cosine = 0.61 ✗ (near miss)
-[Docker : 0.60]       [Kubernetes : Req]   → cosine = 0.78 ✓
+[Docker : 0.60]       [Kubernetes : Req]   → adjacent; requirement remains a gap
 [??? : 0.00]          [Payment : Required] → cosine = 0.00 ✗ (gap)
 
 Semantic Evidence Coverage = (required_coverage × 0.7) + (preferred_coverage × 0.3)
@@ -333,7 +334,7 @@ For each unmatched skill, classifies the gap:
 
 | Gap Type | What it means | Effort | Example |
 |----------|---------------|--------|---------|
-| **PresentationGap** | You have adjacent skill, surface it differently | Low | "Docker Compose" → show for "Kubernetes" |
+| **PresentationGap** | Existing evidence needs clearer presentation | Low | Existing Kubernetes work needs a clearer account |
 | **WeakEvidence** | You have it but thin evidence | Low | Add specific K8s achievements |
 | **AdjacentSkill** | Related skills in same graph community | Medium | Side project with the target skill |
 | **TrueGap** | Not in your skill graph at all | High | Dedicated learning needed |
@@ -391,8 +392,12 @@ interfaces. `Tailoring` is retained as a configuration and compatibility name.
 Providers may propose ingestion candidates or clearly labelled authoring drafts.
 Their output is never accepted automatically.
 
-The projection and export path does not call an AI provider. It reads reviewed
-ledger records and approved human prose. The product does not score prose for
+The planner selects reviewed ledger records and approved human prose deterministically.
+An optional source-bound editing stage calls a configured provider to tighten selected
+passages. Validation rejects unsupported edits and retains the source wording.
+Local reusable prose accounts bind text to skills, source fingerprints, evidence IDs,
+model identity, editing instructions and the applicable job brief. Cache hits are
+validated again; they never establish skill coverage. The product does not score prose for
 whether it appears machine-written and does not offer detector-evasion rewriting.
 
 ---
@@ -427,7 +432,8 @@ Single SQLite database (`data.db`) in user's AppData:
 
 | Table | Content |
 |-------|---------|
-| `resume` | JSON blob - singleton |
+| `resumes` | Original imported source records |
+| `generated_resumes` | Saved projection metadata and archive references |
 | `profile` | JSON blob - singleton |
 | `jobs` | JSON blobs - one per job |
 | `applications` | JSON blobs - one per tracked application |
@@ -438,6 +444,19 @@ Single SQLite database (`data.db`) in user's AppData:
 | `app_meta` | Key-value settings |
 
 All mutations via `MutateAsync(Action<AppState>)` under `SemaphoreSlim` lock.
+
+`app_meta.complete_career` stores `CompleteCareerRecord`: the definitive transcript,
+import/override revisions, review warnings and derived semantic index. SQLite and
+JSON stores bootstrap legacy imports once and reconcile changed imports at save
+time. Removing an input archive does not retract accepted career facts. The full
+JobML projection is materialised per career revision. Reviewed prose publication
+uses revision checks to prevent stale overwrites.
+
+Generated archives are separate from inputs and retain frozen job/source/resume
+snapshots, DOCX, PDF, JobML, evidence JSON and rendered pages. Files are stored under
+`generated-resumes`; derived wording is stored under `prose-library` in the app data
+directory. See [complete career workflow](complete-career-workflow.md).
+
 
 ---
 
@@ -455,7 +474,8 @@ All mutations via `MutateAsync(Action<AppState>)` under `SemaphoreSlim` lock.
 2. Skill Ledger built
    │
    ├─→ Skills extracted from Skills section, Technologies, Achievements
-   ├─→ Semantic matching links skills to experience date ranges
+   ├─→ Reviewed imports reconcile into the saved complete career
+   ├─→ Accepted claim concepts retain original role/source bindings
    ├─→ Years calculated, strength scored, consistency checked
    │
    ▼
@@ -467,7 +487,8 @@ All mutations via `MutateAsync(Action<AppState>)` under `SemaphoreSlim` lock.
    ▼
 4. Matching
    │
-   ├─→ Multi-vector cosine similarity between ledgers
+   ├─→ Accepted concepts and audited equivalents determine coverage
+   ├─→ Semantic retrieval identifies related evidence and honest adjacent gaps
    ├─→ Career plan: gap type, effort, impact per unmatched skill
    ├─→ Skill graph updated, communities re-detected
    │
@@ -513,7 +534,7 @@ lucidRESUME (Avalonia UI)
     ├── Export ──→ Core
     ├── Collabora (document tools)
     ├── Avalonia.UITesting ──→ (Avalonia)
-    └── Core ──→ Microsoft.Data.Sqlite, sqlite-vec
+    └── Core ──→ JobML (independent interchange models), Microsoft.Data.Sqlite, sqlite-vec
 ```
 
 **Rule:** Everything depends inward on `Core`. `Core` has minimal external dependencies. Services are registered via DI extension methods (`AddXxx(config)`).
@@ -544,7 +565,7 @@ User secrets (`dotnet user-secrets`) for API keys. Environment variables with `L
 
 ## 11. Testing
 
-371 tests across 11 projects. Tests favour direct service instantiation and fixed
+597 tests across 12 projects at the 2026-10-12 validation checkpoint. Tests favour direct service instantiation and fixed
 fixtures, with fake HTTP handlers where a provider boundary must be exercised.
 
 | Project | What it tests |
@@ -559,6 +580,7 @@ fixtures, with fake HTTP handlers where a provider boundary must be exercised.
 | JobML.Tests | Validation, drift, reversible links, and cJobML projection |
 | Compiler.Tests | Deterministic evidence selection and projection orchestration |
 | Web.Tests | ASP.NET Core endpoint and compiler control |
+| App.Tests | Complete-career editor, role interviews and native Markdown rendering |
 | Avalonia.UITesting.Tests | Locators, input, scripts, screenshots, and UI assertions |
 
 ### UX Testing

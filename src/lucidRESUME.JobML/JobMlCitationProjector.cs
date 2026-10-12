@@ -34,13 +34,15 @@ public static class CJobMlProjector
                 resolution.Evidence.Any(item => item.State is not (EvidenceState.Valid or EvidenceState.External)))
                 throw new JobMlProjectionException(
                     $"Accepted claim '{claim.Id}' has changed, missing, or ambiguous evidence.");
-            var proseEvidence = claim.Evidence.FirstOrDefault(IsProseEvidence);
-            if (proseEvidence is not null && string.IsNullOrWhiteSpace(proseEvidence.Fingerprint?.Text))
-                throw new JobMlProjectionException(
-                    $"Accepted claim '{claim.Id}' has prose evidence without a drift fingerprint.");
-            if (string.IsNullOrWhiteSpace(proseEvidence?.Ref) ||
-                !index.TryGet(proseEvidence.Ref, out var passage))
-                continue;
+            var prosePassages = new List<ProsePassage>();
+            foreach (var proseEvidence in claim.Evidence.Where(IsProseEvidence))
+            {
+                if (string.IsNullOrWhiteSpace(proseEvidence.Fingerprint?.Text))
+                    throw new JobMlProjectionException($"Accepted claim '{claim.Id}' has prose evidence without a drift fingerprint.");
+                if (!string.IsNullOrWhiteSpace(proseEvidence.Ref) && index.TryGet(proseEvidence.Ref, out var linkedPassage))
+                    prosePassages.Add(linkedPassage);
+            }
+            if (prosePassages.Count == 0) continue;
 
             var numbers = new List<int>();
             foreach (var evidence in claim.Evidence.Where(IsCompactReference))
@@ -58,8 +60,9 @@ public static class CJobMlProjector
             }
 
             if (numbers.Count > 0)
-                anchors.Add(new CJobMlAnchor(claim.Id, passage.Reference, passage.Text,
-                    passage.SourceStart, passage.SourceLength, numbers));
+                foreach (var passage in prosePassages.DistinctBy(passage => passage.Reference))
+                    anchors.Add(new CJobMlAnchor(claim.Id, passage.Reference, passage.Text,
+                        passage.SourceStart, passage.SourceLength, numbers));
         }
 
         var markdown = InsertCitations(file.Markdown, anchors);

@@ -4,13 +4,13 @@ namespace lucidRESUME.Compiler;
 
 public sealed class CompositionValidator
 {
-    private static readonly Regex Number = new(@"(?<![\w-])\d+(?:[.,]\d+)*(?:%|x|\+)?", RegexOptions.Compiled);
+    private static readonly Regex Number = new(@"(?<![\w-])\d+(?:[.,]\d+)*(?:%\+?|x|\+)?", RegexOptions.Compiled);
     private static readonly Regex Word = new(@"[\p{L}\p{N}][\p{L}\p{N}+#.-]{2,}", RegexOptions.Compiled);
     private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
         {
             "and", "the", "with", "from", "that", "this", "for", "into", "through", "role", "have",
             "must", "will", "your", "their", "our", "using", "across", "including", "alongside", "while",
-            "within", "between"
+            "within", "between", "building", "build", "system", "platform", "tool"
         };
 
     public IReadOnlyList<string> Validate(
@@ -37,11 +37,29 @@ public sealed class CompositionValidator
                 errors.Add($"Section '{block.SectionId}' changed the selected evidence identities.");
             if (string.IsNullOrWhiteSpace(block.Text))
                 errors.Add($"Section '{block.SectionId}' returned empty prose.");
+            if (Regex.IsMatch(block.Text, @"\b(led|lead|owned|directed)\b", RegexOptions.IgnoreCase) &&
+                !Regex.IsMatch(original.Text, @"\b(led|lead|owned|directed|headed|managed)\b", RegexOptions.IgnoreCase))
+                errors.Add($"Section '{block.SectionId}' introduced leadership or ownership not present in the source prose.");
+            // Conservative editorial gates. Ambiguous rewrites retain the accepted human source.
+            foreach (var qualifier in new[] { "not", "never", "planned", "proposed", "intended", "estimated", "approximately", "up to", "no longer", "pilot", "prototype", "past year", "last year", "past month", "last month" })
+                if (Regex.IsMatch(original.Text, @"\b" + qualifier + @"\b", RegexOptions.IgnoreCase) &&
+                    !Regex.IsMatch(block.Text, @"\b" + qualifier + @"\b", RegexOptions.IgnoreCase))
+                    errors.Add($"Section '{block.SectionId}' removed source qualifier '{qualifier}'.");
+            if (WordCount(original.Text) >= 8 && WordCount(block.Text) < (packet.Kind == "summary" ? 4 : 6))
+                errors.Add($"Section '{block.SectionId}' lost the substantive account and became a fragment.");
+            var originalContent = Words(original.Text);
+            if (packet.Kind != "summary" && originalContent.Count >= 8 &&
+                Words(block.Text).Intersect(originalContent).Count() < originalContent.Count * .25)
+                errors.Add($"Section '{block.SectionId}' dropped too much of the selected contribution.");
             var allowedNumbers = Number.Matches(original.Text).Select(x => CanonicalNumber(x.Value))
                 .ToHashSet(StringComparer.Ordinal);
             var introduced = Number.Matches(block.Text).Select(x => x.Value)
                 .Where(x => !allowedNumbers.Contains(CanonicalNumber(x))).Distinct();
             foreach (var value in introduced) errors.Add($"Section '{block.SectionId}' introduced numeric fact '{value}'.");
+            if (packet.Kind != "summary")
+                foreach (var value in allowedNumbers.Where(value =>
+                    !Number.Matches(block.Text).Any(number => CanonicalNumber(number.Value) == value)))
+                    errors.Add($"Section '{block.SectionId}' removed numeric fact '{value}'.");
             var selectedClaims = packet.Claims.Where(x => original.ClaimIds.Contains(x.Claim.Id, StringComparer.OrdinalIgnoreCase));
             var allowedFacts = Words(original.Text + " " + string.Join(' ', selectedClaims.SelectMany(x =>
                 x.Claim.Concepts.All.Append(x.Claim.Statement))));
@@ -90,7 +108,7 @@ public sealed class ResumeCompositionOrchestrator(
 {
     public async Task<(IReadOnlyList<CompositionBlock> Blocks, bool Used, string? Provider, IReadOnlyList<string> Warnings)>
         ComposeAsync(ProjectionManifest manifest, string jobDescription, CompilationOptions options,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, IProgress<string>? progress = null)
     {
         // The initial state is selected human prose, never model-authored text.
         var source = manifest.Sections.Select(packet => new CompositionBlock(
@@ -122,13 +140,20 @@ public sealed class ResumeCompositionOrchestrator(
         };
         var warnings = new List<string>();
         var acceptedPass = false;
+        var repairNotes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var pass in new[] { CompositionPass.Tighten, CompositionPass.HumanVoice })
         {
             try
             {
+                var passManifest = editableManifest with
+                {
+                    Sections = editableManifest.Sections.Select(section => repairNotes.TryGetValue(section.SectionId, out var note)
+                        ? section with { Intent = section.Intent + " Previous edit was rejected. Correct these specific errors while editing the immutable source: " + note }
+                        : section).ToList()
+                };
                 var draft = await provider.RunPassAsync(
-                    new CompositionPassRequest(pass, jobDescription, editableManifest, editableSource,
-                        current.Where(block => editableSectionIds.Contains(block.SectionId)).ToList()), cancellationToken);
+                    new CompositionPassRequest(pass, jobDescription, passManifest, editableSource,
+                        current.Where(block => editableSectionIds.Contains(block.SectionId)).ToList()) { Progress = progress }, cancellationToken);
                 var returned = draft.Blocks
                     .GroupBy(block => block.SectionId, StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
@@ -157,6 +182,7 @@ public sealed class ResumeCompositionOrchestrator(
                     if (errors.Count > 0)
                     {
                         next.Add(currentBlock);
+                        repairNotes[sourceBlock.SectionId] = string.Join(" ", errors);
                         warnings.Add($"Discarded {pass} edit for '{sourceBlock.SectionId}': {string.Join(" ", errors)}");
                         continue;
                     }
@@ -170,6 +196,7 @@ public sealed class ResumeCompositionOrchestrator(
                 acceptedPass |= acceptedSections > 0;
                 warnings.AddRange(draft.Warnings);
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
             catch (Exception ex)
             {
                 warnings.Add($"Discarded {pass} pass after provider failure: {ex.Message}");

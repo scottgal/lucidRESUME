@@ -22,10 +22,13 @@ internal sealed class ReadmeSkillExtractor
     /// Summarize a README and extract skills from it.
     /// Returns canonical skill names with confidence scores, plus a project summary.
     /// </summary>
-    public async Task<ReadmeExtractionResult> ExtractAsync(string markdown, string repoName, CancellationToken ct)
+    public async Task<ReadmeExtractionResult> ExtractAsync(string markdown, string repoName, CancellationToken ct, bool summarize = true)
     {
         var skills = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         string? summary = null;
+        // Always inspect the original README; summaries can omit the useful technology passages.
+        foreach (var skill in SkillTaxonomy.FindCanonicalMentions(markdown)) skills[skill] = 0.8;
+        if (!summarize) return new ReadmeExtractionResult(skills.Select(kv => (kv.Key, kv.Value)).ToList(), null);
 
         try
         {
@@ -66,8 +69,9 @@ internal sealed class ReadmeSkillExtractor
             ExtractSkillsFromText(skills, markdown, 0.5);
         }
 
+        // Summariser output can nominate skills, but a source mention must support each one.
         return new ReadmeExtractionResult(
-            skills.Select(kv => (kv.Key, kv.Value)).ToList(),
+            skills.Where(kv => SkillTaxonomy.MentionsEquivalent(markdown, kv.Key)).Select(kv => (kv.Key, kv.Value)).ToList(),
             summary);
     }
 

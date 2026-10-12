@@ -10,6 +10,7 @@ public sealed class GitHubProjectProfile
     public string? Description { get; init; }
     public string? Summary { get; init; }
     public string Url { get; init; } = "";
+    public RepositoryContribution Contribution { get; init; } = new();
     public int Stars { get; init; }
     public int SizeKb { get; init; }
     public bool IsFork { get; init; }

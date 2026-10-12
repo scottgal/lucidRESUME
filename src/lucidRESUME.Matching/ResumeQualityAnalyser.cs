@@ -210,8 +210,8 @@ public sealed partial class ResumeQualityAnalyser : IResumeQualityAnalyser
 
                 // Quantification
                 if (!QuantRx.IsMatch(bullet))
-                    findings.Add(new(section, FindingSeverity.Warning,
-                        "MISSING_QUANTITY", "No measurable result or number detected - add a metric if possible"));
+                    findings.Add(new(section, FindingSeverity.Info,
+                        "MISSING_QUANTITY", "No metric detected. A concrete qualitative outcome is valid; add numbers only when you can substantiate them"));
 
                 // Pronouns
                 if (PronounRx.IsMatch(bullet))

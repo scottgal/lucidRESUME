@@ -38,6 +38,14 @@ public partial class App : Application
         var resumePage = _provider.GetRequiredService<ResumePageViewModel>();
         jobsPage.NavigateTo = page => mainVm.NavigateCommand.Execute(page);
 
+        resumePage.OpenTranscriptBuilder = resume =>
+        {
+            var apply = _provider.GetRequiredService<ApplyPageViewModel>();
+            apply.SetContext(resume, null);
+            apply.BuildCompleteTranscriptCommand.Execute(null);
+            mainVm.NavigateCommand.Execute("Apply");
+        };
+
         // Wire import review: parse → preview → review page → apply/cancel → back to resume
         resumePage.ShowImportReview = (target, preview) =>
         {
@@ -105,6 +113,9 @@ public partial class App : Application
         services.AddSingleton<JobsPageViewModel>();
         services.AddSingleton<SearchPageViewModel>();
         services.AddSingleton<ApplyPageViewModel>();
+        services.AddSingleton<lucidRESUME.Export.GeneratedResumeArchive>();
+        services.AddSingleton<lucidRESUME.Export.CompleteCareerJobMlService>();
+        services.AddSingleton<GeneratedResumesPageViewModel>();
         services.AddSingleton(new Services.AiSettingsPath(aiSettingsPath));
         services.AddSingleton<ProfilePageViewModel>();
         services.AddSingleton<MyDataPageViewModel>();
