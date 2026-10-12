@@ -55,11 +55,12 @@ class Client:
                    LUCIDRESUME_Interview__Enabled='false',
                    LUCIDRESUME_Docling__Enabled='false')
         command = (['dotnet', str(app)] if app.suffix == '.dll' else [str(app)])
-        self.stderr = (output / 'client-stderr.log').open('w')
-        self.log = (output / 'client-stdout.log').open('w')
+        self.stderr = (output / 'client-stderr.log').open('w', encoding='utf-8')
+        self.log = (output / 'client-stdout.log').open('w', encoding='utf-8')
         self.proc = subprocess.Popen(command + ['--ux-mcp', '--output', str(output / 'screenshots')],
                                      cwd=REPO, env=env, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=self.stderr, text=True, bufsize=1)
+                                     stdout=subprocess.PIPE, stderr=self.stderr, text=True,
+                                     encoding='utf-8', bufsize=1)
         threading.Thread(target=self.read, daemon=True).start()
 
     def read(self):
@@ -161,7 +162,7 @@ def main():
             item.update(status='failed', error=str(error))
             print('FAIL', name, error, flush=True)
             try:
-                (output / (name + '-vm.txt')).write_text(client.call('ui_vm'))
+                (output / (name + '-vm.txt')).write_text(client.call('ui_vm'), encoding='utf-8')
                 client.shot(name + '-failure')
             except Exception:
                 pass
