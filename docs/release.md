@@ -57,8 +57,23 @@ xattr -dr com.apple.quarantine ~/Applications/lucidRESUME.app
 ```
 
 Do not disable Gatekeeper globally. The release workflow verifies the nested code
-signatures and runs the packaged app through the Avalonia UI smoke script on a
-matching macOS runner before upload.
+signatures after extracting the final archive and runs all native client workflows
+on matching Intel and Apple Silicon runners before upload. Neither Mac architecture
+may skip its launch check.
+
+The extracted launcher also runs `--storage-audit` from an unrelated working
+directory without developer library search paths. This uses the shipped SQLite
+provider and sqlite-vec extension to migrate synthetic JSON, save and reopen a
+database, search both vector dimensions, check integrity and release file handles.
+It only creates temporary synthetic data; it never opens the user's career database.
+For support diagnostics, run:
+
+```bash
+/path/to/lucidRESUME.app/Contents/MacOS/lucidRESUME --storage-audit
+```
+
+A successful result contains `"complete":true`; failure returns exit code 2 and
+the exception details. The workflow retains this JSON with the client screenshots.
 
 ## Creating A Release
 
@@ -102,9 +117,10 @@ python3 scripts/validate-release-client.py --output artifacts/native-e2e
 CI runs the offline CLI and native checks across its OS matrix, uploads evidence
 on failure, and checks the local web publish/compile/download round trip on Linux.
 Release source validation also runs the CLI and native checks before building
-archives. Compatible macOS archive runners test the signed `.app` launcher using
-the same native workflows. Cross-architecture builds retain asset/signature checks
-without claiming they were launched on incompatible hosts.
+archives. Both macOS archive runners extract the final archive, run the SQLite
+audit and test the signed `.app` launcher using the same native workflows. Other
+cross-architecture builds retain asset checks without claiming they were launched
+on incompatible hosts.
 
 Close the application before backing up the complete app data directory. Include
 `data.db`, `generated-resumes/` and `prose-library/`; a database-only backup cannot

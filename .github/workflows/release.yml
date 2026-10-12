@@ -73,9 +73,9 @@ jobs:
             rid: win-x64
           - os: windows-latest
             rid: win-arm64
-          - os: macos-latest
+          - os: macos-15-intel
             rid: osx-x64
-          - os: macos-latest
+          - os: macos-15
             rid: osx-arm64
           - os: ubuntu-24.04
             rid: linux-x64
@@ -222,29 +222,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate packaged macOS workflows
-        if: ${{ startsWith(matrix.rid, 'osx-') }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          host_arch="$(uname -m)"
-          if { [ "${{ matrix.rid }}" = "osx-arm64" ] && [ "$host_arch" != "arm64" ]; } || \
-             { [ "${{ matrix.rid }}" = "osx-x64" ] && [ "$host_arch" = "arm64" ]; }; then
-            echo "Skipping launch test for ${{ matrix.rid }} on $host_arch; bundle signature was still verified."
-            exit 0
-          fi
-          python3 scripts/validate-release-client.py \
-            --app artifacts/bundle/lucidRESUME.app/Contents/MacOS/lucidRESUME \
-            --output artifacts/packaged-e2e
-
-      - name: Upload packaged workflow evidence
-        if: always() && startsWith(matrix.rid, 'osx-')
-        uses: actions/upload-artifact@v7
-        with:
-          name: packaged-e2e-${{ matrix.rid }}
-          path: artifacts/packaged-e2e
-          if-no-files-found: warn
-
       - name: Create archive
         shell: pwsh
         run: |
@@ -280,6 +257,52 @@ jobs:
             tar -czf "artifacts/release/$name.tar.gz" -C "artifacts/release" $name
             Get-FileHash "artifacts/release/$name.tar.gz" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $name.tar.gz" } | Set-Content "artifacts/release/$name.tar.gz.sha256"
           }
+
+      - name: Validate extracted macOS archive and SQLite
+        if: startsWith(matrix.rid, 'osx-')
+        shell: bash
+        run: |
+          set -euo pipefail
+          rid="${{ matrix.rid }}"
+          expected_arch=x86_64
+          if [ "$rid" = osx-arm64 ]; then expected_arch=arm64; fi
+          test "$(uname -m)" = "$expected_arch"
+          name="lucidRESUME-${{ steps.version.outputs.VERSION }}-$rid"
+          extracted="$PWD/artifacts/extracted macOS"
+          mkdir -p "$extracted"
+          tar -xzf "artifacts/release/$name.tar.gz" -C "$extracted"
+          bundle="$extracted/$name/lucidRESUME.app"
+          launcher="$bundle/Contents/MacOS/lucidRESUME"
+          payload="$bundle/Contents/Resources/app"
+          codesign --verify --deep --strict --verbose=2 "$bundle"
+          for native_library in libe_sqlite3.dylib vec0.dylib; do
+            test -s "$payload/$native_library"
+            lipo -verify_arch "$expected_arch" "$payload/$native_library"
+            codesign --verify --strict --verbose=2 "$payload/$native_library"
+            otool -L "$payload/$native_library"
+          done
+          # Exercise the extracted launcher from an unrelated working directory,
+          # without developer library paths or an installed .NET runtime root.
+          report="$PWD/artifacts/storage-audit.json"
+          (
+            cd "$(mktemp -d)"
+            env -u DYLD_LIBRARY_PATH -u DYLD_FALLBACK_LIBRARY_PATH -u DOTNET_ROOT \
+              "$launcher" --storage-audit > "$report"
+          )
+          cat "$report"
+          python3 -c 'import json,sys; assert json.load(open(sys.argv[1]))["complete"]' "$report"
+          python3 scripts/validate-release-client.py \
+            --app "$launcher" --output artifacts/packaged-e2e
+
+      - name: Upload packaged workflow evidence
+        if: always() && startsWith(matrix.rid, 'osx-')
+        uses: actions/upload-artifact@v7
+        with:
+          name: packaged-e2e-${{ matrix.rid }}
+          path: |
+            artifacts/packaged-e2e
+            artifacts/storage-audit.json
+          if-no-files-found: warn
 
       - name: Upload app archives
         uses: actions/upload-artifact@v7

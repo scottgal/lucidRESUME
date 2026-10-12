@@ -14,6 +14,9 @@ class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Contains("--storage-audit", StringComparer.OrdinalIgnoreCase))
+            return Services.StorageAudit.RunAsync().GetAwaiter().GetResult();
+
         if (args.Contains("--asset-audit", StringComparer.OrdinalIgnoreCase))
         {
             var audit = ProductAssetInventory.Audit(AppContext.BaseDirectory);
