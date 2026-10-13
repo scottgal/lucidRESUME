@@ -488,3 +488,249 @@ projections took approximately 78 s and 45 s under concurrent validation load.
 These timings demonstrate cache reuse, not a measured speed improvement. Tone
 remains conservative; the AI summary still leads with evaluation rather than its
 stronger runtime account, a stylistic selection issue for a future iteration.
+
+## 9. Ingestion-time retrieval and human, grounded recomposition (13 October 2026)
+
+### 9.1 What the research supports
+
+Retrieval, writing quality and factual support are separate problems. ALCE evaluates
+fluency, correctness and citation quality separately; a fluent answer with a citation
+can still have unsupported sentences or insufficient citation coverage. This motivates
+separate acceptance checks here, rather than a single “resume quality” score.
+[ALCE, Gao et al., 2023](https://aclanthology.org/2023.emnlp-main.398/).
+
+FActScore evaluates support at the level of atomic factual statements. Its relevant
+lesson for a career record is to check the candidate's action, ownership, delivery
+status, metric and scope individually: a paragraph can mix accurate and invented
+facts. We adapt that evaluation principle, not its biographical benchmark scores,
+and do not claim to have implemented the FActScore evaluator.
+[FActScore, Min et al., 2023](https://aclanthology.org/2023.emnlp-main.741/).
+
+Content planning offers a useful separation between deciding what to say and
+realising it as prose. Narayan et al. condition trained summarizers on intermediate
+entity plans. Our implementation uses a simpler deterministic evidence plan and
+prompting; the paper's trained-model results do not establish that our prompt
+will obtain the same gains. The design inference is to select accepted facts and
+job focus before asking a model to express them naturally.
+[Planning with Learned Entity Prompts, Narayan et al., 2021](https://aclanthology.org/2021.tacl-1.88/).
+
+Lexical overlap is not entailment. Maynez et al. found factual hallucinations in
+abstractive summarization and better correlation between entailment measures and
+faithfulness than standard overlap metrics. Our existing novelty and detail gates
+are therefore conservative safeguards, not a proof that every paraphrase is faithful.
+An entailment model is a candidate for a separate shadow evaluation, especially
+for negation, actor attribution and test-versus-production scope; it should not
+silently replace deterministic checks or the author's review.
+[On Faithfulness and Factuality, Maynez et al., 2020](https://aclanthology.org/2020.acl-main.173/).
+
+### 9.2 Local DoomSummarizer comparison
+
+The local DoomSummarizer implementation separates retained content, keyword corpus
+statistics, full-text candidates and dense retrieval. `StorageService.Fts.cs` stores
+search text and an IDF corpus; `RetrievalPipeline.cs` fuses multiple ranked signals
+and retains a separate Lucene BM25 signal. lucidRESUME borrows the reusable-signal
+and rank-fusion pattern, not the whole research/news pipeline. A career has stronger
+boundaries: one person's accepted record, role identities, personal contribution,
+and explicit status/measurement limitations. Article topic similarity can suggest a
+related publication; it cannot establish that the author used that technology in
+employment or delivered a production result.
+
+TF-IDF makes uncommon source terms more discriminating than common vocabulary.
+It remains a lexical ranking signal, not a skill model.
+[Introduction to Information Retrieval, term weighting](https://nlp.stanford.edu/IR-book/html/htmledition/term-frequency-and-weighting-1.html).
+SQLite FTS5 provides indexed text search and BM25 ordering; its BM25 scores sort
+with better matches having smaller values, so the adapter converts their sign
+before reporting a positive relevance score.
+[SQLite FTS5 documentation](https://www.sqlite.org/fts5.html#the_bm25_function).
+RRF combines ranks rather than assuming that sparse and dense scores share a
+numeric scale. The original paper supports the fusion method, not a claim that
+our weights or small career evaluation are optimal.
+[Reciprocal Rank Fusion, Cormack et al., 2009](https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf).
+
+### 9.3 Implemented data flow
+
+```mermaid
+flowchart LR
+    A[Reviewed imports, sources and edits] --> B[Definitive career and accepted claims]
+    B --> C[Scoped prose chunks with provenance]
+    C --> D[Persisted TF-IDF, FTS5 and reusable embeddings]
+    E[Job requirements] --> F[Bounded hybrid retrieval]
+    D --> F
+    F --> G[Section evidence and detail plan]
+    G --> H[Natural prose composition]
+    H --> I[Fact checks and retained evidence bindings]
+```
+
+A chunk is currently a complete accepted claim passage, deduplicated within its
+subject. It retains its original text, all supporting claim/evidence IDs, skills,
+structured interview accounts, status/number signature and missing prose dimensions.
+We do not split a limitation away from the sentence it qualifies just to hit a token
+size. This is paragraph/claim chunking, not an implemented semantic clause segmenter.
+Cross-role duplicates remain distinct claims even when their embedding text matches.
+
+SQLite and JSON saves update the canonical lexical index after import reconciliation.
+Raw term counts, corpus document frequencies and normalised TF-IDF weights are
+persisted. Changing the corpus recomputes sparse weights; it does not require
+re-embedding unchanged text. The SQLite FTS5 projection updates only changed rows,
+removes deleted/rejected chunks and records the exact accepted-index revision.
+Search against an obsolete revision returns no candidates rather than using stale
+facts. Original imports remain archives, not the generation-time search corpus.
+
+The configured desktop and CLI SQLite stores enrich embeddings after the content
+transaction and outside the database lock. The result is committed only if the
+canonical source and accepted-claims revision still match. A newer edit wins over
+an old embedding result. Model identity, digest and normalization stamp the vectors;
+model changes invalidate reuse. Unavailable models retain lexical retrieval. The
+existing 500-new-vector bound per analysis remains; an explicit refresh can finish
+larger indexes. The standalone JSON store persists lexical analysis; generation
+can still enrich it on demand.
+
+Retrieval combines TF-IDF cosine, compatible dense cosine and FTS5/BM25 ranks within
+role boundaries. It then applies match-strength/query-specificity calibration and
+requirement diversity. These are heuristics requiring ablation, not learned optimal
+weights. Up to 48 queries run per projection, with explicit must-haves and structured
+responsibilities first and distinctive source-related clauses ahead of generic raw
+posting text. At most 24 additional query embeddings are requested. The full set of
+requirements remains available to composition planning; a retrieval work budget does
+not delete the rest of the job description. More than 48 explicit requirements can
+exceed that search budget, so the selected subset is not a completeness guarantee.
+
+Polarity words such as “not” and “never” remain in sparse terms. An explicit narrow
+phrase such as “not deployed to production” is downweighted for a positive production
+query, while remaining retrievable for a prototype query. This is a status heuristic,
+not a general contradiction classifier. Negated skill use, double negation and mixed
+chronology still require finer evaluation. Search rank never upgrades proficiency or
+turns a prototype into delivered production work.
+
+### 9.4 The writing contract
+
+Previously every section received every JD requirement ID, and responsibilities and
+required competencies could be labelled Preferred. The new plan preserves Required,
+Responsibility and Preferred kinds. Each paragraph receives only a small relevant
+focus list with source claim IDs, matched terms and unmatched terms. A single generic
+shared word is insufficient to add a multi-term responsibility to that focus list.
+These are retrieval hints, not a finding of requirement coverage. Actual evidence
+coverage remains a separate operation.
+
+The plan also carries every selected detail claim, source segment IDs and missing
+prose dimensions. The model receives the original passages and reviewed structured
+accounts as evidence. Embedding coordinates and TF-IDF weights are used by retrieval;
+they are not passed as career facts for the writer to narrate. Job clauses guide
+emphasis and sequence. They supply no new achievements, technologies or outcomes.
+The neutral Tighten pass omits job focus from its plan and cache identity; HumanVoice
+receives the job-specific focus. Both caches include the actual pass-specific plan.
+
+Human prose here means specific, readable and recognisably the author's contribution,
+not a detector score. The preferred shape is action and object, followed where useful
+by a supported technical choice, context, purpose or result. Context belongs where it
+explains the decision, not in mandatory STAR headings. Unknown outcomes remain next
+to the activities they qualify. We prefer varied complete sentences, plain verbs and
+concrete objects; we avoid repeated stock openings and keyword piles. Direct,
+Understated and Expressive controls can change rhythm and emphasis without changing
+ownership or certainty. Brief output can remove repetition; Thorough output retains
+all selected decisions, implementation details and limitations. Missing evidence can
+prompt optional interviews but never blocks generation or permits invented detail.
+
+References stay in immutable claim/evidence bindings outside model-written text.
+The native preview and exports resolve those bindings. Current references are at
+paragraph/account granularity: an ID that resolves is not proof that every clause is
+supported. Sentence-level support/completeness assessment is part of the proposed
+next evaluation, not a capability silently attributed to the current validator.
+
+### 9.5 Acceptance rubric and evidence
+
+| Dimension | Acceptance question | Failure example |
+|---|---|---|
+| Fidelity | Does each factual clause retain actor, object, status, scope and attribution? | Team work becomes personal delivery. |
+| Detail | Does a selected account explain a concrete contribution with available decisions/context? | “Improved systems” replaces tool authorization and idempotency. |
+| Relevance | Does the paragraph answer a relevant JD concern using its own evidence? | Every paragraph receives all required skills. |
+| Voice | Does it read naturally without boilerplate, keyword piles or dangling modifiers? | “Never deploying” replaces a passive deployment status. |
+| Citation support | Do cited facts actually support the emitted clauses? | A valid ID accompanies an invented business result. |
+| Citation completeness | Are all emitted factual clauses supported and reviewable? | An uncited causal claim is appended to a supported metric. |
+
+The new regression cases cover persistent lexical/FTS indexing, rejection pruning,
+unchanged-row reuse, reopen search, reads during model work, stale-result rejection,
+unchanged embedding reuse after edits and additional imports, model replacement,
+rare-term ranking, bounded long-job queries, late JD clauses, priority preservation,
+section focus isolation and positive-versus-negative deployment selection.
+
+Two full synthetic career projections use the real SQLite index and local qwen3.5:4b
+writer. An independent Luna review compares output with source facts and separately
+reports stylistic weaknesses. It is a model review, not a human preference study.
+The experiment uses lexical fallback, so it establishes FTS/TF-IDF integration and
+binding integrity, not real-vector retrieval accuracy. The AI and database jobs retain
+different evidence and focused skill lists. The database version restores the measured
+latency account to the leading senior-role bullet. No factual drift was identified in
+the paired outputs. The AI summary can still lead with an unknown evaluation outcome
+rather than its stronger runtime account; fluent ordering is not solved by retrieval.
+
+A useful next experiment is a fixed, labelled requirement-to-passage set spanning real
+career shapes, with TF-IDF-only, BM25-only, dense-only and fused ablations. Evaluate
+retrieval recall/precision separately from factual precision, citation support,
+completeness, concrete detail and blinded human preference. Include negated skill
+use, mixed chronology, different actors sharing metrics and semantically equivalent
+paraphrases with little lexical overlap. Existing novelty budgets may reject good
+paraphrases; a separately calibrated entailment check should first run in shadow mode
+before any relaxation. Neither embedding similarity, a readability formula nor an
+LLM judge alone should certify “human and grounded”.
+
+
+### 9.6 Retained evidence for this run
+
+The synthetic projections and run metadata are checked in under
+[`results/prose-recomposition-2026-10-13`](results/prose-recomposition-2026-10-13).
+The applied-AI projection took 50.8 seconds; the database-platform projection took
+19.2 seconds and reused four validated source-neutral accounts. These are single
+local runs, not a speed benchmark. Both had zero automated quality findings, but
+the database run rejected several edits and discarded a malformed HumanVoice
+response. Retaining grounded prior text was the successful fallback; it is not
+proof that the attempted rewrite improved prose. All 677 application tests,
+21 CLI checks and 15 native client workflow groups passed after these changes.
+
+## 10. SeekStorm replacement spike (13 October 2026)
+
+SeekStorm is a credible replacement for the custom retrieval layer: it provides
+BM25F lexical search, external-vector indexing, hybrid rank fusion and facets in
+one embedded engine. It should retrieve canonical accepted prose chunks, not
+infer skill proficiency from vector proximity. Stable claim and evidence IDs,
+embedding model identity, rejection history and validated writing plans remain
+application responsibilities. [SeekStorm source](https://github.com/SeekStorm/SeekStorm).
+
+The existing `SeekStorm.Bindings` 0.1.0 package was not usable as a self-contained
+consumer: its native build artifacts lost their RID/native directory structure
+before packing, leaving the published package without native libraries. The C#
+schema omitted `index_vector`; its vector smoke checks therefore did not exercise
+a real vector index. Release checks used `Debug.Assert`, and CI ignored native
+integration failures. These are packaging and verification defects rather than
+reasons to implement another search engine.
+[Binding repository](https://github.com/scottgal/seekstorm-csharp),
+[published package](https://www.nuget.org/packages/SeekStorm.Bindings).
+
+The SDK update pins engine 3.4.1, exposes external-vector configuration and stored
+hit fields, adds stable logical-key updates, rejects malformed filters/vectors,
+and replaces document-sized stack allocation with cleared pooled buffers.
+CI now preserves all six runtime paths, checks the actual package contents and
+runs managed and NativeAOT package consumers on each host. Local macOS ARM64
+verification passed all 19 integration/model tests, the Release pipeline, and
+both package-consumer execution modes with NativeAOT warnings treated as errors.
+Other platforms must pass CI before a new package is published.
+
+Stronger tests exposed two engine 3.4.1 behaviors: vector hits bypass facet filters,
+and multi-shard lexical search on an external-vector index returns empty without
+a query vector. The binding supplies an unused unit vector for lexical ranking;
+filtered vector/hybrid search intersects the **complete** ranked candidate set
+with native facet eligibility before pagination. This bounded compatibility path
+supports at most 100,000 indexed documents, rejects unsupported filtered-vector
+facet aggregations, and has an adversarial top-one regression test. It is suitable
+for a small career evidence collection, but is not engine-level vector prefiltering
+and should not be presented as its performance equivalent.
+[SDK implementation](https://github.com/scottgal/seekstorm-csharp/commit/3f3ed9e).
+
+The safe migration is to keep SQLite as the canonical career ledger and make the
+SeekStorm index rebuildable, revision-gated derived data. Match the embedding
+model and dimensions before hybrid queries, facet by role **before the requested
+result limit**, and preserve clause-level source bindings through composition.
+Once the packaged engine passes every supported platform, replace the custom
+FTS projection and manual lexical/dense rank fusion together; avoid maintaining
+two competing retrieval indexes permanently. The current application implementation
+in section 9 is the tested baseline, not an already completed SeekStorm migration.

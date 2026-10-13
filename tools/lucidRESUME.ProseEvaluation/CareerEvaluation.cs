@@ -3,6 +3,7 @@ using System.Text.Json;
 using lucidRESUME.AI;
 using lucidRESUME.Compiler;
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Persistence;
 using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Resume;
@@ -48,16 +49,21 @@ internal static class CareerEvaluation
                 RawText = "Design PostgreSQL reporting queries, database backups and recovery drills. Optimise measured test latency. Build reliable C# services. Explain performance evidence and operational recovery." })
         };
         var embedder = new LexicalOnlyEmbedder();
+        using var store = new SqliteAppStore(Path.Combine(output, "synthetic-career.db"), proseEnricher: new CareerProseAnalyser(embedder));
+        await store.SaveAsync(new AppState { Resumes = [source] });
+        source = (await store.LoadAsync()).CompleteCareer!.Transcript;
+        var fullText = new SearchRecorder(store);
         var taxonomy = new SkillTaxonomyService(embedder);
         var options = Options.Create(new TailoringOptions { ComposeProse = true, Provider = "ollama" });
         var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
             new SkillLedgerMatcher(embedder), embedder, taxonomy, options, NullLogger<SemanticCompressor>.Instance,
-            new ResumeProjectionEditor(composer, options));
+            new ResumeProjectionEditor(composer, options), fullText);
         var originalRoles = JsonSerializer.Serialize(source.Experience);
         var rows = new List<object>();
         var selectedByJob = new Dictionary<string, HashSet<string>>();
         foreach (var (id, job) in jobs)
         {
+            fullText.Reset();
             var timer = Stopwatch.StartNew();
             var progress = new List<string>();
             using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
@@ -99,7 +105,7 @@ internal static class CareerEvaluation
             await File.WriteAllTextAsync(Path.Combine(output, $"career-{id}.json"), JsonSerializer.Serialize(result.Projection,
                 new JsonSerializerOptions { WriteIndented = true }));
             rows.Add(new { job = id, elapsed_ms = timer.ElapsedMilliseconds, selected_claims = selectedByJob[id].Order().ToArray(),
-                provider = "ollama", result.Projection.GenerationWarnings, progress, quality_findings = findings });
+                provider = "ollama", fts_queries = fullText.Queries, fts_hits = fullText.Hits, result.Projection.GenerationWarnings, progress, quality_findings = findings });
             await File.WriteAllTextAsync(Path.Combine(output, "career-results.json"), JsonSerializer.Serialize(rows, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine($"Career {id}: {timer.ElapsedMilliseconds} ms; {findings.Count} quality findings");
         }
@@ -107,10 +113,25 @@ internal static class CareerEvaluation
         await File.WriteAllTextAsync(Path.Combine(output, "career-run.json"), JsonSerializer.Serialize(new
         {
             embedding_mode = "lexical fallback; no vector model or skill proficiency inference",
+            retrieval = "persisted TF-IDF + SQLite FTS5/BM25 rank fusion; canonical career only",
             jobs_select_different_evidence = distinctSelection,
             validator_policy = CompositionValidator.PolicyVersion
         }, new JsonSerializerOptions { WriteIndented = true }));
         if (!distinctSelection) throw new InvalidDataException("Contrasting jobs selected identical role evidence.");
+    }
+
+    private sealed class SearchRecorder(IProseSearch search) : IProseSearch
+    {
+        public int Queries { get; private set; }
+        public int Hits { get; private set; }
+        public void Reset() { Queries = 0; Hits = 0; }
+        public async Task<IReadOnlyList<ProseSearchHit>> SearchAsync(string revision, string query, int maximum = 64, CancellationToken ct = default)
+        {
+            Queries++;
+            var hits = await search.SearchAsync(revision, query, maximum, ct);
+            Hits += hits.Count;
+            return hits;
+        }
     }
 
     private sealed class LexicalOnlyEmbedder : IEmbeddingService

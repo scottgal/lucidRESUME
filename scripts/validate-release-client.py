@@ -389,7 +389,11 @@ def main():
         assert 'scoped prose segments analysed' in client.get('PublicationStatus'), client.get('PublicationStatus')
         with sqlite3.connect(output / 'data/data.db') as db:
             complete = json.loads(db.execute("select value from app_meta where key='complete_career'").fetchone()[0])['Transcript']
+            indexed_ids = {row[0] for row in db.execute('select segment_id from career_prose_fts')}
         assert complete['ProseIndex']['Segments']
+        assert complete['ProseIndex']['DocumentFrequency'], 'The canonical lexical corpus was not saved.'
+        assert all(segment['TermFrequency'] and segment['TfIdf'] for segment in complete['ProseIndex']['Segments'])
+        assert indexed_ids == {segment['Id'] for segment in complete['ProseIndex']['Segments']}, 'FTS and the accepted career snapshot diverged.'
         article = next(article for article in complete['Publications'] if article['Name'] == 'Synthetic retry example')
         assert article['EvidenceMetadata']['review'] == 'required'
         assert not article['Technologies']

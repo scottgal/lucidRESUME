@@ -1,0 +1,907 @@
+{
+  "ResumeId": "65b80680-d7b7-418c-a41c-78d5fb6ea304",
+  "FileName": "Complete career transcript",
+  "ContentType": "application/vnd.lucidresume.career-transcript",
+  "FileSizeBytes": 0,
+  "CreatedAt": "2026-10-13T12:29:42.467897+00:00",
+  "LastModifiedAt": "2026-10-13T12:30:01.643846+00:00",
+  "RawMarkdown": "# Alex Example\n**Target role: Database Platform Engineer**\n\n\n## Summary {#summary}\nDesigned PostgreSQL reporting queries and database backup recovery drills. Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.\n\n## Experience {#experience}\n\n### Applied AI Engineer - Example Operations {#experience-261c4726577848d680395cfb0f81e20f}\n*Jan 2025 - Present*\n\n- Designed PostgreSQL reporting queries and database backup recovery drills.\n\n- Built a C# support-agent runtime using Azure OpenAI and Qdrant retrieval for internal operations.\n\n### Senior Software Engineer - Example Commerce {#experience-3e829653491947ceb739740041f07db2}\n*Jan 2018 - Dec 2024*\n\n- Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.\n\n- Built C# billing retry queues and audit trails to enable the operations team to inspect failed attempts.\n\n- Led the API team and reviewed PostgreSQL recovery designs prior to production release.\n\n### Research Developer - Example Lab {#experience-d3d8b0dd88924145a19238b5af9e5a4b}\n*Jan 2015 - Dec 2017*\n\n- Built a Python/FastAPI document-classification prototype using PyTorch; it was never deployed to production.\n\n## Skills {#skills}\n**Role tools:** C#, PostgreSQL\n\n",
+  "RawJson": null,
+  "PlainText": "# Alex Example\n**Target role: Database Platform Engineer**\n\n\n## Summary {#summary}\nDesigned PostgreSQL reporting queries and database backup recovery drills. Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.\n\n## Experience {#experience}\n\n### Applied AI Engineer - Example Operations {#experience-261c4726577848d680395cfb0f81e20f}\n*Jan 2025 - Present*\n\n- Designed PostgreSQL reporting queries and database backup recovery drills.\n\n- Built a C# support-agent runtime using Azure OpenAI and Qdrant retrieval for internal operations.\n\n### Senior Software Engineer - Example Commerce {#experience-3e829653491947ceb739740041f07db2}\n*Jan 2018 - Dec 2024*\n\n- Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.\n\n- Built C# billing retry queues and audit trails to enable the operations team to inspect failed attempts.\n\n- Led the API team and reviewed PostgreSQL recovery designs prior to production release.\n\n### Research Developer - Example Lab {#experience-d3d8b0dd88924145a19238b5af9e5a4b}\n*Jan 2015 - Dec 2017*\n\n- Built a Python/FastAPI document-classification prototype using PyTorch; it was never deployed to production.\n\n## Skills {#skills}\n**Role tools:** C#, PostgreSQL\n\n",
+  "CanonicalMarkdown": null,
+  "JobMlSource": null,
+  "JobMlRevision": null,
+  "CompleteJobMlUri": null,
+  "IncludeCompactJobMl": true,
+  "OutputTemplateId": "ats-classic",
+  "MinimumOutputPages": 1,
+  "GenerationOptions": {
+    "Length": 2,
+    "Detail": 2,
+    "Tone": 0
+  },
+  "TargetRole": null,
+  "ImageCacheKey": null,
+  "PageCount": 0,
+  "Personal": {
+    "FullName": "Alex Example",
+    "Email": null,
+    "Phone": null,
+    "ContactPreference": null,
+    "Location": null,
+    "LinkedInUrl": null,
+    "GitHubUrl": null,
+    "WebsiteUrl": null,
+    "Summary": "Designed PostgreSQL reporting queries and database backup recovery drills. Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms."
+  },
+  "Experience": [
+    {
+      "Id": "261c4726-5778-48d6-8039-5cfb0f81e20f",
+      "Company": "Example Operations",
+      "Title": "Applied AI Engineer",
+      "Location": null,
+      "StartDate": "2025-01-01",
+      "EndDate": null,
+      "IsCurrent": true,
+      "IsCompact": false,
+      "IsCareerAnchor": false,
+      "Achievements": [
+        "Designed PostgreSQL reporting queries and database backup recovery drills.",
+        "Built a C# support-agent runtime using Azure OpenAI and Qdrant retrieval for internal operations."
+      ],
+      "InterviewEntries": [],
+      "Technologies": [
+        "C#",
+        "Azure OpenAI",
+        "Qdrant",
+        "PostgreSQL"
+      ],
+      "ImportSources": []
+    },
+    {
+      "Id": "3e829653-4919-47ce-b739-740041f07db2",
+      "Company": "Example Commerce",
+      "Title": "Senior Software Engineer",
+      "Location": null,
+      "StartDate": "2018-01-01",
+      "EndDate": "2024-12-31",
+      "IsCurrent": false,
+      "IsCompact": false,
+      "IsCareerAnchor": false,
+      "Achievements": [
+        "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.",
+        "Built C# billing retry queues and audit trails to enable the operations team to inspect failed attempts.",
+        "Led the API team and reviewed PostgreSQL recovery designs prior to production release."
+      ],
+      "InterviewEntries": [],
+      "Technologies": [
+        "C#",
+        "PostgreSQL"
+      ],
+      "ImportSources": []
+    },
+    {
+      "Id": "d3d8b0dd-8892-4145-a192-38b5af9e5a4b",
+      "Company": "Example Lab",
+      "Title": "Research Developer",
+      "Location": null,
+      "StartDate": "2015-01-01",
+      "EndDate": "2017-12-31",
+      "IsCurrent": false,
+      "IsCompact": false,
+      "IsCareerAnchor": false,
+      "Achievements": [
+        "Built a Python/FastAPI document-classification prototype using PyTorch; it was never deployed to production."
+      ],
+      "InterviewEntries": [],
+      "Technologies": [
+        "Python",
+        "FastAPI",
+        "PyTorch"
+      ],
+      "ImportSources": []
+    }
+  ],
+  "Education": [],
+  "Skills": [
+    {
+      "Name": "C#",
+      "Category": "Role tools",
+      "YearsExperience": null,
+      "EndorsementCount": 0,
+      "ImportSources": [],
+      "SourceReferences": []
+    },
+    {
+      "Name": "PostgreSQL",
+      "Category": "Role tools",
+      "YearsExperience": null,
+      "EndorsementCount": 0,
+      "ImportSources": [],
+      "SourceReferences": []
+    }
+  ],
+  "Certifications": [],
+  "Projects": [],
+  "Publications": [],
+  "RelatedWork": [],
+  "ProseIndex": {
+    "SourceRevision": "",
+    "AcceptedClaimsRevision": "",
+    "PolicyVersion": "career-segments-lexical-v3",
+    "EmbeddingSpace": "",
+    "EmbeddingRevision": "",
+    "DocumentFrequency": {},
+    "AnalysedAt": "0001-01-01T00:00:00+00:00",
+    "Segments": []
+  },
+  "Entities": [],
+  "IngestionDecisions": [],
+  "EvidenceLedger": {
+    "SourceRevision": "fnv1a64:90643574cab907dd",
+    "BuiltAt": "2026-10-13T12:28:51.607169+00:00",
+    "Evidence": [
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:personal:name",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "personal",
+        "Locator": "personal:name",
+        "Text": "Alex Example",
+        "FastHash": "fnv1a64:5ba4de6a556ee247",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:personal:summary",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "personal",
+        "Locator": "personal:summary",
+        "Text": "Hands-on software engineer building reliable C# services and internal AI agent runtimes.",
+        "FastHash": "fnv1a64:2afd8241bacc1e13",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:role",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "experience",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:role",
+        "Text": "Applied AI Engineer | Example Operations | 2025-01-01 | present",
+        "FastHash": "fnv1a64:fb6c9a7938213985",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:achievement:1",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:achievement:1",
+        "Text": "Built a C# support-agent runtime using Azure OpenAI and Qdrant retrieval for internal operations.",
+        "FastHash": "fnv1a64:66f3ca3332262fef",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:achievement:2",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:achievement:2",
+        "Text": "Added per-tool authorization and idempotency keys before allowing the internal agent to update ticket state.",
+        "FastHash": "fnv1a64:d5afcc757866b41e",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:achievement:3",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:achievement:3",
+        "Text": "Curated offline evaluation cases from failed tool calls; the production effect remains unknown.",
+        "FastHash": "fnv1a64:c359d02b8b41dc3a",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:achievement:4",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:achievement:4",
+        "Text": "Designed PostgreSQL reporting queries and database backup recovery drills.",
+        "FastHash": "fnv1a64:5d5a2cd5c36be139",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:technology:1",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:technology:1",
+        "Text": "C#",
+        "FastHash": "fnv1a64:090f8d07b5a75203",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:technology:2",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:technology:2",
+        "Text": "Azure OpenAI",
+        "FastHash": "fnv1a64:394cdafd1a449866",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:technology:3",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:technology:3",
+        "Text": "Qdrant",
+        "FastHash": "fnv1a64:d8eb346cfd8c82e7",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:technology:4",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:261c4726577848d680395cfb0f81e20f:technology:4",
+        "Text": "PostgreSQL",
+        "FastHash": "fnv1a64:e0c03eeee7758633",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:role",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "experience",
+        "Locator": "experience:3e829653491947ceb739740041f07db2:role",
+        "Text": "Senior Software Engineer | Example Commerce | 2018-01-01 | 2024-12-31",
+        "FastHash": "fnv1a64:5dd0b4173c0c880a",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:achievement:1",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:3e829653491947ceb739740041f07db2:achievement:1",
+        "Text": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.",
+        "FastHash": "fnv1a64:406489eb2e2e0432",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:achievement:2",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:3e829653491947ceb739740041f07db2:achievement:2",
+        "Text": "Built C# billing retry queues and audit trails so the operations team could inspect failed attempts.",
+        "FastHash": "fnv1a64:251c2a414c2acda1",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:achievement:3",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:3e829653491947ceb739740041f07db2:achievement:3",
+        "Text": "Led the API team and reviewed PostgreSQL recovery designs before the production release.",
+        "FastHash": "fnv1a64:1a2d015f8c8ca3f2",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:achievement:4",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:3e829653491947ceb739740041f07db2:achievement:4",
+        "Text": "Implemented accessible keyboard navigation for the operations administration console.",
+        "FastHash": "fnv1a64:6c927b2cb786f713",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:technology:1",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:3e829653491947ceb739740041f07db2:technology:1",
+        "Text": "C#",
+        "FastHash": "fnv1a64:090f8d07b5a75203",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:technology:2",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:3e829653491947ceb739740041f07db2:technology:2",
+        "Text": "PostgreSQL",
+        "FastHash": "fnv1a64:e0c03eeee7758633",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:role",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "experience",
+        "Locator": "experience:d3d8b0dd88924145a19238b5af9e5a4b:role",
+        "Text": "Research Developer | Example Lab | 2015-01-01 | 2017-12-31",
+        "FastHash": "fnv1a64:59b2b96b5ecf396a",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:achievement:1",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "achievement",
+        "Locator": "experience:d3d8b0dd88924145a19238b5af9e5a4b:achievement:1",
+        "Text": "Built a Python/FastAPI document-classification prototype using PyTorch; it was never deployed to production.",
+        "FastHash": "fnv1a64:3c4e645153a5727f",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:1",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:1",
+        "Text": "Python",
+        "FastHash": "fnv1a64:39938159c7a334f7",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:2",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:2",
+        "Text": "FastAPI",
+        "FastHash": "fnv1a64:f436059b73afd885",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      },
+      {
+        "Id": "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:3",
+        "SourceResumeId": "2b968ef6-117d-4176-897d-88a54ed1f507",
+        "SourceName": "synthetic-career.md",
+        "Kind": "technology",
+        "Locator": "experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:3",
+        "Text": "PyTorch",
+        "FastHash": "fnv1a64:ef377244625b7054",
+        "ExternalUri": null,
+        "Title": null,
+        "Authors": [],
+        "Publisher": null,
+        "PublishedOn": null,
+        "AccessedOn": null,
+        "ExtractionMethod": "deterministic",
+        "Confidence": 1
+      }
+    ],
+    "Claims": [
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:personal:name",
+        "Kind": "personal",
+        "Statement": "Alex Example",
+        "SubjectId": "personal",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:personal:name"
+        ],
+        "Concepts": [],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:personal:summary",
+        "Kind": "personal",
+        "Statement": "Hands-on software engineer building reliable C# services and internal AI agent runtimes.",
+        "SubjectId": "personal",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:personal:summary"
+        ],
+        "Concepts": [],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:role",
+        "Kind": "experience",
+        "Statement": "Applied AI Engineer | Example Operations | 2025-01-01 | present",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:role"
+        ],
+        "Concepts": [],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:1",
+        "Kind": "achievement",
+        "Statement": "Built a C# support-agent runtime using Azure OpenAI and Qdrant retrieval for internal operations.",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:achievement:1"
+        ],
+        "Concepts": [
+          "C#",
+          "Azure OpenAI",
+          "Qdrant"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:2",
+        "Kind": "achievement",
+        "Statement": "Added per-tool authorization and idempotency keys before allowing the internal agent to update ticket state.",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:achievement:2"
+        ],
+        "Concepts": [],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:3",
+        "Kind": "achievement",
+        "Statement": "Curated offline evaluation cases from failed tool calls; the production effect remains unknown.",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:achievement:3"
+        ],
+        "Concepts": [],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:4",
+        "Kind": "achievement",
+        "Statement": "Designed PostgreSQL reporting queries and database backup recovery drills.",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:achievement:4"
+        ],
+        "Concepts": [
+          "PostgreSQL"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:technology:1",
+        "Kind": "technology",
+        "Statement": "C#",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:technology:1"
+        ],
+        "Concepts": [
+          "C#"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:technology:2",
+        "Kind": "technology",
+        "Statement": "Azure OpenAI",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:technology:2"
+        ],
+        "Concepts": [
+          "Azure OpenAI"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:technology:3",
+        "Kind": "technology",
+        "Statement": "Qdrant",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:technology:3"
+        ],
+        "Concepts": [
+          "Qdrant"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:technology:4",
+        "Kind": "technology",
+        "Statement": "PostgreSQL",
+        "SubjectId": "experience:261c4726577848d680395cfb0f81e20f",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:261c4726577848d680395cfb0f81e20f:technology:4"
+        ],
+        "Concepts": [
+          "PostgreSQL"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:role",
+        "Kind": "experience",
+        "Statement": "Senior Software Engineer | Example Commerce | 2018-01-01 | 2024-12-31",
+        "SubjectId": "experience:3e829653491947ceb739740041f07db2",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:role"
+        ],
+        "Concepts": [],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:1",
+        "Kind": "achievement",
+        "Statement": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.",
+        "SubjectId": "experience:3e829653491947ceb739740041f07db2",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:achievement:1"
+        ],
+        "Concepts": [
+          "PostgreSQL"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:2",
+        "Kind": "achievement",
+        "Statement": "Built C# billing retry queues and audit trails so the operations team could inspect failed attempts.",
+        "SubjectId": "experience:3e829653491947ceb739740041f07db2",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:achievement:2"
+        ],
+        "Concepts": [
+          "C#"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:3",
+        "Kind": "achievement",
+        "Statement": "Led the API team and reviewed PostgreSQL recovery designs before the production release.",
+        "SubjectId": "experience:3e829653491947ceb739740041f07db2",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:achievement:3"
+        ],
+        "Concepts": [
+          "PostgreSQL"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:4",
+        "Kind": "achievement",
+        "Statement": "Implemented accessible keyboard navigation for the operations administration console.",
+        "SubjectId": "experience:3e829653491947ceb739740041f07db2",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:achievement:4"
+        ],
+        "Concepts": [],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:technology:1",
+        "Kind": "technology",
+        "Statement": "C#",
+        "SubjectId": "experience:3e829653491947ceb739740041f07db2",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:technology:1"
+        ],
+        "Concepts": [
+          "C#"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:technology:2",
+        "Kind": "technology",
+        "Statement": "PostgreSQL",
+        "SubjectId": "experience:3e829653491947ceb739740041f07db2",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:3e829653491947ceb739740041f07db2:technology:2"
+        ],
+        "Concepts": [
+          "PostgreSQL"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:d3d8b0dd88924145a19238b5af9e5a4b:role",
+        "Kind": "experience",
+        "Statement": "Research Developer | Example Lab | 2015-01-01 | 2017-12-31",
+        "SubjectId": "experience:d3d8b0dd88924145a19238b5af9e5a4b",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:role"
+        ],
+        "Concepts": [],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:d3d8b0dd88924145a19238b5af9e5a4b:achievement:1",
+        "Kind": "achievement",
+        "Statement": "Built a Python/FastAPI document-classification prototype using PyTorch; it was never deployed to production.",
+        "SubjectId": "experience:d3d8b0dd88924145a19238b5af9e5a4b",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:achievement:1"
+        ],
+        "Concepts": [
+          "Python",
+          "FastAPI",
+          "PyTorch"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:1",
+        "Kind": "technology",
+        "Statement": "Python",
+        "SubjectId": "experience:d3d8b0dd88924145a19238b5af9e5a4b",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:1"
+        ],
+        "Concepts": [
+          "Python"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:2",
+        "Kind": "technology",
+        "Statement": "FastAPI",
+        "SubjectId": "experience:d3d8b0dd88924145a19238b5af9e5a4b",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:2"
+        ],
+        "Concepts": [
+          "FastAPI"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      },
+      {
+        "Id": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:3",
+        "Kind": "technology",
+        "Statement": "PyTorch",
+        "SubjectId": "experience:d3d8b0dd88924145a19238b5af9e5a4b",
+        "EvidenceIds": [
+          "evidence:2b968ef6117d4176897d88a54ed1f507:experience:d3d8b0dd88924145a19238b5af9e5a4b:technology:3"
+        ],
+        "Concepts": [
+          "PyTorch"
+        ],
+        "Origin": "declared",
+        "Review": "accepted"
+      }
+    ]
+  },
+  "Projection": {
+    "SourceResumeId": "9f28bca5-33ce-49a5-bf63-b44e2c0c7cd5",
+    "SourceRevision": "fnv1a64:90643574cab907dd",
+    "Blocks": [
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:4",
+        "ProseRef": "#experience-261c4726577848d680395cfb0f81e20f:p2"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:1",
+        "ProseRef": "#experience-261c4726577848d680395cfb0f81e20f:p3"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:1",
+        "ProseRef": "#experience-3e829653491947ceb739740041f07db2:p2"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:2",
+        "ProseRef": "#experience-3e829653491947ceb739740041f07db2:p3"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:3",
+        "ProseRef": "#experience-3e829653491947ceb739740041f07db2:p4"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:d3d8b0dd88924145a19238b5af9e5a4b:achievement:1",
+        "ProseRef": "#experience-d3d8b0dd88924145a19238b5af9e5a4b:p2"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:4",
+        "ProseRef": "#summary:p1"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:1",
+        "ProseRef": "#summary:p1"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:technology:1",
+        "ProseRef": "#skills:p1"
+      },
+      {
+        "ClaimId": "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:technology:4",
+        "ProseRef": "#skills:p1"
+      }
+    ]
+  },
+  "TailoredForJobId": null,
+  "GenerationEvidenceLinks": [],
+  "GenerationWarnings": [
+    "Retained prior wording after rejected Tighten edit: Section \u0027#summary:p1\u0027 introduced unsupported descriptive content: query, performance, reducing.",
+    "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 removed the measured status of a result. Preserve what was measured rather than strengthening its causal interpretation.",
+    "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 removed named skill \u0027PostgreSQL\u0027.",
+    "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 lost the substantive account and became a fragment.",
+    "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 dropped too much of the selected contribution.",
+    "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 dropped the substance of selected claim \u0027claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:1\u0027.",
+    "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 changed or omitted a directed measurement: from 240 ms to 180 ms. Retain its direction and units.",
+    "Discarded HumanVoice pass after provider failure: The model returned invalid section JSON."
+  ]
+}

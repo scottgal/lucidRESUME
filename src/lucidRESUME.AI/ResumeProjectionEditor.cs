@@ -41,9 +41,7 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
         var index = MarkdownEvidenceIndex.Create(markdown);
         var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
         var claims = ledger.Claims.ToDictionary(claim => claim.Id);
-        var requirements = job.RequiredSkills.Concat(job.Responsibilities).Concat(job.PreferredSkills)
-            .Distinct(StringComparer.OrdinalIgnoreCase).Select((text, i) => new CompilerRequirement($"requirement-{i}", text,
-                job.RequiredSkills.Contains(text) ? RequirementKind.Required : RequirementKind.Preferred, text)).ToList();
+        var requirements = ProseJobRequirements.Build(job);
         var packets = new List<EvidencePacket>();
         var preferences = projection.GenerationOptions;
         var budget = ResumeGenerationBudget.Resolve(job, preferences);
@@ -66,11 +64,13 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
                     },
                     passage.Heading ?? "", passage.Text.TrimStart('-', ' '), claim.EvidenceIds, 1, [])).ToList();
             if (selected.Count == 0) continue;
+            var plan = ProseJobRequirements.Plan(requirements, selected, source.ProseIndex);
             var words = Regex.Matches(passage.Text, @"\S+").Count;
             packets.Add(new(group.Key, passage.Heading ?? "", writingInstruction,
-                group.Key.StartsWith("#summary:") ? budget.SummaryWords : Math.Max((int)Math.Ceiling(words * (preferences.Detail == ResumeDetail.Thorough ? 1.4 : 1.15)), 40), selected, requirements.Select(requirement => requirement.Id).ToList(),
+                group.Key.StartsWith("#summary:") ? budget.SummaryWords : Math.Max((int)Math.Ceiling(words * (preferences.Detail == ResumeDetail.Thorough ? 1.4 : 1.15)), 40), selected, plan.Focus.Select(requirement => requirement.RequirementId).ToList(),
                 group.Key.StartsWith("#summary:") ? "summary" : "experience")
             {
+                WritingPlan = plan,
                 Accounts = source.ProseIndex.Segments.Where(segment => selected.Any(claim => segment.ClaimIds.Contains(claim.Claim.Id)))
                     .SelectMany(segment => segment.Accounts).DistinctBy(account => account.InterviewId).ToList()
             });

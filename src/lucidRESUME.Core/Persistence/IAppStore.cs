@@ -194,6 +194,7 @@ public sealed class AppState
         transcript.JobMlRevision = null;
         transcript.Experience.RemoveAll(role => !WorkExperienceIdentity.IsValid(role));
         transcript.CanonicalMarkdown = record?.Transcript.CanonicalMarkdown;
+        transcript.ProseIndex = record?.Transcript.ProseIndex ?? new();
         transcript.RawMarkdown = string.Join("\n\n", inputs.SelectMany(source =>
                 Regex.Split(source.CanonicalMarkdown ?? source.RawMarkdown ?? "", @"\r?\n\s*\r?\n"))
             .Select(paragraph => paragraph.Trim()).Where(paragraph => paragraph.Length > 0)

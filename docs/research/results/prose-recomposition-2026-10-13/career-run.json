@@ -1,0 +1,6 @@
+{
+  "embedding_mode": "lexical fallback; no vector model or skill proficiency inference",
+  "retrieval": "persisted TF-IDF \u002B SQLite FTS5/BM25 rank fusion; canonical career only",
+  "jobs_select_different_evidence": true,
+  "validator_policy": "selected-facts-purpose-measurements-scope-v6"
+}

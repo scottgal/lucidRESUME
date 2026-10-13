@@ -39,6 +39,17 @@ public sealed record EvidencePacket(
     string Kind = "experience")
 {
     public IReadOnlyList<lucidRESUME.Core.Models.Resume.ContributionAccount> Accounts { get; init; } = [];
+    public ProseCompositionPlan? WritingPlan { get; init; }
+}
+
+/// <summary>Retrieval hints for emphasis, not an assertion that a requirement is satisfied.</summary>
+public sealed record ProseRequirementFocus(string RequirementId, string Text, RequirementKind Kind,
+    IReadOnlyList<string> SourceClaimIds, IReadOnlyList<string> MatchedTerms, IReadOnlyList<string> UnmatchedTerms);
+
+public sealed record ProseCompositionPlan(IReadOnlyList<ProseRequirementFocus> Focus,
+    IReadOnlyList<string> DetailClaimIds, IReadOnlyList<string> MissingDetails, IReadOnlyList<string> SourceSegmentIds)
+{
+    public ProseCompositionPlan ForPass(CompositionPass pass) => pass == CompositionPass.Tighten ? this with { Focus = [] } : this;
 }
 
 public sealed record ProjectionManifest(

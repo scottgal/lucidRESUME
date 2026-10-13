@@ -45,6 +45,7 @@ public sealed class SemanticCompressor
     private readonly SkillTaxonomyService _taxonomy;
     private readonly ILogger<SemanticCompressor> _logger;
     private readonly HashSet<string> _careerAnchorCompanies;
+    private readonly IProseSearch? _proseSearch;
 
     public SemanticCompressor(
         SkillLedgerBuilder ledgerBuilder,
@@ -53,8 +54,9 @@ public sealed class SemanticCompressor
         IEmbeddingService embedder,
         SkillTaxonomyService taxonomy,
         IOptions<TailoringOptions> options,
-        ILogger<SemanticCompressor> logger, ResumeProjectionEditor? editor = null)
+        ILogger<SemanticCompressor> logger, ResumeProjectionEditor? editor = null, IProseSearch? proseSearch = null)
     {
+        _proseSearch = proseSearch;
         _editor = editor;
         _ledgerBuilder = ledgerBuilder;
         _jdLedgerBuilder = jdLedgerBuilder;
@@ -157,18 +159,32 @@ public sealed class SemanticCompressor
         // Competency retrieval ranks actual role accounts; it never establishes coverage.
         var competencyVectors = new List<float[]>();
         var proseRequirements = new List<ProseRequirement>();
-        foreach (var competency in jd.Competencies.Where(c => c.Priority != Core.Models.Coverage.RequirementPriority.Preferred))
+        var queryVectorsAvailable = proseIndex.Segments.Any(segment => segment.Embedding.Length > 0);
+        var newQueryVectors = 0;
+        var allProseRequirements = ProseJobRequirements.Build(jd);
+        var retrievalQueries = ProseJobRequirements.SelectForRetrieval(jd, allProseRequirements, proseIndex);
+        foreach (var requirement in retrievalQueries)
         {
-            var vector = await _embedder.EmbedAsync(competency.Name + ": " + competency.Description, ct);
+            var vector = jdLedger.Requirements.FirstOrDefault(item => string.Equals(item.SkillName, requirement.Text, StringComparison.OrdinalIgnoreCase))?.Embedding ?? [];
+            if (vector.Length == 0 && queryVectorsAvailable && newQueryVectors < 24)
+            {
+                try
+                {
+                    newQueryVectors++;
+                    vector = await _embedder.EmbedAsync(requirement.Text, ct);
+                    queryVectorsAvailable = vector.Length > 0 && vector.All(float.IsFinite);
+                    if (!queryVectorsAvailable) vector = [];
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+                catch { queryVectorsAvailable = false; }
+            }
             if (vector.Length > 0) competencyVectors.Add(vector);
-            proseRequirements.Add(new($"competency-{proseRequirements.Count}", competency.Name + ": " + competency.Description, vector));
+            proseRequirements.Add(new(requirement.Id, requirement.Text, vector));
         }
-        foreach (var requirement in jd.RequiredSkills.Concat(jd.Responsibilities).Distinct(StringComparer.OrdinalIgnoreCase))
-            proseRequirements.Add(new($"requirement-{proseRequirements.Count}", requirement,
-                jdLedger.Requirements.FirstOrDefault(item => string.Equals(item.SkillName, requirement, StringComparison.OrdinalIgnoreCase))?.Embedding ?? []));
-        if (proseRequirements.Count == 0)
-            foreach (var clause in Regex.Split(jd.RawText, @"[\n.;]+").Where(clause => !string.IsNullOrWhiteSpace(clause)))
-                proseRequirements.Add(new($"clause-{proseRequirements.Count}", clause, []));
+        var fullTextMatches = new Dictionary<string, IReadOnlyList<ProseSearchHit>>();
+        if (_proseSearch is not null)
+            foreach (var query in proseRequirements)
+                fullTextMatches[query.Id] = await _proseSearch.SearchAsync(proseIndex.SearchRevision, query.Text, ct: ct);
         var ignored = Tokens(string.Join(' ', new CoverageOptions().StopWords.Concat(new[]
             { "and", "the", "for", "are", "you", "our", "can", "has", "this", "that", "will", "from", "need", "work", "teams", "systems", "platform", "engineering", "technical", "built", "build", "designed", "design", "develop", "lead", "leadership", "production" })));
         // Structured competency extraction is optional. The original job and its
@@ -328,7 +344,7 @@ public sealed class SemanticCompressor
             if (unresolvedStatus) projection.GenerationWarnings.Add($"Verify delivery and cancellation chronology for {exp.Title} at {exp.Company}; status-sensitive accounts remain in the full transcript.");
             var retrieved = CareerProseRetriever.Select(proseIndex, proseRequirements,
                 $"experience:{exp.Id:N}", Math.Max(budget.AchievementsPerRole * 3, 12),
-                segment => relevance.GetValueOrDefault(segment.Text));
+                segment => relevance.GetValueOrDefault(segment.Text), fullTextMatches);
             foreach (var item in retrieved)
             {
                 var achievement = item.Segment.Text;

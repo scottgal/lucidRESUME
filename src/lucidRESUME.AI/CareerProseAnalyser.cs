@@ -1,89 +1,46 @@
 using System.Text.RegularExpressions;
 using lucidRESUME.Core.Interfaces;
-using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Resume;
 
 namespace lucidRESUME.AI;
 
-/// <summary>Adapts DocSummarizer's retained segments/signals pattern to scoped career claims.</summary>
-public sealed class CareerProseAnalyser(IEmbeddingService embedder)
+/// <summary>Enriches persisted lexical chunks with reusable, model-stamped embeddings.</summary>
+public sealed class CareerProseAnalyser(IEmbeddingService embedder) : ICareerProseEnricher
 {
     public async Task<CareerProseIndex> AnalyseAsync(ResumeDocument source, CancellationToken ct = default, bool force = false)
     {
-        var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
         string Space() => embedder is IEmbeddingSpaceDescriptor descriptor
             ? $"{descriptor.ModelId}|{descriptor.ModelDigest}|{descriptor.Normalization}" : embedder.GetType().FullName ?? "unknown";
+        var index = CareerProseLexicalIndex.Build(source);
         var space = Space();
-        var previous = source.ProseIndex;
-        // Review, skill and provenance edits need not change the original source text.
-        var accepted = ledger.Claims.Where(claim => claim.Review == "accepted").ToList();
-        var acceptedRevision = ReusableProseStore.Fingerprint(System.Text.Json.JsonSerializer.Serialize(
-            accepted.OrderBy(claim => claim.Id).Select(claim => new { claim.Id, claim.Statement, claim.SubjectId, claim.Kind, claim.Concepts, claim.EvidenceIds })));
-        if (!force && previous.SourceRevision == ledger.SourceRevision && previous.AcceptedClaimsRevision == acceptedRevision &&
-            previous.EmbeddingSpace == space && previous.PolicyVersion == CareerProseIndex.CurrentPolicyVersion) return previous;
-        var reusable = previous.Segments.Where(segment => segment.EmbeddingSpace == space && (!force || segment.Embedding.Length > 0))
-            .GroupBy(segment => segment.ContentHash).ToDictionary(group => group.Key, group => group.First());
-        var index = new CareerProseIndex
-        {
-            SourceRevision = ledger.SourceRevision,
-            AcceptedClaimsRevision = acceptedRevision,
-            EmbeddingSpace = space,
-            AnalysedAt = DateTimeOffset.UtcNow
-        };
-        var vectorsAvailable = true;
-        var newVectors = 0;
-        foreach (var group in accepted.Where(claim => claim.Kind is "achievement" or "summary" or "project" or "publication" || claim.SubjectId == "personal" && claim.Statement == source.Personal.Summary)
-                     .GroupBy(claim => (claim.SubjectId, Text: Regex.Replace(claim.Statement, @"\s+", " ").Trim().ToLowerInvariant())))
+        string Revision(string model) => CareerProseLexicalIndex.Fingerprint(index.SearchRevision + "|" + model);
+        if (!force && index.EmbeddingRevision == Revision(space)) return index;
+        var available = true;
+        var calls = 0;
+        foreach (var segment in index.Segments)
         {
             ct.ThrowIfCancellationRequested();
-            var claims = group.ToList();
-            var text = claims[0].Statement;
-            var hash = ReusableProseStore.Fingerprint(text);
-            float[] vector = [];
-            if (reusable.TryGetValue(hash, out var cached)) vector = cached.Embedding;
-            else if (vectorsAvailable && newVectors < 500)
+            if (segment.EmbeddingSpace != space) segment.Embedding = [];
+            if (segment.Embedding.Length == 0 && available && calls < 500)
             {
                 try
                 {
-                    newVectors++;
-                    vector = await embedder.EmbedAsync(text, ct);
-                    if (vector.Any(value => !float.IsFinite(value))) vector = [];
-                    vectorsAvailable = vector.Length > 0;
+                    calls++;
+                    segment.Embedding = await embedder.EmbedAsync(segment.Text, ct);
+                    if (segment.Embedding.Any(value => !float.IsFinite(value))) segment.Embedding = [];
+                    available = segment.Embedding.Length > 0;
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-                catch { vectorsAvailable = false; }
+                catch { available = false; }
             }
-            index.Segments.Add(new CareerProseSegment
-            {
-                Id = ReusableProseStore.Fingerprint((group.Key.SubjectId ?? "career") + "|" + group.Key.Text),
-                ContentHash = hash,
-                SubjectId = group.Key.SubjectId ?? "career",
-                Kind = claims[0].Kind,
-                Text = text,
-                ClaimIds = claims.Select(claim => claim.Id).ToList(),
-                EvidenceIds = claims.SelectMany(claim => claim.EvidenceIds).Distinct().ToList(),
-                Skills = claims.SelectMany(claim => claim.Concepts).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
-                SkillConceptIds = claims.SelectMany(claim => claim.Concepts).Select(EvidenceLedgerBuilder.Slug).Distinct().ToList(),
-                Accounts = source.Experience.Where(role => group.Key.SubjectId == $"experience:{role.Id:N}")
-                    .SelectMany(role => role.InterviewEntries).Where(entry => entry.Account is not null && claims.Any(claim => claim.Statement == entry.ReviewedProse))
-                    .Select(entry => entry.Account!).ToList(),
-                MissingDimensions = ProseStructure.MissingDimensions(text).ToList(),
-                Embedding = vector,
-                EmbeddingSpace = space,
-                FactSignature = FactSignature(text),
-                Salience = 1d - ProseStructure.MissingDimensions(text).Count / 4d
-            });
         }
-        // ONNX may initialize on the first call; stamp the actual resulting space.
-        index.EmbeddingSpace = Space();
+        index.EmbeddingSpace = Space(); // ONNX can initialize on its first call.
         foreach (var segment in index.Segments) segment.EmbeddingSpace = index.EmbeddingSpace;
-        source.ProseIndex = index;
+        index.EmbeddingRevision = Revision(index.EmbeddingSpace);
         return index;
     }
 
-    public static string FactSignature(string text) => string.Join('|', Regex.Matches(text.ToLowerInvariant(),
-        @"\b\d+(?:[.,]\d+)*(?:%|ms|x)?|\b(?:not|never|planned|intended|prototype|pilot|production|cancelled|canceled|helped|assisted|supported|contributed|led|owned|unknown|unmeasured)\b")
-        .Select(match => match.Value).Order(StringComparer.Ordinal));
+    public static string FactSignature(string text) => CareerProseLexicalIndex.FactSignature(text);
 }
 
 /// <summary>Assembles complementary facts for synthesis within one role; never joins employers.</summary>

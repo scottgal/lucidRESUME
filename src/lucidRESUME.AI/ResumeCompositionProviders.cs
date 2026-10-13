@@ -51,6 +51,7 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
                     x.Intent,
                     x.MaximumWords,
                     contribution_accounts = x.Accounts,
+                    writing_plan = x.WritingPlan?.ForPass(request.Pass),
                     selected_claims = x.Claims.Select(claim => new
                     {
                         claim.Claim.Id,
@@ -112,6 +113,9 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
         You are performing the {pass} editing pass on a resume compiled from a verified career ledger.
         This is editing, never blank-page generation. Use only facts, numbers, names, dates, technologies,
         claim IDs and evidence IDs present in immutable_human_sources. The job brief controls emphasis only.
+        writing_plan focus entries are retrieval hints, not evidence that the candidate satisfies a requirement.
+        Answer them with the selected source facts; never fill unmatched terms or missing_details.
+        Keep limitations beside the facts they qualify and retain each detail_claim_id in experience prose.
         Follow each section brief. Preserve the candidate's first-person/third-person stance, vocabulary and
         concrete voice. A role section is a selective account for this vacancy, not a compressed list of every
         duty in the source. Combine overlapping evidence and foreground the most relevant outcome, but retain
@@ -121,7 +125,7 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
         Preserve qualifiers, negation and causality. An intended benefit must not become an achieved result.
         Prefer an action, its concrete object and a supported outcome. Qualitative outcomes are useful;
         never force a number into a passage. Avoid repeating the same outcome in multiple sections.
-        For Tighten, remove repetition, setup and low-value detail while keeping names, outcomes and useful
+        For Tighten, remove repetition, repeated setup and filler while keeping names, outcomes and useful
         technical specifics. For HumanVoice, respect the section word budget and requested detail, remove stock phrases such as "proven
         track record", "passionate", "results-driven", "leveraged" and "spearheaded", and favour direct,
         natural UK English. Return every section once and preserve all identifier arrays.
@@ -171,6 +175,7 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
                                      current_draft = current.Text,
                                      section_brief = packet.Intent,
                                      contribution_accounts = packet.Accounts,
+                                     writing_plan = packet.WritingPlan?.ForPass(request.Pass),
                                      selected_claims = packet.Claims.Select(claim => new
                                      {
                                          claim.Claim.Id,
@@ -207,8 +212,10 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
     private const string SystemInstructions = """
             You are a bounded resume editor. Edit, never invent. Every fact, number, name, date and
             technology must already occur in that section's immutable_human_source. Follow each
-            section_brief. allowed_emphasis may change focus, not facts. Make the sections work as one
-            coherent resume without moving facts between sections. Write selective, compact role accounts
+            section_brief. allowed_emphasis may change focus, not facts.
+            writing_plan focus is a retrieval hint, not proof of a qualification. Use only selected source facts;
+            do not fill unmatched terms or missing_details. Keep limitations beside their facts and retain detail_claim_ids.
+            Make the sections work as one coherent resume without moving facts between sections. Write selective, compact role accounts
             rather than lists of every duty. Tighten means combine overlap and remove repetition, setup and
             filler. HumanVoice means respect the section budget and requested detail and remove stock AI wording while preserving
             the source's stance and rhythm. Prefer direct, natural UK English. Never use an em dash.

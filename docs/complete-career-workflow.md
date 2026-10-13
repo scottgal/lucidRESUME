@@ -201,8 +201,18 @@ Long bullets wrap within the native preview, including their evidence links.
 
 ![Projected resume with wrapped evidence-linked bullets](screenshots/projected-resume-wrapped.png)
 
-In **Profile**, **Refresh career prose analysis** updates this derived index. The
-first projection can also build it automatically. Missing models leave lexical
+Imports and reviewed edits now update retained term counts, corpus frequencies,
+TF-IDF and the SQLite full-text index when the definitive career is saved. Only
+changed full-text rows are replaced. Embeddings are enriched outside the database
+lock and unchanged text is reused; stale model results cannot overwrite newer edits.
+Generation combines sparse, full-text and available dense retrieval within role
+boundaries. Requirement matches guide selection and never establish proficiency.
+Long postings use a bounded query set while the full requirement set remains
+available to each section's evidence plan. The plan distinguishes missing terms
+from source-supported wording; the writer must not fill those gaps with facts.
+
+In **Profile**, **Refresh career prose analysis** updates this derived index. A
+legacy record's first projection can also build it automatically. Missing models leave lexical
 retrieval available, and unanswered interview questions never block projection.
 
 The **Articles and supporting publications** card imports a local blog Markdown

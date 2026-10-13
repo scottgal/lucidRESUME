@@ -3,7 +3,7 @@ using Microsoft.Data.Sqlite;
 
 namespace lucidRESUME.Core.Persistence;
 
-public sealed class SqliteAppStore : IAppStore, IDisposable
+public sealed partial class SqliteAppStore : IAppStore, Interfaces.IProseSearch, IDisposable
 {
     private readonly SqliteConnection _conn;
     private readonly SemaphoreSlim _lock = new(1, 1);
@@ -17,8 +17,9 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         PropertyNameCaseInsensitive = true
     };
 
-    public SqliteAppStore(string dbPath, string? jsonMigrationPath = null)
+    public SqliteAppStore(string dbPath, string? jsonMigrationPath = null, Interfaces.ICareerProseEnricher? proseEnricher = null)
     {
+        _proseEnricher = proseEnricher;
         var dir = Path.GetDirectoryName(dbPath);
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
@@ -53,6 +54,8 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             CREATE TABLE IF NOT EXISTS search_presets (id TEXT PRIMARY KEY, data TEXT NOT NULL, is_custom INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS applications (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS search_watches (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS career_prose_chunks (id TEXT PRIMARY KEY, payload_hash TEXT NOT NULL);
+            CREATE VIRTUAL TABLE IF NOT EXISTS career_prose_fts USING fts5(segment_id UNINDEXED, subject_id UNINDEXED, text, keywords);
             CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings USING vec0(embedding float[384]);
             CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings_768 USING vec0(embedding float[768]);
             CREATE TABLE IF NOT EXISTS vec_meta (
@@ -89,6 +92,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
         await _lock.WaitAsync(ct);
         try { SaveCore(state); }
         finally { _lock.Release(); }
+        await EnrichCareerAsync(ct);
     }
 
     public async Task MutateAsync(Action<AppState> mutate, CancellationToken ct = default)
@@ -102,6 +106,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             SaveCore(state);
         }
         finally { _lock.Release(); }
+        await EnrichCareerAsync(ct);
     }
 
     public async Task ExportJsonAsync(Stream output, CancellationToken ct = default)
@@ -232,6 +237,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
     {
         state.ReconcileCompleteTranscript();
         state.NormalizeResumes();
+        if (state.CompleteCareer is { } career) Models.Resume.CareerProseLexicalIndex.Build(career.Transcript);
         state.LastSaved = DateTimeOffset.UtcNow;
         using var tx = _conn.BeginTransaction();
 
@@ -326,6 +332,7 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
             UpsertMeta("employer_profile", JsonSerializer.Serialize(state.EmployerProfile, JsonOpts));
         else
             Execute("DELETE FROM app_meta WHERE key = 'employer_profile'");
+        SyncProseCore(state.CompleteCareer?.Transcript.ProseIndex);
         tx.Commit();
     }
 
@@ -369,5 +376,6 @@ public sealed class SqliteAppStore : IAppStore, IDisposable
     {
         _conn.Dispose();
         _lock.Dispose();
+        _proseLock.Dispose();
     }
 }

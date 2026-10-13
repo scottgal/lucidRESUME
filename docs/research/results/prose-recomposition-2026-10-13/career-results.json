@@ -1,0 +1,70 @@
+[
+  {
+    "job": "applied-ai",
+    "elapsed_ms": 50805,
+    "selected_claims": [
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:1",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:2",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:3",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:2",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:3",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:d3d8b0dd88924145a19238b5af9e5a4b:achievement:1"
+    ],
+    "provider": "ollama",
+    "fts_queries": 8,
+    "fts_hits": 21,
+    "GenerationWarnings": [],
+    "progress": [
+      "Tightening prose (pass 1/2) \u00B7 batch 1/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 1/3 in 4s",
+      "Tightening prose (pass 1/2) \u00B7 batch 2/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 2/3 in 10s",
+      "Tightening prose (pass 1/2) \u00B7 batch 3/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 3/3 in 10s",
+      "Polishing prose (pass 2/2) \u00B7 batch 1/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 1/3 in 5s",
+      "Polishing prose (pass 2/2) \u00B7 batch 2/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 2/3 in 12s",
+      "Polishing prose (pass 2/2) \u00B7 batch 3/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 3/3 in 10s"
+    ],
+    "quality_findings": []
+  },
+  {
+    "job": "database-platform",
+    "elapsed_ms": 19180,
+    "selected_claims": [
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:1",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:261c4726577848d680395cfb0f81e20f:achievement:4",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:1",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:2",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:3",
+      "claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:d3d8b0dd88924145a19238b5af9e5a4b:achievement:1"
+    ],
+    "provider": "ollama",
+    "fts_queries": 6,
+    "fts_hits": 17,
+    "GenerationWarnings": [
+      "Retained prior wording after rejected Tighten edit: Section \u0027#summary:p1\u0027 introduced unsupported descriptive content: query, performance, reducing.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 removed the measured status of a result. Preserve what was measured rather than strengthening its causal interpretation.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 removed named skill \u0027PostgreSQL\u0027.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 lost the substantive account and became a fragment.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 dropped too much of the selected contribution.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 dropped the substance of selected claim \u0027claim:9f28bca533ce49a5bf63b44e2c0c7cd5:experience:3e829653491947ceb739740041f07db2:achievement:1\u0027.",
+      "Retained prior wording after rejected Tighten edit: Section \u0027#experience-3e829653491947ceb739740041f07db2:p2\u0027 changed or omitted a directed measurement: from 240 ms to 180 ms. Retain its direction and units.",
+      "Discarded HumanVoice pass after provider failure: The model returned invalid section JSON."
+    ],
+    "progress": [
+      "Reusing 4 validated prose account(s) \u00B7 Tighten",
+      "Tightening prose (pass 1/2) \u00B7 batch 1/2 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 1/2 in 4s",
+      "Tightening prose (pass 1/2) \u00B7 batch 2/2 \u00B7 local model qwen3.5:4b\u2026",
+      "Tightening prose (pass 1/2) \u00B7 completed batch 2/2 in 7s",
+      "Polishing prose (pass 2/2) \u00B7 batch 1/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 1/3 in 5s",
+      "Polishing prose (pass 2/2) \u00B7 batch 2/3 \u00B7 local model qwen3.5:4b\u2026",
+      "Polishing prose (pass 2/2) \u00B7 completed batch 2/3 in 3s"
+    ],
+    "quality_findings": []
+  }
+]

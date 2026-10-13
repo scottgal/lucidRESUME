@@ -141,8 +141,10 @@ public partial class App : Application
 
         var dbPath = Path.Combine(appDataDir, "data.db");
         var jsonPath = Path.Combine(appDataDir, "data.json");
-        services.AddSingleton<IAppStore>(_ => new SqliteAppStore(dbPath,
-            jsonMigrationPath: File.Exists(jsonPath) ? jsonPath : null));
+        services.AddSingleton<IAppStore>(sp => new SqliteAppStore(dbPath,
+            jsonMigrationPath: File.Exists(jsonPath) ? jsonPath : null,
+            proseEnricher: sp.GetRequiredService<lucidRESUME.AI.CareerProseAnalyser>()));
+        services.AddSingleton<lucidRESUME.Core.Interfaces.IProseSearch>(sp => (SqliteAppStore)sp.GetRequiredService<IAppStore>());
 
         services.AddHttpClient<Services.StartupHealthCheck>();
         services.AddSingleton<MainWindowViewModel>();

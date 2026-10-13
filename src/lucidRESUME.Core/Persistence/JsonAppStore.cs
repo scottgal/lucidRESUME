@@ -91,6 +91,7 @@ public sealed class JsonAppStore : IAppStore, IDisposable
     {
         state.ReconcileCompleteTranscript();
         state.NormalizeResumes();
+        if (state.CompleteCareer is { } career) Models.Resume.CareerProseLexicalIndex.Build(career.Transcript);
         state.LastSaved = DateTimeOffset.UtcNow;
 
         var dir = Path.GetDirectoryName(_filePath)!;

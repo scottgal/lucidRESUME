@@ -74,6 +74,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                 packet.MaximumWords,
                 packet.Kind,
                 packet.Accounts,
+                writingPlan = packet.WritingPlan?.ForPass(request.Pass),
                 claims = packet.Claims.Select(claim => new
                 {
                     claim.Claim.Id,
@@ -127,6 +128,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                     current_draft = current.Text == source.Text ? null : Protect(current.SectionId, current.Text),
                     section_brief = packet.Intent,
                     contribution_accounts = packet.Accounts,
+                    writing_plan = packet.WritingPlan?.ForPass(request.Pass),
                     selected_claims = packet.Claims.Select(claim => new
                     {
                         id = claim.Claim.Id,
@@ -297,6 +299,13 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
         Preserve the substance of every selected claim and each purpose_details_to_preserve clause.
         Do not replace a specific purpose such as inspecting failed attempts with generic inspection.
         HumanVoice must retain those details even if the current draft omitted them; use the immutable source.
+        A writing_plan is a content plan, not extra candidate evidence. Its focus entries are
+        retrieval hints, never proof of a qualification; unmatched terms must not become candidate facts.
+        Answer the relevant focus with the selected source actions, decisions, scope and results.
+        Lead with the strongest concrete contribution rather than a caveat when the source permits it;
+        keep each limitation beside the fact it limits. Preserve detail_claim_ids in experience prose.
+        Do not fill missing_details or turn source_segment_ids into words in the resume.
+        Link related facts naturally without keyword lists, a repeated template or forced STAR headings.
         Preserve personal versus team contribution, qualifiers, negation and causality. Helping must
         remain helping. Keep the candidate's own actions distinct from the team's actions: leading
         a team and personally reviewing designs must not become leading the team to review designs.

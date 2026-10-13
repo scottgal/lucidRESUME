@@ -29,7 +29,9 @@ held-out quality benchmark. Add new evidence shapes before claiming broader gain
 
 `--career` projects one three-role career against contrasting AI leadership and
 database jobs using the full compressor, evidence binding and local composition
-path. It saves readable resumes and checks source immutability, binding integrity,
+path. It persists the synthetic career in an isolated SQLite database and records
+FTS query/hit counts, exercising TF-IDF and FTS5 rank fusion. It saves readable
+resumes and checks source immutability, binding integrity,
 role-scoped technologies and differing evidence selection. Its embedder returns
 no vectors, deliberately testing lexical fallback rather than semantic matching.
 
