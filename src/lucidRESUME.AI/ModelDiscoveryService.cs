@@ -70,6 +70,9 @@ public sealed class ModelDiscoveryService
             var resp = await _http.GetFromJsonAsync<OllamaTagsResponse>(
                 $"{_ollamaOpts.BaseUrl}/api/tags", ct);
             return resp?.Models?
+                .Where(model => !model.Name.Split(':')[0].StartsWith("nimble", StringComparison.OrdinalIgnoreCase) &&
+                    (model.Capabilities is null || model.Capabilities.Contains("completion", StringComparer.OrdinalIgnoreCase) &&
+                        !model.Capabilities.Contains("decision", StringComparer.OrdinalIgnoreCase)))
                 .Select(m => new ModelInfo(m.Name, m.Name, "ollama", "Free (local)"))
                 .ToList() ?? [];
         }
@@ -138,7 +141,8 @@ public sealed class ModelDiscoveryService
     private record OllamaTagsResponse(
         [property: JsonPropertyName("models")] List<OllamaModel>? Models);
     private record OllamaModel(
-        [property: JsonPropertyName("name")] string Name);
+        [property: JsonPropertyName("name")] string Name,
+        [property: JsonPropertyName("capabilities")] List<string>? Capabilities = null);
     private record AnthropicModelsResponse(
         [property: JsonPropertyName("data")] List<AnthropicModel>? Data);
     private record AnthropicModel(

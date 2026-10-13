@@ -53,6 +53,8 @@ public sealed class GeneratedResumeArchiveTests
             };
             var job = new JobDescription { Title = "Platform Engineer", Company = "Target company", RawText = "Reliable APIs" };
             var artifact = new ResumeArtifactBuilder().Build(source, projection, job, "ats-classic");
+            Assert.False(artifact.IncludeCompactJobMl);
+            Assert.Contains("```jobml", artifact.JobMlSource);
             GeneratedResume saved;
             byte[] pdfBytes;
             using (var store = (IDisposable)OpenStore())
@@ -68,6 +70,7 @@ public sealed class GeneratedResumeArchiveTests
                 pdfBytes = await File.ReadAllBytesAsync(archive.FileFor(saved.Id, "pdf"));
                 using var pdf = PdfDocument.Open(pdfBytes);
                 Assert.Equal(pdf.NumberOfPages, archive.PdfPages(saved.Id).Length);
+                Assert.DoesNotContain("References", string.Join(" ", pdf.GetPages().Select(page => page.Text)));
                 Assert.True(File.Exists(archive.FileFor(saved.Id, "docx")));
                 Assert.Empty((await ((IAppStore)store).LoadAsync()).Resumes);
             }

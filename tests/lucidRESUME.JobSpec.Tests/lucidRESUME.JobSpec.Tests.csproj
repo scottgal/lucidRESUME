@@ -30,4 +30,5 @@
   </ItemGroup>
 
   <ItemGroup><Content Include="../fixtures/jobs/morena-head-applied-ai.txt" Link="Fixtures/morena-head-applied-ai.txt" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+<ItemGroup><Content Include="../fixtures/jobs/mbn-applied-ai.txt" Link="Fixtures/mbn-applied-ai.txt" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
 </Project>

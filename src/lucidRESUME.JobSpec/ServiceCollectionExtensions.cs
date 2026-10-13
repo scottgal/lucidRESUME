@@ -70,6 +70,9 @@ public static class ServiceCollectionExtensions
             services.Configure<FusionOptions>(configuration.GetSection("JdFusion"));
 
         // --- Main parser ---
+        if (configuration is not null)
+            services.Configure<JobSkillClassificationOptions>(configuration.GetSection("Nimble"));
+        services.AddSingleton<JobSkillClassifier>();
         services.AddTransient<IJobSpecParser, JobSpecParser>();
 
         return services;

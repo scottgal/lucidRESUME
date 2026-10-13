@@ -1,0 +1,44 @@
+Applied AI Engineer
+MBN Solutions
+Remote | UK or Europe | Working UK hours
+$90,000–$150,000 base salary + competitive equity
+
+Build AI that people depend on. Own the engineering that makes it work.
+
+MBN Solutions is hiring an Applied AI Engineer for a growing business putting AI at the centre of its operations.
+The opportunity is to take ownership of systems that handle complex, everyday workflows and make them more capable, reliable and scalable. You’ll work closely with the people using what you build, understand where processes break down and turn those problems into production software.
+We’re looking for a strong engineer with a builder’s instinct and a founder’s mentality: someone who asks good questions, makes considered decisions and follows through.
+
+The opportunity
+You’ll help shape how AI applications are built, evaluated and deployed across the business. That means connecting existing capabilities, improving how quality is measured and developing the infrastructure needed to support growth.
+You’ll have meaningful influence over architecture and implementation, with direct access to colleagues across engineering, product and operations. Your decisions will affect both the technology and how people work.
+
+What you’ll do
+Build and improve AI applications used in live business workflows.
+Develop agentic systems that connect models, tools, data and backend services.
+Create evaluations that make performance measurable and guide improvements.
+Investigate failures, improve reliability and take solutions through to production.
+Turn complex operational requirements into practical engineering decisions.
+Help establish patterns and infrastructure that other engineers can build on.
+
+What you’ll bring
+Strong software engineering experience and recent ownership of production code.
+Practical experience building applications with LLMs or agentic workflows.
+Sound judgement around system design, integrations, data and reliability.
+An understanding of how to evaluate AI systems beyond whether a demo looks convincing.
+Confidence navigating unfamiliar problems and making progress without a detailed specification.
+An interest in the commercial and customer impact of your work.
+
+You might be an applied AI engineer, an early startup engineer or a technical founder. You could also be a strong backend engineer who has moved into building AI products. What matters is what you’ve personally built, the decisions you made and how it performed in practice.
+
+Why consider it?
+You’ll join a small engineering team where individual contributions carry weight and there is room to shape the approach. The role offers substantial ownership, close collaboration with experienced colleagues and the opportunity to see your work used directly in the business. As the company grows, there is scope to take on broader technical responsibilities.
+
+The details
+Competitive base salary and equity, with the full range shared upfront.
+Fully remote within the UK or Europe, working UK hours.
+Occasional in-person team gatherings.
+No visa sponsorship available.
+
+Interested?
+Contact michael@mbnsolutions.com for a confidential conversation. Send your CV or profile and tell me about an AI product or technically demanding system you’ve helped take into production.

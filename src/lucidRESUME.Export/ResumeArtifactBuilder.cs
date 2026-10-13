@@ -46,6 +46,8 @@ public sealed class ResumeArtifactBuilder
         result.JobMlSource = artifact;
         result.JobMlRevision = MarkdownEvidenceIndex.Fingerprint(jobMl.Markdown);
         result.OutputTemplateId = templateId;
+        // Evidence remains in JobML and the archive; application documents contain no reference appendix.
+        result.IncludeCompactJobMl = false;
         result.GenerationOptions = projection.GenerationOptions;
         result.MinimumOutputPages = projection.MinimumOutputPages;
         result.TargetRole = job.Title;

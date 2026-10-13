@@ -19,6 +19,12 @@ public sealed class JobDescription
     public SalaryRange? Salary { get; set; }
 
     // Extracted requirements
+    /// <summary>Persisted extraction policy; saved adverts are classified only when this changes.</summary>
+    public string? SkillAnalysisVersion { get; set; }
+    public string? SkillAnalysisSourceHash { get; set; }
+    public DateTimeOffset? SkillAnalysedAt { get; set; }
+    public List<JobSkillDecision> SkillDecisions { get; set; } = [];
+    public List<string> SkillAnalysisWarnings { get; set; } = [];
     public List<JobCompetency> Competencies { get; set; } = [];
     public List<string> RequiredSkills { get; set; } = [];
     public List<string> PreferredSkills { get; set; } = [];

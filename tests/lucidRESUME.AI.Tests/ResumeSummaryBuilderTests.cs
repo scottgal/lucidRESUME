@@ -3,6 +3,21 @@ namespace lucidRESUME.AI.Tests;
 public sealed class ResumeSummaryBuilderTests
 {
     [Fact]
+    public void Relevant_first_person_product_account_is_preserved_with_its_qualifiers()
+    {
+        const string source = "Over the past year I have developed products with agentic LLMs, documenting the work in dozens of technical articles. Technology leader with two decades of experience.";
+        Assert.Equal(source, ResumeSummaryBuilder.RelevantAuthoredAccount(source, "Applied AI Engineer building agentic systems with LLMs."));
+        Assert.Null(ResumeSummaryBuilder.RelevantAuthoredAccount(source, "PostgreSQL database administration and backup recovery."));
+    }
+
+    [Fact]
+    public void Authored_account_keeps_following_delivery_qualification()
+    {
+        const string source = "I have developed agentic software products with LLMs. They were never deployed to production.";
+        Assert.Equal(source, ResumeSummaryBuilder.RelevantAuthoredAccount(source, "Applied AI Engineer building agentic products with LLMs."));
+    }
+
+    [Fact]
     public void Off_target_profile_retains_identity_and_uses_only_evidenced_job_focus()
     {
         var summary = ResumeSummaryBuilder.Build("Software engineer building internal AI agent runtimes.", ["PostgreSQL"], false);

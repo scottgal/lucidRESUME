@@ -67,6 +67,44 @@ public sealed class NimbleResumeDecisionProviderTests
         await Assert.ThrowsAsync<InvalidDataException>(() => sut.DecideAsync(request));
     }
 
+    [Fact]
+    public async Task Sends_batch_as_one_request_to_configured_lan_server_and_validates_each_answer()
+    {
+        var calls = 0;
+        var handler = new StubHandler(async request =>
+        {
+            calls++;
+            Assert.Equal("http://192.168.0.15:11434/v1/systemone", request.RequestUri!.ToString());
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
+            var questions = body.RootElement.GetProperty("questions");
+            Assert.Equal(2, questions.EnumerateObject().Count());
+            Assert.Contains("LLMs", questions.GetProperty("decision0").GetProperty("instructions").GetString());
+            return Json("""
+                {"model":"nimble","answers":{
+                  "decision0":{"type":"choice","choice":"skill","confidence":0.9,"probabilities":{"skill":0.98,"noise":0.02}},
+                  "decision1":{"type":"choice","choice":"noise","confidence":0.9,"probabilities":{"skill":0.02,"noise":0.98}}},"usage":{}}
+                """);
+        });
+        var sut = new NimbleResumeDecisionProvider(new HttpClient(handler), Options.Create(new NimbleOptions
+        { Enabled = true, BaseUrl = "http://192.168.0.15:11434" }));
+        var choices = new Dictionary<string, string> { ["skill"] = "Skill", ["noise"] = "Noise" };
+        var answers = await sut.DecideBatchAsync([
+            new("1", "jd", "hash", "LLMs in a remote role", "Classify LLMs", choices),
+            new("2", "jd", "hash", "LLMs in a remote role", "Classify Remote", choices)]);
+        Assert.Equal(1, calls);
+        Assert.Equal(new[] { "skill", "noise" }, answers.Select(answer => answer.SelectedCandidate));
+    }
+
+    [Fact]
+    public async Task Rejects_an_incomplete_batch_instead_of_misaligning_labels()
+    {
+        var handler = new StubHandler(_ => Task.FromResult(Json("""
+            {"model":"nimble","answers":{"decision0":{"type":"choice","choice":"skill","confidence":1,"probabilities":{"skill":1,"noise":0}}},"usage":{}}
+            """)));
+        var request = new ResumeDecisionRequest("1", "jd", "hash", "state", "Classify", new Dictionary<string, string> { ["skill"] = "Skill", ["noise"] = "Noise" });
+        await Assert.ThrowsAsync<InvalidDataException>(() => Create(handler).DecideBatchAsync([request, request]));
+    }
+
     private static NimbleResumeDecisionProvider Create(HttpMessageHandler handler) =>
         new(new HttpClient(handler), Options.Create(new NimbleOptions
         {

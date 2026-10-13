@@ -30,4 +30,4 @@ public interface IResumeMarkdownRenderer
 
 public sealed record CompileRequest(string JobDescription, string? SourceRevision = null,
     bool Polish = true, string? Provider = "openai", bool Publish = true,
-    string? ApplicationReference = null, bool IncludeCitations = true, int MinimumPages = 2);
+    string? ApplicationReference = null, bool IncludeCitations = false, int MinimumPages = 2);

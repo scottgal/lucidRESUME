@@ -132,7 +132,7 @@
                         <Run Text="{Binding Location}"/>
                       </TextBlock>
                       <TextBlock FontSize="10" Foreground="{DynamicResource LrSubtleTextBrush}"
-                                 Text="{Binding SkillScore, StringFormat='Match: {0:P0}'}"/>
+                                 Text="{Binding SkillScoreLabel}"/>
                     </StackPanel>
                   </Button>
                 </DataTemplate>

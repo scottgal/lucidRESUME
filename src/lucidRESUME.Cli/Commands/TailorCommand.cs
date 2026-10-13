@@ -34,8 +34,8 @@ public static class TailorCommand
         var templateOpt = new Option<string?>("--template") { Description = "Output template: ats-classic, modern-professional, compact-technical" };
         var compactJobMlOpt = new Option<bool>("--cjobml")
         {
-            DefaultValueFactory = _ => true,
-            Description = "Include compact cJobML citations and References in exported files (default: true)"
+            DefaultValueFactory = _ => false,
+            Description = "Include compact cJobML citations and References in exported files (default: false)"
         };
         var fullJobMlOpt = new Option<string?>("--full-jobml")
         {

@@ -56,6 +56,36 @@ internal static class ResumeSummaryBuilder
             skills.Where(skill => !SkillTaxonomy.MentionsEquivalent(phrase, skill)).ToList());
     }
 
+    /// <summary>Retains a short author-written account when it directly describes the requested work.</summary>
+    internal static string? RelevantAuthoredAccount(string source, string jobContext)
+    {
+        // Reuse whole sentences, including their qualifiers. Technical domains must overlap explicitly.
+        var shared = SkillTaxonomy.FindCanonicalMentions(jobContext).ToList();
+        var ignored = new HashSet<string>(["the", "with", "and", "for", "have", "this", "that", "from", "over", "past", "year", "work", "worked", "building", "developed", "engineer", "engineering", "software", "products", "systems", "business"], StringComparer.OrdinalIgnoreCase);
+        var jobTerms = Regex.Matches(jobContext.ToLowerInvariant(), @"[\p{L}\p{N}+#]{3,}").Select(match => match.Value)
+            .Where(term => !ignored.Contains(term)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sentences = Regex.Split(source, @"(?<=[.!?])\s+");
+        for (var index = 0; index < sentences.Length; index++)
+        {
+            var sentence = sentences[index];
+            if (Regex.IsMatch(sentence, @"\b(?:I|my|we)\b", RegexOptions.IgnoreCase) &&
+                Regex.IsMatch(sentence, @"\b(?:developed|built|designed|maintained|implemented|worked)\b", RegexOptions.IgnoreCase) &&
+                (shared.Any(domain => SkillTaxonomy.MentionsEquivalent(sentence, domain)) ||
+                Regex.Matches(sentence.ToLowerInvariant(), @"[\p{L}\p{N}+#]{3,}").Select(match => match.Value).Distinct().Count(jobTerms.Contains) >= 2) &&
+                Regex.Matches(sentence, @"\S+").Count is >= 8 and <= 65)
+            {
+                // A following qualification belongs to the account: "I built it. It was never deployed."
+                var next = index + 1 < sentences.Length ? sentences[index + 1] : null;
+                var professionalContext = next is not null && Regex.Matches(next, @"\S+").Count <= 35 &&
+                    Regex.IsMatch(next, @"\b(?:engineer|developer|architect|leader|consultant|manager)\b.*\b(?:years?|decades?)\b", RegexOptions.IgnoreCase);
+                var account = next is not null && (!IsUnqualifiedAccount(next) || professionalContext)
+                    ? sentence + " " + next : sentence;
+                if (Regex.Matches(account, @"\S+").Count <= 65) return account;
+            }
+        }
+        return null;
+    }
+
     public static string Build(string careerSummary, IReadOnlyList<string> focusSkills, bool retainCareerSummary, FocusAccount? account = null)
     {
         if (retainCareerSummary || focusSkills.Count == 0) return careerSummary;

@@ -287,11 +287,11 @@
 
             <Border BorderBrush="{DynamicResource LrBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
               <StackPanel Spacing="8">
-                <CheckBox Content="Use local Nimble for ambiguous ingestion decisions"
+                <CheckBox Content="Use Nimble for resume parsing and job skill classification"
                           IsChecked="{Binding NimbleEnabled}"/>
                 <TextBox Text="{Binding NimbleBaseUrl}" PlaceholderText="http://localhost:11434"
                          CornerRadius="6" Padding="10,8"/>
-                <TextBlock Text="Nimble classifies unresolved sections or selects among name and employer spans already proposed by parsing and NER. It runs through local Ollama and cannot generate evidence or prose. Install Ollama 0.35 or newer and run ollama pull nimble."
+                <TextBlock Text="Nimble classifies unresolved sections or selects among name and employer spans already proposed by parsing and NER. It also separates job skills and capabilities from logistics and noise. Use your local or configured Ollama server; Nimble cannot generate evidence or prose. Install Ollama 0.35 or newer and run ollama pull nimble."
                            TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="11"/>
               </StackPanel>
             </Border>

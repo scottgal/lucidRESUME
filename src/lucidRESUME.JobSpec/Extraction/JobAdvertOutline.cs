@@ -19,6 +19,7 @@ internal static class JobAdvertOutline
             "preferred skills" or "bonus" or "desirable" => "preferred",
             "what you'll own" or "what you will own" or "what you'll do" or "what you will do" or
             "responsibilities" or "key responsibilities" => "responsibility",
+            "why consider it?" or "the details" or "interested?" or "the opportunity" or
             "about the role" or "about us" or "about the company" or "the environment" or
             "location and working style" or "location" or "working style" or "benefits" or "compensation" or
             "compensation and benefits" or "what we offer" or "how to apply" or "equal opportunities" => "ignore",
@@ -45,6 +46,9 @@ internal static class JobAdvertOutline
             if (line.Length == 0) continue;
             var kind = SectionKind(line);
             if (kind is not null) { Flush(); section = kind; continue; }
+            // Career-path alternatives explain who may apply; they are not mandatory experience.
+            if (heading is null && Regex.IsMatch(line, @"^You (?:might be|could also be)\b", RegexOptions.IgnoreCase))
+            { section = "ignore"; continue; }
             if (section is null or "ignore") continue;
             var clean = line.TrimStart('#', '-', '*', '•', ' ').Replace("**", "").Trim();
             if (section == "preferred")
@@ -58,6 +62,9 @@ internal static class JobAdvertOutline
                 clean.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length <= 10;
             if (headingShaped) { Flush(); heading = clean; }
             else if (heading is not null) prose.Add(clean);
+            else if (clean.Length > 15)
+                result.Add(new(clean.TrimEnd('.'), clean, section == "required"
+                    ? RequirementPriority.Required : RequirementPriority.Responsibility));
         }
         Flush();
         // Use this representation only when the advert really provides multiple described competencies.

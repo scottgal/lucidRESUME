@@ -10,7 +10,7 @@ namespace lucidRESUME.Web;
 
 internal static class ResumeProjectionMapper
 {
-    public static ResumeDocument Build(CompilationResult result, bool includeCitations = true, int minimumPages = 2)
+    public static ResumeDocument Build(CompilationResult result, bool includeCitations = false, int minimumPages = 2)
     {
         var resume = ResumeDocument.Create("tailored.md", "text/markdown",
             Encoding.UTF8.GetByteCount(result.HumanMarkdown));

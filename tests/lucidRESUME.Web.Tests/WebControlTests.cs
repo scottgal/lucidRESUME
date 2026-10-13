@@ -273,6 +273,7 @@ public sealed class WebControlTests : IClassFixture<WebApplicationFactory<Progra
         {
             jobDescription = "Head of Engineering. TypeScript and AWS experience required. Lead engineering change.",
             polish = false,
+            includeCitations = true,
             applicationReference = "Example Ltd, Head of Engineering"
         }), Encoding.UTF8, "application/json");
         var compiled = await _client.SendAsync(compile);

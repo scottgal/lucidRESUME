@@ -8,6 +8,15 @@ public interface IResumeDecisionProvider
 {
     string ProviderName { get; }
 
+    /// <summary>Classifies a bounded set sharing source context; adapters may submit one native multi-question request.</summary>
+    async Task<IReadOnlyList<ResumeDecisionResult>> DecideBatchAsync(
+        IReadOnlyList<ResumeDecisionRequest> requests, CancellationToken ct = default)
+    {
+        var results = new List<ResumeDecisionResult>();
+        foreach (var request in requests) results.Add(await DecideAsync(request, ct));
+        return results;
+    }
+
     Task<ResumeDecisionResult> DecideAsync(
         ResumeDecisionRequest request,
         CancellationToken ct = default);

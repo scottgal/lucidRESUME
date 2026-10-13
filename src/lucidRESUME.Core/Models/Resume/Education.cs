@@ -21,6 +21,15 @@ public sealed class Education
     /// <summary>Import sources that contributed to this entry.</summary>
     public List<string> ImportSources { get; set; } = [];
 
+    /// <summary>Education is conventionally displayed with years, without adding month precision.</summary>
+    public string FormatYears() => (StartDate?.Year, EndDate?.Year) switch
+    {
+        (int start, int end) => start == end ? start.ToString() : $"{start}–{end}",
+        (int start, null) => start.ToString(),
+        (null, int end) => end.ToString(),
+        _ => GraduationYear?.ToString() ?? ""
+    };
+
     /// <summary>Auto-classify the education level from the degree string.</summary>
     public void ClassifyLevel()
     {

@@ -22,7 +22,10 @@ public sealed record JobListItem(
     double SkillScore,
     string SourceUrl,
     // Carry the full job so aspect extraction and tailoring have structured fields
-    JobDescription FullJob);
+    JobDescription FullJob)
+{
+    public string SkillScoreLabel => FullJob.MatchScore.HasValue ? $"Match: {SkillScore:P0}" : "Match not assessed";
+}
 
 /// <summary>A single required-skill coverage row in the job detail panel.</summary>
 public sealed record CoverageItemViewModel(
@@ -53,6 +56,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     private readonly SkillLedgerMatcher _ledgerMatcher;
     private readonly CareerPlanner _careerPlanner;
     private readonly SearchQueryGenerator _searchQueryGenerator;
+    private readonly IJobSpecParser? _jobParser;
 
     // Cancels any in-flight RefreshAspectsAsync when the selected job changes
     private CancellationTokenSource? _refreshCts;
@@ -125,7 +129,8 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         JdSkillLedgerBuilder jdLedgerBuilder,
         SkillLedgerMatcher ledgerMatcher,
         CareerPlanner careerPlanner,
-        SearchQueryGenerator searchQueryGenerator)
+        SearchQueryGenerator searchQueryGenerator,
+        IJobSpecParser? jobParser = null)
     {
         _jobSearchService = jobSearchService;
         _matchingService = matchingService;
@@ -140,6 +145,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         _ledgerMatcher = ledgerMatcher;
         _careerPlanner = careerPlanner;
         _searchQueryGenerator = searchQueryGenerator;
+        _jobParser = jobParser;
         _ = LoadSavedAsync();
     }
 
@@ -154,43 +160,10 @@ public sealed partial class JobsPageViewModel : ViewModelBase
             return;
         }
 
-        // Compute match scores using skill ledger if resume is available
-        Core.Models.Skills.SkillLedger? resumeLedger = null;
-        var aggregateResume = state.BuildAggregateResume();
-        if (aggregateResume is not null)
-        {
-            try { resumeLedger = await _ledgerBuilder.BuildAsync(aggregateResume); }
-            catch { /* non-blocking */ }
-        }
-
-        var jobItems = new List<JobListItem>();
-        foreach (var j in state.Jobs.OrderByDescending(j => j.CreatedAt))
-        {
-            var score = j.MatchScore ?? 0.0;
-
-            // Compute match score from skill ledger if not already set
-            if (score < 0.01 && resumeLedger is not null)
-            {
-                try
-                {
-                    var jdLedger = await _jdLedgerBuilder.BuildAsync(j);
-                    var match = await _ledgerMatcher.MatchAsync(resumeLedger, jdLedger, resumeDoc: aggregateResume);
-                    score = match.OverallFit;
-                    j.SetMatchScore(score);
-                }
-                catch { /* non-blocking */ }
-            }
-
-            jobItems.Add(new JobListItem(
-                j.JobId,
-                j.Title ?? "(No title)",
-                j.Company ?? "(Unknown)",
-                j.Location ?? "",
-                j.IsRemote ?? false,
-                score,
-                j.Source?.Url ?? "",
-                j));
-        }
+        // Browsing saved jobs must not rebuild every match or rescan imports.
+        var jobItems = state.Jobs.OrderByDescending(job => job.CreatedAt).Select(job => new JobListItem(
+            job.JobId, job.Title ?? "(No title)", job.Company ?? "(Unknown)", job.Location ?? "",
+            job.IsRemote ?? false, job.MatchScore ?? 0, job.Source?.Url ?? "", job)).ToList();
 
         // Split into Looking (candidate) and Hiring (employer) views
         Jobs = jobItems.Where(j => !j.FullJob.IsEmployerRole).ToList().AsReadOnly();
@@ -209,19 +182,13 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     {
         try
         {
-            var aggregateResume = state.BuildAggregateResume();
+            var aggregateResume = state.GetCompleteTranscript();
             if (aggregateResume is null) return;
             var ledger = await _ledgerBuilder.BuildAsync(aggregateResume);
             var graph = new SkillGraph();
             graph.AddResumeLedger(ledger);
 
-            // Also add saved JD ledgers to enrich the graph
-            foreach (var job in state.Jobs)
-            {
-                var jdLedger = await _jdLedgerBuilder.BuildAsync(job);
-                graph.AddJdLedger(jdLedger);
-            }
-
+            // Startup suggestions use the accepted career ledger. A selected job is analysed separately.
             graph.DetectCommunities();
             var suggestions = _searchQueryGenerator.Generate(graph, ledger);
 
@@ -280,10 +247,27 @@ public sealed partial class JobsPageViewModel : ViewModelBase
 
         if (value is not null)
         {
-            _ = RunJdQualityAsync(value.FullJob);
-            _ = RunCoverageAsync(value.FullJob);
-            _ = RunCareerPlanAsync(value.FullJob);
+            _ = AnalyseSelectedJobAsync(value.FullJob, _refreshCts.Token);
         }
+    }
+
+    private async Task AnalyseSelectedJobAsync(JobDescription job, CancellationToken ct)
+    {
+        try
+        {
+            if (_jobParser is not null && await _jobParser.EnsureRequirementsCurrentAsync(job, ct))
+                await _store.MutateAsync(state =>
+                {
+                    var index = state.Jobs.FindIndex(saved => saved.JobId == job.JobId);
+                    if (index >= 0 && state.Jobs[index].RawText == job.RawText) state.Jobs[index] = job;
+                }, ct);
+            if (ct.IsCancellationRequested || SelectedJob?.JobId != job.JobId) return;
+            SelectedJobSkills = string.Join(" · ", job.MentionedSkills.Concat(job.RequiredSkills).Concat(job.PreferredSkills)
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+            await Task.WhenAll(RunJdQualityAsync(job), RunCoverageAsync(job, ct), RunCareerPlanAsync(job, ct));
+        }
+        catch (OperationCanceledException) { }
+        catch { /* Optional analysis must not prevent selecting or projecting a job. */ }
     }
 
     private Task RunJdQualityAsync(JobDescription job)
@@ -312,15 +296,16 @@ public sealed partial class JobsPageViewModel : ViewModelBase
         return Task.CompletedTask;
     }
 
-    private async Task RunCoverageAsync(JobDescription job)
+    private async Task RunCoverageAsync(JobDescription job, CancellationToken ct = default)
     {
         try
         {
             var state = await _store.LoadAsync();
-            var aggregateResume = state.BuildAggregateResume();
+            var aggregateResume = state.GetCompleteTranscript();
             if (aggregateResume is null) return;
 
-            var report = await _coverageAnalyser.AnalyseAsync(aggregateResume, job);
+            var report = await _coverageAnalyser.AnalyseAsync(aggregateResume, job, ct);
+            if (ct.IsCancellationRequested || SelectedJob?.JobId != job.JobId) return;
             CoveragePercent = report.CoveragePercent;
             CoverageItems = report.Entries
                 .Where(e => e.Requirement.Priority == RequirementPriority.Required)
@@ -402,7 +387,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
             var results = await _jobSearchService.SearchAllAsync(query);
 
             var state = await _store.LoadAsync();
-            var resume = state.BuildAggregateResume();
+            var resume = state.GetCompleteTranscript();
             var profile = state.Profile;
 
             var items = new List<JobListItem>();
@@ -415,6 +400,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
                     {
                         var match = await _matchingService.MatchAsync(resume, job, profile);
                         score = match.Score;
+                        job.SetMatchScore(score);
                     }
                     catch (OperationCanceledException)
                     {
@@ -462,7 +448,7 @@ public sealed partial class JobsPageViewModel : ViewModelBase
     {
         if (SelectedJob is null) return;
         var state = await _store.LoadAsync();
-        _applyPage.SetContext(state.SelectedResume, SelectedJob.FullJob);
+        _applyPage.SetContext(state.GetCompleteTranscript(), SelectedJob.FullJob);
         NavigateTo?.Invoke("Apply");
     }
 
@@ -476,22 +462,23 @@ public sealed partial class JobsPageViewModel : ViewModelBase
 
     private bool HasSelectedJob() => SelectedJob is not null;
 
-    private async Task RunCareerPlanAsync(JobDescription job)
+    private async Task RunCareerPlanAsync(JobDescription job, CancellationToken ct = default)
     {
         try
         {
             var state = await _store.LoadAsync();
-            var aggregateResume = state.BuildAggregateResume();
+            var aggregateResume = state.GetCompleteTranscript();
             if (aggregateResume is null) return;
 
-            var resumeLedger = await _ledgerBuilder.BuildAsync(aggregateResume);
-            var jdLedger = await _jdLedgerBuilder.BuildAsync(job);
+            var resumeLedger = await _ledgerBuilder.BuildAsync(aggregateResume, ct);
+            var jdLedger = await _jdLedgerBuilder.BuildAsync(job, ct);
             var graph = new SkillGraph();
             graph.AddResumeLedger(resumeLedger);
             graph.AddJdLedger(jdLedger);
             graph.DetectCommunities();
 
-            var plan = await _careerPlanner.PlanAsync(resumeLedger, jdLedger, graph);
+            var plan = await _careerPlanner.PlanAsync(resumeLedger, jdLedger, graph, ct);
+            if (ct.IsCancellationRequested || SelectedJob?.JobId != job.JobId) return;
 
             CareerFitPercent = (int)(plan.CurrentFit * 100);
             CareerAdvice = plan.Recommendations

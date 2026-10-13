@@ -9,6 +9,16 @@ namespace lucidRESUME.AI.Tests;
 public sealed class ResumeProjectionEditorTests
 {
     [Fact]
+    public void Prose_does_not_copy_skill_label_capitalisation_into_ordinary_concepts()
+    {
+        const string source = "Led microservices and event-driven architecture using ASP.NET Core and Azure.";
+        Assert.Equal(source, ResumeProjectionEditor.RestoreSourceSentenceCase(source,
+            "Led Microservices and event-driven Architecture using ASP.NET Core and Azure."));
+        Assert.Equal("Microservices need observability.", ResumeProjectionEditor.RestoreSourceSentenceCase(
+            "Used microservices and observability.", "Microservices need Observability."));
+    }
+
+    [Fact]
     public void Job_brief_retains_detailed_competencies_and_distinguishes_same_title_jobs()
     {
         var database = new JobDescription
@@ -153,6 +163,26 @@ public sealed class ResumeProjectionEditorTests
         Assert.Equal("Software engineer", packet.Claims.Single(claim => claim.Claim.Id.EndsWith(":personal:summary", StringComparison.Ordinal)).Claim.Statement);
         Assert.DoesNotContain(packet.Claims, claim => claim.Claim.Statement.Contains("AI agent"));
         Assert.Equal("Software engineer building internal AI agent runtimes.", source.Personal.Summary);
+    }
+
+    [Fact]
+    public async Task Authored_summary_exposes_only_its_selected_account_to_the_writer()
+    {
+        const string account = "Over the past year I developed products with agentic LLMs.";
+        var source = ResumeDocument.Create("cv.md", "text/markdown", 0);
+        source.Personal.Summary = account + " Earlier migrations reduced infrastructure costs by 50%.";
+        var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
+        var projection = ResumeDocument.Create("out.md", "text/markdown", 0);
+        projection.Personal.Summary = account;
+        projection.Projection = new ResumeProjectionInfo { SourceResumeId = source.ResumeId, SourceRevision = ledger.SourceRevision,
+            Blocks = [new() { ClaimId = ledger.Claims.Single(claim => claim.Id.EndsWith(":personal:summary")).Id, ProseRef = "#summary:p1" }] };
+        projection.SetDoclingOutput("## Summary {#summary}\n\n" + account, null, null);
+        var recorder = new SummaryRecorder();
+        var editor = new ResumeProjectionEditor(new ResumeCompositionOrchestrator([recorder], new CompositionValidator()),
+            Options.Create(new TailoringOptions { Provider = "test" }));
+        await editor.EditAsync(source, projection, new JobDescription { Title = "Applied AI Engineer" });
+        Assert.Equal(account, Assert.Single(Assert.Single(recorder.Sections).Claims).Claim.Statement);
+        Assert.Contains("50%", source.Personal.Summary);
     }
 
     private sealed class SummaryRecorder : IResumeCompositionProvider

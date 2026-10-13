@@ -34,6 +34,24 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
         return Short(brief, 3000) + "\nJob fingerprint: " + MarkdownEvidenceIndex.Fingerprint(identity);
     }
 
+    private static readonly HashSet<string> SentenceCaseConcepts = new(["architecture", "microservices", "scalability",
+        "observability", "integration", "integrations", "software", "engineering", "development", "delivery", "evaluation", "workflows"], StringComparer.Ordinal);
+
+    internal static string RestoreSourceSentenceCase(string source, string edited)
+    {
+        // Capability labels are capitalised in Skills; ordinary concepts stay in sentence case in prose.
+        var lowerSourceWords = Regex.Matches(source, @"\b[\p{L}]+\b").Select(match => match.Value)
+            .Where(word => word == word.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
+        return Regex.Replace(edited, @"\b[\p{L}]+\b", match =>
+        {
+            var lower = match.Value.ToLowerInvariant();
+            if (!SentenceCaseConcepts.Contains(lower) || match.Value == lower || !lowerSourceWords.Contains(lower)) return match.Value;
+            var previous = match.Index - 1;
+            while (previous >= 0 && char.IsWhiteSpace(edited[previous])) previous--;
+            return previous < 0 || edited[previous] is '.' or '!' or '?' ? match.Value : lower;
+        });
+    }
+
     public async Task EditAsync(ResumeDocument source, ResumeDocument projection, JobDescription job, CancellationToken ct = default, IProgress<string>? progress = null)
     {
         if (!options.Value.ComposeProse || projection.Projection is null) return;
@@ -56,9 +74,11 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
                     {
                         Id = claim.Id,
                         Subject = claim.SubjectId ?? "career",
-                        Statement = group.Key.StartsWith("#summary:") && claim.Kind == "personal" &&
-                                    ResumeSummaryBuilder.UsesIdentity(passage.Text, claim.Statement)
-                            ? ResumeSummaryBuilder.Identity(claim.Statement)! : claim.Statement,
+                        Statement = group.Key.StartsWith("#summary:") && claim.Kind == "personal"
+                            ? claim.Statement.Contains(passage.Text, StringComparison.Ordinal) ? passage.Text
+                                : ResumeSummaryBuilder.UsesIdentity(passage.Text, claim.Statement)
+                                    ? ResumeSummaryBuilder.Identity(claim.Statement)! : claim.Statement
+                            : claim.Statement,
                         Concepts = new JobMlClaimConcepts
                         {
                             Skills = [.. claim.Concepts]
@@ -94,6 +114,7 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
             // Keep one paragraph per binding, so evidence references cannot drift.
             var text = Regex.Replace(block.Text.Trim(), @"\s+", " ").TrimStart('-', ' ');
             text = Regex.Replace(text, @"\basp\.net\b", "ASP.NET", RegexOptions.IgnoreCase);
+            text = RestoreSourceSentenceCase(passage.Text, text);
             if (Regex.IsMatch(text, @"(^|\s)(#{1,6}\s|```|\{#[^}]+\})") || text.Contains("<p", StringComparison.OrdinalIgnoreCase))
             {
                 projection.GenerationWarnings.Add($"Retained source prose for {block.SectionId}: edit introduced document structure.");

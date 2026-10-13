@@ -5,6 +5,17 @@ namespace lucidRESUME.Compiler.Tests;
 public sealed class ProseQualityTests
 {
     [Theory]
+    [InlineData("Supported an ASP.NET Core applicaiton using Azure.", "Supported an ASP.NET Core application using Azure.", "application")]
+    [InlineData("Built services to meet customer requirement.", "Built services to meet customer requirements.", "requirements")]
+    public void Harmless_spelling_and_plural_edits_do_not_become_invented_job_facts(string source, string edit, string requirement)
+    {
+        var packet = Packet(source, []);
+        var manifest = Manifest(packet) with { Requirements = [new("r", requirement, RequirementKind.Required, requirement)] };
+        var block = new CompositionBlock("role", source, ["claim"], ["evidence"]);
+        Assert.Empty(new CompositionValidator().Validate(new([block with { Text = edit }], []), [block], manifest));
+    }
+
+    [Theory]
     [InlineData("Built a prototype. Proposed a human review queue; the project was cancelled before implementation.", true)]
     [InlineData("Built a prototype. Proposed a human review queue; the project was cancelled before the queue was implemented.", false)]
     public void Cancellation_keeps_the_unimplemented_object_separate_from_the_built_prototype(string edited, bool rejected)

@@ -30,7 +30,8 @@ public sealed class SemanticCompressor
     private static readonly HashSet<string> GenericSkillLabels = new(StringComparer.OrdinalIgnoreCase)
     {
         "engineering", "systems", "system", "technical", "tech", "technology", "technologies",
-        "performance", "lead", "leading", "management", "it", "software", "development"
+        "performance", "lead", "leading", "management", "it", "software", "development",
+        "business", "support", "connect", "remote", "uk", "cv", "product", "tools", "data", "services", "architecture"
     };
     private static readonly HashSet<string> ShortTechnicalTokens = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -350,7 +351,8 @@ public sealed class SemanticCompressor
         md.AppendLine();
         var includedRoles = 0;
         foreach (var exp in resume.Experience
-                     .OrderByDescending(IsContinuingCompanyRole)
+                     .OrderByDescending(e => e.IsCurrent)
+                     .ThenByDescending(IsContinuingCompanyRole)
                      .ThenByDescending(e => e.StartDate))
         {
             if (!selectedRoleIds.Contains(exp.Id)) continue;
@@ -464,17 +466,20 @@ public sealed class SemanticCompressor
             var summary = careerSummary;
             if (selectedAccountsForSummary.Count >= 1)
             {
-                var focusSkills = jd.RequiredSkills.Concat(jd.PreferredSkills)
+                var focusSkills = (jd.MentionedSkills.Count > 0 ? jd.MentionedSkills : jd.RequiredSkills.Concat(jd.PreferredSkills))
+                    .Where(skill => !GenericSkillLabels.Contains(skill) && skill.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length <= 5)
                     .Where(skill => selectedAccountsForSummary.Any(item => SkillTaxonomy.MentionsEquivalent(item.Text, skill)))
                     .Distinct(StringComparer.OrdinalIgnoreCase).Take(4).ToList();
                 var focusAccount = ResumeSummaryBuilder.FindFocusAccount(selectedAccountsForSummary.Select(item => item.Text), focusSkills);
-                summary = ResumeSummaryBuilder.Build(careerSummary, focusSkills,
+                var authoredFocus = ResumeSummaryBuilder.RelevantAuthoredAccount(careerSummary,
+                    string.Join(' ', new[] { jd.Title ?? "", jd.RawText }.Concat(jd.MentionedSkills)));
+                summary = authoredFocus ?? ResumeSummaryBuilder.Build(careerSummary, focusSkills,
                     focusSkills.Count > 0 && focusSkills.All(skill => SkillTaxonomy.MentionsEquivalent(careerSummary, skill)) &&
                     !lucidRESUME.Compiler.CompositionValidator.RepeatsSentence(careerSummary,
                         projection.Experience.SelectMany(role => role.Achievements).ToList()), focusAccount);
-                if (summary.Contains(careerSummary, StringComparison.Ordinal) || ResumeSummaryBuilder.UsesIdentity(summary, careerSummary))
+                if (authoredFocus is not null || summary.Contains(careerSummary, StringComparison.Ordinal) || ResumeSummaryBuilder.UsesIdentity(summary, careerSummary))
                     Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
-                foreach (var item in summary == careerSummary ? [] : selectedAccountsForSummary.Where(item => focusAccount is null || focusAccount.Sources.Contains(item.Text)))
+                foreach (var item in summary == careerSummary || authoredFocus is not null ? [] : selectedAccountsForSummary.Where(item => focusAccount is null || focusAccount.Sources.Contains(item.Text)))
                 {
                     var selectedParagraph = projection.Experience.Single(role => role.Id == item.Role.Id).Achievements.IndexOf(item.Text);
                     var firstParagraph = string.IsNullOrEmpty(FormatDateRange(item.Role.StartDate, item.Role.EndDate, item.Role.IsCurrent)) ? 1 : 2;
@@ -628,20 +633,28 @@ public sealed class SemanticCompressor
             : [];
         var selectedAccounts = projection.Experience.SelectMany(role => role.Achievements).ToList();
         var explicitSkills = resume.Skills.Where(skill => Accepted(sourceLedger, EvidenceLedgerBuilder.SkillLocator(skill.Name)) &&
-            selectedAccounts.Any(account => SkillTaxonomy.MentionsEquivalent(account, skill.Name))).Select(skill => skill.Name);
-        var declaredAiSkills = jd.Title?.Contains("AI", StringComparison.OrdinalIgnoreCase) == true
-            ? resume.Skills.Where(skill => Accepted(sourceLedger, EvidenceLedgerBuilder.SkillLocator(skill.Name)) &&
-                Regex.IsMatch(skill.Category ?? "", @"\b(AI|ML)\b", RegexOptions.IgnoreCase)).Select(skill => skill.Name)
-            : [];
+            selectedAccounts.Any(account => SkillTaxonomy.MentionsEquivalent(account, skill.Name))).Select(skill => skill.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var relevantAccountConcepts = projection.Projection.Blocks.Select(block => sourceLedger.Claims.FirstOrDefault(claim => claim.Id == block.ClaimId))
             .Where(claim => claim is not null && Tokens(claim.Statement).Except(ignored).Intersect(targetTokens).Count() >= 2)
             .SelectMany(claim => claim!.Concepts).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var broadEngineeringRequest = Regex.IsMatch(jd.RawText,
+            @"\b(?:software engineering|backend (?:engineer|services)|production (?:code|software|systems))\b", RegexOptions.IgnoreCase);
+        var selectedRoleTechnologies = projection.Experience.Where(role => !role.IsCompact && broadEngineeringRequest).SelectMany(role => role.Technologies)
+            .Where(name => sourceLedger.Claims.Any(claim => claim.Review == "accepted" && claim.Kind == "technology" &&
+                claim.Statement.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Associations rank already-declared skills for display; they never establish a requirement match or role claim.
+        var supportingDeclaredSkills = broadEngineeringRequest
+            ? resume.Skills.Where(skill => Accepted(sourceLedger, EvidenceLedgerBuilder.SkillLocator(skill.Name)) &&
+                explicitSkills.Any(selected => SkillTaxonomy.AreRelated(skill.Name, selected)))
+                .Select(skill => skill.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var jobSkillContext = string.Join(' ', new[] { jd.Title ?? "", jd.RawText }.Concat(jd.RequiredSkills).Concat(jd.PreferredSkills).Concat(jd.Responsibilities));
         var skillsByCategory = priorityLeadership.Concat(matchedSkillNames).Concat(demonstratedConcepts)
-            .Concat(explicitSkills).Concat(declaredAiSkills).Concat(relevantAccountConcepts)
+            .Concat(explicitSkills).Concat(selectedRoleTechnologies).Concat(supportingDeclaredSkills).Concat(relevantAccountConcepts)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Where(name => matchedSkillNames.Contains(name) ||
-                SkillTaxonomy.MentionsEquivalent(jobSkillContext, name) || priorityLeadership.Contains(name) || declaredAiSkills.Contains(name))
+                SkillTaxonomy.MentionsEquivalent(jobSkillContext, name) || priorityLeadership.Contains(name) || explicitSkills.Contains(name) || selectedRoleTechnologies.Contains(name) || supportingDeclaredSkills.Contains(name))
             .Where(name => !GenericSkillLabels.Contains(name))
             .Where(name => sourceLedger.Claims.Any(claim => claim.Review == "accepted" && claim.Kind is "skill" or "technology" &&
                 claim.Statement.Equals(name, StringComparison.OrdinalIgnoreCase)))
@@ -683,11 +696,16 @@ public sealed class SemanticCompressor
             var educationParagraph = 1;
             foreach (var edu in resume.Education.Where(e => !string.IsNullOrWhiteSpace(e.Degree) && Accepted(sourceLedger, $"education:{e.Id:N}")))
             {
+                if (EducationEquivalence.Default.GetIscedLevel(edu.Degree) < 0)
+                {
+                    projection.GenerationWarnings.Add($"Education at {edu.Institution} has an unresolved qualification label. Retained in the complete transcript; omitted from this resume rather than presenting a subject as an awarded degree.");
+                    continue;
+                }
                 var qualification = string.IsNullOrWhiteSpace(edu.FieldOfStudy)
                     ? edu.Degree ?? ""
                     : $"{edu.Degree} | {edu.FieldOfStudy}";
                 md.AppendLine($"**{qualification}** | {edu.Institution ?? ""}");
-                var educationDates = FormatDateRange(edu.StartDate, edu.EndDate, false);
+                var educationDates = edu.FormatYears();
                 if (!string.IsNullOrWhiteSpace(educationDates))
                     md.AppendLine($"*{educationDates}*");
                 md.AppendLine();

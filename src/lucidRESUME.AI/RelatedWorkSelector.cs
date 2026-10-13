@@ -11,7 +11,9 @@ public static class RelatedWorkSelector
 {
     private static readonly HashSet<string> Stop = new("the and for with from that this your have will build built design own lead experience required strong work working platform system systems engineering production project development skills responsibilities".Split(' '), StringComparer.OrdinalIgnoreCase);
     private static HashSet<string> Terms(string text) => Regex.Matches(text.ToLowerInvariant(), @"[a-z][a-z0-9+#.-]*")
-        .Select(match => match.Value.TrimEnd('.')).Where(word => word.Length >= 2 && !Stop.Contains(word)).ToHashSet();
+        .Select(match => match.Value.TrimEnd('.') switch
+        { "agentic" or "agents" => "agent", "llms" => "llm", "workflows" => "workflow", "architectural" => "architecture", "decisions" => "decision", _ => match.Value.TrimEnd('.') })
+        .Where(word => word.Length >= 2 && !Stop.Contains(word)).ToHashSet();
 
     public static IReadOnlyList<RelatedWorkLink> Select(ResumeDocument source, JobDescription job,
         IEnumerable<Guid> excludedProjects, int maximum)
@@ -23,6 +25,7 @@ public static class RelatedWorkSelector
             .Concat(job.RequiredSkills).Concat(job.Responsibilities).Concat(job.PreferredSkills)
             .Where(text => !string.IsNullOrWhiteSpace(text)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (requirements.Count == 0) requirements = Regex.Split(job.RawText, @"[\r\n]+|(?<=[.!?])\s+").Where(text => Terms(text).Count > 0).ToList();
+        var namedSkillTerms = job.MentionedSkills.SelectMany(Terms).ToHashSet();
         var candidates = new List<(RelatedWorkLink Link, int Coverage, int Specificity, double Attribution, DateOnly? Date)>();
         foreach (var (project, kind) in source.Projects.Select(project => (project, "project"))
                      .Concat(source.Publications.Select(project => (project, "publication"))))
@@ -39,7 +42,10 @@ public static class RelatedWorkSelector
                 var matched = requirements.Where(requirement =>
                 {
                     var terms = Terms(requirement);
-                    return terms.Count > 0 && words.Intersect(terms).Count() >= Math.Min(2, terms.Count);
+                    var shared = words.Intersect(terms).ToList();
+                    // Related writing is candidate context, not proof of skill: a named technical anchor may suffice.
+                    return terms.Count > 0 && (shared.Count >= Math.Min(2, terms.Count) ||
+                        kind == "publication" && shared.Any(namedSkillTerms.Contains));
                 }).ToList();
                 return (Claim: claim, Requirements: matched, Specificity: words.Intersect(requirements.SelectMany(Terms)).Count());
             }).OrderByDescending(item => item.Requirements.Count).ThenByDescending(item => item.Specificity).FirstOrDefault();

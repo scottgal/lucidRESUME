@@ -40,3 +40,8 @@ gaap: generally accepted accounting principles, us gaap
 gdpr: general data protection regulation
 hiring: recruitment, recruiting, team recruitment, recruit senior developers, recruited senior developers, hired engineering team
 release management: release lifecycle
+
+# Exact LLM terminology; broader AI services remain distinct.
+code llm: code llms
+large language model: large language models, llm, llms
+azure openai: azure openai service, azure openai services

@@ -109,7 +109,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
 
     public IReadOnlyList<ResumeTemplate> Templates { get; } = ResumeTemplateCatalog.All;
     [ObservableProperty] private ResumeTemplate _selectedTemplate = ResumeTemplateCatalog.All[0];
-    [ObservableProperty] private bool _includeCompactJobMl = true;
+    [ObservableProperty] private bool _includeCompactJobMl;
 
     // Compression stats
     [ObservableProperty] private string? _compressionStats;
@@ -165,6 +165,15 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         var version = _contextVersion;
         try
         {
+            if (await _jobParser.EnsureRequirementsCurrentAsync(job))
+            {
+                if (version != _contextVersion) return null;
+                await _store.MutateAsync(state =>
+                {
+                    var index = state.Jobs.FindIndex(saved => saved.JobId == job.JobId);
+                    if (index >= 0 && state.Jobs[index].RawText == job.RawText) state.Jobs[index] = job;
+                });
+            }
             var report = await _coverageAnalyser.AnalyseAsync(resume, job);
             if (version != _contextVersion) return null;
             CoveragePercent = report.CoveragePercent;
@@ -223,6 +232,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                 finally { _settingParsedFields = false; }
             }
 
+            StatusMessage = "Checking saved job requirements…";
             var coverage = await RunCoverageAsync(resume, job);
             if (version != _contextVersion) return;
             _interviewTopics = coverage is null ? [] : RoleInterviewPlanner.Plan(resume, coverage)
@@ -236,6 +246,8 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                     ? "Some job requirements have limited supporting evidence. Your resume will use what is available. You can optionally add role detail and regenerate."
                     : null;
 
+            if (job.SkillAnalysisWarnings.Count > 0)
+                EvidenceWarning = string.Join(" ", job.SkillAnalysisWarnings) + " " + EvidenceWarning;
             if (version != _contextVersion) return;
 
             // Step 1: Semantic compression - filter to relevant evidence only
@@ -514,7 +526,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
                 latest.CompleteCareer.UpdatedAt = DateTimeOffset.UtcNow;
             });
             if (version != _contextVersion) return;
-            _contextResume = aggregateContext ? (await _store.LoadAsync()).BuildAggregateResume()! : updated;
+            _contextResume = aggregateContext ? (await _store.LoadAsync()).GetCompleteTranscript()! : updated;
             if (version != _contextVersion) return;
             _handledTopics.Add(topic.Key);
             if (IsTranscriptBuilder)

@@ -17,6 +17,7 @@ public sealed partial class CareerPlannerPageViewModel : ViewModelBase
     private readonly SkillLedgerBuilder _ledgerBuilder;
     private readonly JdSkillLedgerBuilder _jdLedgerBuilder;
     private readonly CareerPlanner _planner;
+    private readonly IJobSpecParser? _jobParser;
 
     [ObservableProperty] private bool _hasData;
     [ObservableProperty] private bool _isLoading;
@@ -37,29 +38,33 @@ public sealed partial class CareerPlannerPageViewModel : ViewModelBase
     [ObservableProperty] private bool _hasPlan;
 
     public CareerPlannerPageViewModel(IAppStore store, SkillLedgerBuilder ledgerBuilder,
-        JdSkillLedgerBuilder jdLedgerBuilder, CareerPlanner planner)
+        JdSkillLedgerBuilder jdLedgerBuilder, CareerPlanner planner, IJobSpecParser? jobParser = null)
     {
         _store = store;
         _ledgerBuilder = ledgerBuilder;
         _jdLedgerBuilder = jdLedgerBuilder;
         _planner = planner;
+        _jobParser = jobParser;
         _ = LoadAsync();
     }
+
+    private bool _loadingSavedJobs;
 
     private async Task LoadAsync()
     {
         var state = await _store.LoadAsync();
-        var resume = state.BuildAggregateResume();
+        var resume = state.GetCompleteTranscript();
         HasData = resume != null;
         Jobs = new ObservableCollection<JobDescription>(state.Jobs);
 
-        if (Jobs.Count > 0)
-            SelectedJob = Jobs[0];
+        _loadingSavedJobs = true;
+        try { if (Jobs.Count > 0) SelectedJob = Jobs[0]; }
+        finally { _loadingSavedJobs = false; }
     }
 
     partial void OnSelectedJobChanged(JobDescription? value)
     {
-        if (value != null) _ = PlanForJobAsync(value);
+        if (value != null && !_loadingSavedJobs) _ = PlanForJobAsync(value);
     }
 
     [RelayCommand]
@@ -74,8 +79,14 @@ public sealed partial class CareerPlannerPageViewModel : ViewModelBase
         StatusMessage = "Analysing gaps...";
         try
         {
+            if (_jobParser is not null && await _jobParser.EnsureRequirementsCurrentAsync(jd))
+                await _store.MutateAsync(state =>
+                {
+                    var index = state.Jobs.FindIndex(job => job.JobId == jd.JobId);
+                    if (index >= 0 && state.Jobs[index].RawText == jd.RawText) state.Jobs[index] = jd;
+                });
             var state = await _store.LoadAsync();
-            var resume = state.BuildAggregateResume();
+            var resume = state.GetCompleteTranscript();
             if (resume == null) { StatusMessage = "No resume data"; return; }
 
             var ledger = await _ledgerBuilder.BuildAsync(resume);

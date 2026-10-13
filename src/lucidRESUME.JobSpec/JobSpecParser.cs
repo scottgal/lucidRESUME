@@ -18,11 +18,12 @@ public sealed class JobSpecParser : IJobSpecParser
     private readonly ISkillTaxonomy? _taxonomy;
     private readonly IEntityLookup? _entityLookup;
     private readonly FusionOptions _fusionOpts;
+    private readonly JobSkillClassifier _skillClassifier;
 
     public JobSpecParser(ILogger<JobSpecParser> logger, ScrapeStrategySelector strategySelector,
         IEnumerable<IEntityDetector> detectors, IOptions<FusionOptions>? fusionOpts = null,
         ILlmExtractionService? llm = null, ISkillTaxonomy? taxonomy = null,
-        IEntityLookup? entityLookup = null)
+        IEntityLookup? entityLookup = null, JobSkillClassifier? skillClassifier = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(strategySelector);
@@ -34,6 +35,7 @@ public sealed class JobSpecParser : IJobSpecParser
         _taxonomy = taxonomy;
         _entityLookup = entityLookup;
         _fusionOpts = fusionOpts?.Value ?? new FusionOptions();
+        _skillClassifier = skillClassifier ?? new();
     }
 
     /// <summary>Constructor for text-only use (no URL scraping). Tests use this.</summary>
@@ -43,6 +45,7 @@ public sealed class JobSpecParser : IJobSpecParser
         _logger = logger;
         _strategySelector = null!;
         _fusionOpts = new FusionOptions();
+        _skillClassifier = new();
     }
 
     public async Task<JobDescription> ParseFromTextAsync(string text, CancellationToken ct = default)
@@ -57,11 +60,11 @@ public sealed class JobSpecParser : IJobSpecParser
         allCandidates.AddRange(StructuralExtractor.Extract(text));
 
         // Layer 2+3+4: NER + LLM + Taxonomy centroids — ALL run in parallel
-        // LLM always runs if available (don't gate on IsAvailable — let it try and fail gracefully)
+        // With Nimble configured, use bounded decisions over local candidates instead of full LLM extraction.
         var tasks = new List<Task<List<JdFieldCandidate>>>();
         if (_detectors is not null)
             tasks.Add(NerExtractor.ExtractAsync(text, _detectors, ct));
-        if (_llm is not null)
+        if (_llm is not null && !_skillClassifier.HasDecisionProvider)
             tasks.Add(LlmExtractor.ExtractAsync(text, _llm, ct));
         if (_taxonomy is not null)
             tasks.Add(TaxonomyCentroidExtractAsync(text, ct));
@@ -79,11 +82,12 @@ public sealed class JobSpecParser : IJobSpecParser
                 allCandidates.Add(new("location", location, 0.70, "entity-lookup"));
         }
 
-        // Fuse all signals via RRF
-        var fused = JdFieldFuser.Fuse(allCandidates, _fusionOpts);
+        // Validate once before fusion: noise must never become a matching target or summary focus.
+        var classification = await _skillClassifier.ClassifyAsync(text, allCandidates, ct);
+        var fused = JdFieldFuser.Fuse(classification.Candidates, _fusionOpts);
         ApplyFusedFields(job, fused);
         job.MentionedSkills = job.RequiredSkills.Concat(job.PreferredSkills)
-            .Where(skill => skill.Length is >= 2 and <= 50)
+            .Where(skill => skill.Length is >= 2 and <= 50 && classification.Classes.GetValueOrDefault(skill) == "skill")
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var outline = JobAdvertOutline.Extract(text);
         if (outline.Count > 0)
@@ -98,12 +102,41 @@ public sealed class JobSpecParser : IJobSpecParser
         }
 
 
+        job.SkillAnalysisVersion = _skillClassifier.AnalysisVersion;
+        job.SkillAnalysedAt = DateTimeOffset.UtcNow;
+        job.SkillAnalysisSourceHash = Core.Models.Evidence.EvidenceLedgerBuilder.FastHash(text);
+        job.SkillDecisions = classification.Decisions;
+        job.SkillAnalysisWarnings = classification.Warnings;
+
         _logger.LogInformation(
             "JD parsed: {Title} at {Company}, {SkillCount} skills ({PreferredCount} preferred), {Total} candidates from {Layers} layers",
             job.Title, job.Company, job.RequiredSkills.Count, job.PreferredSkills.Count,
             allCandidates.Count, allCandidates.Select(c => c.Source.Split(':')[0]).Distinct().Count());
 
         return job;
+    }
+
+    public async Task<bool> EnsureRequirementsCurrentAsync(JobDescription job, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(job.RawText)) return false;
+        var sameSource = job.SkillAnalysisSourceHash == Core.Models.Evidence.EvidenceLedgerBuilder.FastHash(job.RawText);
+        if (sameSource && job.SkillAnalysisVersion == _skillClassifier.AnalysisVersion &&
+            (job.SkillAnalysisWarnings.Count == 0 || job.SkillAnalysedAt > DateTimeOffset.UtcNow.AddMinutes(-5))) return false;
+        var parsed = await ParseFromTextAsync(job.RawText, ct);
+        job.MatchScore = null; // Previous scores may have matched rejected extraction noise.
+        job.RequiredSkills = parsed.RequiredSkills;
+        job.PreferredSkills = parsed.PreferredSkills;
+        job.MentionedSkills = parsed.MentionedSkills;
+        job.Competencies = parsed.Competencies;
+        job.Responsibilities = parsed.Responsibilities;
+        job.RequiredYearsExperience = parsed.RequiredYearsExperience;
+        job.RequiredEducation = parsed.RequiredEducation;
+        job.SkillAnalysisVersion = parsed.SkillAnalysisVersion;
+        job.SkillAnalysisSourceHash = parsed.SkillAnalysisSourceHash;
+        job.SkillAnalysedAt = parsed.SkillAnalysedAt;
+        job.SkillDecisions = parsed.SkillDecisions;
+        job.SkillAnalysisWarnings = parsed.SkillAnalysisWarnings;
+        return true;
     }
 
     /// <summary>Layer 4: Taxonomy centroid matching — finds known skills in text.</summary>

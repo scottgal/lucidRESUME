@@ -9,6 +9,18 @@ namespace lucidRESUME.AI.Tests;
 
 public sealed class ResumeCompositionProviderTests
 {
+    [Theory]
+    [InlineData("http://192.168.0.15:11434", true)]
+    [InlineData("https://ollama.example.test", true)]
+    [InlineData("file:///tmp/model", false)]
+    [InlineData("http://user:secret@192.168.0.15:11434", false)]
+    public void Ollama_writer_accepts_the_configured_server_without_embedded_credentials(string url, bool available)
+    {
+        var provider = new OllamaResumeCompositionProvider(new HttpClient(),
+            Options.Create(new OllamaOptions { CompositionEnabled = true, BaseUrl = url, Model = "writer" }));
+        Assert.Equal(available, provider.IsAvailable);
+    }
+
     [Fact]
     public void Local_provider_recovers_an_explicitly_identified_flat_section()
     {

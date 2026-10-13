@@ -10,6 +10,33 @@ namespace lucidRESUME.AI.Tests;
 public sealed class TargetedProjectionTests
 {
     [Fact]
+    public async Task Broad_engineering_advert_keeps_selected_role_tools_without_unrelated_declared_ai_skills()
+    {
+        var source = ResumeDocument.Create("career.md", "text/markdown", 0);
+        source.Personal.Summary = "Over the past year I have developed products with agentic LLMs.";
+        source.Skills = [new() { Name = "C#" }, new() { Name = "ASP.NET Core" }, new() { Name = "Code LLM" }, new() { Name = "ML.NET", Category = "AI & Innovation" }];
+        source.Education = [new() { Degree = "BSc (Hons)", Institution = "Example University", StartDate = new(1992, 1, 1), EndDate = new(1996, 1, 1) },
+            new() { Degree = "Laser physics and optoelectronics", Institution = "Another University" }];
+        source.Experience.Add(new() { Title = "Backend Engineer", Company = "Example", IsCurrent = true,
+            Achievements = ["Built production backend services with ASP.NET Core for business workflows.", "Built systems using Code LLMs for document processing."] });
+        var embedder = new EmptyEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }), NullLogger<SemanticCompressor>.Instance);
+        var result = await compressor.CompressAsync(source, new JobDescription { Title = "Applied AI Engineer",
+            RawText = "Build agentic workflows with LLMs and own production backend services.", RequiredSkills = ["Business", "Systems", "Support", "Connect"] });
+        Assert.Contains(result.Projection.Skills, skill => skill.Name == "C#");
+        Assert.Contains(result.Projection.Skills, skill => skill.Name == "Code LLM");
+        Assert.Equal("BSc (Hons)", Assert.Single(result.Projection.Education).Degree);
+        Assert.Contains("1992–1996", result.Markdown);
+        Assert.DoesNotContain("Jan 1992", result.Markdown);
+        Assert.Contains(result.Projection.Skills, skill => skill.Name == "ASP.NET Core");
+        Assert.DoesNotContain(result.Projection.Skills, skill => skill.Name == "ML.NET");
+        Assert.Contains("agentic LLMs", result.Projection.Personal.Summary);
+        Assert.DoesNotContain("Experience with Business", result.Projection.Personal.Summary);
+    }
+
+    [Fact]
     public async Task Concise_projection_still_evidences_required_tenure_and_warns_without_blocking_when_short()
     {
         var resume = ResumeDocument.Create("career.md", "text/markdown", 0);

@@ -77,7 +77,9 @@ method, confidence, source, and review state.
 An optional local Ollama Nimble decision layer can resolve bounded ingestion ambiguities after local
 rules and NER have proposed candidates. It can classify an unknown section or
 prose-linked skill, or select an already-extracted person or employer span. It cannot generate a new
-name, company, claim, or evidence value. Every decision is probability-gated,
+name, company, claim, or evidence value. For jobs it classifies extracted phrases as skills,
+capabilities, logistics or noise in batches, replacing full LLM extraction when enabled.
+Saved job decisions are reused during generation. Every decision is probability-gated,
 source-hashed, and recorded for review. Nimble is disabled by default. See the
 [local setup and decision guide](docs/nimble-parsing.md).
 Cloud API keys entered in Profile are held by the operating system credential

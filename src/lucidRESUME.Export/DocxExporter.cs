@@ -130,7 +130,10 @@ public sealed class DocxExporter : IResumeExporter
                             KeepTogether(roleParagraphs[paragraphIndex], paragraphIndex < roleParagraphs.Count - 1);
                         body.Append(roleParagraphs[paragraphIndex]);
                     }
-                    body.Append(CreateParagraph("", fontSize: exp.IsCompact ? 8 : 22)); // spacing
+                    // Paragraph spacing avoids an empty text line after every role.
+                    if (roleParagraphs.Count > 0)
+                        roleParagraphs[^1].ParagraphProperties!.SpacingBetweenLines = new SpacingBetweenLines
+                        { After = exp.IsCompact ? "40" : "120" };
                 }
             }
 
@@ -146,7 +149,7 @@ public sealed class DocxExporter : IResumeExporter
                     AppendCitationMarkers(paragraph,
                         ExportArtifact.EducationCitationNumbers(edu, compact));
                     body.Append(paragraph);
-                    var dates = FormatDateRange(edu.StartDate, edu.EndDate, false);
+                    var dates = edu.FormatYears();
                     if (!string.IsNullOrEmpty(dates))
                         body.Append(CreateParagraph(dates, fontSize: 18, color: "888888", italic: true));
                 }
@@ -278,7 +281,9 @@ public sealed class DocxExporter : IResumeExporter
             { Type = StyleValues.Paragraph, StyleId = "Heading3" },
             new Style(
                 new StyleName { Val = "List Bullet" },
+                new BasedOn { Val = "Normal" },
                 new StyleParagraphProperties(
+                    new SpacingBetweenLines { After = "40", Line = "240", LineRule = LineSpacingRuleValues.Auto },
                     new Indentation { Left = "360", Hanging = "180" })
             )
             { Type = StyleValues.Paragraph, StyleId = "ListBullet" }
@@ -356,7 +361,7 @@ public sealed class DocxExporter : IResumeExporter
                 new RunFonts { Ascii = template.FontFamily, HighAnsi = template.FontFamily });
             if (bold) properties.Append(new Bold());
             if (color is not null) properties.Append(new Color { Val = color });
-            properties.Append(new FontSize { Val = "22" });
+            properties.Append(new FontSize { Val = ((int)Math.Round(template.BodyFontSize * 2)).ToString() });
             paragraph.Append(new Run(properties,
                 new Text(value) { Space = SpaceProcessingModeValues.Preserve }));
         }
@@ -391,21 +396,11 @@ public sealed class DocxExporter : IResumeExporter
             paragraph.PrependChild(properties);
         }
         var style = properties.GetFirstChild<ParagraphStyleId>();
-        if (keepWithNext)
-        {
-            var keepNext = new KeepNext();
-            if (style is null) properties.PrependChild(keepNext);
-            else properties.InsertAfter(keepNext, style);
-            properties.InsertAfter(new KeepLines(), keepNext);
-        }
-        else if (style is null)
-        {
-            properties.PrependChild(new KeepLines());
-        }
-        else
-        {
-            properties.InsertAfter(new KeepLines(), style);
-        }
+        // Explicit false is required to override Heading3's inherited KeepNext for compact rows.
+        var keepNext = new KeepNext { Val = keepWithNext };
+        if (style is null) properties.PrependChild(keepNext);
+        else properties.InsertAfter(keepNext, style);
+        properties.InsertAfter(new KeepLines(), keepNext);
     }
 
     private static Paragraph CreateSkillGroup(string category, List<string> skills, ResumeTemplate template)

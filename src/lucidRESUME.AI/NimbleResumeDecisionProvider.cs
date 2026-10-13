@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 namespace lucidRESUME.AI;
 
 /// <summary>
-/// Local Ollama Nimble adapter for closed-set ingestion decisions. It cannot generate a value
+/// Configured Ollama Nimble adapter for closed-set ingestion decisions. It cannot generate a value
 /// outside the candidates supplied by the deterministic pipeline.
 /// </summary>
 public sealed partial class NimbleResumeDecisionProvider : IResumeDecisionProvider
@@ -29,46 +29,57 @@ public sealed partial class NimbleResumeDecisionProvider : IResumeDecisionProvid
             throw new InvalidOperationException("Nimble:MaxStateCharacters must be between 256 and 16000.");
 
         var baseUri = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
-        if (baseUri.Scheme != Uri.UriSchemeHttp || !baseUri.IsLoopback)
-            throw new InvalidOperationException("Nimble:BaseUrl must be a local HTTP loopback address.");
+        if (baseUri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(baseUri.UserInfo))
+            throw new InvalidOperationException("Nimble:BaseUrl must be an HTTP or HTTPS server address without embedded credentials.");
         _http.BaseAddress = baseUri;
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("lucidRESUME/2.x");
     }
 
-    public async Task<ResumeDecisionResult> DecideAsync(
-        ResumeDecisionRequest request,
-        CancellationToken ct = default)
+    public async Task<ResumeDecisionResult> DecideAsync(ResumeDecisionRequest request, CancellationToken ct = default) =>
+        (await DecideBatchAsync([request], ct))[0];
+
+    public async Task<IReadOnlyList<ResumeDecisionResult>> DecideBatchAsync(
+        IReadOnlyList<ResumeDecisionRequest> requests, CancellationToken ct = default)
     {
-        if (request.Candidates.Count is < 2 or > 26)
-            throw new ArgumentException("Nimble choice decisions require between 2 and 26 candidates.", nameof(request));
-
-        var state = request.State.Length > _options.MaxStateCharacters
-            ? request.State[.._options.MaxStateCharacters]
-            : request.State;
-        if (_options.RedactContactDetails)
-            state = Redact(state);
-
-        var payload = new NimbleRequest(
-            _options.Model,
-            state,
-            new Dictionary<string, NimbleQuestion>(StringComparer.Ordinal)
-            {
-                ["decision"] = new("choice", request.Instructions, request.Candidates)
-            });
-
+        if (requests.Count is < 1 or > 16)
+            throw new ArgumentException("Nimble batches require between 1 and 16 questions.", nameof(requests));
+        foreach (var request in requests)
+            if (request.Candidates.Count is < 2 or > 26)
+                throw new ArgumentException("Nimble choice decisions require between 2 and 26 candidates.", nameof(requests));
+        // Each decision has its own label/instructions; shared source context is sent only once.
+        var state = string.Join("\n", requests.Select(request => request.State).Distinct(StringComparer.Ordinal));
+        if (requests.Count > 1 && state.Length > _options.MaxStateCharacters)
+            throw new ArgumentException("Batch source context exceeds Nimble:MaxStateCharacters; supply bounded context.", nameof(requests));
+        if (state.Length > _options.MaxStateCharacters) state = state[.._options.MaxStateCharacters];
+        if (_options.RedactContactDetails) state = Redact(state);
+        string Key(int index) => requests.Count == 1 ? "decision" : "decision" + index;
+        var questions = requests.Select((request, index) => (request, index)).ToDictionary(
+            item => Key(item.index), item => new NimbleQuestion("choice", item.request.Instructions, item.request.Candidates),
+            StringComparer.Ordinal);
+        var payload = new NimbleRequest(_options.Model, state, questions);
         using var response = await _http.PostAsJsonAsync("v1/systemone", payload, NimbleJsonContext.Default.NimbleRequest, ct);
         var responseBody = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException(
                 $"Nimble returned HTTP {(int)response.StatusCode}. Request id: {ReadRequestId(response) ?? "unavailable"}.",
                 null, response.StatusCode);
-
         var parsed = JsonSerializer.Deserialize(responseBody, NimbleJsonContext.Default.NimbleResponse)
                      ?? throw new InvalidDataException("Nimble returned an empty response.");
         if (string.IsNullOrWhiteSpace(parsed.Model))
             throw new InvalidDataException("Nimble response did not identify the model used.");
-        if (!parsed.Answers.TryGetValue("decision", out var answer))
-            throw new InvalidDataException("Nimble response did not contain the requested decision.");
+        var results = new List<ResumeDecisionResult>();
+        for (var index = 0; index < requests.Count; index++)
+        {
+            if (!parsed.Answers.TryGetValue(Key(index), out var answer))
+                throw new InvalidDataException("Nimble response did not contain a requested decision.");
+            results.Add(ValidateAnswer(requests[index], answer, parsed, response));
+        }
+        return results;
+    }
+
+    private ResumeDecisionResult ValidateAnswer(ResumeDecisionRequest request, NimbleAnswer answer,
+        NimbleResponse parsed, HttpResponseMessage response)
+    {
         if (!string.Equals(answer.Type, "choice", StringComparison.Ordinal))
             throw new InvalidDataException($"Nimble returned answer type '{answer.Type}' instead of 'choice'.");
         if (string.IsNullOrWhiteSpace(answer.Choice) || !request.Candidates.ContainsKey(answer.Choice))

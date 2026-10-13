@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using lucidRESUME.Compiler;
 using lucidRESUME.Core.Models.Resume;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace lucidRESUME.AI;
 
-/// <summary>Local structured prose editing over already-selected evidence packets.</summary>
+/// <summary>Configured Ollama structured prose editing over already-selected evidence packets.</summary>
 public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<OllamaOptions> configured,
     ILogger<OllamaResumeCompositionProvider>? logger = null, ReusableProseStore? proseStore = null)
     : IResumeCompositionProvider
@@ -18,13 +19,13 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
 
     public string ProviderId => "ollama";
     public bool IsAvailable => _options.CompositionEnabled &&
-                               !string.IsNullOrWhiteSpace(_options.Model) && LocalBaseUri() is not null;
+                               !string.IsNullOrWhiteSpace(_options.Model) && ConfiguredBaseUri() is not null;
 
     public async Task<CompositionDraft> RunPassAsync(CompositionPassRequest request,
         CancellationToken cancellationToken = default)
     {
-        var baseUri = LocalBaseUri() ?? throw new InvalidOperationException(
-            "Ollama prose editing requires a local HTTP loopback address.");
+        var baseUri = ConfiguredBaseUri() ?? throw new InvalidOperationException(
+            "Ollama prose editing requires an HTTP or HTTPS server address without embedded credentials.");
         if (!IsAvailable) throw new InvalidOperationException("Ollama prose editing is not enabled.");
 
         var factsBySection = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
@@ -57,7 +58,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
         {
             var packet = request.Manifest.Sections.Single(section => section.SectionId == current.SectionId);
             var source = request.SourceBlocks.Single(block => block.SectionId == current.SectionId);
-            var key = ReusableProseStore.Fingerprint(JsonSerializer.Serialize(new
+            var recipe = JsonSerializer.Serialize(new
             {
                 version = SystemInstructions + " neutral-tighten-v1 " + CompositionValidator.PolicyVersion,
                 modelIdentity,
@@ -83,9 +84,19 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                     claim.Claim.Statement,
                     skills = claim.Claim.Concepts.All.Order(StringComparer.Ordinal).ToArray()
                 })
-            }));
+            });
+            var key = ReusableProseStore.Fingerprint(recipe);
             keys[current.SectionId] = key;
             var account = modelIdentity is null ? null : await proseStore!.FindAsync(key, cancellationToken);
+            var migrated = false;
+            if (account is null && modelIdentity is not null)
+            {
+                var previousRecipe = JsonNode.Parse(recipe)!.AsObject();
+                previousRecipe["version"] = SystemInstructions + " neutral-tighten-v1 " + CompositionValidator.PreviousPolicyVersion;
+                var previous = await proseStore!.FindAsync(ReusableProseStore.Fingerprint(previousRecipe.ToJsonString()), cancellationToken);
+                // Revalidate accepted text under the new policy. Prior rejections must get a fresh attempt.
+                if (previous is { RetainedSource: false }) { account = previous; migrated = true; }
+            }
             if (account is not null && (account.SourceText != source.Text || account.ModelIdentity != modelIdentity ||
                 !account.ClaimIds.SequenceEqual(source.ClaimIds) || !account.EvidenceIds.SequenceEqual(source.EvidenceIds) ||
                 !account.Skills.ToHashSet(StringComparer.OrdinalIgnoreCase).SetEquals(packet.Claims.SelectMany(claim => claim.Claim.Concepts.All))))
@@ -96,6 +107,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                         request.Manifest with { Sections = [packet] }).Count == 0))
             {
                 edited.Add(candidate);
+                if (migrated) { account.Key = key; await proseStore!.SaveAsync(account, cancellationToken); }
                 warnings.AddRange(account.ReviewNotes);
                 if (account.RetainedSource)
                     rejections[current.SectionId] = account.RejectionReason;
@@ -116,7 +128,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
         foreach (var batch in batches)
         {
             batchNumber++;
-            request.Progress?.Report($"{passName} · batch {batchNumber}/{batches.Length} · local model {_options.Model}…");
+            request.Progress?.Report($"{passName} · batch {batchNumber}/{batches.Length} · Ollama model {_options.Model}…");
             var timer = Stopwatch.StartNew();
             var sections = batch.Select(current =>
             {
@@ -276,10 +288,10 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
         return null;
     }
 
-    private Uri? LocalBaseUri()
+    private Uri? ConfiguredBaseUri()
     {
         if (!Uri.TryCreate(_options.BaseUrl.TrimEnd('/') + "/", UriKind.Absolute, out var uri) ||
-            uri.Scheme != Uri.UriSchemeHttp || !uri.IsLoopback)
+            uri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(uri.UserInfo))
             return null;
         return uri;
     }

@@ -510,12 +510,11 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                     if (nimble.TryGetProperty("BaseUrl", out var baseUrl))
                         NimbleBaseUrl = baseUrl.GetString() ?? NimbleBaseUrl;
                 }
-                if (doc.RootElement.TryGetProperty("Anthropic", out var a2) &&
-                    a2.TryGetProperty("Model", out var model))
+                var modelSection = AiProvider.ToLowerInvariant() switch
+                { "anthropic" => "Anthropic", "ollama" => "Ollama", "llamasharp" => "LlamaSharp", _ => "OpenAi" };
+                if (doc.RootElement.TryGetProperty(modelSection, out var selectedProvider) &&
+                    selectedProvider.TryGetProperty("Model", out var model))
                     SelectedModel = model.GetString() ?? "";
-                else if (doc.RootElement.TryGetProperty("OpenAi", out var o2) &&
-                         o2.TryGetProperty("Model", out var oModel))
-                    SelectedModel = oModel.GetString() ?? "";
             }
 
             if (_secretStore.IsAvailable)
@@ -575,8 +574,8 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
         try
         {
             if (!Uri.TryCreate(NimbleBaseUrl.TrimEnd('/') + "/", UriKind.Absolute, out var nimbleUri)
-                || nimbleUri.Scheme != Uri.UriSchemeHttp || !nimbleUri.IsLoopback)
-                throw new InvalidOperationException("Nimble URL must be a local HTTP loopback address.");
+                || nimbleUri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(nimbleUri.UserInfo))
+                throw new InvalidOperationException("Nimble URL must be an HTTP or HTTPS server address without embedded credentials.");
             if (_secretStore.IsAvailable)
             {
                 await SaveSecretAsync(AiSecretNames.AnthropicApiKey, AnthropicApiKey);
@@ -585,13 +584,16 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
             else if (!string.IsNullOrWhiteSpace(AnthropicApiKey) || !string.IsNullOrWhiteSpace(OpenAiApiKey))
                 throw new InvalidOperationException("An OS credential store is required to save API keys.");
 
+            var existing = File.Exists(_aiSettingsPath.Path)
+                ? JsonNode.Parse(await File.ReadAllTextAsync(_aiSettingsPath.Path))?.AsObject() ?? new JsonObject()
+                : new JsonObject();
             var settings = new Dictionary<string, object>
             {
                 ["Tailoring"] = new Dictionary<string, object>
                 {
                     ["ComposeProse"] = ComposeResumeProse,
                     ["Provider"] = AiProvider,
-                    ["ExtractionProvider"] = AiProvider
+                    ["ExtractionProvider"] = existing["Tailoring"]?["ExtractionProvider"]?.GetValue<string>() ?? "none"
                 },
                 ["Anthropic"] = new Dictionary<string, string>
                 {
@@ -622,8 +624,18 @@ public sealed partial class ProfilePageViewModel : ViewModelBase
                 }
             };
 
-            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            await WriteSettingsAtomicallyAsync(json);
+            // Preserve configured server URLs, context windows and other settings absent from this form.
+            var edited = JsonSerializer.SerializeToNode(settings)!.AsObject();
+            foreach (var (sectionName, section) in edited)
+            {
+                if (section is not JsonObject fields) { existing[sectionName] = section?.DeepClone(); continue; }
+                var target = existing[sectionName] as JsonObject;
+                if (target is null) existing[sectionName] = target = new JsonObject();
+                foreach (var (name, value) in fields) target[name] = value?.DeepClone();
+            }
+            foreach (var sectionName in new[] { "Anthropic", "OpenAi", "Jev" })
+                if (existing[sectionName] is JsonObject section) section.Remove("ApiKey");
+            await WriteSettingsAtomicallyAsync(existing.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
             AiSettingsStatus = "Saved. Restart to apply settings.";
         }
         catch (Exception ex)

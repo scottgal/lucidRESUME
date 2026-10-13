@@ -232,7 +232,7 @@ public sealed class PdfExporter : IResumeExporter
                         CitedText(col.Item(), qualification,
                             ExportArtifact.EducationCitationNumbers(edu, compact),
                             template, 9, 1, bold: true);
-                    var dates = FormatDates(edu.StartDate, edu.EndDate, false);
+                    var dates = edu.FormatYears();
                     if (!string.IsNullOrEmpty(dates))
                         col.Item().SemanticParagraph().Text(dates).FontSize(8).FontColor(Colors.Grey.Medium);
                     col.Item().PaddingBottom(4);

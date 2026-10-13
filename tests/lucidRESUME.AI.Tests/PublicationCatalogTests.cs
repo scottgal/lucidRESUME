@@ -12,6 +12,19 @@ public sealed class PublicationCatalogTests : IDisposable
     public void Dispose() => Directory.Delete(_directory, true);
 
     [Fact]
+    public void Named_agentic_requirement_retrieves_specific_agent_writing_without_asserting_proficiency()
+    {
+        var source = ResumeDocument.Create("career.md", "text/markdown", 0);
+        source.Publications = [new() { Name = "Agent architecture", Description = "Agentic product development and persistent specialist ownership.", Url = "https://example.com/architecture" },
+            new() { Name = "Agent workflow", Description = "Agent coordination across repositories and architectural decisions.", Url = "https://example.com/workflow" }];
+        var job = new JobDescription { MentionedSkills = ["Agentic workflows"], RequiredSkills = ["Develop agentic workflows that connect models and backend services."] };
+        var links = RelatedWorkSelector.Select(source, job, [], 3);
+        Assert.Equal(2, links.Count);
+        Assert.All(links, link => Assert.Equal("publication", link.Kind));
+        Assert.Empty(source.Skills);
+    }
+
+    [Fact]
     public async Task Import_is_incremental_and_content_changes_reset_publication_approval()
     {
         var path = Path.Combine(_directory, "agent-memory.md");

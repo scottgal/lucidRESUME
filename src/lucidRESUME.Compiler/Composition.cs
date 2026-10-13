@@ -4,7 +4,8 @@ namespace lucidRESUME.Compiler;
 
 public sealed class CompositionValidator
 {
-    public const string PolicyVersion = "selected-facts-distinct-summary-v8";
+    public const string PolicyVersion = "selected-facts-distinct-summary-v9";
+    public const string PreviousPolicyVersion = "selected-facts-distinct-summary-v8";
     private static readonly Regex Number = new(@"(?<![\w-])\d+(?:[.,]\d+)*(?:%\+?|x|\+)?", RegexOptions.Compiled);
     private static readonly Regex Word = new(@"[\p{L}\p{N}][\p{L}\p{N}+#.-]{2,}", RegexOptions.Compiled);
     private static readonly Regex Purpose = new(
@@ -176,13 +177,13 @@ public sealed class CompositionValidator
                 if (!allowedFacts.Contains(assurance.Value.ToLowerInvariant()))
                     errors.Add($"Section '{block.SectionId}' introduced unsupported assurance '{assurance.Value}'. Describe the evidenced controls or observations without asserting an unverified quality outcome.");
             var targetTerms = Words(string.Join(' ', manifest.Requirements.Select(x => x.Text)));
-            var leaked = Words(block.Text).Where(x => targetTerms.Contains(x) && !allowedFacts.Contains(x)).ToList();
+            var leaked = Words(block.Text).Where(x => targetTerms.Contains(x) && !allowedFacts.Contains(x) && !IsSpellingCorrection(x, allowedFacts)).ToList();
             foreach (var term in leaked)
                 errors.Add($"Section '{block.SectionId}' introduced target-role term '{term}' without selected evidence.");
             // A lexical overlap floor alone accepts fluent, invented extra clauses.
             // This conservative novelty budget is advisory grounding, not entailment proof.
             var editorialWords = new HashSet<string>("added created developed implemented delivered used helped assisted contributed supported reviewed worked enabled enabling enables backed made approach focused involved provided established applied remains unmeasured inspection".Split(' '));
-            var novel = Words(block.Text).Except(allowedFacts).Except(editorialWords).ToList();
+            var novel = Words(block.Text).Except(allowedFacts).Except(editorialWords).Where(word => !IsSpellingCorrection(word, allowedFacts)).ToList();
             if (novel.Count > Math.Max(2, allowedFacts.Count * .15))
                 errors.Add($"Section '{block.SectionId}' introduced unsupported descriptive content: {string.Join(", ", novel)}.");
             if (WordCount(block.Text) > packet.MaximumWords)
@@ -201,6 +202,19 @@ public sealed class CompositionValidator
     // Explicit purpose clauses only: a conservative editorial check, not semantic entailment.
     public static IReadOnlyList<string> PurposeDetails(string text) => Purpose.Matches(text)
         .Select(match => match.Groups[1].Value.Trim()).ToArray();
+    private static bool IsSpellingCorrection(string word, IReadOnlySet<string> source)
+    {
+        // Only a single adjacent-letter transposition in a long source word; never semantic substitution.
+        if (word.Length < 7) return false;
+        foreach (var original in source.Where(value => value.Length == word.Length))
+        {
+            var differences = Enumerable.Range(0, word.Length).Where(index => original[index] != word[index]).ToArray();
+            if (differences.Length == 2 && differences[1] == differences[0] + 1 &&
+                original[differences[0]] == word[differences[1]] && original[differences[1]] == word[differences[0]]) return true;
+        }
+        return false;
+    }
+
     private static string CanonicalNumber(string value) => value.Replace(",", string.Empty, StringComparison.Ordinal);
     private static HashSet<string> Words(string value) => Word.Matches(value)
         .Select(x => CanonicalWord(x.Value)).Where(x => x.Length >= 3 && !StopWords.Contains(x)).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -219,6 +233,7 @@ public sealed class CompositionValidator
         "workflows" => "workflow",
         "releases" => "release",
         "standards" => "standard",
+        "requirements" => "requirement",
         "delivers" or "delivered" or "delivery" => "deliver",
         "implemented" or "implementing" => "implement",
         "measured" or "measuring" or "unmeasured" => "measure",

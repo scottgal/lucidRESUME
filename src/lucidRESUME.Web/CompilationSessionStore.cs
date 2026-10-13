@@ -5,7 +5,7 @@ namespace lucidRESUME.Web;
 
 public sealed class CompilationSessionStore(IMemoryCache cache)
 {
-    public void Put(CompilationResult result, TimeSpan lifetime, bool includeCitations = true, int minimumPages = 2)
+    public void Put(CompilationResult result, TimeSpan lifetime, bool includeCitations = false, int minimumPages = 2)
     {
         ArgumentNullException.ThrowIfNull(result);
         cache.Set(result.CompilationId,
