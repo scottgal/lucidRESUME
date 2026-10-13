@@ -720,11 +720,11 @@ and multi-shard lexical search on an external-vector index returns empty without
 a query vector. The binding supplies an unused unit vector for lexical ranking;
 filtered vector/hybrid search intersects the **complete** ranked candidate set
 with native facet eligibility before pagination. This bounded compatibility path
-supports at most 100,000 indexed documents, rejects unsupported filtered-vector
+supports at most 100,000 indexed documents, rejects unsupported vector/hybrid
 facet aggregations, and has an adversarial top-one regression test. It is suitable
 for a small career evidence collection, but is not engine-level vector prefiltering
 and should not be presented as its performance equivalent.
-[SDK implementation](https://github.com/scottgal/seekstorm-csharp/commit/3f3ed9e).
+[SDK implementation](https://github.com/scottgal/seekstorm-csharp/commit/01c282c).
 
 The safe migration is to keep SQLite as the canonical career ledger and make the
 SeekStorm index rebuildable, revision-gated derived data. Match the embedding
@@ -734,3 +734,25 @@ Once the packaged engine passes every supported platform, replace the custom
 FTS projection and manual lexical/dense rank fusion together; avoid maintaining
 two competing retrieval indexes permanently. The current application implementation
 in section 9 is the tested baseline, not an already completed SeekStorm migration.
+
+
+A follow-up actual-package spike indexed the ten accepted canonical chunks from
+section 9's synthetic career. Five lexical intents retrieved agent actions,
+evaluation detail, database latency and C# evidence; C++ correctly returned no
+matches. Every intent was also queried with each exact role facet and a top-one
+limit, with no cross-role result. Technology tokens were normalized consistently
+in documents and queries (`c#` → `csharp`, `c++` → `cplusplus`, `.net` → `dotnet`);
+raw alphanumeric tokenization alone would lose those distinctions. This is a
+small functional check, not a relevance benchmark or embedding evaluation.
+[Retained spike output](results/seekstorm-canonical-spike-2026-10-13.json).
+
+That corpus check exposed a further engine 3.4.1 defect: a multi-term Union query
+with a facet filter indexed an empty aggregation-slot vector and panicked across
+the C ABI. Publication was stopped. The corrected binding initializes zero-length
+aggregation slots, removes the internal placeholder from returned facets, and
+catches unwinding engine panics in fallible FFI operations so callers receive a
+`SeekStormException`. The smoke pipeline now includes the triggering Union/role
+query; the corpus spike and managed/NativeAOT package consumers pass locally with
+0.2.1. A Rust regression also verifies panic-to-error conversion. This reinforces
+the need for representative application queries before removing the current
+retrieval implementation, even when a library advertises all required features.

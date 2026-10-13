@@ -1,0 +1,117 @@
+{
+  "engine": "SeekStorm 3.4.1 / Bindings 0.2.1",
+  "mode": "lexical BM25F; no vector model",
+  "chunks": 10,
+  "role_isolation": "passed",
+  "queries": [
+    {
+      "query": "agent runtime orchestration authorization idempotency",
+      "total": 3,
+      "hits": [
+        {
+          "Score": 0.86304635,
+          "Document": {
+            "key": "0D48F1E3D11DB2F05448389D1838E8773CFC69BAD145C05E51B0246C1D343D03",
+            "role": "experience:261c4726577848d680395cfb0f81e20f",
+            "body": "Added per-tool authorization and idempotency keys before allowing the internal agent to update ticket state."
+          }
+        },
+        {
+          "Score": 0.28768212,
+          "Document": {
+            "key": "F406DC183A18A559F7B7C375386D70B6C6181CD7FED248CC4AC3A8FE3754AD9A",
+            "role": "personal",
+            "body": "Hands-on software engineer building reliable C# services and internal AI agent runtimes."
+          }
+        },
+        {
+          "Score": 0.28768212,
+          "Document": {
+            "key": "8CE777875FAF517FD8D175B7A0ABAEECD5C12361B15AC2CCA6F5BE44E792CCAB",
+            "role": "experience:261c4726577848d680395cfb0f81e20f",
+            "body": "Built a C# support-agent runtime using Azure OpenAI and Qdrant retrieval for internal operations."
+          }
+        }
+      ]
+    },
+    {
+      "query": "evaluation simulations unknown impact",
+      "total": 1,
+      "hits": [
+        {
+          "Score": 0.57536423,
+          "Document": {
+            "key": "C51C35E863C4AD016C873A1AB6A618D1D5B283C3464DD76236234E51A1E38972",
+            "role": "experience:261c4726577848d680395cfb0f81e20f",
+            "body": "Curated offline evaluation cases from failed tool calls; the production effect remains unknown."
+          }
+        }
+      ]
+    },
+    {
+      "query": "PostgreSQL query latency",
+      "total": 3,
+      "hits": [
+        {
+          "Score": 0.68324506,
+          "Document": {
+            "key": "031DA04E8CB09F86F2FC008AFA2CF1CA1D357A553DC92216DD2F38BA45372247",
+            "role": "experience:3e829653491947ceb739740041f07db2",
+            "body": "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms."
+          }
+        },
+        {
+          "Score": 0.39556292,
+          "Document": {
+            "key": "99A3C1BD90F31B62C5A7D9C82DD445B9136B01F041003842DDC74B5BDC0B2DD9",
+            "role": "experience:261c4726577848d680395cfb0f81e20f",
+            "body": "Designed PostgreSQL reporting queries and database backup recovery drills."
+          }
+        },
+        {
+          "Score": 0.39556292,
+          "Document": {
+            "key": "C2A036D0B75D1907BA81E78C673549215D20A3AFC4883AC6E8DCE5C92228F247",
+            "role": "experience:3e829653491947ceb739740041f07db2",
+            "body": "Led the API team and reviewed PostgreSQL recovery designs before the production release."
+          }
+        }
+      ]
+    },
+    {
+      "query": "C#",
+      "total": 3,
+      "hits": [
+        {
+          "Score": 0.39556292,
+          "Document": {
+            "key": "8CE777875FAF517FD8D175B7A0ABAEECD5C12361B15AC2CCA6F5BE44E792CCAB",
+            "role": "experience:261c4726577848d680395cfb0f81e20f",
+            "body": "Built a C# support-agent runtime using Azure OpenAI and Qdrant retrieval for internal operations."
+          }
+        },
+        {
+          "Score": 0.39556292,
+          "Document": {
+            "key": "B9AF9D9E2E1E2CEA4C5F8C19735737F575A7FF4B4AF7F4BD2EF43F0FB5642D29",
+            "role": "experience:3e829653491947ceb739740041f07db2",
+            "body": "Built C# billing retry queues and audit trails so the operations team could inspect failed attempts."
+          }
+        },
+        {
+          "Score": 0.28768212,
+          "Document": {
+            "key": "F406DC183A18A559F7B7C375386D70B6C6181CD7FED248CC4AC3A8FE3754AD9A",
+            "role": "personal",
+            "body": "Hands-on software engineer building reliable C# services and internal AI agent runtimes."
+          }
+        }
+      ]
+    },
+    {
+      "query": "C\u002B\u002B",
+      "total": 0,
+      "hits": []
+    }
+  ]
+}
