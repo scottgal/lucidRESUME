@@ -530,6 +530,7 @@ public sealed class AppState
         Location = source.Location,
         StartDate = source.StartDate,
         EndDate = source.EndDate,
+        EndDateIsMonthOnly = source.EndDateIsMonthOnly,
         IsCurrent = source.IsCurrent,
         IsCompact = source.IsCompact,
         IsCareerAnchor = source.IsCareerAnchor,

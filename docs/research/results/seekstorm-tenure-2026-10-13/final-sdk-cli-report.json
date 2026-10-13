@@ -1,0 +1,131 @@
+{
+  "cases": [
+    {
+      "name": "parse",
+      "exit_code": 0,
+      "seconds": 2.52,
+      "status": "passed"
+    },
+    {
+      "name": "export-json",
+      "exit_code": 0,
+      "seconds": 1.98,
+      "status": "passed"
+    },
+    {
+      "name": "export-markdown",
+      "exit_code": 0,
+      "seconds": 0.83,
+      "status": "passed"
+    },
+    {
+      "name": "analyse",
+      "exit_code": 0,
+      "seconds": 0.91,
+      "status": "passed"
+    },
+    {
+      "name": "match",
+      "exit_code": 0,
+      "seconds": 0.71,
+      "status": "passed"
+    },
+    {
+      "name": "compound-match",
+      "exit_code": 0,
+      "seconds": 1.3,
+      "status": "passed"
+    },
+    {
+      "name": "evidence",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "status": "passed"
+    },
+    {
+      "name": "explain",
+      "exit_code": 0,
+      "seconds": 0.8,
+      "status": "passed"
+    },
+    {
+      "name": "validate",
+      "exit_code": 0,
+      "seconds": 0.78,
+      "status": "passed"
+    },
+    {
+      "name": "extract-jd",
+      "exit_code": 0,
+      "seconds": 0.32,
+      "status": "passed"
+    },
+    {
+      "name": "fix",
+      "exit_code": 0,
+      "seconds": 0.83,
+      "status": "passed"
+    },
+    {
+      "name": "anonymize",
+      "exit_code": 0,
+      "seconds": 0.71,
+      "status": "passed"
+    },
+    {
+      "name": "rank",
+      "exit_code": 0,
+      "seconds": 1.04,
+      "status": "passed"
+    },
+    {
+      "name": "drift",
+      "exit_code": 0,
+      "seconds": 1.03,
+      "status": "passed"
+    },
+    {
+      "name": "tailor",
+      "exit_code": 0,
+      "seconds": 1.06,
+      "status": "passed"
+    },
+    {
+      "name": "generate",
+      "exit_code": 0,
+      "seconds": 1.09,
+      "status": "passed"
+    },
+    {
+      "name": "career-record",
+      "exit_code": 0,
+      "seconds": 1.19,
+      "status": "passed"
+    },
+    {
+      "name": "jobml-validate",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.13
+    },
+    {
+      "name": "jobml-reconcile",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.14
+    },
+    {
+      "name": "render-docx",
+      "exit_code": 0,
+      "seconds": 0.43,
+      "status": "passed"
+    },
+    {
+      "name": "render-pdf",
+      "exit_code": 0,
+      "seconds": 0.37,
+      "status": "passed"
+    }
+  ],
+  "passed": true
+}

@@ -1,14 +1,18 @@
 using lucidRESUME.Core.Interfaces;
 using lucidRESUME.Core.Models.Resume;
 using lucidRESUME.Core.Persistence;
-using Microsoft.Data.Sqlite;
+using System.Text.Json.Nodes;
 
 namespace lucidRESUME.Core.Tests;
 
 public sealed class ProsePersistenceTests : IDisposable
 {
     private readonly string _path = Path.Combine(Path.GetTempPath(), "career-prose-" + Guid.NewGuid().ToString("N") + ".db");
-    public void Dispose() => File.Delete(_path);
+    public void Dispose()
+    {
+        File.Delete(_path);
+        if (Directory.Exists(_path + ".prose-search")) Directory.Delete(_path + ".prose-search", true);
+    }
 
     [Fact]
     public async Task Save_indexes_only_canonical_accepted_prose_and_removes_rejected_chunks()
@@ -20,7 +24,7 @@ public sealed class ProsePersistenceTests : IDisposable
         var career = (await store.LoadAsync()).CompleteCareer!.Transcript;
         var index = career.ProseIndex;
         Assert.NotEmpty(index.DocumentFrequency);
-        Assert.All(index.Segments, segment => { Assert.NotEmpty(segment.TfIdf); Assert.NotEmpty(segment.ClaimIds); Assert.NotEmpty(segment.EvidenceIds); });
+        Assert.All(index.Segments, segment => { Assert.NotEmpty(segment.TermFrequency); Assert.NotEmpty(segment.ClaimIds); Assert.NotEmpty(segment.EvidenceIds); });
         var hit = Assert.Single(await store.SearchAsync(index.SearchRevision, "C#"));
         Assert.Contains(index.Segments, segment => segment.Id == hit.SegmentId && segment.Text.Contains("Qdrant"));
         Assert.Single(await store.SearchAsync(index.SearchRevision, "C++"));
@@ -35,7 +39,7 @@ public sealed class ProsePersistenceTests : IDisposable
     }
 
     [Fact]
-    public async Task Updating_one_passage_preserves_unchanged_fts_rows_and_reopen_search()
+    public async Task Updating_one_passage_preserves_unchanged_chunk_fingerprints_and_reopen_search()
     {
         string revision;
         using (var store = new SqliteAppStore(_path))
@@ -78,15 +82,57 @@ public sealed class ProsePersistenceTests : IDisposable
         Assert.All(final.Segments, segment => Assert.Equal(new float[] { 1, 0 }, segment.Embedding));
     }
 
-    private long ReadRow(string id)
+    [Fact]
+    public async Task Hybrid_search_honours_role_scope_and_model_identity()
     {
-        using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = _path, Pooling = false }.ToString());
-        connection.Open();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT rowid FROM career_prose_fts WHERE segment_id = $id";
-        command.Parameters.AddWithValue("$id", id);
-        return (long)command.ExecuteScalar()!;
+        using var store = new SqliteAppStore(_path, proseEnricher: new VectorEnricher());
+        var source = ResumeDocument.Create("source.md", "text/markdown", 0);
+        source.Experience.Add(new() { Company = "First", Title = "Engineer", Achievements = ["Built C# retry workers."] });
+        source.Experience.Add(new() { Company = "Second", Title = "Engineer", Achievements = ["Built C++ retry workers."] });
+        await store.SaveAsync(new() { Resumes = [source] });
+        var index = (await store.LoadAsync()).CompleteCareer!.Transcript.ProseIndex;
+        var first = index.Segments.Single(segment => segment.Text.Contains("C#"));
+        var query = new ProseSearchQuery(index.SearchRevision, "retry", first.SubjectId, "achievement",
+            [0, 1], "test-vectors", 1);
+        Assert.Equal(first.Id, Assert.Single(await store.SearchAsync(query)).SegmentId);
+        Assert.Equal(first.Id, Assert.Single(await store.SearchAsync(query with { EmbeddingSpace = "different-model" })).SegmentId);
+        Assert.Empty(await store.SearchAsync(query with { SubjectId = "experience:unknown" }));
+        Assert.Single(await store.SearchAsync(query with { Embedding = [0, 0] })); // Invalid vectors use lexical search.
     }
+
+    [Fact]
+    public async Task Corrupt_derived_manifest_is_rebuilt_from_canonical_evidence()
+    {
+        using (var store = new SqliteAppStore(_path))
+        {
+            var source = ResumeDocument.Create("source.md", "text/markdown", 0);
+            source.Experience.Add(new() { Company = "Example", Title = "Engineer", Achievements = ["Built Qdrant retrieval."] });
+            await store.SaveAsync(new() { Resumes = [source] });
+        }
+        File.WriteAllText(Path.Combine(_path + ".prose-search", "manifest.json"), "broken JSON");
+        using var reopened = new SqliteAppStore(_path);
+        var index = (await reopened.LoadAsync()).CompleteCareer!.Transcript.ProseIndex;
+        await reopened.PrepareAsync(index);
+        Assert.Single(await reopened.SearchAsync(index.SearchRevision, "Qdrant"));
+    }
+
+    private sealed class VectorEnricher : ICareerProseEnricher
+    {
+        public Task<CareerProseIndex> AnalyseAsync(ResumeDocument source, CancellationToken ct = default, bool force = false)
+        {
+            foreach (var segment in source.ProseIndex.Segments)
+            {
+                segment.Embedding = segment.Text.Contains("C#") ? [1, 0] : [0, 1];
+                segment.EmbeddingSpace = "test-vectors";
+            }
+            source.ProseIndex.EmbeddingSpace = "test-vectors";
+            source.ProseIndex.EmbeddingRevision = "embedded:" + source.ProseIndex.SearchRevision;
+            return Task.FromResult(source.ProseIndex);
+        }
+    }
+
+    private string ReadRow(string id) => JsonNode.Parse(File.ReadAllText(
+        Path.Combine(_path + ".prose-search", "manifest.json")))!["Chunks"]![id]!.GetValue<string>();
 
     private sealed class PausedEnricher : ICareerProseEnricher
     {

@@ -26,6 +26,7 @@ public sealed partial class SqliteAppStore : IAppStore, Interfaces.IProseSearch,
 
         // The store owns one long-lived connection. Pooling only retains a file
         // handle after disposal, which prevents moving/deleting the store on Windows.
+        _nativeProse = new SeekStormProseSearch(Path.GetFullPath(dbPath) + ".prose-search");
         _conn = new SqliteConnection(new SqliteConnectionStringBuilder
         {
             DataSource = dbPath,
@@ -54,8 +55,6 @@ public sealed partial class SqliteAppStore : IAppStore, Interfaces.IProseSearch,
             CREATE TABLE IF NOT EXISTS search_presets (id TEXT PRIMARY KEY, data TEXT NOT NULL, is_custom INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS applications (id TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS search_watches (id TEXT PRIMARY KEY, data TEXT NOT NULL);
-            CREATE TABLE IF NOT EXISTS career_prose_chunks (id TEXT PRIMARY KEY, payload_hash TEXT NOT NULL);
-            CREATE VIRTUAL TABLE IF NOT EXISTS career_prose_fts USING fts5(segment_id UNINDEXED, subject_id UNINDEXED, text, keywords);
             CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings USING vec0(embedding float[384]);
             CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings_768 USING vec0(embedding float[768]);
             CREATE TABLE IF NOT EXISTS vec_meta (
@@ -332,7 +331,7 @@ public sealed partial class SqliteAppStore : IAppStore, Interfaces.IProseSearch,
             UpsertMeta("employer_profile", JsonSerializer.Serialize(state.EmployerProfile, JsonOpts));
         else
             Execute("DELETE FROM app_meta WHERE key = 'employer_profile'");
-        SyncProseCore(state.CompleteCareer?.Transcript.ProseIndex);
+        UpsertMeta("career_prose_revision", JsonSerializer.Serialize(state.CompleteCareer?.Transcript.ProseIndex.SearchRevision ?? ""));
         tx.Commit();
     }
 
@@ -374,6 +373,7 @@ public sealed partial class SqliteAppStore : IAppStore, Interfaces.IProseSearch,
 
     public void Dispose()
     {
+        _nativeProse.Dispose();
         _conn.Dispose();
         _lock.Dispose();
         _proseLock.Dispose();

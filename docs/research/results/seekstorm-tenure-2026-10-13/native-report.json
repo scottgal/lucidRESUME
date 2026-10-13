@@ -1,0 +1,82 @@
+{
+  "app": "/Users/scottgalloway/RiderProjects/lucidRESUME/src/lucidRESUME/bin/Release/net10.0/lucidRESUME.dll",
+  "cases": [
+    {
+      "name": "empty-navigation",
+      "status": "passed",
+      "seconds": 4.32
+    },
+    {
+      "name": "docx-import-review-dedup",
+      "status": "passed",
+      "seconds": 2.77
+    },
+    {
+      "name": "complete-role-interview",
+      "status": "passed",
+      "seconds": 0.55
+    },
+    {
+      "name": "full-jobml-publish",
+      "status": "passed",
+      "seconds": 1.32
+    },
+    {
+      "name": "generate-with-unavailable-writer",
+      "status": "passed",
+      "seconds": 0.95
+    },
+    {
+      "name": "archive-word-pdf-evidence",
+      "status": "passed",
+      "seconds": 0.83
+    },
+    {
+      "name": "jobs-watch-pipeline",
+      "status": "passed",
+      "seconds": 1.71
+    },
+    {
+      "name": "hiring-validation-save",
+      "status": "passed",
+      "seconds": 0.41
+    },
+    {
+      "name": "profile-save",
+      "status": "passed",
+      "seconds": 1.06
+    },
+    {
+      "name": "populated-navigation",
+      "status": "passed",
+      "seconds": 3.22
+    },
+    {
+      "name": "restart-persistence",
+      "status": "passed",
+      "seconds": 2.96
+    },
+    {
+      "name": "jobml-draft-selection-drift",
+      "status": "passed",
+      "seconds": 4.73
+    },
+    {
+      "name": "pdf-import-round-trip",
+      "status": "passed",
+      "seconds": 1.28
+    },
+    {
+      "name": "different-jobs-different-evidence",
+      "status": "passed",
+      "seconds": 1.17
+    },
+    {
+      "name": "analysed-prose-and-cached-articles",
+      "status": "passed",
+      "seconds": 1.22
+    }
+  ],
+  "started_at": "2026-10-13T15:10:21Z",
+  "passed": true
+}

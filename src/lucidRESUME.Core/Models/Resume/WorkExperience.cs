@@ -8,6 +8,8 @@ public sealed class WorkExperience
     public string? Location { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
+    /// <summary>The source supplied an end month, not an exact day (for example LinkedIn).</summary>
+    public bool EndDateIsMonthOnly { get; set; }
     public bool IsCurrent { get; set; }
 
     /// <summary>

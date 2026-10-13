@@ -1,0 +1,25 @@
+{
+  "sdk_version": "0.2.4",
+  "sdk_commit": "7b09111",
+  "sdk_package_source": "Public NuGet package; normal solution restore verified",
+  "public_package_sha256": "149796f50530e85e09a6e42f5d884ced39a3551c6c1c7bb1496b7603306cd48a",
+  "native_assets": [
+    "runtimes/linux-arm64/native/libseekstorm_ffi.so",
+    "runtimes/linux-x64/native/libseekstorm_ffi.so",
+    "runtimes/osx-arm64/native/libseekstorm_ffi.dylib",
+    "runtimes/osx-x64/native/libseekstorm_ffi.dylib",
+    "runtimes/win-arm64/native/seekstorm_ffi.dll",
+    "runtimes/win-x64/native/seekstorm_ffi.dll"
+  ],
+  "sdk_ci": "https://github.com/scottgal/seekstorm-csharp/actions/runs/38428997899",
+  "sdk_ci_status": "success: all six native targets and managed/NativeAOT consumers",
+  "engine": "3.4.1 unmodified",
+  "tests_passed": 689,
+  "cli_workflows": 21,
+  "native_workflows": 15,
+  "packaged_mac_workflows": 15,
+  "model_evaluation": "Earlier local 0.2.2 candidate; retained historical measurements, not rerun against 0.2.4",
+  "public_package_build": "Release --warnaserror: 0 warnings, 0 errors",
+  "public_package_tests": "All 689 tests across 12 projects passed",
+  "format": "dotnet format --verify-no-changes passed"
+}

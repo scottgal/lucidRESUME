@@ -94,20 +94,13 @@ public sealed class SemanticCompressor
 
         // Collect the most relevant experience IDs - roles that evidence required skills
         var roleRequirements = new Dictionary<Guid, HashSet<string>>();
-        var skillToEvidence = new Dictionary<string, List<SkillEvidence>>();
 
         foreach (var match in matchResult.Matches.Where(m => m.IsMatched))
         {
             var ledgerEntry = resumeLedger.Find(match.MatchedResumeSkill!);
             if (ledgerEntry is null) continue;
 
-            skillToEvidence[match.RequiredSkill] = ledgerEntry.Evidence
-                .OrderByDescending(e => e.Confidence)
-                .ThenByDescending(e => e.StartDate)
-                .Take(3) // top 3 evidence pieces per skill
-                .ToList();
-
-            foreach (var evidence in skillToEvidence[match.RequiredSkill])
+            foreach (var evidence in ledgerEntry.Evidence)
             {
                 if (evidence.ExperienceId.HasValue)
                 {
@@ -157,7 +150,6 @@ public sealed class SemanticCompressor
         }
 
         // Competency retrieval ranks actual role accounts; it never establishes coverage.
-        var competencyVectors = new List<float[]>();
         var proseRequirements = new List<ProseRequirement>();
         var queryVectorsAvailable = proseIndex.Segments.Any(segment => segment.Embedding.Length > 0);
         var newQueryVectors = 0;
@@ -178,13 +170,9 @@ public sealed class SemanticCompressor
                 catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
                 catch { queryVectorsAvailable = false; }
             }
-            if (vector.Length > 0) competencyVectors.Add(vector);
             proseRequirements.Add(new(requirement.Id, requirement.Text, vector));
         }
-        var fullTextMatches = new Dictionary<string, IReadOnlyList<ProseSearchHit>>();
-        if (_proseSearch is not null)
-            foreach (var query in proseRequirements)
-                fullTextMatches[query.Id] = await _proseSearch.SearchAsync(proseIndex.SearchRevision, query.Text, ct: ct);
+        if (_proseSearch is not null) await _proseSearch.PrepareAsync(proseIndex, ct);
         var ignored = Tokens(string.Join(' ', new CoverageOptions().StopWords.Concat(new[]
             { "and", "the", "for", "are", "you", "our", "can", "has", "this", "that", "will", "from", "need", "work", "teams", "systems", "platform", "engineering", "technical", "built", "build", "designed", "design", "develop", "lead", "leadership", "production" })));
         // Structured competency extraction is optional. The original job and its
@@ -194,33 +182,52 @@ public sealed class SemanticCompressor
             .Concat(jd.Competencies.Where(c => c.Priority != Core.Models.Coverage.RequirementPriority.Preferred)
                 .Select(c => c.Name + ": " + c.Description)))).Except(ignored).ToHashSet();
         var roleTokens = resume.Experience.Where(IsUsableRole).Select(role => Tokens(string.Join(' ', role.Achievements))).ToList();
+        var isAiTarget = Tokens(jd.Title ?? "").Contains("ai");
         double LexicalRelevance(string text)
         {
             var tokens = Tokens(text).Except(ignored).ToHashSet();
-            return tokens.Intersect(targetTokens).Sum(token => Math.Log(1 + roleTokens.Count / (1d + roleTokens.Count(role => role.Contains(token))))) /
+            var score = tokens.Intersect(targetTokens).Sum(token => Math.Log(1 + roleTokens.Count / (1d + roleTokens.Count(role => role.Contains(token))))) /
                 Math.Sqrt(Math.Max(1, tokens.Count));
+            return score;
+        }
+        double RetrievalRelevance(string text)
+        {
+            var score = LexicalRelevance(text);
+            // Broad AI titles still need useful offline retrieval of named AI technologies.
+            if (isAiTarget && CareerProseLexicalIndex.Terms(text).Any(term =>
+                    term is "ai" or "llm" or "llms" or "openai" or "azureopenai" or "agent" or "agents" or "retrieval" or "embeddings")) score += .4;
+            return score;
         }
         var relevance = new Dictionary<string, double>(StringComparer.Ordinal);
-        foreach (var role in resume.Experience.Where(IsUsableRole))
+        var roleSearchResults = new Dictionary<Guid, Dictionary<string, IReadOnlyList<ProseSearchHit>>>();
+        var detailRequirements = roleRequirements.ToDictionary(item => item.Key,
+            item => (IReadOnlySet<string>)new HashSet<string>(item.Value, StringComparer.OrdinalIgnoreCase));
+        var primaryRequirementIds = allProseRequirements.Where(item => item.Kind != lucidRESUME.Compiler.RequirementKind.Preferred)
+            .Select(item => item.Id).ToHashSet();
+        var segmentSubjects = proseIndex.Segments.ToDictionary(segment => segment.Id, segment => segment.SubjectId);
+        var corpusResults = new Dictionary<string, IReadOnlyList<ProseSearchHit>>();
+        if (_proseSearch is not null)
+            foreach (var query in proseRequirements)
+                corpusResults[query.Id] = await _proseSearch.SearchAsync(new ProseSearchQuery(
+                    proseIndex.SearchRevision, query.Text, Kind: "achievement",
+                    Embedding: query.Embedding, EmbeddingSpace: proseIndex.EmbeddingSpace, Maximum: 256), ct);
+        foreach (var role in resume.Experience.Where(IsUsableRole).Where(AcceptedRole))
         {
-            var scores = new List<double>();
-            foreach (var achievement in role.Achievements)
-            {
-                var vector = competencyVectors.Count > 0 ? proseIndex.Segments.FirstOrDefault(segment =>
-                    segment.SubjectId == $"experience:{role.Id:N}" && segment.Text == achievement)?.Embedding ?? [] : [];
-                var score = competencyVectors.Where(query => query.Length > 0 && query.Length == vector.Length)
-                    .Select(query => (double)_embedder.CosineSimilarity(query, vector))
-                    .Where(double.IsFinite).DefaultIfEmpty(0).Max();
-                score += LexicalRelevance(achievement) * .3;
-                if (Regex.IsMatch(jd.Title ?? "", @"\bAI\b", RegexOptions.IgnoreCase) &&
-                    Regex.IsMatch(achievement, @"\b(AI|LLM|OpenAI|agent|retrieval|embeddings)\b", RegexOptions.IgnoreCase))
-                    score += .4;
-                relevance[achievement] = score;
-                scores.Add(score);
-            }
-            if (competencyVectors.Count > 0 || targetTokens.Count > 0)
+            var hits = new Dictionary<string, IReadOnlyList<ProseSearchHit>>();
+            foreach (var query in proseRequirements)
+                hits[query.Id] = (corpusResults.GetValueOrDefault(query.Id) ?? [])
+                    .Where(hit => segmentSubjects.GetValueOrDefault(hit.SegmentId) == $"experience:{role.Id:N}").ToList();
+            roleSearchResults[role.Id] = hits;
+            var accounts = CareerProseRetriever.Select(proseIndex, proseRequirements, $"experience:{role.Id:N}",
+                Math.Max(12, budget.AchievementsPerRole * 3), segment => RetrievalRelevance(segment.Text), hits);
+            foreach (var account in accounts) relevance[account.Segment.Text] = account.Score;
+            // These are allocation hints, never declarations that the candidate meets a requirement.
+            detailRequirements[role.Id] = (detailRequirements.GetValueOrDefault(role.Id) ?? new HashSet<string>())
+                .Concat(accounts.SelectMany(account => account.RequirementIds).Where(primaryRequirementIds.Contains))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (proseRequirements.Count > 0)
                 roleScores[role.Id] = roleScores.GetValueOrDefault(role.Id) +
-                    scores.OrderDescending().Take(2).DefaultIfEmpty(0).Average() * 24;
+                    accounts.Take(2).Select(account => account.Score).DefaultIfEmpty(0).Average() * 24;
         }
 
         // A current specialist role deserves detail when its title explicitly matches the target.
@@ -230,7 +237,7 @@ public sealed class SemanticCompressor
                 Tokens(role.Title ?? "").Intersect(targetTitleTerms).Count() * 12;
 
         var selectedRoleIds = SelectDetailedRoleIds(
-            resume.Experience.Where(AcceptedRole).ToList(), roleScores, _careerAnchorCompanies, budget.Roles);
+            resume.Experience.Where(AcceptedRole).ToList(), roleScores, _careerAnchorCompanies, budget.Roles, detailRequirements);
         var currentSpecialist = resume.Experience.Where(IsUsableRole).Where(AcceptedRole).Where(role => role.IsCurrent &&
                 Tokens(role.Title ?? "").Intersect(targetTitleTerms).Any())
             .OrderByDescending(role => role.StartDate).FirstOrDefault();
@@ -242,6 +249,26 @@ public sealed class SemanticCompressor
             if (replaceable is not null) selectedRoleIds.Remove(replaceable.Id);
             selectedRoleIds.Add(currentSpecialist.Id);
         }
+        if (proseRequirements.Count > 0)
+        {
+            // A role needed for chronology need not spend a bullet on off-target work.
+            var withoutJobEvidence = resume.Experience.Where(role => selectedRoleIds.Contains(role.Id) &&
+                !IsCareerAnchor(role, _careerAnchorCompanies) && role.Id != currentSpecialist?.Id &&
+                (detailRequirements.GetValueOrDefault(role.Id)?.Count ?? 0) == 0 &&
+                !proseIndex.Segments.Any(segment => segment.SubjectId == $"experience:{role.Id:N}" &&
+                    relevance.GetValueOrDefault(segment.Text) > 0)).Select(role => role.Id).ToHashSet();
+            if (withoutJobEvidence.Count == selectedRoleIds.Count)
+            {
+                var newest = resume.Experience.Where(role => selectedRoleIds.Contains(role.Id))
+                    .OrderByDescending(role => role.StartDate).FirstOrDefault();
+                if (newest is not null) withoutJobEvidence.Remove(newest.Id);
+            }
+            selectedRoleIds.ExceptWith(withoutJobEvidence);
+        }
+        var experiencePlan = ExperienceDetailPlan.Build(jd,
+            resume.Experience.Where(IsUsableRole).Where(AcceptedRole).ToList(), selectedRoleIds, roleScores,
+            detailRequirements,
+            budget, DateOnly.FromDateTime(DateTime.UtcNow));
         var anchorCount = resume.Experience.Count(experience =>
             selectedRoleIds.Contains(experience.Id) && IsCareerAnchor(experience, _careerAnchorCompanies));
         if (anchorCount > 0)
@@ -342,8 +369,14 @@ public sealed class SemanticCompressor
             var relevantAchievements = new List<string>();
             var unresolvedStatus = RoleEvidenceQuality.NeedsStatusClarification(exp);
             if (unresolvedStatus) projection.GenerationWarnings.Add($"Verify delivery and cancellation chronology for {exp.Title} at {exp.Company}; status-sensitive accounts remain in the full transcript.");
+            var fullTextMatches = roleSearchResults.GetValueOrDefault(exp.Id);
+            if (_proseSearch is not null && fullTextMatches is not null)
+                foreach (var query in proseRequirements.Where(query => corpusResults.GetValueOrDefault(query.Id)?.Count >= 256))
+                    fullTextMatches[query.Id] = await _proseSearch.SearchAsync(new ProseSearchQuery(
+                        proseIndex.SearchRevision, query.Text, $"experience:{exp.Id:N}", "achievement",
+                        query.Embedding, proseIndex.EmbeddingSpace), ct);
             var retrieved = CareerProseRetriever.Select(proseIndex, proseRequirements,
-                $"experience:{exp.Id:N}", Math.Max(budget.AchievementsPerRole * 3, 12),
+                $"experience:{exp.Id:N}", Math.Max(experiencePlan.AchievementLimits.GetValueOrDefault(exp.Id, 1) * 3, 12),
                 segment => relevance.GetValueOrDefault(segment.Text), fullTextMatches);
             foreach (var item in retrieved)
             {
@@ -386,6 +419,7 @@ public sealed class SemanticCompressor
                 Location = CleanRoleLocation(exp.Location),
                 StartDate = exp.StartDate,
                 EndDate = exp.EndDate,
+                EndDateIsMonthOnly = exp.EndDateIsMonthOnly,
                 IsCurrent = exp.IsCurrent,
                 IsCareerAnchor = IsCareerAnchor(exp, _careerAnchorCompanies),
                 Technologies = exp.Technologies.Where(name => sourceLedger.Claims.Any(claim => claim.Review == "accepted" &&
@@ -393,7 +427,7 @@ public sealed class SemanticCompressor
                 ImportSources = [.. exp.ImportSources]
             };
             var paragraph = string.IsNullOrEmpty(dateRange) ? 1 : 2;
-            var maximumAchievements = isCareerAnchor && preferences.Detail != ResumeDetail.Thorough ? 1 : budget.AchievementsPerRole;
+            var maximumAchievements = experiencePlan.AchievementLimits.GetValueOrDefault(exp.Id, 1);
             var packets = ProseSynthesisAssembler.Assemble(relevantAchievements, targetTokens,
                 preferences.Detail == ResumeDetail.Thorough ? 3 : 2);
             foreach (var facts in packets.Take(maximumAchievements))
@@ -452,7 +486,7 @@ public sealed class SemanticCompressor
 
         var earlierRoles = new List<WorkExperience>();
         var chronology = resume.Experience.Where(role => selectedRoleIds.Contains(role.Id)).ToList();
-        foreach (var role in resume.Experience.Where(IsUsableRole).Where(AcceptedRole).Where(role => !selectedRoleIds.Contains(role.Id)).OrderByDescending(role => role.StartDate))
+        foreach (var role in experiencePlan.ChronologyRoleIds.Select(id => resume.Experience.Single(role => role.Id == id)))
         {
             if (chronology.Any(existing => PossibleDuplicateChronology(existing, role)))
             {
@@ -461,8 +495,11 @@ public sealed class SemanticCompressor
             }
             earlierRoles.Add(role);
             chronology.Add(role);
-            if (earlierRoles.Count == 6) break;
         }
+        var evidencedYears = ExperienceDetailPlan.CoveredYears(chronology, DateOnly.FromDateTime(DateTime.UtcNow));
+        if (experiencePlan.RequiredYears is { } requiredYears && evidencedYears + .01 < requiredYears)
+            projection.GenerationWarnings.Add($"The job requests {requiredYears} years of experience; accepted dated roles substantiate {evidencedYears:F1} non-overlapping years. Missing dates or experience can be added to the complete transcript.");
+        earlierRoles = earlierRoles.OrderByDescending(role => role.StartDate).ToList();
         if (earlierRoles.Count > 0)
         {
             md.AppendLine("## Additional Experience {#additional-experience}");
@@ -479,6 +516,7 @@ public sealed class SemanticCompressor
                     Company = role.Company,
                     StartDate = role.StartDate,
                     EndDate = role.EndDate,
+                    EndDateIsMonthOnly = role.EndDateIsMonthOnly,
                     IsCurrent = role.IsCurrent,
                     IsCompact = true
                 });
@@ -720,7 +758,8 @@ public sealed class SemanticCompressor
         IEnumerable<WorkExperience> experience,
         IReadOnlyDictionary<Guid, double> roleScores,
         IReadOnlySet<string>? careerAnchorCompanies = null,
-        int maximumRelevantRoles = MaximumRelevantRoles)
+        int maximumRelevantRoles = MaximumRelevantRoles,
+        IReadOnlyDictionary<Guid, IReadOnlySet<string>>? requirementHints = null)
     {
         var usable = experience
             .Where(IsUsableRole)
@@ -731,14 +770,18 @@ public sealed class SemanticCompressor
             .ThenByDescending(role => role.StartDate)
             .ToList();
         var selected = anchors.Select(role => role.Id).ToHashSet();
+        var represented = anchors.SelectMany(role => requirementHints?.GetValueOrDefault(role.Id) ?? new HashSet<string>()).ToHashSet();
         var remaining = Math.Max(0, maximumRelevantRoles);
-        foreach (var role in usable.Where(role => !selected.Contains(role.Id))
-                     .OrderByDescending(role => roleScores.GetValueOrDefault(role.Id))
-                     .ThenByDescending(role => role.StartDate))
+        var candidates = usable.Where(role => !selected.Contains(role.Id)).ToList();
+        while (remaining > 0 && candidates.Count > 0)
         {
-            if (remaining == 0) break;
+            var role = candidates.OrderByDescending(role => roleScores.GetValueOrDefault(role.Id) +
+                    12 * (requirementHints?.GetValueOrDefault(role.Id) ?? new HashSet<string>()).Count(id => !represented.Contains(id)))
+                .ThenByDescending(role => role.StartDate).First();
+            candidates.Remove(role);
             if (usable.Any(existing => selected.Contains(existing.Id) && PossibleDuplicateChronology(existing, role))) continue;
             selected.Add(role.Id);
+            represented.UnionWith(requirementHints?.GetValueOrDefault(role.Id) ?? new HashSet<string>());
             remaining--;
         }
         return selected;

@@ -209,8 +209,11 @@ See [generation and interview settings](docs/resume-output-design.md#morena-regr
 
 The career now also stores analysed prose passages with accepted skills, evidence,
 reviewed contribution accounts and reusable embeddings. Projection retrieves per job
-requirement, deduplicates accounts within their source role, and combines compatible
-facts for synthesis. Embeddings rank passages; they do not establish skills. The
+requirement through a rebuildable SeekStorm index, deduplicates accounts within their
+source role, and combines compatible facts for synthesis. Required career years
+expand the dated chronology; relevant recent roles and older roles supplying distinct
+job evidence receive more detail within the selected length budget. Concurrent roles
+count once, and tenure shortfalls warn without blocking generation. Embeddings rank passages; they do not establish skills. The
 Profile page can refresh this index and import/review cached blog passages. Relevant
 articles and concise related repository links travel with the generated archive,
 Word/PDF exports and JobML. See the [implementation and evaluation paper](docs/research/2026-10-12-evidence-preserving-prose.md).

@@ -39,11 +39,11 @@ internal static class CareerEvaluation
         ];
         var jobs = new[]
         {
-            (Id: "applied-ai", Job: new JobDescription { Title = "Head of Applied AI Engineering", Company = "Synthetic AI Employer",
+            (Id: "applied-ai", Job: new JobDescription { Title = "Head of Applied AI Engineering", Company = "Synthetic AI Employer", RequiredYearsExperience = 10,
                 RequiredSkills = ["C#", "Azure OpenAI", "Qdrant"],
                 Responsibilities = ["Own agent tool authorization, idempotency and state transitions.", "Build offline evaluation cases from failed tool calls.", "Lead a small engineering team and personally review architecture."],
                 RawText = "Hands-on applied AI leadership. Own agent architecture, retrieval, authorization, idempotency and tool execution. Build evaluation datasets from failed tool calls. Lead a small engineering team and personally review architecture. Production learning and safe state changes matter." }),
-            (Id: "database-platform", Job: new JobDescription { Title = "Database Platform Engineer", Company = "Synthetic Platform Employer",
+            (Id: "database-platform", Job: new JobDescription { Title = "Database Platform Engineer", Company = "Synthetic Platform Employer", RequiredYearsExperience = 8,
                 RequiredSkills = ["C#", "PostgreSQL"],
                 Responsibilities = ["Optimise PostgreSQL queries and test latency.", "Design database backups and recovery drills."],
                 RawText = "Design PostgreSQL reporting queries, database backups and recovery drills. Optimise measured test latency. Build reliable C# services. Explain performance evidence and operational recovery." })
@@ -105,7 +105,8 @@ internal static class CareerEvaluation
             await File.WriteAllTextAsync(Path.Combine(output, $"career-{id}.json"), JsonSerializer.Serialize(result.Projection,
                 new JsonSerializerOptions { WriteIndented = true }));
             rows.Add(new { job = id, elapsed_ms = timer.ElapsedMilliseconds, selected_claims = selectedByJob[id].Order().ToArray(),
-                provider = "ollama", fts_queries = fullText.Queries, fts_hits = fullText.Hits, result.Projection.GenerationWarnings, progress, quality_findings = findings });
+                provider = "ollama", native_queries = fullText.Queries, native_hits = fullText.Hits,
+                required_years = job.RequiredYearsExperience, role_detail = result.Projection.Experience.Select(role => new { role.Title, role.IsCompact, bullets = role.Achievements.Count }), result.Projection.GenerationWarnings, progress, quality_findings = findings });
             await File.WriteAllTextAsync(Path.Combine(output, "career-results.json"), JsonSerializer.Serialize(rows, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine($"Career {id}: {timer.ElapsedMilliseconds} ms; {findings.Count} quality findings");
         }
@@ -113,7 +114,7 @@ internal static class CareerEvaluation
         await File.WriteAllTextAsync(Path.Combine(output, "career-run.json"), JsonSerializer.Serialize(new
         {
             embedding_mode = "lexical fallback; no vector model or skill proficiency inference",
-            retrieval = "persisted TF-IDF + SQLite FTS5/BM25 rank fusion; canonical career only",
+            retrieval = "SeekStorm BM25F with exact role facets; canonical career only; lexical fallback (no vector model)",
             jobs_select_different_evidence = distinctSelection,
             validator_policy = CompositionValidator.PolicyVersion
         }, new JsonSerializerOptions { WriteIndented = true }));
@@ -125,10 +126,13 @@ internal static class CareerEvaluation
         public int Queries { get; private set; }
         public int Hits { get; private set; }
         public void Reset() { Queries = 0; Hits = 0; }
-        public async Task<IReadOnlyList<ProseSearchHit>> SearchAsync(string revision, string query, int maximum = 64, CancellationToken ct = default)
+        public Task PrepareAsync(CareerProseIndex index, CancellationToken ct = default) => search.PrepareAsync(index, ct);
+        public Task<IReadOnlyList<ProseSearchHit>> SearchAsync(string revision, string query, int maximum = 64, CancellationToken ct = default)
+            => SearchAsync(new ProseSearchQuery(revision, query, Maximum: maximum), ct);
+        public async Task<IReadOnlyList<ProseSearchHit>> SearchAsync(ProseSearchQuery query, CancellationToken ct = default)
         {
             Queries++;
-            var hits = await search.SearchAsync(revision, query, maximum, ct);
+            var hits = await search.SearchAsync(query, ct);
             Hits += hits.Count;
             return hits;
         }

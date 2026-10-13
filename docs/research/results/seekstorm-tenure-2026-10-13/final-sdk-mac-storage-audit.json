@@ -1,0 +1,1 @@
+{"complete":true,"architecture":"Arm64","sqliteVersion":"3.53.3","checks":["create-schema-migrate-write","dispose-relocate-reopen-persist","sqlite-vec-384-and-768-search","integrity-check","release-handles-cleanup"]}

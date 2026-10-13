@@ -105,6 +105,7 @@ public static class AnonymizeCommand
                 Location = AnonymizeLocation(exp.Location),
                 StartDate = exp.StartDate,
                 EndDate = exp.EndDate,
+                EndDateIsMonthOnly = exp.EndDateIsMonthOnly,
                 IsCurrent = exp.IsCurrent,
                 Achievements = exp.Achievements.ToList(),
                 Technologies = exp.Technologies.ToList(),

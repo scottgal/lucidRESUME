@@ -1,0 +1,82 @@
+{
+  "app": "/private/tmp/lucidresume-024-mac/lucidRESUME.app/Contents/MacOS/lucidRESUME",
+  "cases": [
+    {
+      "name": "empty-navigation",
+      "status": "passed",
+      "seconds": 5.11
+    },
+    {
+      "name": "docx-import-review-dedup",
+      "status": "passed",
+      "seconds": 2.22
+    },
+    {
+      "name": "complete-role-interview",
+      "status": "passed",
+      "seconds": 0.54
+    },
+    {
+      "name": "full-jobml-publish",
+      "status": "passed",
+      "seconds": 0.95
+    },
+    {
+      "name": "generate-with-unavailable-writer",
+      "status": "passed",
+      "seconds": 0.76
+    },
+    {
+      "name": "archive-word-pdf-evidence",
+      "status": "passed",
+      "seconds": 0.58
+    },
+    {
+      "name": "jobs-watch-pipeline",
+      "status": "passed",
+      "seconds": 1.62
+    },
+    {
+      "name": "hiring-validation-save",
+      "status": "passed",
+      "seconds": 0.34
+    },
+    {
+      "name": "profile-save",
+      "status": "passed",
+      "seconds": 1.05
+    },
+    {
+      "name": "populated-navigation",
+      "status": "passed",
+      "seconds": 3.07
+    },
+    {
+      "name": "restart-persistence",
+      "status": "passed",
+      "seconds": 2.73
+    },
+    {
+      "name": "jobml-draft-selection-drift",
+      "status": "passed",
+      "seconds": 4.81
+    },
+    {
+      "name": "pdf-import-round-trip",
+      "status": "passed",
+      "seconds": 1.29
+    },
+    {
+      "name": "different-jobs-different-evidence",
+      "status": "passed",
+      "seconds": 1.18
+    },
+    {
+      "name": "analysed-prose-and-cached-articles",
+      "status": "passed",
+      "seconds": 1.23
+    }
+  ],
+  "started_at": "2026-10-13T16:49:20Z",
+  "passed": true
+}

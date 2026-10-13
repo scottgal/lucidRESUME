@@ -65,9 +65,9 @@ public sealed class ProseRecompositionTests
             fullText: new Dictionary<string, IReadOnlyList<ProseSearchHit>> { ["safety"] = [new(detailed.Id, 1)] }));
         Assert.Equal(detailed.Id, selected.Segment.Id);
         var signal = Assert.Single(selected.Signals);
-        Assert.True(signal.TfIdf > 0);
-        Assert.Equal(1, signal.FullTextRank);
-        Assert.Equal(0, signal.Semantic);
+        Assert.True(signal.LexicalOverlap > 0);
+        Assert.Equal(1, signal.NativeRank);
+        Assert.Equal(1, signal.NativeScore);
         Assert.NotEmpty(selected.Segment.ClaimIds);
     }
 

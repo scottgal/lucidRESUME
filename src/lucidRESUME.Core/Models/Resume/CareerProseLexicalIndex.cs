@@ -72,13 +72,6 @@ public static class CareerProseLexicalIndex
         }
         index.DocumentFrequency = index.Segments.SelectMany(segment => segment.TermFrequency.Keys).GroupBy(term => term)
             .ToDictionary(group => group.Key, group => group.Count());
-        foreach (var segment in index.Segments)
-        {
-            var weights = segment.TermFrequency.ToDictionary(term => term.Key,
-                term => (1 + Math.Log(term.Value)) * (1 + Math.Log((1d + index.Segments.Count) / (1 + index.DocumentFrequency[term.Key]))));
-            var norm = Math.Sqrt(weights.Values.Sum(weight => weight * weight));
-            segment.TfIdf = weights.ToDictionary(term => term.Key, term => norm > 0 ? term.Value / norm : 0);
-        }
         source.ProseIndex = index;
         return index;
     }

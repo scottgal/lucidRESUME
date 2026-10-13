@@ -786,6 +786,7 @@ public sealed class ResumeDocumentMerger
             target.Location = incoming.Location;
             target.StartDate = incoming.StartDate;
             target.EndDate = incoming.IsCurrent ? null : incoming.EndDate;
+            target.EndDateIsMonthOnly = incoming.EndDateIsMonthOnly;
             target.IsCurrent = incoming.IsCurrent;
         }
         else if ((incoming.Title?.Length ?? 0) > (target.Title?.Length ?? 0))
@@ -810,7 +811,10 @@ public sealed class ResumeDocumentMerger
             if (target.EndDate is null ||
                 (Math.Abs(incoming.EndDate.Value.DayNumber - target.EndDate.Value.DayNumber) <= DateOverlapGraceDays &&
                  incoming.EndDate > target.EndDate))
+            {
                 target.EndDate = incoming.EndDate;
+                target.EndDateIsMonthOnly = incoming.EndDateIsMonthOnly;
+            }
             target.IsCurrent = false;
         }
         else if (!incomingIsAuthoritative && incoming.IsCurrent && target.EndDate is null)

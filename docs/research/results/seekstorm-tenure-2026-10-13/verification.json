@@ -1,0 +1,12 @@
+{
+  "sdk_candidate": "0.2.2 (local, unpublished; macOS ARM64 native asset)",
+  "sdk_package_sha256": "b31cc8f7561acf7b908ec8fb6873116702da5c34d6a1750b0965101f587d8388",
+  "engine": "3.4.1 unmodified",
+  "unit_tests_passed": 688,
+  "native_workflows": 15,
+  "cli_workflows": 21,
+  "sdk_release_gate": "Not cleared: cross-platform candidate checks and optional spelling audit remain unresolved",
+  "data": "Synthetic only",
+  "mac_arm64_bundle": "Self-contained, ad-hoc signed; three native libraries architecture verified; 15 packaged-client workflows and storage audit passed with developer library/runtime variables unset",
+  "historical_note": "Initial 0.2.2 measurements. Superseded release validation is in final-sdk-verification.json; original model timings remain historical."
+}

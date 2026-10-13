@@ -756,3 +756,175 @@ query; the corpus spike and managed/NativeAOT package consumers pass locally wit
 0.2.1. A Rust regression also verifies panic-to-error conversion. This reinforces
 the need for representative application queries before removing the current
 retrieval implementation, even when a library advertises all required features.
+
+
+## 11. SeekStorm integration and tenure-aware experience allocation
+
+This section supersedes section 10's migration status. Initial local measurements
+used the **actual SeekStorm.Bindings 0.2.2 candidate package**, built from the
+bindings working tree against unmodified upstream SeekStorm 3.4.1. It was not
+published at that stage. The application now pins **0.2.4**; the completed SDK
+release gate is recorded below. Initial candidate results and their package hashes
+are retained as historical measurements.
+
+### Ownership and simplification
+
+| Concern | Current owner |
+| --- | --- |
+| Canonical accepted prose, skills, sources and interview accounts | SQLite career transcript |
+| Lexical BM25F, external-vector/hybrid retrieval and native facets | SeekStorm via the bindings |
+| Incremental index updates, cache revision/model checks and recovery | Small application adapter and derived manifest |
+| Explicit skill qualification, review status and factual grounding | Existing ledger and composition validator |
+| Cross-role diversity, tenure coverage and space allocation | Resume projection planner |
+
+The SQLite FTS mirror, manually normalized TF-IDF weights, per-achievement query
+cosine loop and custom lexical/dense rank-fusion algorithm have been removed.
+Token counts and document frequencies remain cheap canonical metadata for query
+selection, diversity and offline fallback. Search results identify current accepted
+chunks by stable keys; they do not supply new claims or establish proficiency.
+Native integration adds cache/lifecycle code, so this is a reduction in bespoke
+retrieval algorithms rather than a claim of a large net line-count reduction.
+
+Normal generation queries the corpus once per requirement, partitions the hits by
+source role and refines selected roles only when the native result limit was
+reached. It no longer performs every query for every career role. Enrichment reads
+and conditionally updates only the canonical transcript, rather than loading and
+reconciling archived imports. Identical chunks keep their search payload; embedding
+model changes rebuild only when vectors actually exist. Missing models therefore
+do not force a lexical-index rebuild merely because a model identity was stamped.
+
+The derived index checks revision, model and dimensions; rejects invalid/zero-norm
+query vectors; rechecks role scope after native filtering; and rebuilds corrupt
+manifests from the canonical transcript. If native retrieval is unavailable,
+generation retains lexical retrieval from the accepted canonical chunks. The
+bindings' bounded filtered-vector compatibility path remains the limitation
+explained in section 10; it is not native vector prefiltering.
+
+### Required years and role detail
+
+The planner uses structured required years, with a conservative raw-advert fallback
+for overall professional/engineering tenure. It does not interpret “10 years of
+Kubernetes” as ten years of general career tenure. The union of accepted dated role
+intervals counts concurrent employment once and does not count employment gaps.
+Undated roles add no tenure. LinkedIn imports retain that their end date has only
+month precision, so January–December employment is not mistaken for eleven months;
+exact-day dates remain exact, with the last day of closed employment included.
+
+Detailed role selection rewards job evidence not represented by already selected
+roles. A finite shared bullet budget gives more space to relevant recent accounts
+and distinctive older evidence, with diminishing returns to repeating a role.
+Older accepted roles extend compact chronology as needed to evidence the requested
+years, including beyond the previous six-entry cap. This does not claim that every
+skill was used throughout a role's entire tenure. Insufficient dated experience
+produces a warning and still generates the resume.
+
+Tests cover ten-year chronology with more than six compact entries, concurrent
+roles, unknown dates, real gaps, source month precision, unique older evidence,
+shared space budgets, raw skill-duration exclusion, and an actual concise
+projection that evidences ten years or warns for an unsupported twenty-year request.
+The latter also verifies one corpus query for a one-requirement job across twelve
+roles and accepted claim bindings in the output.
+
+Local verification uses synthetic careers and an isolated store. Package publication
+and cross-platform native verification remain separate release requirements; these
+results must not be represented as a published or cross-platform-ready release.
+
+
+### Local verification and remaining prose findings
+
+The final local Release build has zero warnings/errors, and all **688 tests**, **21
+CLI workflows**, and **15 desktop workflows** pass. Native persistence checks cover
+accepted-only indexing, incremental unchanged fingerprints, rejection removal,
+reopen search, stale revisions, concurrent edits during inference, hybrid role
+facets, model mismatch, invalid vectors and corrupt-manifest recovery. The macOS
+release workflow now explicitly checks SeekStorm's bundled library alongside both
+SQLite libraries for architecture, signing and deployment-target compatibility.
+
+The local `qwen3.5:4b` synthetic career run requested ten years for the applied-AI
+job and eight for the database job. The AI projection allocated **3 / 2 bullets**
+to current / senior roles; the database projection allocated **2 / 3**. Both kept
+the older research role as compact dated chronology. They used eight and six native
+corpus queries respectively and selected different source claims. End-to-end times
+were 44.4 and 19.6 seconds, including model composition. These are two local samples,
+not a native-search performance benchmark or a demonstrated general speedup.
+
+Automated checks reported no grounding findings. Luna independently found no
+apparent factual or ownership drift and confirmed tenure and detail allocation.
+The database provider attempted unsupported wording and dropped measurement detail;
+validation retained prior text. Its final HumanVoice response was invalid JSON and
+was discarded. Thus a successful resume does not mean every attempted model edit
+succeeded.
+
+Luna's remaining prose finding is that summaries still repeat selected experience
+sentences. The database resume also retains a C# agent-runtime account that supports
+the required language but is less specific than its PostgreSQL evidence. These are
+remaining editorial improvements, not justification for weakening source grounding.
+New LinkedIn imports preserve end-month precision; older records without precision
+metadata retain conservative exact-day counting rather than silently expanding
+claimed tenure.
+
+[Verification manifest](results/seekstorm-tenure-2026-10-13/verification.json),
+[career results](results/seekstorm-tenure-2026-10-13/career-results.json),
+[AI resume](results/seekstorm-tenure-2026-10-13/career-applied-ai.md),
+[database resume](results/seekstorm-tenure-2026-10-13/career-database-platform.md),
+[desktop report](results/seekstorm-tenure-2026-10-13/native-report.json),
+[CLI report](results/seekstorm-tenure-2026-10-13/cli-report.json).
+
+
+The self-contained macOS ARM64 bundle also passed all **15 packaged-client
+workflows**, ad-hoc signing and native architecture checks. Its SQLite storage audit
+passed from an unrelated working directory with developer library/runtime paths
+unset. This verifies the local ARM64 candidate, not macOS x64 or other RIDs.
+[Packaged Mac report](results/seekstorm-tenure-2026-10-13/packaged-mac-report.json),
+[storage audit](results/seekstorm-tenure-2026-10-13/mac-storage-audit.json),
+[Luna review](results/seekstorm-tenure-2026-10-13/luna-review.md).
+
+
+### Published SDK release gate — 0.2.4
+
+SeekStorm.Bindings **0.2.4** passed all six native build/smoke/test jobs, package
+asset verification, and all six managed/NativeAOT package consumers. The publish
+job succeeded. Both the SDK tag run and its main-branch run are green. The engine
+remains the unmodified **3.4.1** crate; changes are confined to bindings,
+configuration validation, lifecycle management and packaging.
+[SDK release pipeline](https://github.com/scottgal/seekstorm-csharp/actions/runs/38428997899),
+[SDK main CI](https://github.com/scottgal/seekstorm-csharp/actions/runs/38428998059),
+[SDK source](https://github.com/scottgal/seekstorm-csharp/commit/7b09111),
+[NuGet package](https://www.nuget.org/packages/SeekStorm.Bindings/0.2.4).
+
+The release excludes upstream configurations that cannot be safely supported:
+spelling dictionaries are rejected before allocation; embedded indexes require
+one shard and exactly 11 segment bits because the upstream reopen path assumes
+that default. Json-vector fields require External inference with validated F32
+vectors. Existing unsupported indexes fail explicitly before shard allocation.
+These restrictions do not affect the career adapter's configuration.
+
+Final regression tests cover failed index switches, missing/deleted update IDs,
+unknown fields, null typed facets, typed configuration/response shapes, and
+commit/reopen with the supported segment setting. There are **26 .NET SDK tests**
+and **3 Rust boundary/panic tests**. The smoke runner detects logged background
+native failures even if the engine returns a successful process exit.
+
+Candidate 0.2.2's Windows package restore failed because repeated CLI source
+arguments treated an HTTPS URL as a local path. The generated NuGet configuration
+fix was subsequently verified on both Windows architectures. A version-bump error
+in candidate 0.2.3's lockfile was corrected by restoring registry package entries;
+only the binding package's own version differs from the previously verified lock.
+The corrected locked native build was verified locally before 0.2.4 was pushed.
+
+The application regression suite now has **689 tests**, including consecutive
+closed January–December employment ranges. Last employment days are included,
+overlapping days are counted once, and intervals are clipped at the current date.
+The existing model quality findings and rejected-edit behavior above remain
+applicable; SDK publication is not a claim that every attempted prose edit succeeds.
+
+The public NuGet package was subsequently downloaded and restored through the
+normal solution feed. The [final SDK verification](results/seekstorm-tenure-2026-10-13/final-sdk-verification.json)
+records its SHA-256 and all six native runtime assets. The final local 0.2.4
+checks passed [21 CLI workflows](results/seekstorm-tenure-2026-10-13/final-sdk-cli-report.json),
+[15 desktop workflows](results/seekstorm-tenure-2026-10-13/final-sdk-native-report.json),
+and [15 packaged Mac workflows](results/seekstorm-tenure-2026-10-13/final-sdk-packaged-mac-report.json).
+The [Mac storage audit](results/seekstorm-tenure-2026-10-13/final-sdk-mac-storage-audit.json)
+verified relocated SQLite and vector storage with developer runtime variables unset.
+These final package checks supersede the initial candidate release-gate status;
+the model timings above remain measurements of the earlier candidate.

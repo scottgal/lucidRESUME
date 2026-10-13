@@ -344,7 +344,7 @@ public static partial class EvidenceLedgerBuilder
         foreach (var experience in resume.Experience)
         {
             parts.Add(experience.Id.ToString("N"));
-            parts.Add($"{experience.Company}|{experience.Title}|{experience.Location}|{experience.StartDate}|{experience.EndDate}|{experience.IsCurrent}");
+            parts.Add($"{experience.Company}|{experience.Title}|{experience.Location}|{experience.StartDate}|{experience.EndDate}|{experience.EndDateIsMonthOnly}|{experience.IsCurrent}");
             parts.AddRange(experience.Achievements);
             parts.AddRange(experience.Technologies);
             parts.AddRange(experience.InterviewEntries.Select(entry => System.Text.Json.JsonSerializer.Serialize(entry)));

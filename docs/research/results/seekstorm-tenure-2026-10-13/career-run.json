@@ -1,0 +1,6 @@
+{
+  "embedding_mode": "lexical fallback; no vector model or skill proficiency inference",
+  "retrieval": "SeekStorm BM25F with exact role facets; canonical career only; lexical fallback (no vector model)",
+  "jobs_select_different_evidence": true,
+  "validator_policy": "selected-facts-purpose-measurements-scope-v6"
+}

@@ -314,3 +314,26 @@ The final private native benchmark used this persisted career: initial new prose
 ## Complete career workflow and screenshots
 
 See [complete career workflow](complete-career-workflow.md) for migration, full JobML editing, raw interview retention, GitHub review gates, generated archive previews and the measured reuse performance. The portable raw narrative and interview fields are documented in [transcript extension 0.1](jobml-transcript-extension-0.1.md).
+
+
+### Experience space and required years
+
+Generation now uses required overall career years to extend accepted dated
+chronology beyond the old six-entry compact limit. Concurrent employment counts
+once; employment gaps and missing dates do not add years. An insufficient career
+still generates, with a warning and an invitation to improve the complete transcript.
+A skill's appearance in a role does not establish that skill's duration for the
+entire role.
+
+Detailed roles share a finite bullet budget. Recency and relevance influence space,
+while distinctive evidence can give an older role more detail. Roles without job
+support can remain compact chronology entries. Normal retrieval queries SeekStorm
+once per requirement; role-specific refinement is needed only when corpus results
+were truncated. The canonical transcript remains authoritative and unavailable
+native search falls back to its accepted passages.
+
+This implementation uses SeekStorm.Bindings 0.2.4, verified with managed and
+NativeAOT package consumers on all six supported RIDs. Its embedded contract uses
+one shard and the engine's reopen-compatible default segment setting. Unsafe
+optional spelling dictionaries are explicitly unsupported; resume retrieval does
+not enable them. See the [research and verification record](research/2026-10-12-evidence-preserving-prose.md#11-seekstorm-integration-and-tenure-aware-experience-allocation).

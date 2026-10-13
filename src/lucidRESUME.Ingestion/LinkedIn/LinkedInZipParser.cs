@@ -101,6 +101,7 @@ public sealed class LinkedInZipParser
                 Location = Get(row, "Location"),
                 StartDate = ParseMonthYear(Get(row, "Started On")),
                 EndDate = ParseMonthYear(Get(row, "Finished On")),
+                EndDateIsMonthOnly = true,
             };
             exp.IsCurrent = exp.EndDate is null;
 

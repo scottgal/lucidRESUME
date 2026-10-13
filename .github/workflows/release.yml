@@ -277,13 +277,13 @@ jobs:
           launcher="$bundle/Contents/MacOS/lucidRESUME"
           payload="$bundle/Contents/Resources/app"
           codesign --verify --deep --strict --verbose=2 "$bundle"
-          for native_library in libe_sqlite3.dylib vec0.dylib; do
+          for native_library in libe_sqlite3.dylib vec0.dylib libseekstorm_ffi.dylib; do
             test -s "$payload/$native_library"
             lipo "$payload/$native_library" -verify_arch "$expected_arch"
             codesign --verify --strict --verbose=2 "$payload/$native_library"
             otool -L "$payload/$native_library"
           done
-          python3 - "$bundle" "$payload/libe_sqlite3.dylib" "$payload/vec0.dylib" <<'PY'
+          python3 - "$bundle" "$payload/libe_sqlite3.dylib" "$payload/vec0.dylib" "$payload/libseekstorm_ffi.dylib" <<'PY'
           import plistlib, re, subprocess, sys
           with open(sys.argv[1] + '/Contents/Info.plist', 'rb') as source:
               declared = plistlib.load(source)['LSMinimumSystemVersion']

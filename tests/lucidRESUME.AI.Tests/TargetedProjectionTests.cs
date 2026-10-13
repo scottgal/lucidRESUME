@@ -10,6 +10,39 @@ namespace lucidRESUME.AI.Tests;
 public sealed class TargetedProjectionTests
 {
     [Fact]
+    public async Task Concise_projection_still_evidences_required_tenure_and_warns_without_blocking_when_short()
+    {
+        var resume = ResumeDocument.Create("career.md", "text/markdown", 0);
+        resume.Experience = Enumerable.Range(2010, 12).Select(year => new WorkExperience
+        {
+            Company = $"Employer {year}",
+            Title = "Software Engineer",
+            StartDate = new(year, 1, 1),
+            EndDate = new(year + 1, 1, 1),
+            Achievements = ["Built reliable APIs with C#."]
+        }).ToList();
+        var embedder = new EmptyEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var search = new CountingSearch();
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }),
+            NullLogger<SemanticCompressor>.Instance, proseSearch: search);
+        var job = new JobDescription { Title = "Software Engineer", RequiredSkills = ["C#"], RequiredYearsExperience = 10 };
+        var result = await compressor.CompressAsync(resume, job, generationOptions: new() { Length = ResumeLength.Concise });
+        Assert.Equal(1, search.Queries); // One requirement query for the complete career, rather than twelve.
+        Assert.Equal(3, result.Projection.Experience.Count(role => !role.IsCompact));
+        Assert.True(result.Projection.Experience.Count(role => role.IsCompact) >= 7);
+        Assert.True(ExperienceDetailPlan.CoveredYears(result.Projection.Experience, DateOnly.FromDateTime(DateTime.UtcNow)) >= 9.99);
+        Assert.DoesNotContain(result.Projection.GenerationWarnings, warning => warning.Contains("non-overlapping years"));
+        job.RequiredYearsExperience = 20;
+        var shortfall = await compressor.CompressAsync(resume, job, generationOptions: new() { Length = ResumeLength.Concise });
+        Assert.NotEmpty(shortfall.Projection.Experience);
+        Assert.Contains(shortfall.Projection.GenerationWarnings, warning => warning.Contains("20 years") && warning.Contains("non-overlapping"));
+        Assert.All(shortfall.Projection.Projection!.Blocks, block =>
+            Assert.Contains(resume.EvidenceLedger!.Claims, claim => claim.Id == block.ClaimId && claim.Review == "accepted"));
+    }
+
+    [Fact]
     public async Task Review_only_rejections_remove_summary_projects_education_and_skills_from_the_projection()
     {
         var source = ResumeDocument.Create("career.md", "text/markdown", 0);
@@ -79,6 +112,15 @@ public sealed class TargetedProjectionTests
                 "Improved accessible interfaces with keyboard navigation and screen reader testing."]
         };
         resume.Experience.Add(role);
+        var oldResearch = new WorkExperience
+        {
+            Company = "Research Lab",
+            Title = "Research Developer",
+            StartDate = new(2010, 1, 1),
+            EndDate = new(2015, 1, 1),
+            Achievements = ["Built a Python classification prototype using PyTorch."]
+        };
+        resume.Experience.Add(oldResearch);
         var embedder = new EmptyEmbedder();
         var taxonomy = new SkillTaxonomyService(embedder);
         var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
@@ -96,13 +138,16 @@ public sealed class TargetedProjectionTests
             RawText = "Improve accessible interfaces, keyboard navigation and screen reader testing.",
             Responsibilities = ["Improve accessible interfaces, keyboard navigation and screen reader testing."]
         });
-        var databaseRole = Assert.Single(database.Projection.Experience);
-        var accessibilityRole = Assert.Single(accessibility.Projection.Experience);
+        var databaseRole = Assert.Single(database.Projection.Experience, item => !item.IsCompact);
+        var accessibilityRole = Assert.Single(accessibility.Projection.Experience, item => !item.IsCompact);
         Assert.Contains("PostgreSQL", databaseRole.Achievements[0]);
         Assert.Contains("accessible interfaces", accessibilityRole.Achievements[0]);
         Assert.DoesNotContain(databaseRole.Achievements, text => text.Contains("screen reader"));
         Assert.DoesNotContain(accessibilityRole.Achievements, text => text.Contains("PostgreSQL"));
         Assert.Equal(5, role.Achievements.Count);
+        var compact = Assert.Single(database.Projection.Experience, item => item.IsCompact);
+        Assert.Equal(oldResearch.Id, compact.Id);
+        Assert.Empty(compact.Achievements);
         Assert.All(database.Projection.Projection!.Blocks, block => Assert.Contains(resume.EvidenceLedger!.Claims, claim => claim.Id == block.ClaimId));
     }
 
@@ -286,6 +331,16 @@ public sealed class TargetedProjectionTests
             claim => claim.Id == block.ClaimId && claim.Kind == "achievement" && claim.Review == "accepted"));
         Assert.Equal("Software engineer building internal AI agent runtimes.", source.Personal.Summary);
         Assert.Equal(3, source.Experience[0].Achievements.Count);
+    }
+
+    private sealed class CountingSearch : IProseSearch
+    {
+        public int Queries { get; private set; }
+        public Task<IReadOnlyList<ProseSearchHit>> SearchAsync(string revision, string query, int maximum = 64, CancellationToken ct = default)
+        {
+            Queries++;
+            return Task.FromResult<IReadOnlyList<ProseSearchHit>>([]);
+        }
     }
 
     private sealed class EmptyEmbedder : IEmbeddingService

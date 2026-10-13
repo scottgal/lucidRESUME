@@ -3,7 +3,7 @@ namespace lucidRESUME.Core.Models.Resume;
 /// <summary>Derived, reusable analysis. It never replaces the original claims or prose.</summary>
 public sealed class CareerProseIndex
 {
-    public const string CurrentPolicyVersion = "career-segments-lexical-v3";
+    public const string CurrentPolicyVersion = "career-segments-native-v4";
     public string SourceRevision { get; set; } = "";
     public string AcceptedClaimsRevision { get; set; } = "";
     public string PolicyVersion { get; set; } = CurrentPolicyVersion;
@@ -34,5 +34,4 @@ public sealed class CareerProseSegment
     public string FactSignature { get; set; } = "";
     public double Salience { get; set; }
     public Dictionary<string, int> TermFrequency { get; set; } = new(StringComparer.Ordinal);
-    public Dictionary<string, double> TfIdf { get; set; } = new(StringComparer.Ordinal);
 }
