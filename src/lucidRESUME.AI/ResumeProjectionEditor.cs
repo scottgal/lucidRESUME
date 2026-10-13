@@ -56,7 +56,9 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
                     {
                         Id = claim.Id,
                         Subject = claim.SubjectId ?? "career",
-                        Statement = claim.Statement,
+                        Statement = group.Key.StartsWith("#summary:") && claim.Kind == "personal" &&
+                                    ResumeSummaryBuilder.UsesIdentity(passage.Text, claim.Statement)
+                            ? ResumeSummaryBuilder.Identity(claim.Statement)! : claim.Statement,
                         Concepts = new JobMlClaimConcepts
                         {
                             Skills = [.. claim.Concepts]
@@ -71,6 +73,8 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
                 group.Key.StartsWith("#summary:") ? "summary" : "experience")
             {
                 WritingPlan = plan,
+                DistinctFrom = group.Key.StartsWith("#summary:")
+                    ? projection.Experience.SelectMany(role => role.Achievements).ToList() : [],
                 Accounts = source.ProseIndex.Segments.Where(segment => selected.Any(claim => segment.ClaimIds.Contains(claim.Claim.Id)))
                     .SelectMany(segment => segment.Accounts).DistinctBy(account => account.InterviewId).ToList()
             });
@@ -93,6 +97,13 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
             if (Regex.IsMatch(text, @"(^|\s)(#{1,6}\s|```|\{#[^}]+\})") || text.Contains("<p", StringComparison.OrdinalIgnoreCase))
             {
                 projection.GenerationWarnings.Add($"Retained source prose for {block.SectionId}: edit introduced document structure.");
+                continue;
+            }
+            if (block.SectionId.StartsWith("#summary:") && CompositionValidator.RepeatsSentence(text,
+                    result.Blocks.Where(candidate => packets.Any(packet => packet.SectionId == candidate.SectionId && packet.Kind == "experience"))
+                        .Select(candidate => candidate.Text).ToList()))
+            {
+                projection.GenerationWarnings.Add("Retained summary introduction: edit repeated an experience sentence.");
                 continue;
             }
             var raw = markdown.Substring(passage.SourceStart, passage.SourceLength);

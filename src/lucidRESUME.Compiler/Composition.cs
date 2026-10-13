@@ -4,7 +4,7 @@ namespace lucidRESUME.Compiler;
 
 public sealed class CompositionValidator
 {
-    public const string PolicyVersion = "selected-facts-purpose-measurements-scope-v6";
+    public const string PolicyVersion = "selected-facts-distinct-summary-v8";
     private static readonly Regex Number = new(@"(?<![\w-])\d+(?:[.,]\d+)*(?:%\+?|x|\+)?", RegexOptions.Compiled);
     private static readonly Regex Word = new(@"[\p{L}\p{N}][\p{L}\p{N}+#.-]{2,}", RegexOptions.Compiled);
     private static readonly Regex Purpose = new(
@@ -36,6 +36,16 @@ public sealed class CompositionValidator
             "its", "but", "though", "which", "before", "after", "prior", "during"
         };
 
+    public static bool RepeatsSentence(string summary, IReadOnlyList<string> experience)
+    {
+        static IEnumerable<string> Sentences(string text) => Regex.Split(text, @"(?<=[.!?])\s+")
+            .Select(sentence => Regex.Replace(sentence.Trim().TrimStart('-', ' '), @"[^\p{L}\p{N}+#]+", " ").Trim().ToLowerInvariant())
+            .Where(sentence => sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length >= 8);
+        var details = experience.SelectMany(Sentences).Select(sentence => sentence.Split(' ').ToHashSet(StringComparer.Ordinal)).ToList();
+        return Sentences(summary).Select(sentence => sentence.Split(' ').ToHashSet(StringComparer.Ordinal)).Any(sentence =>
+            details.Any(detail => (double)sentence.Intersect(detail).Count() / Math.Min(sentence.Count, detail.Count) >= .85));
+    }
+
     public IReadOnlyList<string> Validate(
         CompositionDraft draft,
         IReadOnlyList<CompositionBlock> source,
@@ -60,6 +70,8 @@ public sealed class CompositionValidator
                 errors.Add($"Section '{block.SectionId}' changed the selected evidence identities.");
             if (string.IsNullOrWhiteSpace(block.Text))
                 errors.Add($"Section '{block.SectionId}' returned empty prose.");
+            if (packet.Kind == "summary" && RepeatsSentence(block.Text, packet.DistinctFrom))
+                errors.Add($"Section '{block.SectionId}' repeats a complete or near-complete experience sentence. Summarize relevant focus and keep the detailed account in Experience.");
             if (AmbiguousMeasurementSubject.IsMatch(block.Text))
                 errors.Add($"Section '{block.SectionId}' gives a measurement limitation an ambiguous subject. Name the drills, tests or other source activity explicitly instead of 'environment, which did not measure'.");
             if (!PersonalPronoun.IsMatch(original.Text) && PersonalPronoun.IsMatch(block.Text))
@@ -159,6 +171,10 @@ public sealed class CompositionValidator
             var selectedClaims = packet.Claims.Where(x => original.ClaimIds.Contains(x.Claim.Id, StringComparer.OrdinalIgnoreCase));
             var allowedFacts = Words(original.Text + " " + string.Join(' ', selectedClaims.SelectMany(x =>
                 x.Claim.Concepts.All.Append(x.Claim.Statement))));
+            foreach (Match assurance in Regex.Matches(block.Text,
+                         @"\b(?:safe|safely|secure|securely|reliable|reliably|robust|scalable|guaranteed|risk-free|error-free|flawless)\b", RegexOptions.IgnoreCase))
+                if (!allowedFacts.Contains(assurance.Value.ToLowerInvariant()))
+                    errors.Add($"Section '{block.SectionId}' introduced unsupported assurance '{assurance.Value}'. Describe the evidenced controls or observations without asserting an unverified quality outcome.");
             var targetTerms = Words(string.Join(' ', manifest.Requirements.Select(x => x.Text)));
             var leaked = Words(block.Text).Where(x => targetTerms.Contains(x) && !allowedFacts.Contains(x)).ToList();
             foreach (var term in leaked)

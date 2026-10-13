@@ -337,3 +337,34 @@ NativeAOT package consumers on all six supported RIDs. Its embedded contract use
 one shard and the engine's reopen-compatible default segment setting. Unsafe
 optional spelling dictionaries are explicitly unsupported; resume retrieval does
 not enable them. See the [research and verification record](research/2026-10-12-evidence-preserving-prose.md#11-seekstorm-integration-and-tenure-aware-experience-allocation).
+
+## Distinct, evidence-linked summaries
+
+The summary introduces the candidate's relevant focus; Experience carries detailed
+contributions and outcomes. Selected achievements are no longer copied verbatim
+into the summary. An authored profile is retained when it covers the selected
+evidenced job skills. Otherwise the offline introduction reuses only an explicitly
+stated professional identity and short action/object themes from up to two accepted
+accounts. A small verb-inflection table changes past actions into experience phrases;
+coordinated duties, tool clauses, outcomes and purpose clauses remain in the detailed
+role. Supported job skills omitted from these short themes can appear in a separate
+technical-focus sentence.
+Named technologies such as ASP.NET Core retain their spelling. When no safe account
+phrase covers the focus, the fallback names up to four supported skills. It does
+not infer a title or seniority from the vacancy. A single relevant account is enough;
+the summary does not require two achievements.
+
+Summary role references are limited to claims supporting the emitted focus; an
+unchanged authored profile retains its personal-summary reference alone. When only
+the identity phrase is reused, the editor receives that phrase rather than the
+whole off-target profile as candidate context. Qualified accounts stay in
+Experience with their limitations. The editor receives the experience passages
+as repetition context, and validation rejects complete or near-complete repeated
+sentences of at least eight words using 85% overlap relative to the smaller word
+set. This catches a full account hidden behind a longer candidate-identity prefix. Final
+summary edits are also checked against the edited experience passages. This is
+a repetition heuristic, not a semantic entailment or universal redundancy test.
+
+Prose-cache identities include this context and the validation policy. The
+`lucidRESUME.ProseEvaluation` tool is built and restored with the solution to
+prevent stale dependency graphs when rerunning paired-job evaluations.

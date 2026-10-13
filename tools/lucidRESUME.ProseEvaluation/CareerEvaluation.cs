@@ -70,6 +70,9 @@ internal static class CareerEvaluation
             var result = await compressor.CompressAsync(source, job, timeout.Token, new InlineProgress(progress),
                 generationOptions: new() { Length = ResumeLength.Standard, Detail = ResumeDetail.Thorough, Tone = ResumeTone.Direct });
             var findings = new List<string>();
+            if (CompositionValidator.RepeatsSentence(result.Projection.Personal.Summary ?? "",
+                    result.Projection.Experience.SelectMany(role => role.Achievements).ToList()))
+                findings.Add("Summary repeats a complete experience sentence.");
             if (!progress.Any(message => message.Contains("local model") || message.Contains("Reusing")))
                 findings.Add("No local prose model call or cached composition was observed.");
             var index = MarkdownEvidenceIndex.Create(result.Markdown);
@@ -104,9 +107,20 @@ internal static class CareerEvaluation
             await File.WriteAllTextAsync(Path.Combine(output, $"career-{id}.md"), result.Markdown);
             await File.WriteAllTextAsync(Path.Combine(output, $"career-{id}.json"), JsonSerializer.Serialize(result.Projection,
                 new JsonSerializerOptions { WriteIndented = true }));
-            rows.Add(new { job = id, elapsed_ms = timer.ElapsedMilliseconds, selected_claims = selectedByJob[id].Order().ToArray(),
-                provider = "ollama", native_queries = fullText.Queries, native_hits = fullText.Hits,
-                required_years = job.RequiredYearsExperience, role_detail = result.Projection.Experience.Select(role => new { role.Title, role.IsCompact, bullets = role.Achievements.Count }), result.Projection.GenerationWarnings, progress, quality_findings = findings });
+            rows.Add(new
+            {
+                job = id,
+                elapsed_ms = timer.ElapsedMilliseconds,
+                selected_claims = selectedByJob[id].Order().ToArray(),
+                provider = "ollama",
+                native_queries = fullText.Queries,
+                native_hits = fullText.Hits,
+                required_years = job.RequiredYearsExperience,
+                role_detail = result.Projection.Experience.Select(role => new { role.Title, role.IsCompact, bullets = role.Achievements.Count }),
+                result.Projection.GenerationWarnings,
+                progress,
+                quality_findings = findings
+            });
             await File.WriteAllTextAsync(Path.Combine(output, "career-results.json"), JsonSerializer.Serialize(rows, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine($"Career {id}: {timer.ElapsedMilliseconds} ms; {findings.Count} quality findings");
         }

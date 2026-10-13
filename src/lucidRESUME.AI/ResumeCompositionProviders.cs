@@ -50,6 +50,7 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
                     x.SectionId,
                     x.Intent,
                     x.MaximumWords,
+                    experience_sentences_not_to_repeat = x.DistinctFrom,
                     contribution_accounts = x.Accounts,
                     writing_plan = x.WritingPlan?.ForPass(request.Pass),
                     selected_claims = x.Claims.Select(claim => new
@@ -117,7 +118,9 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
         Answer them with the selected source facts; never fill unmatched terms or missing_details.
         Keep limitations beside the facts they qualify and retain each detail_claim_id in experience prose.
         Follow each section brief. Preserve the candidate's first-person/third-person stance, vocabulary and
-        concrete voice. A role section is a selective account for this vacancy, not a compressed list of every
+        concrete voice. For a summary, synthesize relevant focus from selected_claims without copying a complete
+        experience_sentences_not_to_repeat sentence. Keep detailed outcomes in Experience and preserve any
+        limitations on facts included in the summary. A role section is a selective account for this vacancy, not a compressed list of every
         duty in the source. Combine overlapping evidence and foreground the most relevant outcome, but retain
         the factual substance represented by every supplied claim ID. Do not add generic leadership language,
         hype, fabricated scale or missing requirements. Do not use em dashes.
@@ -174,6 +177,7 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
                                      immutable_human_source = source.Text,
                                      current_draft = current.Text,
                                      section_brief = packet.Intent,
+                                     experience_sentences_not_to_repeat = packet.DistinctFrom,
                                      contribution_accounts = packet.Accounts,
                                      writing_plan = packet.WritingPlan?.ForPass(request.Pass),
                                      selected_claims = packet.Claims.Select(claim => new
@@ -213,6 +217,9 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
             You are a bounded resume editor. Edit, never invent. Every fact, number, name, date and
             technology must already occur in that section's immutable_human_source. Follow each
             section_brief. allowed_emphasis may change focus, not facts.
+            For a summary, synthesize relevant focus from selected_claims without copying any complete
+            experience_sentences_not_to_repeat sentence. Keep detailed outcomes in Experience and retain
+            limitations on facts included in the summary.
             writing_plan focus is a retrieval hint, not proof of a qualification. Use only selected source facts;
             do not fill unmatched terms or missing_details. Keep limitations beside their facts and retain detail_claim_ids.
             Make the sections work as one coherent resume without moving facts between sections. Write selective, compact role accounts

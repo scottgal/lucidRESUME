@@ -928,3 +928,84 @@ The [Mac storage audit](results/seekstorm-tenure-2026-10-13/final-sdk-mac-storag
 verified relocated SQLite and vector storage with developer runtime variables unset.
 These final package checks supersede the initial candidate release-gate status;
 the model timings above remain measurements of the earlier candidate.
+
+## 12. Summary recomposition quality loop — 13 October 2026
+
+The earlier paired evaluation exposed an implementation bug: the summary copied
+the two highest-ranked experience paragraphs verbatim. This used valid evidence
+but wasted space and repeated the same detailed accounts. The correction separates
+professional positioning from the detailed role record.
+
+An authored introduction is retained when it directly covers the selected,
+evidenced job skills and does not repeat an experience sentence. Otherwise the
+summary combines an explicitly authored professional identity with short
+action/object themes from up to two accepted role accounts. A bounded
+verb-inflection table changes past actions into experience phrases. Coordinated
+duties, tool clauses, purposes and results stay in the detailed account. Named
+technologies, including ASP.NET Core, retain their spelling. Supported focus skills
+not present in the short themes may appear in a separate technical-focus sentence.
+When no safe account themes cover the focus, the skill-based introduction remains
+the fallback. A single relevant account is sufficient. Qualified accounts stay in
+Experience with their complete status and limitations.
+
+The evidence links follow the emitted content. An unchanged personal profile does
+not inherit unrelated role references. Thematic introductions link to their
+accepted supporting role claims; an identity fragment retains the personal source
+reference. The editor sees only that reused identity fragment when the rest of the
+imported profile is off-target. The canonical claim and original transcript remain
+unchanged. This prevents an imported AI narrative from leaking back into a database
+introduction merely because it shares the word “engineer”.
+
+The evidence packet carries experience text as repetition context. Validation
+compares sentences of at least eight words and rejects 85% overlap relative to the
+smaller word set. Comparing with the larger set had allowed a full achievement to
+be disguised by a longer candidate-identity prefix. The final check uses edited
+role passages too. Shared technology names and shorter topic phrases remain
+allowed. This is a substantial-repetition heuristic, not general semantic
+entailment or proof of perfect editorial quality. Prose-cache keys include the
+context and validation policy; cached edits are rechecked.
+
+The loop caught two further quality failures. A broad retention score kept the
+same AI introduction for the database job; retention now requires explicit coverage
+of the emitted job focus. Luna found a skills-only fallback safe but formulaic.
+A subsequent full action/object rewrite remained too close to its role bullet,
+so the final fallback uses shorter themes and can combine accounts instead. These
+are deterministic source edits, not a new source of candidate facts or an NLP
+semantic-role-labelling claim.
+
+The prose evaluation project is now part of the solution. A stale standalone
+restore graph had allowed the evaluation executable to reference an earlier
+SeekStorm candidate after the app moved to the public package. Normal solution
+restore/build now covers the evaluation harness too.
+
+The final paired local-model run produced these introductions:
+
+- Applied AI: “Hands-on software engineer with experience building a C# support-agent runtime and adding per-tool authorization. Technical experience includes Azure OpenAI and Qdrant.”
+- Database platform: “Hands-on software engineer with experience designing PostgreSQL reporting queries and optimising queries.”
+
+Both passed the automated output checks and Luna's review of grounding, ownership,
+status and measurements. The AI summary links to the identity, runtime and
+authorization claims; the database summary links to the identity, reporting/recovery
+and measured-query claims. The AI role still states that its offline evaluation's
+production effect is unknown. The database role retains measured test-latency
+direction and values. Unsupported intermediate edits were rejected. An actual
+model proposal that changed evidenced authorization controls into a “safely”
+assertion prompted a regression gate against source-unsupported quality assurances.
+
+The final local model runs took 76.6 s and 57.5 s for the whole two-pass projections;
+these are not search timings or a claim of faster generation. The Release build
+passed without warnings; all **711 tests** and **15 desktop workflows** passed.
+The PostgreSQL screenshot was inspected and shows the focused introduction with
+clickable supporting references.
+[Paired model results](results/summary-recomposition-2026-10-13/career-results.json),
+[AI resume](results/summary-recomposition-2026-10-13/career-applied-ai.md),
+[database resume](results/summary-recomposition-2026-10-13/career-database-platform.md),
+[Luna review](results/summary-recomposition-2026-10-13/luna-review.md),
+[desktop report](results/summary-recomposition-2026-10-13/native-report.json),
+[PostgreSQL screenshot](results/summary-recomposition-2026-10-13/targeted-postgresql.png),
+[verification](results/summary-recomposition-2026-10-13/verification.json).
+
+This is a small synthetic evaluation. Naturalness remains improvable: the database
+summary repeats “queries”, and a higher-level reporting/query-optimisation phrase
+could read better. Broader human ratings and whole-document semantic redundancy
+evaluation remain future work.

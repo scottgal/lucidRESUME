@@ -295,11 +295,17 @@ public sealed class TargetedProjectionTests
         Assert.All(bindings, block => Assert.Equal("accepted", ledger.Claims.Single(claim => claim.Id == block.ClaimId).Review));
     }
 
-    [Fact]
-    public async Task Summary_and_skills_follow_selected_job_evidence_instead_of_reusing_the_whole_career()
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task Summary_and_skills_follow_selected_job_evidence_instead_of_reusing_the_whole_career(bool authoredProfileMatches, bool singleAccount)
     {
         var source = ResumeDocument.Create("career.md", "text/markdown", 0);
-        source.Personal.Summary = "Software engineer building internal AI agent runtimes.";
+        source.Personal.Summary = authoredProfileMatches
+            ? "Software engineer working with PostgreSQL on reporting and recovery."
+            : "Software engineer building internal AI agent runtimes.";
+        var originalSummary = source.Personal.Summary;
         source.Experience.Add(new()
         {
             Title = "Engineer",
@@ -310,6 +316,8 @@ public sealed class TargetedProjectionTests
                 "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms.",
                 "Built a Python document-classification prototype using PyTorch; never deployed to production."]
         });
+        if (singleAccount) source.Experience[0].Achievements.RemoveAt(1);
+        var originalAchievementCount = source.Experience[0].Achievements.Count;
         var embedder = new EmptyEmbedder();
         var taxonomy = new SkillTaxonomyService(embedder);
         var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
@@ -322,15 +330,22 @@ public sealed class TargetedProjectionTests
             Responsibilities = ["Design PostgreSQL reporting queries, database backup recovery drills and optimise measured test latency."]
         }, generationOptions: new() { Detail = ResumeDetail.Thorough });
         Assert.Contains("PostgreSQL", result.Projection.Personal.Summary);
+        Assert.False(lucidRESUME.Compiler.CompositionValidator.RepeatsSentence(result.Projection.Personal.Summary!,
+            result.Projection.Experience.SelectMany(role => role.Achievements).ToList()));
         Assert.DoesNotContain("AI agent", result.Projection.Personal.Summary);
         Assert.Contains(result.Projection.Skills, skill => skill.Name == "PostgreSQL");
         Assert.DoesNotContain(result.Projection.Skills, skill => skill.Name is "Python" or "PyTorch");
         var summaryClaims = result.Projection.Projection!.Blocks.Where(block => block.ProseRef == "#summary:p1").ToList();
-        Assert.True(summaryClaims.Count >= 2);
+        if (authoredProfileMatches)
+        {
+            Assert.Equal(originalSummary, result.Projection.Personal.Summary);
+            Assert.EndsWith(":personal:summary", Assert.Single(summaryClaims).ClaimId);
+        }
+        else Assert.True(summaryClaims.Count >= 2);
         Assert.All(summaryClaims, block => Assert.Contains(source.EvidenceLedger!.Claims,
-            claim => claim.Id == block.ClaimId && claim.Kind == "achievement" && claim.Review == "accepted"));
-        Assert.Equal("Software engineer building internal AI agent runtimes.", source.Personal.Summary);
-        Assert.Equal(3, source.Experience[0].Achievements.Count);
+            claim => claim.Id == block.ClaimId && (claim.Kind == "achievement" || claim.Id.EndsWith(":personal:summary", StringComparison.Ordinal)) && claim.Review == "accepted"));
+        Assert.Equal(originalSummary, source.Personal.Summary);
+        Assert.Equal(originalAchievementCount, source.Experience[0].Achievements.Count);
     }
 
     private sealed class CountingSearch : IProseSearch

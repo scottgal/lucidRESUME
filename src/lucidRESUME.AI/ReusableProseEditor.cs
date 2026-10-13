@@ -35,6 +35,7 @@ internal static class ReusableProseEditor
                 packet.Intent,
                 packet.MaximumWords,
                 packet.Kind,
+                packet.DistinctFrom,
                 packet.Accounts,
                 writingPlan = packet.WritingPlan?.ForPass(request.Pass),
                 claims = packet.Claims.Select(claim => new

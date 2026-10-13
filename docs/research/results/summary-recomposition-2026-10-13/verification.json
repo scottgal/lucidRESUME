@@ -1,0 +1,18 @@
+{
+  "sdk": "SeekStorm.Bindings 0.2.4, unmodified engine 3.4.1",
+  "build": "Release --warnaserror: 0 warnings, 0 errors",
+  "tests_passed": 711,
+  "native_workflows_passed": 15,
+  "model": "qwen3.5:4b via local Ollama",
+  "validator_policy": "selected-facts-distinct-summary-v8",
+  "repetition_gate": "85% overlap relative to smaller word set; sentences >=8 words",
+  "data": "Synthetic only",
+  "quality_findings": [],
+  "limitations": [
+    "Small paired evaluation, not a broad human-quality benchmark.",
+    "Unsupported model summary edits were rejected; successful final edits do not imply all attempts succeeded.",
+    "Sentence-overlap gate is a heuristic, not entailment proof.",
+    "Database summary still repeats the word queries; naturalness remains improvable.",
+    "No new packaged app release was created in this pass."
+  ]
+}

@@ -40,6 +40,7 @@ public sealed record EvidencePacket(
 {
     public IReadOnlyList<lucidRESUME.Core.Models.Resume.ContributionAccount> Accounts { get; init; } = [];
     public ProseCompositionPlan? WritingPlan { get; init; }
+    public IReadOnlyList<string> DistinctFrom { get; init; } = [];
 }
 
 /// <summary>Retrieval hints for emphasis, not an assertion that a requirement is satisfied.</summary>

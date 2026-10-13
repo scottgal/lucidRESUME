@@ -128,6 +128,45 @@ public sealed class ResumeProjectionEditorTests
         Assert.Equal("Engineer with experience building reliable services.", source.Personal.Summary);
     }
 
+    [Fact]
+    public async Task Focused_summary_exposes_only_the_reused_identity_from_an_off_target_profile()
+    {
+        var source = ResumeDocument.Create("cv.md", "text/markdown", 0);
+        source.Personal.Summary = "Software engineer building internal AI agent runtimes.";
+        source.Experience.Add(new() { Title = "Engineer", Company = "Example", Achievements = ["Designed PostgreSQL reporting queries and database backup recovery drills."] });
+        var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);
+        var projection = ResumeDocument.Create("out.md", "text/markdown", 0);
+        projection.Personal.Summary = "Software engineer with experience in PostgreSQL.";
+        projection.Projection = new ResumeProjectionInfo
+        {
+            SourceResumeId = source.ResumeId,
+            SourceRevision = ledger.SourceRevision,
+            Blocks = ledger.Claims.Where(claim => claim.Kind == "achievement" || claim.Id.EndsWith(":personal:summary", StringComparison.Ordinal))
+                .Select(claim => new ResumeProjectionBlock { ClaimId = claim.Id, ProseRef = "#summary:p1" }).ToList()
+        };
+        projection.SetDoclingOutput("## Summary {#summary}\n\n" + projection.Personal.Summary, null, null);
+        var recorder = new SummaryRecorder();
+        var editor = new ResumeProjectionEditor(new ResumeCompositionOrchestrator([recorder], new CompositionValidator()),
+            Options.Create(new TailoringOptions { Provider = "test" }));
+        await editor.EditAsync(source, projection, new JobDescription { RequiredSkills = ["PostgreSQL"] });
+        var packet = Assert.Single(recorder.Sections);
+        Assert.Equal("Software engineer", packet.Claims.Single(claim => claim.Claim.Id.EndsWith(":personal:summary", StringComparison.Ordinal)).Claim.Statement);
+        Assert.DoesNotContain(packet.Claims, claim => claim.Claim.Statement.Contains("AI agent"));
+        Assert.Equal("Software engineer building internal AI agent runtimes.", source.Personal.Summary);
+    }
+
+    private sealed class SummaryRecorder : IResumeCompositionProvider
+    {
+        public string ProviderId => "test";
+        public bool IsAvailable => true;
+        public IReadOnlyList<EvidencePacket> Sections { get; private set; } = [];
+        public Task<CompositionDraft> RunPassAsync(CompositionPassRequest request, CancellationToken ct = default)
+        {
+            Sections = request.Manifest.Sections;
+            return Task.FromResult(new CompositionDraft(request.CurrentBlocks, []));
+        }
+    }
+
     [Theory]
     [InlineData("Remote Oct 2024 – Present", "Remote")]
     [InlineData("Glasgow, UK Jan 2011 – Jul 2011", "Glasgow, UK")]

@@ -73,6 +73,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                 packet.Intent,
                 packet.MaximumWords,
                 packet.Kind,
+                packet.DistinctFrom,
                 packet.Accounts,
                 writingPlan = packet.WritingPlan?.ForPass(request.Pass),
                 claims = packet.Claims.Select(claim => new
@@ -127,6 +128,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
                     immutable_human_source = Protect(current.SectionId, source.Text),
                     current_draft = current.Text == source.Text ? null : Protect(current.SectionId, current.Text),
                     section_brief = packet.Intent,
+                    experience_sentences_not_to_repeat = packet.DistinctFrom,
                     contribution_accounts = packet.Accounts,
                     writing_plan = packet.WritingPlan?.ForPass(request.Pass),
                     selected_claims = packet.Claims.Select(claim => new
@@ -173,8 +175,7 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
             var prompt = JsonSerializer.Serialize(new
             {
                 pass = request.Pass.ToString(),
-                target_role = batch.All(block => summaryIds.Contains(block.SectionId))
-                    ? string.Empty : jobBrief,
+                target_role = jobBrief,
                 sections
             });
             var maximumWords = request.Manifest.Sections.Where(packet => sectionIds.Contains(packet.SectionId))
@@ -292,7 +293,10 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
         every source marker in role and project passages; the summary may omit facts to stay concise.
         Tighten removes repetition and irrelevant setup; HumanVoice
         makes the tightened text sound like a specific engineer in natural UK English. For the
-        professional summary, remove generic praise and preserve the source's grammatical person.
+        professional summary, use selected_claims to explain the candidate's relevant focus in one or two
+        natural sentences; keep detailed outcomes in Experience. Do not repeat any complete sentence from
+        experience_sentences_not_to_repeat. The selected claims support synthesis, never new qualifications.
+        Remove generic praise and preserve the source's grammatical person.
         Do not add "I" or "my" to passages written with an implied subject. Retain the source's grammatical person.
         Preserve named technical details that distinguish the work. Keep metrics and numeric notation exactly as supplied, including 10+, 80% and up to. Rewrite conversational asides as concise professional statements, retaining cancellations, planned work and uncertainty. Fix obvious spelling and capitalization errors. Remove stock praise such as
         "proven track record", "competitive advantages", "rapid ROI" and "technical excellence".

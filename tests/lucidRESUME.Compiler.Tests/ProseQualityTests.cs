@@ -98,6 +98,32 @@ public sealed class ProseQualityTests
         Assert.True(result.Used);
     }
 
+    [Theory]
+    [InlineData("Designed PostgreSQL reporting queries and database backup recovery drills.", true)]
+    [InlineData("DESIGNED PostgreSQL reporting queries and database backup recovery drills!", true)]
+    [InlineData("Developed PostgreSQL reporting queries and database backup recovery drills.", true)]
+    [InlineData("Software engineer who designed PostgreSQL reporting queries and database backup recovery drills.", true)]
+    [InlineData("Experience with PostgreSQL reporting and database recovery.", false)]
+    public void Summary_rejects_complete_repeated_sentences_but_allows_shared_technical_topics(string edited, bool repeats)
+    {
+        const string original = "Designed PostgreSQL reporting queries and database backup recovery drills.";
+        var packet = Packet(original, ["PostgreSQL"]) with { Kind = "summary", DistinctFrom = [original] };
+        var block = new CompositionBlock("role", original, ["claim"], ["evidence"]);
+        var errors = new CompositionValidator().Validate(new([block with { Text = edited }], []), [block], Manifest(packet));
+        Assert.Equal(repeats, errors.Any(error => error.Contains("repeats a complete or near-complete experience sentence")));
+    }
+
+    [Theory]
+    [InlineData("safely")]
+    [InlineData("securely")]
+    [InlineData("reliably")]
+    public void Controls_do_not_become_unverified_quality_assurances(string assurance)
+    {
+        var errors = Validate("Added per-tool authorization before allowing the agent to update ticket state.",
+            $"Added per-tool authorization before allowing the agent to update ticket state {assurance}.");
+        Assert.Contains(errors, error => error.Contains("unsupported assurance"));
+    }
+
     private static IReadOnlyList<string> Validate(string source, string edited)
     {
         var packet = Packet(source, []);

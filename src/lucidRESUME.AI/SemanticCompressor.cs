@@ -458,24 +458,32 @@ public sealed class SemanticCompressor
             var selectedAccountsForSummary = projection.Experience.SelectMany(role => role.Achievements.Select(text =>
                     (Role: role, Text: text, Relevance: LexicalRelevance(text))))
                 .Where(item => item.Relevance > 0 && Regex.Matches(item.Text, @"\S+").Count <= budget.SummaryWords / 2)
+                // Qualified accounts stay in Experience, where their complete status remains visible.
+                .Where(item => ResumeSummaryBuilder.IsUnqualifiedAccount(item.Text))
                 .OrderByDescending(item => item.Relevance).Take(2).ToList();
             var summary = careerSummary;
-            if (selectedAccountsForSummary.Count == 2)
+            if (selectedAccountsForSummary.Count >= 1)
             {
-                summary = string.Join(" ", selectedAccountsForSummary.Select(item => item.Text.Trim().TrimEnd('.') + "."));
-                var includePersonal = LexicalRelevance(careerSummary) >= selectedAccountsForSummary.Max(item => item.Relevance) &&
-                    Regex.Matches(careerSummary + " " + summary, @"\S+").Count <= budget.SummaryWords;
-                if (includePersonal)
-                {
-                    summary = careerSummary + " " + summary;
+                var focusSkills = jd.RequiredSkills.Concat(jd.PreferredSkills)
+                    .Where(skill => selectedAccountsForSummary.Any(item => SkillTaxonomy.MentionsEquivalent(item.Text, skill)))
+                    .Distinct(StringComparer.OrdinalIgnoreCase).Take(4).ToList();
+                var focusAccount = ResumeSummaryBuilder.FindFocusAccount(selectedAccountsForSummary.Select(item => item.Text), focusSkills);
+                summary = ResumeSummaryBuilder.Build(careerSummary, focusSkills,
+                    focusSkills.Count > 0 && focusSkills.All(skill => SkillTaxonomy.MentionsEquivalent(careerSummary, skill)) &&
+                    !lucidRESUME.Compiler.CompositionValidator.RepeatsSentence(careerSummary,
+                        projection.Experience.SelectMany(role => role.Achievements).ToList()), focusAccount);
+                if (summary.Contains(careerSummary, StringComparison.Ordinal) || ResumeSummaryBuilder.UsesIdentity(summary, careerSummary))
                     Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
-                }
-                foreach (var item in selectedAccountsForSummary)
+                foreach (var item in summary == careerSummary ? [] : selectedAccountsForSummary.Where(item => focusAccount is null || focusAccount.Sources.Contains(item.Text)))
                 {
                     var selectedParagraph = projection.Experience.Single(role => role.Id == item.Role.Id).Achievements.IndexOf(item.Text);
                     var firstParagraph = string.IsNullOrEmpty(FormatDateRange(item.Role.StartDate, item.Role.EndDate, item.Role.IsCurrent)) ? 1 : 2;
                     var proseRef = $"#experience-{item.Role.Id:N}:p{selectedParagraph + firstParagraph}";
-                    foreach (var binding in projection.Projection.Blocks.Where(block => block.ProseRef == proseRef).ToList())
+                    foreach (var binding in projection.Projection.Blocks.Where(block => block.ProseRef == proseRef &&
+                                 sourceLedger.Claims.Any(claim => claim.Id == block.ClaimId && claim.Review == "accepted" &&
+                                     (focusAccount is null ? focusSkills.Any(skill => SkillTaxonomy.MentionsEquivalent(claim.Statement, skill))
+                                         : ResumeSummaryBuilder.FocusPhrase(claim.Statement) is { } phrase && focusAccount.Sources.Any(source => ResumeSummaryBuilder.FocusPhrase(source) == phrase) ||
+                                           focusAccount.RemainingSkills.Any(skill => SkillTaxonomy.MentionsEquivalent(claim.Statement, skill))))).ToList())
                         projection.Projection.Blocks.Add(new() { ClaimId = binding.ClaimId, ProseRef = "#summary:p1" });
                 }
             }
