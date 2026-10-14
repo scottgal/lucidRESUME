@@ -1,0 +1,89 @@
+{
+  "provider": "llm",
+  "task": "coverage",
+  "model": "gemma4:31b",
+  "createdAt": "2026-10-14T12:07:25Z",
+  "serverVersion": "0.35.0",
+  "modelDigest": "6316f0629137b426c9d9b853ffc4c8209589f30ee39aebede6285096c0ff47e7",
+  "modelDetails": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "gemma4",
+    "families": [
+      "gemma4"
+    ],
+    "parameter_size": "31.3B",
+    "quantization_level": "Q4_K_M",
+    "context_length": 262144,
+    "embedding_length": 5376
+  },
+  "options": {
+    "temperature": 0,
+    "num_predict": 128,
+    "num_ctx": 4096
+  },
+  "thinking": false,
+  "timing": "Per-case HTTP round trip and generated classification JSON; first may include model loading. No confidence estimates.",
+  "rows": [
+    {
+      "id": "status-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 2476.731042,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 2591200,
+      "inputTokens": 106,
+      "outputTokens": 9
+    },
+    {
+      "id": "status-wrong-but-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 2454.3760420000003,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3191000,
+      "inputTokens": 106,
+      "outputTokens": 9
+    },
+    {
+      "id": "polished-no-status",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "elapsedMs": 2532.2219999999998,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 2605300,
+      "inputTokens": 121,
+      "outputTokens": 9
+    },
+    {
+      "id": "unknown-is-explicit",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 2442.613167,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3140600,
+      "inputTokens": 115,
+      "outputTokens": 9
+    },
+    {
+      "id": "role-action-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 2638.977917,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 2584100,
+      "inputTokens": 124,
+      "outputTokens": 10
+    },
+    {
+      "id": "role-result-missing",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 2296.9004999999997,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 2683300,
+      "inputTokens": 126,
+      "outputTokens": 8
+    }
+  ]
+}

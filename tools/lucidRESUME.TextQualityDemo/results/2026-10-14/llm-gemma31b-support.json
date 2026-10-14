@@ -1,0 +1,149 @@
+{
+  "provider": "llm",
+  "task": "support",
+  "model": "gemma4:31b",
+  "createdAt": "2026-10-14T12:07:10Z",
+  "serverVersion": "0.35.0",
+  "modelDigest": "6316f0629137b426c9d9b853ffc4c8209589f30ee39aebede6285096c0ff47e7",
+  "modelDetails": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "gemma4",
+    "families": [
+      "gemma4"
+    ],
+    "parameter_size": "31.3B",
+    "quantization_level": "Q4_K_M",
+    "context_length": 262144,
+    "embedding_length": 5376
+  },
+  "options": {
+    "temperature": 0,
+    "num_predict": 128,
+    "num_ctx": 4096
+  },
+  "thinking": false,
+  "timing": "Per-case HTTP round trip and generated classification JSON; first may include model loading. No confidence estimates.",
+  "rows": [
+    {
+      "id": "refund-confirmed",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 31220.768792000003,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 24386196500,
+      "inputTokens": 114,
+      "outputTokens": 9
+    },
+    {
+      "id": "refund-pending",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 2272.3490840000018,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3705200,
+      "inputTokens": 110,
+      "outputTokens": 8
+    },
+    {
+      "id": "refund-missing",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "elapsedMs": 2428.547375000001,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3178200,
+      "inputTokens": 107,
+      "outputTokens": 8
+    },
+    {
+      "id": "assisted-preserved",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 2512.3307080000004,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3149300,
+      "inputTokens": 121,
+      "outputTokens": 9
+    },
+    {
+      "id": "ownership-upgrade",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 2258.4647909999944,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3108600,
+      "inputTokens": 98,
+      "outputTokens": 8
+    },
+    {
+      "id": "invented-impact",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "elapsedMs": 2248.8918749999984,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3129200,
+      "inputTokens": 109,
+      "outputTokens": 8
+    },
+    {
+      "id": "prototype-status",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 2308.666791999997,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3142200,
+      "inputTokens": 101,
+      "outputTokens": 8
+    },
+    {
+      "id": "planned-impact",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "elapsedMs": 2268.5047499999982,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3122600,
+      "inputTokens": 101,
+      "outputTokens": 8
+    },
+    {
+      "id": "measured-impact",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 2466.7948330000017,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 2625300,
+      "inputTokens": 132,
+      "outputTokens": 9
+    },
+    {
+      "id": "metric-reversed",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 2344.108665999997,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 2604600,
+      "inputTokens": 109,
+      "outputTokens": 8
+    },
+    {
+      "id": "publication-boundary",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "elapsedMs": 2590.458167000001,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 2631800,
+      "inputTokens": 112,
+      "outputTokens": 9
+    },
+    {
+      "id": "qualifier-retained",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 2569.5836249999998,
+      "returnedModel": "gemma4:31b",
+      "loadNs": 3111500,
+      "inputTokens": 106,
+      "outputTokens": 9
+    }
+  ]
+}

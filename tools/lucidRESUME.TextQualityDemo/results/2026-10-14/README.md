@@ -1,7 +1,9 @@
 # Synthetic CLI probe results
 
-These are all results from the first support run, its repeat, and the coverage run
+These reports cover the original support/coverage runs and the larger-model rerun
 used in the accompanying article. No private career data is included.
+
+## Original runs
 
 * NLI: Python 3.9.6, PyTorch 2.8.0, Transformers 4.57.6, CPU on Apple M5.
   The resolved Hugging Face revision is stored in each report. A fresh process loads
@@ -20,3 +22,23 @@ must not be treated as disproving an assertion; several models make that mistake
 
 Use `compare.py` to inspect every mismatch. The named expected labels live in the
 fixture files and are independent of the models. Changing them changes this probe.
+
+## Larger LLM rerun
+
+`llm-qwen27b-*` and `llm-gemma31b-*` rerun both fixture sets with Qwen3.8 27.3B and
+Gemma4 31.3B on the same LAN Ollama 0.35.0 server. Both use Q4_K_M weights. The
+reports record digests, model details, token counts, load time and generation
+settings. Prompts, fixtures and classification settings match the original 4B
+baseline: temperature zero, thinking disabled, 128 output tokens and 4096 context.
+
+Qwen matches 10/12 support labels; Gemma matches 9/12. Neither produces a false
+entailment. Both match 5/6 exact coverage labels and 6/6 supported-versus-unsupported
+coverage findings. Each calls the polished non-answer contradiction rather than
+neutral, which does not change the finding that its coverage hypothesis is unsupported.
+The unknown-status fixture tests explicit acknowledgement separately from supplying
+the status. Corpus labels are unchanged.
+
+Median request times are about 1.66s/1.80s for Qwen support/coverage and 2.39s/2.47s
+for Gemma. The first support calls take about 16s and 31s respectively; their load
+times are retained. These runs do not compare reasoning-enabled configurations or
+evaluate communication quality.

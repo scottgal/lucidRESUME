@@ -47,7 +47,7 @@ public static class ArticleSamples
                 Console.WriteLine($"Coverage decision: {await CoverageAsync(http, Option("--model", "nimble"))}");
                 break;
             case "llm":
-                Console.WriteLine($"Generated coverage judgement: {await LlmCoverageAsync(http, Option("--model", "qwen3.5:4b"))}");
+                Console.WriteLine($"Generated coverage judgement: {await LlmCoverageAsync(http, Option("--model", "qwen3.8:latest"))}");
                 break;
             default: throw new ArgumentException("Unknown sample. Choose code, embedding, nli, decision or llm.");
         }

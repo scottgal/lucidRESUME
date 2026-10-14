@@ -91,7 +91,7 @@ latency and errors inspectable alongside the specialist classifiers. It does not
 judge style, usefulness or overall response quality.
 
 ```sh
-python3 tools/lucidRESUME.TextQualityDemo/llm.py --model qwen3.5:4b \
+python3 tools/lucidRESUME.TextQualityDemo/llm.py --model qwen3.8:latest \
   --task coverage --output /tmp/llm-coverage.json
 python3 tools/lucidRESUME.TextQualityDemo/compare.py \
   /tmp/nli-coverage.json /tmp/nimble-coverage.json /tmp/llm-coverage.json
@@ -115,12 +115,16 @@ dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample co
 dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- \
   --sample nli --python /tmp/text-quality-venv/bin/python
 dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample decision
-dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample llm
+dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample llm --model qwen3.8:latest
 ollama pull embeddinggemma
 dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample embedding
 ```
 
 Use `--url` for another Ollama server and `--model` for an installed compatible model.
+The LLM sample defaults to Qwen3.8; point `--url` at the server hosting it. The corpus
+runner requires an explicit model. The saved rerun also tests Gemma4 31B. Keep
+`--task support` and `--task coverage` separate, and inspect both exact relation
+labels and supported-versus-unsupported coverage findings in the comparison.
 The NLI example requires the Python environment prepared above. Ollama runs the
 embedding and generative/decision models, while Python runs DeBERTa. The embedding example
 compares pending with complete: their common topic can produce similarity without

@@ -1,0 +1,89 @@
+{
+  "provider": "llm",
+  "task": "coverage",
+  "model": "qwen3.8:latest",
+  "createdAt": "2026-10-14T12:06:12Z",
+  "serverVersion": "0.35.0",
+  "modelDigest": "22130167c4c20e20c7b71454612966ca8e8171e9b3cc8ab6ce8aa6cbfec79643",
+  "modelDetails": {
+    "parent_model": "qwen3.8:27b-q4_K_M",
+    "format": "gguf",
+    "family": "qwen35",
+    "families": [
+      "qwen35"
+    ],
+    "parameter_size": "27.3B",
+    "quantization_level": "Q4_K_M",
+    "context_length": 262144,
+    "embedding_length": 5120
+  },
+  "options": {
+    "temperature": 0,
+    "num_predict": 128,
+    "num_ctx": 4096
+  },
+  "thinking": false,
+  "timing": "Per-case HTTP round trip and generated classification JSON; first may include model loading. No confidence estimates.",
+  "rows": [
+    {
+      "id": "status-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 1786.393167,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3641300,
+      "inputTokens": 106,
+      "outputTokens": 9
+    },
+    {
+      "id": "status-wrong-but-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 1732.5226249999998,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3101000,
+      "inputTokens": 106,
+      "outputTokens": 9
+    },
+    {
+      "id": "polished-no-status",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "elapsedMs": 1821.2049999999995,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3155900,
+      "inputTokens": 121,
+      "outputTokens": 9
+    },
+    {
+      "id": "unknown-is-explicit",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 1591.7954170000003,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3113200,
+      "inputTokens": 115,
+      "outputTokens": 9
+    },
+    {
+      "id": "role-action-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 1937.3657500000006,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3696900,
+      "inputTokens": 124,
+      "outputTokens": 13
+    },
+    {
+      "id": "role-result-missing",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 1909.090082999999,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3111800,
+      "inputTokens": 126,
+      "outputTokens": 13
+    }
+  ]
+}

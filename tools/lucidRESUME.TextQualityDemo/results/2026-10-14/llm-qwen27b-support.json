@@ -1,0 +1,149 @@
+{
+  "provider": "llm",
+  "task": "support",
+  "model": "qwen3.8:latest",
+  "createdAt": "2026-10-14T12:06:02Z",
+  "serverVersion": "0.35.0",
+  "modelDigest": "22130167c4c20e20c7b71454612966ca8e8171e9b3cc8ab6ce8aa6cbfec79643",
+  "modelDetails": {
+    "parent_model": "qwen3.8:27b-q4_K_M",
+    "format": "gguf",
+    "family": "qwen35",
+    "families": [
+      "qwen35"
+    ],
+    "parameter_size": "27.3B",
+    "quantization_level": "Q4_K_M",
+    "context_length": 262144,
+    "embedding_length": 5120
+  },
+  "options": {
+    "temperature": 0,
+    "num_predict": 128,
+    "num_ctx": 4096
+  },
+  "thinking": false,
+  "timing": "Per-case HTTP round trip and generated classification JSON; first may include model loading. No confidence estimates.",
+  "rows": [
+    {
+      "id": "refund-confirmed",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 16168.059875,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 14465403400,
+      "inputTokens": 117,
+      "outputTokens": 9
+    },
+    {
+      "id": "refund-pending",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 1630.2502079999997,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3119400,
+      "inputTokens": 113,
+      "outputTokens": 9
+    },
+    {
+      "id": "refund-missing",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "elapsedMs": 1911.5188329999987,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3154100,
+      "inputTokens": 110,
+      "outputTokens": 9
+    },
+    {
+      "id": "assisted-preserved",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 1924.153125,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3217100,
+      "inputTokens": 124,
+      "outputTokens": 9
+    },
+    {
+      "id": "ownership-upgrade",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 1606.5590410000007,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3098000,
+      "inputTokens": 101,
+      "outputTokens": 9
+    },
+    {
+      "id": "invented-impact",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "elapsedMs": 1741.7742920000023,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 2606600,
+      "inputTokens": 112,
+      "outputTokens": 9
+    },
+    {
+      "id": "prototype-status",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 1683.1835419999984,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3129900,
+      "inputTokens": 104,
+      "outputTokens": 9
+    },
+    {
+      "id": "planned-impact",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "elapsedMs": 1367.6569580000014,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3733300,
+      "inputTokens": 104,
+      "outputTokens": 7
+    },
+    {
+      "id": "measured-impact",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 1636.468707999999,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3137500,
+      "inputTokens": 135,
+      "outputTokens": 9
+    },
+    {
+      "id": "metric-reversed",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 1605.0186249999997,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3264200,
+      "inputTokens": 112,
+      "outputTokens": 9
+    },
+    {
+      "id": "publication-boundary",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "elapsedMs": 1376.8118749999978,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3112400,
+      "inputTokens": 115,
+      "outputTokens": 7
+    },
+    {
+      "id": "qualifier-retained",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 1824.1372499999998,
+      "returnedModel": "qwen3.8:latest",
+      "loadNs": 3126300,
+      "inputTokens": 109,
+      "outputTokens": 9
+    }
+  ]
+}
