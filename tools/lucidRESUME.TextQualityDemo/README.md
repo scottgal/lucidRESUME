@@ -103,15 +103,17 @@ source spans. Never let the writer define the expected answer for its own check.
 
 ## C# article samples
 
-`ArticleSamples.cs` contains small examples using only the .NET standard libraries.
+`ArticleSamples.cs` contains examples using Microsoft.Extensions.AI and OllamaSharp.
 They demonstrate exact structured fact checks, template rendering, embedding
-similarity, reading the NLI worker's JSON, and direct HTTP calls for a decision model
-and a general LLM. These return diagnostics, not an overall answer-quality score.
+similarity, NLI comparisons and model judgements. `DecisionChecks` wraps the app's
+validated Nimble provider; `NliCli` invokes the Python model worker and returns three
+scores. The worker is reloaded per sample call; use the corpus runner to analyse
+many pairs with one model load. These return diagnostics, not an overall quality score.
 
 ```sh
 dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample code
 dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- \
-  --sample nli --report /tmp/nli-quality.json
+  --sample nli --python /tmp/text-quality-venv/bin/python
 dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample decision
 dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample llm
 ollama pull embeddinggemma
@@ -119,7 +121,7 @@ dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample em
 ```
 
 Use `--url` for another Ollama server and `--model` for an installed compatible model.
-The NLI example consumes the support report produced by the Python worker earlier.
-It does not imply that Ollama runs the DeBERTa NLI model. The embedding example
+The NLI example requires the Python environment prepared above. Ollama runs the
+embedding and generative/decision models, while Python runs DeBERTa. The embedding example
 compares pending with complete: their common topic can produce similarity without
 agreement about the status. All snippets intentionally use synthetic data.

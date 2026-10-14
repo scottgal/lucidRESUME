@@ -14,7 +14,7 @@ var json = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented
 if (args.Contains("--help"))
 {
     Console.WriteLine("TextQualityDemo [--task support|coverage] [--url http://localhost:11434] [--model nimble] [--fixtures path] [--output path]");
-    Console.WriteLine("TextQualityDemo --sample code|embedding|nli|decision|llm [--url URL] [--model NAME] [--report JSON]");
+    Console.WriteLine("TextQualityDemo --sample code|embedding|nli|decision|llm [--url URL] [--model NAME] [--python PATH]");
     return;
 }
 string Option(string name, string fallback)

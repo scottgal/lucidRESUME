@@ -1,8 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.10.0" />
+    <PackageReference Include="OllamaSharp" Version="5.5.0" />
     <ProjectReference Include="../../src/lucidRESUME.AI/lucidRESUME.AI.csproj" />
     <None Update="fixtures.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="coverage-fixtures.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="nli.py" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -36,7 +36,7 @@ def main():
         predicted = max(probabilities, key=probabilities.get)
         elapsed_ms = (time.perf_counter() - started) * 1000
         print(f"{case['id']:24} {predicted:14} {elapsed_ms:.0f}ms")
-        rows.append(dict(id=case["id"], expected=case["expected"], predicted=predicted,
+        rows.append(dict(id=case["id"], expected=case.get("expected"), predicted=predicted,
                          probabilities=probabilities, elapsedMs=elapsed_ms))
     args.output.write_text(json.dumps(dict(provider="nli", task=args.task, model=args.model,
         revision=getattr(model.config, "_commit_hash", args.revision), device="cpu", loadMs=load_ms,
