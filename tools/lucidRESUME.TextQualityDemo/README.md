@@ -100,3 +100,26 @@ python3 tools/lucidRESUME.TextQualityDemo/compare.py \
 General LLMs can also propose question decomposition or claim extraction upstream,
 then help revise wording downstream. Review those proposed obligations and preserve
 source spans. Never let the writer define the expected answer for its own check.
+
+## C# article samples
+
+`ArticleSamples.cs` contains small examples using only the .NET standard libraries.
+They demonstrate exact structured fact checks, template rendering, embedding
+similarity, reading the NLI worker's JSON, and direct HTTP calls for a decision model
+and a general LLM. These return diagnostics, not an overall answer-quality score.
+
+```sh
+dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample code
+dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- \
+  --sample nli --report /tmp/nli-quality.json
+dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample decision
+dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample llm
+ollama pull embeddinggemma
+dotnet run --project tools/lucidRESUME.TextQualityDemo -c Release -- --sample embedding
+```
+
+Use `--url` for another Ollama server and `--model` for an installed compatible model.
+The NLI example consumes the support report produced by the Python worker earlier.
+It does not imply that Ollama runs the DeBERTa NLI model. The embedding example
+compares pending with complete: their common topic can produce similarity without
+agreement about the status. All snippets intentionally use synthetic data.

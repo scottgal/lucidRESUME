@@ -4,10 +4,17 @@ using lucidRESUME.AI;
 using lucidRESUME.Core.Interfaces;
 using Microsoft.Extensions.Options;
 
+if (args.FirstOrDefault() == "--sample")
+{
+    await ArticleSamples.RunAsync(args);
+    return;
+}
+
 var json = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
 if (args.Contains("--help"))
 {
     Console.WriteLine("TextQualityDemo [--task support|coverage] [--url http://localhost:11434] [--model nimble] [--fixtures path] [--output path]");
+    Console.WriteLine("TextQualityDemo --sample code|embedding|nli|decision|llm [--url URL] [--model NAME] [--report JSON]");
     return;
 }
 string Option(string name, string fallback)
