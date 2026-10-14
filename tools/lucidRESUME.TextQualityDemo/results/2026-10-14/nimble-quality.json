@@ -1,0 +1,235 @@
+{
+  "provider": "nimble",
+  "createdAt": "2026-10-14T11:20:27.0099+00:00",
+  "timing": "Per-case HTTP round trip for TWO questions; first includes any cold model load.",
+  "rows": [
+    {
+      "id": "refund-confirmed",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9986304566374394,
+        "neutral": 0.0012744576375332578,
+        "contradiction": 9.508572502712968E-05
+      },
+      "expectedAction": "publish",
+      "action": "publish",
+      "actionProbabilities": {
+        "publish": 0.9957027864129049,
+        "revise": 0.004069643000272948,
+        "ask": 0.00022757058682218757
+      },
+      "elapsedMs": 8010.1497,
+      "model": "nimble"
+    },
+    {
+      "id": "refund-pending",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 2.2310588063185256E-05,
+        "neutral": 0.002659394124671041,
+        "contradiction": 0.9973182952872659
+      },
+      "expectedAction": "revise",
+      "action": "revise",
+      "actionProbabilities": {
+        "publish": 5.218612464747104E-05,
+        "revise": 0.7217867429602579,
+        "ask": 0.2781610709150947
+      },
+      "elapsedMs": 467.2278,
+      "model": "nimble"
+    },
+    {
+      "id": "refund-missing",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.0006522538077265797,
+        "neutral": 0.054502058980226115,
+        "contradiction": 0.9448456872120474
+      },
+      "expectedAction": "ask",
+      "action": "ask",
+      "actionProbabilities": {
+        "publish": 0.0006862592690500036,
+        "revise": 0.2080486372256319,
+        "ask": 0.7912651035053182
+      },
+      "elapsedMs": 461.4967,
+      "model": "nimble"
+    },
+    {
+      "id": "assisted-preserved",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9954221494751904,
+        "neutral": 0.004342505252196783,
+        "contradiction": 0.0002353452726128503
+      },
+      "expectedAction": "publish",
+      "action": "publish",
+      "actionProbabilities": {
+        "publish": 0.9881652513610987,
+        "revise": 0.011307685707488425,
+        "ask": 0.000527062931412853
+      },
+      "elapsedMs": 459.6985,
+      "model": "nimble"
+    },
+    {
+      "id": "ownership-upgrade",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 2.6579739448795202E-05,
+        "neutral": 0.00272294008196893,
+        "contradiction": 0.9972504801785823
+      },
+      "expectedAction": "revise",
+      "action": "revise",
+      "actionProbabilities": {
+        "publish": 5.358517880007525E-05,
+        "revise": 0.6088848703425751,
+        "ask": 0.3910615444786249
+      },
+      "elapsedMs": 465.2588,
+      "model": "nimble"
+    },
+    {
+      "id": "invented-impact",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.00013680701605028482,
+        "neutral": 0.405520171664406,
+        "contradiction": 0.5943430213195436
+      },
+      "expectedAction": "ask",
+      "action": "ask",
+      "actionProbabilities": {
+        "publish": 0.00023061330987801743,
+        "revise": 0.036666011145326596,
+        "ask": 0.9631033755447953
+      },
+      "elapsedMs": 463.38,
+      "model": "nimble"
+    },
+    {
+      "id": "prototype-status",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 6.777180496819057E-05,
+        "neutral": 0.00414904284499822,
+        "contradiction": 0.9957831853500336
+      },
+      "expectedAction": "revise",
+      "action": "ask",
+      "actionProbabilities": {
+        "publish": 0.00012410981473010571,
+        "revise": 0.33555752235656544,
+        "ask": 0.6643183678287045
+      },
+      "elapsedMs": 451.4462,
+      "model": "nimble"
+    },
+    {
+      "id": "planned-impact",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "probabilities": {
+        "entailment": 0.00036902246330782845,
+        "neutral": 0.5259279638627157,
+        "contradiction": 0.4737030136739764
+      },
+      "expectedAction": "ask",
+      "action": "ask",
+      "actionProbabilities": {
+        "publish": 0.00031645225573240465,
+        "revise": 0.06910485020716052,
+        "ask": 0.9305786975371071
+      },
+      "elapsedMs": 459.4816,
+      "model": "nimble"
+    },
+    {
+      "id": "measured-impact",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9962188299799236,
+        "neutral": 0.003572153007763464,
+        "contradiction": 0.00020901701231306532
+      },
+      "expectedAction": "publish",
+      "action": "publish",
+      "actionProbabilities": {
+        "publish": 0.9808228270256606,
+        "revise": 0.018802985894912746,
+        "ask": 0.0003741870794266334
+      },
+      "elapsedMs": 673.5516,
+      "model": "nimble"
+    },
+    {
+      "id": "metric-reversed",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 8.277215794831792E-05,
+        "neutral": 0.004640695980659099,
+        "contradiction": 0.9952765318613926
+      },
+      "expectedAction": "revise",
+      "action": "ask",
+      "actionProbabilities": {
+        "publish": 0.0001139279159897829,
+        "revise": 0.1814056523238223,
+        "ask": 0.8184804197601879
+      },
+      "elapsedMs": 460.04,
+      "model": "nimble"
+    },
+    {
+      "id": "publication-boundary",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.001176707854651504,
+        "neutral": 0.4181356019119141,
+        "contradiction": 0.5806876902334344
+      },
+      "expectedAction": "ask",
+      "action": "ask",
+      "actionProbabilities": {
+        "publish": 0.0015890776668856872,
+        "revise": 0.4294656781917805,
+        "ask": 0.5689452441413337
+      },
+      "elapsedMs": 464.1434,
+      "model": "nimble"
+    },
+    {
+      "id": "qualifier-retained",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9292227675291561,
+        "neutral": 0.06627413102085337,
+        "contradiction": 0.004503101449990558
+      },
+      "expectedAction": "publish",
+      "action": "publish",
+      "actionProbabilities": {
+        "publish": 0.9022120492386906,
+        "revise": 0.08256734029287811,
+        "ask": 0.015220610468431288
+      },
+      "elapsedMs": 471.8129,
+      "model": "nimble"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[
+  {"id":"status-present","premise":"Your refund is pending.","hypothesis":"The response specifies the current refund status.","question":"What is the status of my refund?","expected":"entailment"},
+  {"id":"status-wrong-but-present","premise":"Your refund is complete.","hypothesis":"The response specifies the current refund status.","question":"What is the status of my refund?","expected":"entailment"},
+  {"id":"polished-no-status","premise":"I understand how important this is. We aim to provide an excellent payment experience and appreciate your patience.","hypothesis":"The response specifies the current refund status.","question":"What is the status of my refund?","expected":"neutral"},
+  {"id":"unknown-is-explicit","premise":"I cannot determine your refund status from the information available.","hypothesis":"The response explicitly says the refund status cannot be determined.","question":"What is the status of my refund?","expected":"entailment"},
+  {"id":"role-action-present","premise":"I added a retry queue to the C# billing service. We have not measured its effect.","hypothesis":"The response describes a personal implementation contribution.","question":"What did you personally implement and what was the measured result?","expected":"entailment"},
+  {"id":"role-result-missing","premise":"I added a retry queue to the C# billing service. We have not measured its effect.","hypothesis":"The response supplies a measured result of the implementation.","question":"What did you personally implement and what was the measured result?","expected":"contradiction"}
+]

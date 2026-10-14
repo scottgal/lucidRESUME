@@ -1,0 +1,44 @@
+{
+  "provider": "llm",
+  "task": "coverage",
+  "model": "qwen3.5:4b",
+  "timing": "Per-case HTTP round trip and generated classification JSON; first may include model loading. No confidence estimates.",
+  "rows": [
+    {
+      "id": "status-present",
+      "expected": "entailment",
+      "predicted": "neutral",
+      "elapsedMs": 2745.0866250000004
+    },
+    {
+      "id": "status-wrong-but-present",
+      "expected": "entailment",
+      "predicted": "neutral",
+      "elapsedMs": 340.54424999999975
+    },
+    {
+      "id": "polished-no-status",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "elapsedMs": 468.6831250000001
+    },
+    {
+      "id": "unknown-is-explicit",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "elapsedMs": 397.7153329999998
+    },
+    {
+      "id": "role-action-present",
+      "expected": "entailment",
+      "predicted": "neutral",
+      "elapsedMs": 355.02787499999977
+    },
+    {
+      "id": "role-result-missing",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "elapsedMs": 423.3109580000001
+    }
+  ]
+}

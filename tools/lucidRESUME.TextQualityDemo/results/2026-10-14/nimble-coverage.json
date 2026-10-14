@@ -1,0 +1,98 @@
+{
+  "provider": "nimble",
+  "task": "coverage",
+  "createdAt": "2026-10-14T11:25:04.793198+00:00",
+  "timing": "Per-case HTTP round trip for ONE questions; first includes any cold model load.",
+  "rows": [
+    {
+      "id": "status-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9795964801777766,
+        "neutral": 0.019354622551756847,
+        "contradiction": 0.0010488972704665851
+      },
+      "expectedAction": null,
+      "action": null,
+      "actionProbabilities": null,
+      "elapsedMs": 457.8851,
+      "model": "nimble"
+    },
+    {
+      "id": "status-wrong-but-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9898264629046973,
+        "neutral": 0.00881067700643997,
+        "contradiction": 0.001362860088862687
+      },
+      "expectedAction": null,
+      "action": null,
+      "actionProbabilities": null,
+      "elapsedMs": 201.5336,
+      "model": "nimble"
+    },
+    {
+      "id": "polished-no-status",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.0002517384560052007,
+        "neutral": 0.3238697384349176,
+        "contradiction": 0.6758785231090771
+      },
+      "expectedAction": null,
+      "action": null,
+      "actionProbabilities": null,
+      "elapsedMs": 195.9493,
+      "model": "nimble"
+    },
+    {
+      "id": "unknown-is-explicit",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9958168497373608,
+        "neutral": 0.0033361762920433653,
+        "contradiction": 0.0008469739705956958
+      },
+      "expectedAction": null,
+      "action": null,
+      "actionProbabilities": null,
+      "elapsedMs": 195.2148,
+      "model": "nimble"
+    },
+    {
+      "id": "role-action-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9526095983559509,
+        "neutral": 0.035510821236300366,
+        "contradiction": 0.011879580407748573
+      },
+      "expectedAction": null,
+      "action": null,
+      "actionProbabilities": null,
+      "elapsedMs": 204.0754,
+      "model": "nimble"
+    },
+    {
+      "id": "role-result-missing",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.00024858551531394517,
+        "neutral": 0.00406353288102277,
+        "contradiction": 0.9956878816036632
+      },
+      "expectedAction": null,
+      "action": null,
+      "actionProbabilities": null,
+      "elapsedMs": 207.1706,
+      "model": "nimble"
+    }
+  ]
+}

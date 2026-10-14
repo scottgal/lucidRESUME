@@ -1,0 +1,142 @@
+{
+  "provider": "nli",
+  "model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "revision": "6f5cf0a2b59cabb106aca4c287eed12e357e90eb",
+  "device": "cpu",
+  "loadMs": 964.816541,
+  "timing": "Per-case tokenization and ONE forward pass, excluding model loading.",
+  "rows": [
+    {
+      "id": "refund-confirmed",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9838877320289612,
+        "neutral": 0.015163345262408257,
+        "contradiction": 0.0009490182274021208
+      },
+      "elapsedMs": 50.12929199999982
+    },
+    {
+      "id": "refund-pending",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.00023755160509608686,
+        "neutral": 0.00068651232868433,
+        "contradiction": 0.9990758895874023
+      },
+      "elapsedMs": 33.53266699999979
+    },
+    {
+      "id": "refund-missing",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.0011808453127741814,
+        "neutral": 0.043264757841825485,
+        "contradiction": 0.9555544257164001
+      },
+      "elapsedMs": 25.749417000000108
+    },
+    {
+      "id": "assisted-preserved",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9950961470603943,
+        "neutral": 0.004338551312685013,
+        "contradiction": 0.0005652575055137277
+      },
+      "elapsedMs": 30.976707999999853
+    },
+    {
+      "id": "ownership-upgrade",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.000259474094491452,
+        "neutral": 0.0006485607009381056,
+        "contradiction": 0.9990919828414917
+      },
+      "elapsedMs": 25.95516699999978
+    },
+    {
+      "id": "invented-impact",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "probabilities": {
+        "entailment": 7.550860027549788e-05,
+        "neutral": 0.9971444010734558,
+        "contradiction": 0.002780047245323658
+      },
+      "elapsedMs": 25.929291999999826
+    },
+    {
+      "id": "prototype-status",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.0003131831472273916,
+        "neutral": 0.000582448672503233,
+        "contradiction": 0.9991043210029602
+      },
+      "elapsedMs": 25.59733299999989
+    },
+    {
+      "id": "planned-impact",
+      "expected": "neutral",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.6436198949813843,
+        "neutral": 0.3541699945926666,
+        "contradiction": 0.002210106933489442
+      },
+      "elapsedMs": 25.9202919999999
+    },
+    {
+      "id": "measured-impact",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9910030364990234,
+        "neutral": 0.0072629936039447784,
+        "contradiction": 0.0017339455662295222
+      },
+      "elapsedMs": 32.112375000000085
+    },
+    {
+      "id": "metric-reversed",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.0016893813153728843,
+        "neutral": 0.0008637844584882259,
+        "contradiction": 0.9974468946456909
+      },
+      "elapsedMs": 25.743250000000106
+    },
+    {
+      "id": "publication-boundary",
+      "expected": "neutral",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.0003114604623988271,
+        "neutral": 0.023570897057652473,
+        "contradiction": 0.9761176705360413
+      },
+      "elapsedMs": 25.79054199999975
+    },
+    {
+      "id": "qualifier-retained",
+      "expected": "entailment",
+      "predicted": "neutral",
+      "probabilities": {
+        "entailment": 0.009212294593453407,
+        "neutral": 0.9902549386024475,
+        "contradiction": 0.000532769481651485
+      },
+      "elapsedMs": 27.566999999999897
+    }
+  ]
+}

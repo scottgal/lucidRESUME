@@ -1,0 +1,77 @@
+{
+  "provider": "nli",
+  "task": "coverage",
+  "model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "revision": "6f5cf0a2b59cabb106aca4c287eed12e357e90eb",
+  "device": "cpu",
+  "loadMs": 1308.315125,
+  "timing": "Per-case tokenization and ONE forward pass, excluding model loading.",
+  "rows": [
+    {
+      "id": "status-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.8673064708709717,
+        "neutral": 0.13066379725933075,
+        "contradiction": 0.002029815688729286
+      },
+      "elapsedMs": 66.96445900000026
+    },
+    {
+      "id": "status-wrong-but-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.720956027507782,
+        "neutral": 0.2680509388446808,
+        "contradiction": 0.01099307183176279
+      },
+      "elapsedMs": 26.848708000000165
+    },
+    {
+      "id": "polished-no-status",
+      "expected": "neutral",
+      "predicted": "neutral",
+      "probabilities": {
+        "entailment": 0.016652541235089302,
+        "neutral": 0.9109537601470947,
+        "contradiction": 0.07239358872175217
+      },
+      "elapsedMs": 26.223207999999776
+    },
+    {
+      "id": "unknown-is-explicit",
+      "expected": "entailment",
+      "predicted": "neutral",
+      "probabilities": {
+        "entailment": 0.09815792739391327,
+        "neutral": 0.8918362259864807,
+        "contradiction": 0.010005838237702847
+      },
+      "elapsedMs": 25.437249999999967
+    },
+    {
+      "id": "role-action-present",
+      "expected": "entailment",
+      "predicted": "entailment",
+      "probabilities": {
+        "entailment": 0.9917857050895691,
+        "neutral": 0.0071457307785749435,
+        "contradiction": 0.0010685628512874246
+      },
+      "elapsedMs": 26.298957999999928
+    },
+    {
+      "id": "role-result-missing",
+      "expected": "contradiction",
+      "predicted": "contradiction",
+      "probabilities": {
+        "entailment": 0.0006355376681312919,
+        "neutral": 0.004860579036176205,
+        "contradiction": 0.9945038557052612
+      },
+      "elapsedMs": 25.73158299999978
+    }
+  ]
+}

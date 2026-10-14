@@ -160,6 +160,14 @@ Do not add a parser or NLI model to every generation request yet. First compare 
 diagnostic value and latency on a fixed set of career passages, including difficult
 ownership and hypothetical-result examples.
 
+The [TextQualityDemo CLI](../../tools/lucidRESUME.TextQualityDemo/README.md) now
+provides a small synthetic comparison of three-way NLI, Nimble decisions and a
+general Ollama LLM baseline. It separates output coverage (whether the requested
+answer is present), evidential support and next-response action. Neither coverage
+nor support measures overall answer quality. Its [saved runs](../../tools/lucidRESUME.TextQualityDemo/results/2026-10-14)
+include model errors and timing boundaries; these fixtures do not establish a
+production model ranking or calibrated acceptance threshold.
+
 ## 4. Tone is expression, not claim strength
 
 Style-transfer research treats preservation of meaning as a separate requirement
