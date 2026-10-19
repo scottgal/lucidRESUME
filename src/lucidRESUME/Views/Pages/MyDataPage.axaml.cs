@@ -7,23 +7,36 @@ namespace lucidRESUME.Views.Pages;
 
 public partial class MyDataPage : UserControl
 {
+    private MyDataPageViewModel? _subscribed;
     public MyDataPage()
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += (_, _) => Unsubscribe();
+    }
+
+    private void Unsubscribe()
+    {
+        if (_subscribed is not null) _subscribed.PropertyChanged -= OnViewModelChanged;
+        _subscribed = null;
+    }
+
+    private void OnViewModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
+    {
+        if (_subscribed is not { } vm) return;
+        if (args.PropertyName is nameof(vm.GanttBars) or nameof(vm.Experience))
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => { if (_subscribed == vm) BuildGanttChart(vm); });
+        if (args.PropertyName is nameof(vm.SkillPositions) or nameof(vm.Communities))
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => { if (_subscribed == vm) BuildCommunityChart(vm); });
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
+        Unsubscribe();
         if (DataContext is MyDataPageViewModel vm)
         {
-            vm.PropertyChanged += (_, args) =>
-            {
-                if (args.PropertyName is nameof(vm.GanttBars) or nameof(vm.Experience))
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() => BuildGanttChart(vm));
-                if (args.PropertyName is nameof(vm.SkillPositions) or nameof(vm.Communities))
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() => BuildCommunityChart(vm));
-            };
+            _subscribed = vm;
+            vm.PropertyChanged += OnViewModelChanged;
             if (vm.GanttBars.Count > 0)
                 BuildGanttChart(vm);
             if (vm.HasCommunities)

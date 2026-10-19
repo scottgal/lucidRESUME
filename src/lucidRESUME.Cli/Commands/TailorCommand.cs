@@ -21,6 +21,7 @@ public static class TailorCommand
         var resumeOpt = new Option<FileInfo?>("--resume") { Description = "Resume file (PDF or DOCX)" };
         resumeOpt.Aliases.Add("-r");
         var resumeDirOpt = new Option<DirectoryInfo?>("--resume-dir") { Description = "Directory of resume sources to merge into an evidence ledger" };
+        var careerStoreOpt = new Option<FileInfo?>("--career-store") { Description = "Read the saved complete career from this lucidRESUME data.db without changing it" };
 
         var jobOpt = new Option<string?>("--job") { Description = "Job description text or URL" };
         jobOpt.Aliases.Add("-j");
@@ -31,6 +32,7 @@ public static class TailorCommand
         var configOpt = new Option<FileInfo?>("--config") { Description = "Path to lucidresume.json config" };
         var evalOnlyOpt = new Option<bool>("--eval-only") { Description = "Only evaluate quality; do not project an output" };
         var formatOpt = new Option<string?>("--format") { Description = "Output format: markdown (default), docx, pdf, all" };
+        var lengthOpt = new Option<ResumeLength>("--length") { Description = "Evidence selection length: automatic, concise, standard, extended" };
         var templateOpt = new Option<string?>("--template") { Description = "Output template: ats-classic, modern-professional, compact-technical" };
         var compactJobMlOpt = new Option<bool>("--cjobml")
         {
@@ -46,7 +48,7 @@ public static class TailorCommand
 
         var cmd = new Command("tailor", "Project a resume from the ledger for a specific job description")
         {
-            resumeOpt, resumeDirOpt, jobOpt, jobFileOpt, outputOpt, configOpt, evalOnlyOpt, formatOpt, templateOpt,
+            resumeOpt, resumeDirOpt, careerStoreOpt, jobOpt, jobFileOpt, outputOpt, configOpt, evalOnlyOpt, formatOpt, lengthOpt, templateOpt,
             compactJobMlOpt, fullJobMlOpt
         };
 
@@ -79,7 +81,9 @@ public static class TailorCommand
             var compressor = services.GetRequiredService<SemanticCompressor>();
 
             // Parse resume (awaits LLM skill recovery if triggered)
-            var resume = await ResumeInputHelper.LoadAsync(services, resumeFile, resumeDirectory, ct);
+            var resume = result.GetValue(careerStoreOpt) is { } careerStore
+                ? await ResumeInputHelper.LoadSavedCareerAsync(careerStore, resumeFile, resumeDirectory, ct)
+                : await ResumeInputHelper.LoadAsync(services, resumeFile, resumeDirectory, ct);
             if (!string.IsNullOrWhiteSpace(fullJobMl))
             {
                 if (!Uri.TryCreate(fullJobMl, UriKind.Absolute, out var fullJobMlUri) ||
@@ -104,7 +108,8 @@ public static class TailorCommand
 
             // Compress
             Console.Error.WriteLine("Compressing...");
-            var compressed = await compressor.CompressAsync(resume, jd, ct);
+            var compressed = await compressor.CompressAsync(resume, jd, ct,
+                generationOptions: new ResumeGenerationOptions { Length = result.GetValue(lengthOpt) });
             Console.Error.WriteLine($"  Semantic evidence coverage: {compressed.OverallFit:P0} (not eligibility or job fit), {compressed.IncludedRoleCount}/{compressed.OriginalRoleCount} roles, {compressed.MatchedSkillCount}/{compressed.OriginalSkillCount} requirement terms");
             if (compressed.Gaps.Count > 0)
                 Console.Error.WriteLine($"  Gaps: {string.Join(", ", compressed.Gaps)}");

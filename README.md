@@ -394,7 +394,52 @@ maintain an inferred employer-prestige score.
 
 ---
 
+## Desktop workflow
+
+Start in **My career** to import a CV or LinkedIn export, write about each role,
+or edit your complete prose. Evidence prompts explain what detail could help and
+show the saved account behind each suggestion. **Jobs** is the single workspace
+for pasting an advert, extracting and confirming its role/company, keeping an
+optional tracking URL, saving the job and creating its resume. Saved resumes and
+Applications handle outputs and tracking. Specialist evidence editors, source
+inspection and discovery tools are under **More tools**.
+
+Writing drafts survive navigation; use **Save career** or **Save job** to keep
+changes across restarts. See [the desktop UX review](docs/ux-workspaces-review.md)
+for the screen audit, integrity guarantees and verification workflow.
+
 ## Getting Started
+
+### Project from your saved career using the CLI
+
+`tailor` and `generate` accept `--career-store /path/to/lucidRESUME/data.db`
+as an alternative to `--resume` or `--resume-dir`. This reads the authoritative
+saved complete career through a read-only SQLite connection. It does not migrate
+the store, reconcile imports, or change reviewed career prose. A missing complete
+career is an error rather than a fallback to older imports.
+
+```bash
+dotnet run --project src/lucidRESUME.Cli -- tailor \
+  --career-store /path/to/lucidRESUME/data.db \
+  --job-file job-description.txt --length concise \
+  --format all --output output/application
+```
+
+`--length` accepts `automatic`, `concise`, `standard`, or `extended`; it controls
+the evidence selection budget, rather than guaranteeing a page count. `--format
+all` saves Markdown, Word and PDF plus a `.jobml.md` sidecar retaining the full
+evidence graph even when application documents omit citations. Review the prose
+and document layout before applying.
+
+For a read-only comparison of saved ledger concepts and advert requirements with
+their source text, run `evidence --career-store /path/to/data.db --audit --output
+audit.json`. See the [ledger quality review](docs/ledger-quality-review.md) for
+findings, refresh behaviour and validation limits.
+
+The [source and prose quality loop](docs/source-and-prose-quality-loop.md) records
+parser comparisons, raw versus validated model extraction, and writing reviews
+against contrasting job descriptions. Its evaluation commands can be rerun with
+local models or recorded outputs.
 
 ### Download & Install
 

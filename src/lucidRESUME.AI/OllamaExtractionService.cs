@@ -33,33 +33,13 @@ public sealed class OllamaExtractionService : ILlmExtractionService
 
     public async Task<string?> ExtractSkillsAsync(string text, CancellationToken ct = default)
     {
-        // Truncate to keep the prompt fast on the tiny model
-        var input = text.Length > 3000 ? text[..3000] : text;
-        var prompt = $"List all technical skills (programming languages, frameworks, tools, databases) " +
-                     $"mentioned in the following resume text. " +
-                     $"Reply with ONLY a comma-separated list, no explanation, no numbering.\n\n{input}";
+        var prompt = ResumeExtractionPrompts.Skills(text, 3000);
         return await CallAsync(prompt, ct);
     }
 
     public async Task<string?> ExtractExperienceSummaryAsync(string text, CancellationToken ct = default)
     {
-        var input = text.Length > 4000 ? text[..4000] : text;
-        var prompt = $"""
-            Extract ONLY the work experience entries from this resume text.
-            Each job held should be ONE line in this exact format:
-            COMPANY_NAME | JOB_TITLE | START_DATE - END_DATE
-
-            Rules:
-            - Each line is one job/position the person held
-            - Do NOT include bullet points, achievements, or descriptions
-            - Do NOT include education entries
-            - If you cannot find the company name, write "Unknown"
-            - If you cannot find dates, write "Unknown" for that field
-            - Reply with ONLY the formatted lines, no explanation
-
-            Resume text:
-            {input}
-            """;
+        var prompt = ResumeExtractionPrompts.Experience(text, 4000);
         return await CallAsync(prompt, ct);
     }
 
@@ -96,7 +76,7 @@ public sealed class OllamaExtractionService : ILlmExtractionService
                 prompt,
                 stream = true,
                 think = false,
-                options = new { num_ctx = 4096 }
+                options = new { num_ctx = 4096, temperature = 0 }
             };
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(TimeSpan.FromSeconds(55)); // Allow time for first-load warm-up

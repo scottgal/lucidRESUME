@@ -9,6 +9,24 @@ namespace lucidRESUME.AI.Tests;
 public sealed class ResumeProjectionEditorTests
 {
     [Fact]
+    public void Writing_and_budgeting_use_the_same_source_boundaries_as_ingestion()
+    {
+        var job = new JobDescription
+        {
+            Title = "Engineer", RequiredSkills = ["C#"],
+            RawText = "Essential\nBuild C# services and own SQL Server recovery.\nNice to Have\nExperience deploying Docker applications.\nBenefits\nExperience a family culture and build your career through annual training."
+        };
+        var requirements = ProseJobRequirements.Build(job);
+        Assert.DoesNotContain(requirements, item => item.Text.Contains("annual training"));
+        Assert.Contains(requirements, item => item.Text.Contains("Docker") && item.Kind == RequirementKind.Preferred);
+        var brief = ResumeProjectionEditor.BuildJobBrief(job);
+        Assert.DoesNotContain("family culture", brief);
+        Assert.Contains("SQL Server recovery", brief);
+        var clean = new JobDescription { Title = "Engineer", RequiredSkills = ["C#"], RawText = "Essential\nBuild C# services and own SQL Server recovery." };
+        Assert.Equal(ResumeGenerationBudget.Resolve(clean, new()), ResumeGenerationBudget.Resolve(job, new()));
+    }
+
+    [Fact]
     public void Prose_does_not_copy_skill_label_capitalisation_into_ordinary_concepts()
     {
         const string source = "Led microservices and event-driven architecture using ASP.NET Core and Azure.";

@@ -38,8 +38,8 @@ public sealed class JobSpecParser : IJobSpecParser
         _skillClassifier = skillClassifier ?? new();
     }
 
-    /// <summary>Constructor for text-only use (no URL scraping). Tests use this.</summary>
-    internal JobSpecParser(ILogger<JobSpecParser> logger)
+    /// <summary>Constructor for text-only use, with deterministic extraction and no URL scraping or optional models.</summary>
+    public JobSpecParser(ILogger<JobSpecParser> logger)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
@@ -58,6 +58,8 @@ public sealed class JobSpecParser : IJobSpecParser
 
         // Layer 1: Structural (fast, high confidence for obvious patterns)
         allCandidates.AddRange(StructuralExtractor.Extract(text));
+        allCandidates.AddRange(Core.Models.Evidence.EvidenceTerms.FindExplicitConcepts(text)
+            .Select(concept => new JdFieldCandidate("skill", concept, .85, "taxonomy")));
 
         // Layer 2+3+4: NER + LLM + Taxonomy centroids — ALL run in parallel
         // With Nimble configured, use bounded decisions over local candidates instead of full LLM extraction.
@@ -88,7 +90,13 @@ public sealed class JobSpecParser : IJobSpecParser
         ApplyFusedFields(job, fused);
         job.MentionedSkills = job.RequiredSkills.Concat(job.PreferredSkills)
             .Where(skill => skill.Length is >= 2 and <= 50 && classification.Classes.GetValueOrDefault(skill) == "skill")
-            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            .DistinctBy(Core.Models.Evidence.EvidenceTerms.Canonicalize, StringComparer.OrdinalIgnoreCase).ToList();
+        var explicitTerms = job.RequiredSkills.Concat(job.PreferredSkills)
+            .DistinctBy(Core.Models.Evidence.EvidenceTerms.Canonicalize, StringComparer.OrdinalIgnoreCase).ToList();
+        var hasRequiredSection = JobRequirementContext.HasRequiredSection(text);
+        job.RequiredSkills = explicitTerms.Where(term => JobRequirementContext.Priority(text, term) == "required" ||
+            !hasRequiredSection && JobRequirementContext.Priority(text, term) == "unspecified").ToList();
+        job.PreferredSkills = explicitTerms.Where(term => JobRequirementContext.Priority(text, term) == "preferred").ToList();
         var outline = JobAdvertOutline.Extract(text);
         if (outline.Count > 0)
         {

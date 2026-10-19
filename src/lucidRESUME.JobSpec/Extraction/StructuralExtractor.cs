@@ -91,6 +91,18 @@ public static partial class StructuralExtractor
 
     private static void ExtractTitleCompany(List<JdFieldCandidate> candidates, string[] lines)
     {
+        var chrome = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "About the job", "Job description", "Job details" };
+        if (lines.Any(line => chrome.Contains(line.TrimStart('#').Trim())))
+        {
+            var explicitRole = Regex.Match(string.Join('\n', lines),
+                @"\b(?:looking for|hiring|recruiting)\s+(?:a|an)\s+(?<role>[\p{L}.#+/-]+(?:[ \t]+[\p{L}.#+/-]+){0,7}?[ \t]+(?:Team Lead|Engineer|Developer|Architect|Manager|Director))\b", RegexOptions.IgnoreCase);
+            if (explicitRole.Success)
+            {
+                candidates.Add(new("title", explicitRole.Groups["role"].Value, .95, "structural"));
+                return;
+            }
+            lines = lines.Where(line => !chrome.Contains(line.TrimStart('#').Trim())).ToArray();
+        }
         var firstLine = lines.FirstOrDefault(l => l.Length > 5 && !l.StartsWith("http"));
         if (firstLine is null) return;
 
@@ -113,12 +125,13 @@ public static partial class StructuralExtractor
             if (parts.Length == 2 && parts[0].Length > 2 && parts[1].Length > 2)
             {
                 candidates.Add(new("title", parts[0], 0.9, "structural"));
-                var secondLower = parts[1].ToLowerInvariant().Trim();
+                var second = new Regex(@"(?<=[.!?])\s+(?=[A-Z])").Split(parts[1], 2)[0].Trim().TrimEnd('.');
+                var secondLower = second.ToLowerInvariant();
                 if (secondLower is "remote" or "hybrid" or "onsite" or "on-site"
                     or "fully remote" or "100% remote" or "work from home")
                     candidates.Add(new("remote", "true", 0.9, "structural"));
                 else
-                    candidates.Add(new("company", parts[1], 0.85, "structural"));
+                    candidates.Add(new("company", second, 0.85, "structural"));
                 return;
             }
         }
@@ -283,9 +296,10 @@ public static partial class StructuralExtractor
 
         foreach (var rx in patterns)
         {
-            var m = rx.Match(text);
-            if (m.Success && int.TryParse(m.Groups[1].Value, out var yrs) && yrs is > 0 and < 50)
+            foreach (Match m in rx.Matches(text))
             {
+                if (JobRequirementContext.Priority(text, m.Value) is "preferred" or "ignore") continue;
+                if (!int.TryParse(m.Groups[1].Value, out var yrs) || yrs is <= 0 or >= 50) continue;
                 candidates.Add(new("yearsexp", yrs.ToString(CultureInfo.InvariantCulture), 0.9, "structural"));
                 return;
             }
@@ -352,6 +366,17 @@ public static partial class StructuralExtractor
     {
         // Clean markdown bold/italic artifacts
         var cleaned = line.Replace("**", "").Replace("__", "").Replace("*", "").Trim();
+
+        // A flattened paragraph is not a comma-delimited skills list. Its named
+        // technologies are captured by the vocabulary layer; keep commas inside
+        // actual competency sentences together.
+        if (cleaned.Length >= 200) return;
+        if (cleaned.Contains(' ') && (cleaned.EndsWith('.') ||
+            Regex.IsMatch(cleaned, @"^(?:experience|strong|proven|ability|excellent)\b", RegexOptions.IgnoreCase)))
+        {
+            candidates.Add(new(fieldType, cleaned, baseConfidence, "structural"));
+            return;
+        }
 
         var items = SplitRespectingParens(cleaned);
         if (items.Count > 1)

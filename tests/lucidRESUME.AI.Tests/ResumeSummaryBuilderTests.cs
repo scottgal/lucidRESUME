@@ -3,6 +3,30 @@ namespace lucidRESUME.AI.Tests;
 public sealed class ResumeSummaryBuilderTests
 {
     [Fact]
+    public void Stated_professional_identity_can_follow_an_authored_product_account()
+    {
+        Assert.Equal("Technology leader", ResumeSummaryBuilder.Identity(
+            "Over the past year I have built agentic products. Technology leader with two decades of experience."));
+        Assert.Equal("Over the past year I have built agentic products.", ResumeSummaryBuilder.WithoutRepeatedIdentity(
+            "Over the past year I have built agentic products. Technology leader with two decades of experience.",
+            "Technology leader with experience in .NET."));
+        const string qualified = "Built tools. Technology leader with no management experience.";
+        Assert.Equal(qualified, ResumeSummaryBuilder.WithoutRepeatedIdentity(qualified, "Technology leader with experience in .NET."));
+    }
+
+    [Fact]
+    public void Shared_summary_object_is_written_once_without_merging_different_objects()
+    {
+        var account = ResumeSummaryBuilder.FindFocusAccount(
+            ["Designed PostgreSQL reporting queries and database backup drills.", "Optimised PostgreSQL queries: measured test latency fell from 240 ms to 180 ms."], ["PostgreSQL"]);
+        Assert.Equal("designing and optimising PostgreSQL queries", account!.Phrase);
+        var distinct = ResumeSummaryBuilder.FindFocusAccount(
+            ["Built internal support agents using C#.", "Designed customer support agents using C#."], ["C#"]);
+        Assert.Contains("internal", distinct!.Phrase);
+        Assert.Contains("customer", distinct.Phrase);
+    }
+
+    [Fact]
     public void Relevant_first_person_product_account_is_preserved_with_its_qualifiers()
     {
         const string source = "Over the past year I have developed products with agentic LLMs, documenting the work in dozens of technical articles. Technology leader with two decades of experience.";
@@ -68,7 +92,7 @@ public sealed class ResumeSummaryBuilderTests
         var account = ResumeSummaryBuilder.FindFocusAccount(source, ["PostgreSQL"]);
         Assert.NotNull(account);
         var summary = ResumeSummaryBuilder.Build("Software engineer building internal AI agent runtimes.", ["PostgreSQL"], false, account);
-        Assert.Equal("Software engineer with experience designing PostgreSQL reporting queries and optimising queries.", summary);
+        Assert.Equal("Software engineer with experience designing and optimising PostgreSQL queries.", summary);
         Assert.False(lucidRESUME.Compiler.CompositionValidator.RepeatsSentence(summary, source));
         Assert.Equal(2, account.Sources.Count);
     }

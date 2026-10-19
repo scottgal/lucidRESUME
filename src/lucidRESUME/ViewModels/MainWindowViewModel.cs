@@ -10,7 +10,7 @@ namespace lucidRESUME.ViewModels;
 public sealed partial class MainWindowViewModel : ViewModelBase
 {
     [ObservableProperty] private ViewModelBase _currentPage;
-    [ObservableProperty] private string _selectedNav = "Resume";
+    [ObservableProperty] private string _selectedNav = "CareerHome";
 
     // Service status indicators - full display strings for sidebar
     [ObservableProperty] private string _embeddingLabel = "Embeddings: checking...";
@@ -50,6 +50,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         CareerPlannerPageViewModel careerPlannerPage,
         HelpPageViewModel helpPage,
         GeneratedResumesPageViewModel generatedResumesPage,
+        CareerWorkspacePageViewModel careerWorkspace,
         StartupHealthCheck? healthCheck = null,
         SearchWatchPoller? watchPoller = null)
     {
@@ -59,8 +60,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             ["JobML"] = jobMlEditorPage,
             ["MyData"] = myDataPage,
             ["Career"] = careerPlannerPage,
-            ["Jobs"] = jobsPage,
-            ["Search"] = searchPage,
+            ["CareerHome"] = careerWorkspace,
+            ["Jobs"] = applyPage,
+            ["Discover"] = jobsPage,
+            ["Search"] = applyPage,
             ["Apply"] = applyPage,
             ["Pipeline"] = pipelinePage,
             ["Profile"] = profilePage,
@@ -68,12 +71,21 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             ["Help"] = helpPage
         };
         applyPage.OpenArchive = () => Navigate("Generated");
+        generatedResumesPage.OpenJobs = () => Navigate("Jobs");
+        applyPage.OpenCareer = () => Navigate("CareerHome");
+        applyPage.OpenTracking = () => Navigate("Pipeline");
+        careerWorkspace.NavigateTo = Navigate;
+        careerWorkspace.ImportCareer = () =>
+        {
+            resumePage.TopLevel = careerWorkspace.TopLevel;
+            resumePage.ImportResumeCommand.Execute(null);
+        };
         searchPage.OpenProjection = job =>
         {
             applyPage.SetContext(null, job);
             Navigate("Apply");
         };
-        _currentPage = resumePage;
+        _currentPage = careerWorkspace;
         _healthCheck = healthCheck;
         _watchPoller = watchPoller;
 
@@ -89,6 +101,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public async Task InitAsync()
     {
+        if (_pages["CareerHome"] is CareerWorkspacePageViewModel career) await career.LoadAsync();
         if (_healthCheck is null) return;
 
         // Wire up live progress updates from downloads
@@ -212,8 +225,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private void Navigate(string page)
     {
         if (!_pages.TryGetValue(page, out var vm)) return;
-        SelectedNav = page;
+        if (ReferenceEquals(CurrentPage, vm)) return;
+        SelectedNav = page is "Apply" or "Search" ? "Jobs" : page;
         CurrentPage = vm;
+        if (vm is CareerWorkspacePageViewModel career) _ = career.LoadAsync();
         if (vm is JobMlEditorPageViewModel editor) _ = editor.LoadCompleteCareerAsync();
         if (vm is ApplyPageViewModel apply) _ = apply.LoadSavedJobsAsync();
     }

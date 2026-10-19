@@ -7,29 +7,12 @@ namespace lucidRESUME.JobSpec.Extraction;
 /// <summary>Retains competency paragraphs in sectioned adverts instead of splitting every comma into a skill.</summary>
 internal static class JobAdvertOutline
 {
-    internal static string? SectionKind(string line)
-    {
-        var text = line.Trim().TrimStart('#').Replace("**", "").Trim().TrimEnd(':').ToLowerInvariant()
-            .Replace('’', '\'');
-        return text switch
-        {
-            "what we're looking for" or "what we are looking for" or "requirements" or "required qualifications" or
-            "minimum qualifications" or "qualifications" or "what you'll bring" => "required",
-            "what sets you apart" or "nice to have" or "nice-to-have" or "preferred qualifications" or
-            "preferred skills" or "bonus" or "desirable" => "preferred",
-            "what you'll own" or "what you will own" or "what you'll do" or "what you will do" or
-            "responsibilities" or "key responsibilities" => "responsibility",
-            "why consider it?" or "the details" or "interested?" or "the opportunity" or
-            "about the role" or "about us" or "about the company" or "the environment" or
-            "location and working style" or "location" or "working style" or "benefits" or "compensation" or
-            "compensation and benefits" or "what we offer" or "how to apply" or "equal opportunities" => "ignore",
-            _ => null
-        };
-    }
+    internal static string? SectionKind(string line) => JobTextSections.SectionKind(line);
 
     internal static List<JobCompetency> Extract(string text)
     {
         var result = new List<JobCompetency>();
+        var namedRequired = 0;
         string? section = null, heading = null;
         var prose = new List<string>();
         void Flush()
@@ -40,7 +23,8 @@ internal static class JobAdvertOutline
             heading = null;
             prose.Clear();
         }
-        foreach (var raw in text.Split('\n'))
+        var normalized = Regex.Replace(text, @"(?im)^(\s*(?:essential|nice[- ]to[- ]have))\s+(?=\S)", "$1\n");
+        foreach (var raw in normalized.Split('\n'))
         {
             var line = raw.Trim();
             if (line.Length == 0) continue;
@@ -51,7 +35,7 @@ internal static class JobAdvertOutline
             { section = "ignore"; continue; }
             if (section is null or "ignore") continue;
             var clean = line.TrimStart('#', '-', '*', '•', ' ').Replace("**", "").Trim();
-            if (section == "preferred")
+            if (section == "preferred" || Regex.IsMatch(clean, @"^(?:preferably|ideally|bonus|desirable)\b", RegexOptions.IgnoreCase))
             {
                 // Distinguishing experience is optional, including domain and specialist-model work.
                 result.Add(new(clean.TrimEnd('.'), clean, RequirementPriority.Preferred));
@@ -60,7 +44,7 @@ internal static class JobAdvertOutline
             var headingShaped = clean.Length is > 3 and < 85 && !clean.EndsWith('.') &&
                 !clean.Contains(':') && !raw.TrimStart().StartsWith('-') &&
                 clean.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length <= 10;
-            if (headingShaped) { Flush(); heading = clean; }
+            if (headingShaped) { Flush(); heading = clean; if (section == "required") namedRequired++; }
             else if (heading is not null) prose.Add(clean);
             else if (clean.Length > 15)
                 result.Add(new(clean.TrimEnd('.'), clean, section == "required"
@@ -68,7 +52,9 @@ internal static class JobAdvertOutline
         }
         Flush();
         // Use this representation only when the advert really provides multiple described competencies.
-        return result.Count(x => x.Priority == RequirementPriority.Required) >= 2 &&
+        var separateAccounts = namedRequired >= 2 || result.Where(item => item.Priority == RequirementPriority.Required)
+            .All(item => Regex.Matches(item.Description, @"[.!?]\s+(?=[A-Z])").Count <= 1);
+        return separateAccounts && result.Count(x => x.Priority == RequirementPriority.Required) >= 2 &&
                result.Count(x => x.Priority == RequirementPriority.Responsibility) >= 2 ? result : [];
     }
 }

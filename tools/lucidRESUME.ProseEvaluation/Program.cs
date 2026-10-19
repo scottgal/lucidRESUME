@@ -13,9 +13,34 @@ var model = args.Length > 1 ? args[1] : "qwen3.5:4b";
 var endpoint = args.Length > 2 ? args[2] : "http://127.0.0.1:11434";
 if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) || !uri.IsLoopback) throw new ArgumentException("Evaluation requires a local Ollama endpoint.");
 Directory.CreateDirectory(output);
+if (args.Contains("--compare"))
+{
+    Environment.ExitCode = await SourceComparison.RunAsync(output);
+    return;
+}
+if (args.Contains("--review"))
+{
+    using var recorded = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(output, "results.json")));
+    var reviews = recorded.RootElement.EnumerateArray().Select(row =>
+    {
+        var fixture = QualityCase.All.Single(item => item.Id == row.GetProperty("fixture").GetString());
+        if (fixture.Text != row.GetProperty("source").GetString()) throw new InvalidDataException("The source fixture changed; compare this run manually.");
+        var text = row.GetProperty("text").GetString()!;
+        return new { fixture = fixture.Id, tone = row.GetProperty("tone").GetString(),
+            source_retained = text == fixture.Text, text, findings = fixture.Review(text) };
+    }).ToList();
+    await File.WriteAllTextAsync(Path.Combine(output, "comparator-results.json"), JsonSerializer.Serialize(reviews, new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine($"Reviewed {reviews.Count} recorded outputs against the current source annotations; no model calls.");
+    return;
+}
 using var http = new HttpClient(new EvaluationCaptureHandler(output)) { Timeout = TimeSpan.FromSeconds(30) };
 var identity = await http.GetFromJsonAsync<JsonElement>(endpoint + "/api/tags");
 var digest = identity.GetProperty("models").EnumerateArray().FirstOrDefault(item => item.GetProperty("name").GetString() == model);
+if (args.Contains("--extraction"))
+{
+    await ExtractionComparison.RunAsync(output, model, endpoint, http);
+    return;
+}
 var provider = new OllamaResumeCompositionProvider(http, Options.Create(new OllamaOptions
 {
     CompositionEnabled = true,
@@ -123,7 +148,7 @@ sealed class EvaluationCaptureHandler(string output) : DelegatingHandler(new Htt
     {
         var body = request.Content is null ? null : await request.Content.ReadAsStringAsync(ct);
         var response = await base.SendAsync(request, ct);
-        if (request.RequestUri?.AbsolutePath == "/api/chat")
+        if (request.RequestUri?.AbsolutePath is "/api/chat" or "/api/generate")
             await File.WriteAllTextAsync(Path.Combine(output, $"exchange-{++sequence:D3}.json"),
                 JsonSerializer.Serialize(new { request = body, response = await response.Content.ReadAsStringAsync(ct) },
                     new JsonSerializerOptions { WriteIndented = true }), ct);

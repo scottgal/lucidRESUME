@@ -18,15 +18,18 @@ public static class ProseJobRequirements
         requirements.AddRange(job.Competencies.Where(item => item.Priority != RequirementPriority.Required && item.Priority != RequirementPriority.Preferred)
             .Select(item => (item.Name + ": " + item.Description, RequirementKind.Responsibility)));
         // Preserve relevant clauses beyond the bounded top-level brief, even when extraction was partial.
-        requirements.AddRange(Regex.Split(job.RawText, @"[\r\n]+|(?<=[.!?])\s+")
-            .Select(text => text.Trim().TrimStart('-', '*', '•').Trim()).Where(text => text.Length >= 12 &&
-                Regex.IsMatch(text, @"\b(build|design|own|evaluate|lead|implement|define|operate|improve|deploy|maintain|experience|required|must)\b", RegexOptions.IgnoreCase))
-            .Select(text => (text, Regex.IsMatch(text, @"\b(preferred|ideally|bonus|nice to have)\b", RegexOptions.IgnoreCase) ? RequirementKind.Preferred :
-                Regex.IsMatch(text, @"\b(required|must|essential)\b", RegexOptions.IgnoreCase) ? RequirementKind.Required : RequirementKind.Responsibility)));
+        requirements.AddRange(JobTextSections.Read(job.RawText).Where(section => section.Section != "ignore")
+            .SelectMany(section => Regex.Split(section.Text, @"(?<=[.!?])\s+(?=[A-Z])")
+                .Select(text => (Text: text.Trim(), section.Section)))
+            .Where(item => item.Text.Length >= 12 &&
+                !Regex.IsMatch(item.Text, @"\b(?:don['’]t|do not) need\b|\bnot required\b", RegexOptions.IgnoreCase) &&
+                Regex.IsMatch(item.Text, @"\b(build|design|own|evaluate|lead|implement|define|operate|improve|deploy|maintain|experience|required|must)\b", RegexOptions.IgnoreCase))
+            .Select(item => (item.Text, item.Section == "preferred" || Regex.IsMatch(item.Text, @"\b(preferred|preferably|ideally|bonus|nice to have)\b", RegexOptions.IgnoreCase)
+                ? RequirementKind.Preferred : item.Section == "required" || Regex.IsMatch(item.Text, @"\b(required|must|essential)\b", RegexOptions.IgnoreCase)
+                    ? RequirementKind.Required : RequirementKind.Responsibility)));
         requirements.AddRange(job.PreferredSkills.Select(text => (text, RequirementKind.Preferred)));
         requirements.AddRange(job.Competencies.Where(item => item.Priority == RequirementPriority.Preferred)
             .Select(item => (item.Name + ": " + item.Description, RequirementKind.Preferred)));
-        if (requirements.Count == 0 && !string.IsNullOrWhiteSpace(job.RawText)) requirements.Add((job.RawText, RequirementKind.Responsibility));
         return requirements.Where(item => !string.IsNullOrWhiteSpace(item.Text))
             .DistinctBy(item => Regex.Replace(item.Text, @"\s+", " ").Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(item => new CompilerRequirement("job-" + CareerProseLexicalIndex.Fingerprint(item.Text.Trim().ToLowerInvariant())[..16],

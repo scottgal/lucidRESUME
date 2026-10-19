@@ -20,6 +20,39 @@ public sealed class CareerRecordJobMlBuilder(
     private static readonly string[] DefaultRoleCentroids =
         ["Lead Developer", "Head of Engineering", "CTO", "VP of Engineering"];
 
+    /// <summary>Add literal source-backed links to an existing portable graph without rewriting authored prose or review decisions.</summary>
+    public static bool RefreshLiteralConceptLinks(ResumeDocument transcript)
+    {
+        var parser = new JobMlParser();
+        if (string.IsNullOrWhiteSpace(transcript.JobMlSource) || !parser.TryParse(transcript.JobMlSource, out var file, out _)) return false;
+        var ledger = EvidenceLedgerBuilder.EnsureCurrent(transcript);
+        var claims = ledger.Claims.Where(claim => claim.Kind == "achievement" && claim.Review == "accepted")
+            .ToDictionary(claim => StableId("claim", claim.Id));
+        var changed = false;
+        foreach (var claim in file!.Data.Claims.Where(claim => claim.Review == "accepted"))
+        {
+            if (!claims.TryGetValue(claim.Id, out var source) || source.Statement != claim.Statement) continue;
+            foreach (var name in source.Concepts.Where(name => EvidenceTerms.Mentions(source.Statement, name)))
+            {
+                var concept = file.Data.Concepts.FirstOrDefault(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (concept is null)
+                {
+                    concept = new JobMlConcept { Id = StableId("concept", name), Type = "skill", Name = name };
+                    if (file.Data.Concepts.Any(item => item.Id == concept.Id)) continue;
+                    file.Data.Concepts.Add(concept);
+                }
+                claim.Concepts ??= new();
+                if (claim.Concepts.Skills.Contains(concept.Id)) continue;
+                claim.Concepts.Skills.Add(concept.Id);
+                changed = true;
+            }
+        }
+        if (!changed || JobMlProcessor.Validate(file).Any(item => item.Severity == JobMlDiagnosticSeverity.Error)) return false;
+        transcript.JobMlSource = parser.Serialize(file);
+        transcript.JobMlRevision = MarkdownEvidenceIndex.Fingerprint(transcript.JobMlSource);
+        return true;
+    }
+
     /// <summary>Refresh derived metadata without rebuilding claims, embeddings or authored Markdown.</summary>
     public static void RefreshDerivedExtensions(ResumeDocument transcript)
     {
@@ -377,12 +410,14 @@ public sealed class CareerRecordJobMlBuilder(
 
     private static List<(Guid? ResumeId, JobMlSource Value)> BuildSources(EvidenceLedger ledger)
     {
-        var result = ledger.Evidence.GroupBy(record => (record.SourceResumeId, record.SourceName))
-            .Select(group => ((Guid?)group.Key.SourceResumeId, new JobMlSource
+        // A source's display label can change after author edits. Its stable identity
+        // must still produce one catalogue entry and one lookup key.
+        var result = ledger.Evidence.GroupBy(record => record.SourceResumeId)
+            .Select(group => ((Guid?)group.Key, new JobMlSource
             {
-                Id = StableId("source", group.Key.SourceResumeId.ToString("N")),
+                Id = StableId("source", group.Key.ToString("N")),
                 Type = group.All(record => record.ExtractionMethod == "author-interview") ? "interview" : "resume",
-                Name = group.Key.SourceName,
+                Name = string.Join(" / ", group.Select(record => record.SourceName).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)),
                 Summary = group.All(record => record.ExtractionMethod == "author-interview")
                     ? "Author-reviewed role interview. Candidate-declared evidence, not independently verified."
                     : $"Imported career source containing {group.Count()} retained evidence passages.",

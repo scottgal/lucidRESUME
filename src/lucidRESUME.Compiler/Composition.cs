@@ -4,8 +4,8 @@ namespace lucidRESUME.Compiler;
 
 public sealed class CompositionValidator
 {
-    public const string PolicyVersion = "selected-facts-distinct-summary-v9";
-    public const string PreviousPolicyVersion = "selected-facts-distinct-summary-v8";
+    public const string PolicyVersion = "selected-facts-distinct-summary-v10";
+    public const string PreviousPolicyVersion = "selected-facts-distinct-summary-v9";
     private static readonly Regex Number = new(@"(?<![\w-])\d+(?:[.,]\d+)*(?:%\+?|x|\+)?", RegexOptions.Compiled);
     private static readonly Regex Word = new(@"[\p{L}\p{N}][\p{L}\p{N}+#.-]{2,}", RegexOptions.Compiled);
     private static readonly Regex Purpose = new(
@@ -106,6 +106,18 @@ public sealed class CompositionValidator
                     errors.Add($"Section '{block.SectionId}' reassigned the candidate's personal action '{action.Action}' to the team. Retain that the candidate led the team and personally {action.Action} the work.");
             // Conservative editorial gates. Ambiguous rewrites retain the accepted human source.
             const string tentative = @"\b(aimed to|designed to|intended to|planned to|would|may|might|hoped to)\b";
+            const string mandate = @"\b(?:asked|tasked|commissioned|engaged) to\s+(?<action>[\p{L}-]+)";
+            foreach (Match assignment in Regex.Matches(original.Text, mandate, RegexOptions.IgnoreCase))
+            {
+                if (!Regex.IsMatch(block.Text, mandate, RegexOptions.IgnoreCase) &&
+                    !Regex.IsMatch(block.Text, @"\b(?:brief|mandate|assignment|task)\b", RegexOptions.IgnoreCase))
+                    errors.Add($"Section '{block.SectionId}' turned an assigned objective into an achieved result. Preserve that the candidate was asked or tasked to {assignment.Groups["action"].Value}.");
+            }
+            var scopedTest = Regex.Match(original.Text, @"(?<limitation>The test did not measure[^.!?\r\n]+)[.!?]\s+A separate (?:pilot|test)\b", RegexOptions.IgnoreCase);
+            var otherExperiment = Regex.Match(block.Text, @"\bA separate (?:pilot|test)\b", RegexOptions.IgnoreCase);
+            if (scopedTest.Success && otherExperiment.Success &&
+                block.Text.IndexOf(scopedTest.Groups["limitation"].Value, StringComparison.OrdinalIgnoreCase) > otherExperiment.Index)
+                errors.Add($"Section '{block.SectionId}' detached a test limitation from its experiment. Keep the caveat beside that test or name the test explicitly.");
             if (Regex.IsMatch(original.Text, tentative, RegexOptions.IgnoreCase) &&
                 !Regex.IsMatch(block.Text, tentative, RegexOptions.IgnoreCase))
                 errors.Add($"Section '{block.SectionId}' removed intended or uncertain outcome status.");
@@ -219,7 +231,7 @@ public sealed class CompositionValidator
     private static HashSet<string> Words(string value) => Word.Matches(value)
         .Select(x => CanonicalWord(x.Value)).Where(x => x.Length >= 3 && !StopWords.Contains(x)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    private static string CanonicalWord(string value) => value.TrimEnd('.').ToLowerInvariant() switch
+    private static string CanonicalWord(string value) => lucidRESUME.Core.Models.Resume.ResumeSpelling.CorrectWord(value.TrimEnd('.').ToLowerInvariant()) switch
     {
         "led" => "lead",
         "teams" => "team",
@@ -240,7 +252,7 @@ public sealed class CompositionValidator
         "impact" => "effect",
         "attempts" => "attempt",
         "improvements" => "improvement",
-        _ => value.TrimEnd('.').ToLowerInvariant()
+        _ => lucidRESUME.Core.Models.Resume.ResumeSpelling.CorrectWord(value.TrimEnd('.').ToLowerInvariant())
     };
 }
 

@@ -45,6 +45,24 @@ internal static class ResumeSummaryBuilder
         if (selected.Count == 0 || !skills.All(skill => selected.Any(item => SkillTaxonomy.MentionsEquivalent(item.Source, skill)))) return null;
         var phrases = selected.Select(item => item.Phrase!).ToList();
         if (phrases.Count == 2)
+        {
+            var first = phrases[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var second = phrases[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var leftObject = first.Skip(1).ToArray();
+            var rightObject = second.Skip(1).ToArray();
+            var common = leftObject.Intersect(rightObject, StringComparer.OrdinalIgnoreCase).ToArray();
+            // Summarise a shared object once: designing reporting queries and
+            // optimising queries becomes designing and optimising queries.
+            if (first[0] != second[0] && common.Length >= 2 && leftObject.LastOrDefault() == rightObject.LastOrDefault() &&
+                (common.Length == leftObject.Length || common.Length == rightObject.Length))
+            {
+                var sharedObject = leftObject.Length <= rightObject.Length ? leftObject : rightObject;
+                var combined = first[0] + " and " + second[0] + " " + string.Join(' ', sharedObject);
+                return new(selected.Select(item => item.Source).ToList(), combined,
+                    skills.Where(skill => !SkillTaxonomy.MentionsEquivalent(combined, skill)).ToList());
+            }
+        }
+        if (phrases.Count == 2)
             foreach (var skill in skills.Where(skill => SkillTaxonomy.MentionsEquivalent(phrases[0], skill)))
             {
                 var shorter = Regex.Replace(phrases[1], @"^(?<action>\S+)\s+" + Regex.Escape(skill) + @"\s+", "${action} ", RegexOptions.IgnoreCase);
@@ -104,13 +122,24 @@ internal static class ResumeSummaryBuilder
     public static bool UsesIdentity(string summary, string source) =>
         Identity(source) is { } identity && summary.StartsWith(identity + " with experience ", StringComparison.Ordinal);
 
+    internal static string WithoutRepeatedIdentity(string account, string introduction)
+    {
+        var identity = Identity(introduction);
+        return identity is null ? account : string.Join(' ', Regex.Split(account, @"(?<=[.!?])\s+(?=[A-Z])")
+            .Where(sentence => Identity(sentence) != identity || !IsUnqualifiedAccount(sentence) ||
+                Regex.IsMatch(sentence, @"\b(?:no|without|lack|lacking)\b", RegexOptions.IgnoreCase)));
+    }
+
     internal static string? Identity(string source)
     {
-        // Only reuse an explicitly stated professional identity, never a title inferred from the vacancy.
-        var prefix = Regex.Split(source, @"\s+\b(?:building|developing|delivering|designing|maintaining|working|specialising|specializing|focused|with)\b",
-            RegexOptions.IgnoreCase)[0].Trim().TrimEnd('.');
-        return prefix.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length <= 10 &&
-               Regex.IsMatch(prefix, @"\b(?:engineer|developer|architect|leader|consultant|manager|designer)\b$", RegexOptions.IgnoreCase)
-            ? prefix : null;
+        foreach (var sentence in Regex.Split(source, @"(?<=[.!?])\s+(?=[A-Z])"))
+        {
+            // Only reuse an explicitly stated professional identity, never a title inferred from the vacancy.
+            var prefix = Regex.Split(sentence, @"\s+\b(?:building|developing|delivering|designing|maintaining|working|specialising|specializing|focused|with)\b",
+                RegexOptions.IgnoreCase)[0].Trim().TrimEnd('.');
+            if (prefix.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length <= 10 &&
+                Regex.IsMatch(prefix, @"\b(?:engineer|developer|architect|leader|consultant|manager|designer)\b$", RegexOptions.IgnoreCase)) return prefix;
+        }
+        return null;
     }
 }

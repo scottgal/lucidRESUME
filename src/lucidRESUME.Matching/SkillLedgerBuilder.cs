@@ -215,9 +215,10 @@ public sealed class SkillLedgerBuilder
     private static SkillLedger BuildFromCompleteTranscript(ResumeDocument resume)
     {
         var entries = new Dictionary<string, SkillLedgerEntry>(StringComparer.OrdinalIgnoreCase);
-        var evidence = resume.EvidenceLedger.Evidence.ToDictionary(item => item.Id, StringComparer.OrdinalIgnoreCase);
+        var current = Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
+        var evidence = current.Evidence.ToDictionary(item => item.Id, StringComparer.OrdinalIgnoreCase);
         var roles = resume.Experience.ToDictionary(role => $"experience:{role.Id:N}", StringComparer.OrdinalIgnoreCase);
-        foreach (var claim in resume.EvidenceLedger.Claims.Where(claim => claim.Review == "accepted"))
+        foreach (var claim in current.Claims.Where(claim => claim.Review == "accepted"))
         {
             if (claim.EvidenceIds.Count == 0 || claim.EvidenceIds.Any(id => !evidence.ContainsKey(id))) continue;
             roles.TryGetValue(claim.SubjectId ?? "", out var role);
@@ -227,6 +228,7 @@ public sealed class SkillLedgerBuilder
                 foreach (var id in claim.EvidenceIds)
                 {
                     var source = evidence[id];
+                    if (SkillTaxonomy.ContainsPhrase(source.Text, concept) && !SkillTaxonomy.MentionsEquivalent(source.Text, concept)) continue;
                     if (entry.Evidence.Any(item => item.ExperienceId == role?.Id &&
                         item.SourceReference == id && item.SourceText == source.Text)) continue;
                     entry.Evidence.Add(new SkillEvidence

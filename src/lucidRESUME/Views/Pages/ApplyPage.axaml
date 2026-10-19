@@ -4,161 +4,99 @@
              xmlns:controls="using:lucidRESUME.Views.Controls"
              x:DataType="vm:ApplyPageViewModel"
              x:Class="lucidRESUME.Views.Pages.ApplyPage">
-
-  <Grid ColumnDefinitions="*,*" Margin="16,12">
-
-    <!-- LEFT: job input form -->
-    <ScrollViewer Grid.Column="0" Margin="0,0,12,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" IsEnabled="{Binding !IsTailoring}">
-
-      <!-- Header -->
-      <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-        <TextBlock Text="Generate Resume" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
-        <Button Content="Build complete transcript" Margin="12,0,0,4" Command="{Binding BuildCompleteTranscriptCommand}"/>
-        <Button x:Name="ViewGeneratedArchive" Content="Archive" Margin="12,0,0,4" Command="{Binding ViewArchiveCommand}"/>
-      </WrapPanel>
-
-      <!-- Projection invariant -->
-      <Border Grid.Row="1" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10">
-        <TextBlock Text="Your career transcript supplies the facts. Generation selects relevant evidence and can edit its prose while retaining source links."
-                   Foreground="{DynamicResource LrAccentPeachBrush}" FontSize="12" TextWrapping="Wrap"/>
-      </Border>
-
-      <!-- Coverage summary -->
-      <Border Grid.Row="2" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
-              IsVisible="{Binding HasCoverage}">
-        <StackPanel Orientation="Horizontal" Spacing="12">
-          <TextBlock Text="{Binding CoverageLabel}" Foreground="{DynamicResource LrAccentBlueBrush}" FontSize="12" VerticalAlignment="Center"/>
-          <TextBlock Foreground="{DynamicResource LrAccentRedBrush}" FontSize="12" VerticalAlignment="Center"
-                     IsVisible="{Binding GapCount}">
-            <Run Text="{Binding GapCount}"/>
-            <Run Text="unconfirmed must-have(s)"/>
-          </TextBlock>
-          <Border Background="{DynamicResource LrBadgeBgBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
-                  IsVisible="{Binding CompanyTypeLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock Text="{Binding CompanyTypeLabel}" FontSize="10" Foreground="{DynamicResource LrAccentPurpleBrush}"/>
-          </Border>
+  <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource LrPageBgBrush}">
+    <Border Padding="24,20,24,16" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource LrBorderBrush}">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Jobs" FontSize="26" FontWeight="SemiBold"/>
+          <TextBlock Text="Paste an advert. Confirm the details. Build your resume." Foreground="{DynamicResource LrSecondaryTextBrush}" TextWrapping="Wrap"/>
         </StackPanel>
-      </Border>
-
-      <!-- Job Title -->
-      <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,10">
-        <TextBlock Text="Choose a saved job, or paste a description below" FontSize="12"/>
-        <ComboBox x:Name="ProjectionSavedJobSelector" ItemsSource="{Binding SavedJobs}" SelectedItem="{Binding SelectedSavedJob}" HorizontalAlignment="Stretch">
-          <ComboBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:SavedJobItem">
-              <TextBlock><Run Text="{Binding Title}"/><Run Text=" — "/><Run Text="{Binding Company}"/></TextBlock>
-            </DataTemplate>
-          </ComboBox.ItemTemplate>
-        </ComboBox>
-        <TextBlock Text="Job Title" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <TextBox x:Name="ProjectionJobTitle" Text="{Binding JobTitle}" PlaceholderText="e.g. Senior Software Engineer"/>
-      </StackPanel>
-
-      <!-- Company -->
-      <StackPanel Grid.Row="4" Spacing="4" Margin="0,0,0,10">
-        <TextBlock Text="Company" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <TextBox x:Name="ProjectionCompany" Text="{Binding Company}" PlaceholderText="e.g. Acme Corp"/>
-      </StackPanel>
-
-      <!-- Job Description -->
-      <StackPanel Grid.Row="5" Spacing="4" Margin="0,0,0,10">
-        <TextBlock Text="Job Description" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <TextBox x:Name="ProjectionJobDescription" Text="{Binding JobDescriptionText}"
-                 PlaceholderText="Paste the full job description here…"
-                 AcceptsReturn="True"
-                 TextWrapping="Wrap"
-                 Height="200"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-      </StackPanel>
-
-      <!-- Output template -->
-      <StackPanel Grid.Row="6" Spacing="4" Margin="0,0,0,10">
-        <Grid ColumnDefinitions="*,12,*">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Length" FontSize="12"/>
-            <ComboBox x:Name="ProjectionLengthSelector" ItemsSource="{Binding LengthOptions}" SelectedItem="{Binding SelectedLength}" HorizontalAlignment="Stretch"/>
-          </StackPanel>
-          <StackPanel Grid.Column="2" Spacing="4">
-            <TextBlock Text="Detail" FontSize="12"/>
-            <ComboBox x:Name="ProjectionDetailSelector" ItemsSource="{Binding DetailOptions}" SelectedItem="{Binding SelectedDetail}" HorizontalAlignment="Stretch"/>
+        <Button x:Name="NewTargetJobButton" Grid.Column="1" Content="+ Add job" Command="{Binding NewJobCommand}" VerticalAlignment="Center" Padding="18,10"/>
+      </Grid>
+    </Border>
+    <Grid Grid.Row="1" ColumnDefinitions="230,*">
+      <Border Background="{DynamicResource LrSurfaceBgBrush}" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource LrBorderBrush}">
+        <Grid RowDefinitions="Auto,*,Auto" Margin="14">
+          <TextBlock Text="SAVED JOBS" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource LrSecondaryTextBrush}" Margin="0,4,0,12"/>
+          <ListBox x:Name="ProjectionSavedJobSelector" Grid.Row="1" ItemsSource="{Binding SavedJobs}" SelectedItem="{Binding SelectedSavedJob}"
+                   Background="Transparent" BorderThickness="0" IsEnabled="{Binding !IsWorkingOnJob}">
+            <ListBox.ItemTemplate><DataTemplate x:DataType="vm:SavedJobItem">
+              <StackPanel Spacing="4" Margin="2,8">
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Company}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+              </StackPanel>
+            </DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel Grid.Row="2" Spacing="8">
+            <TextBlock Text="Your job drafts stay here while you navigate. Save a job to keep it for next time." FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+            <Button Content="Saved resumes →" Command="{Binding ViewArchiveCommand}" HorizontalAlignment="Stretch"/>
           </StackPanel>
         </Grid>
-        <TextBlock Text="Tone" FontSize="12"/>
-        <ComboBox x:Name="ProjectionToneSelector" ItemsSource="{Binding ToneOptions}" SelectedItem="{Binding SelectedTone}" HorizontalAlignment="Stretch"/>
-        <TextBlock Text="Tone changes expression while preserving evidence and ownership. Applied when prose editing is enabled."
-                   FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource LrSubtleTextBrush}"/>
-        <TextBlock Text="Automatic scales evidence to the job's requirements. Concise, Standard and Extended set the scope; detail controls examples per role. Page count follows the content."
-                   FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource LrSubtleTextBrush}"/>
-        <TextBlock Text="Output Template" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"/>
-        <ComboBox x:Name="OutputTemplateSelector" ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate}"/>
-        <TextBlock Text="{Binding SelectedTemplate.Description}" FontSize="10"
-                   Foreground="{DynamicResource LrSubtleTextBrush}" TextWrapping="Wrap"/>
-      </StackPanel>
-
-      <CheckBox x:Name="IncludeCompactJobMlCheckBox" Grid.Row="7"
-                IsChecked="{Binding IncludeCompactJobMl, Mode=TwoWay}"
-                Content="Include compact cJobML evidence references"
-                ToolTip.Tip="Adds inline citations and a compact machine-readable References section; full editing metadata stays in the ledger"
-                Margin="0,0,0,10"/>
-
-      <!-- Projection action -->
-      <Grid Grid.Row="8" ColumnDefinitions="*,8,*" Margin="0,4,0,8">
-        <Button x:Name="ProjectResumeButton" Grid.Column="0" Grid.ColumnSpan="3"
-                Content="Project Resume"
-                Command="{Binding SmartCompressCommand}"
-                IsEnabled="{Binding !IsTailoring}"
-                FontSize="14" FontWeight="Bold"
-                Padding="16,12"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Center"
-                CornerRadius="6"
-                ToolTip.Tip="Select relevant accepted evidence and render Markdown plus JobML from the same ledger IDs"/>
-      </Grid>
-
-      <!-- Progress bar -->
-      <ProgressBar Grid.Row="9" IsVisible="{Binding IsTailoring}"
-                   IsIndeterminate="True" Margin="0,0,0,8"/>
-
-      <!-- Status / Error -->
-      <StackPanel Grid.Row="10" Spacing="4">
-        <Border Background="{DynamicResource LrAccentYellowBgBrush}" Padding="10,6" CornerRadius="4"
-                IsVisible="{Binding EvidenceWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-          <StackPanel Spacing="6">
-            <TextBlock Text="{Binding EvidenceWarning}" TextWrapping="Wrap" FontSize="12"/>
-            <Button x:Name="ImproveRoleEvidenceButton" Content="Improve role evidence (optional)"
-                    Command="{Binding ImproveEvidenceCommand}" IsVisible="{Binding CanImproveEvidence}"/>
-          </StackPanel>
-        </Border>
-        <TextBlock Text="{Binding CompressionStats}" Foreground="{DynamicResource LrAccentPurpleBrush}" FontSize="11"
-                   IsVisible="{Binding CompressionStats, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                   TextWrapping="Wrap"/>
-        <TextBlock x:Name="ProjectionStatus" Text="{Binding StatusMessage}" Foreground="{DynamicResource LrSecondaryTextBrush}" FontSize="12"
-                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap"/>
-        <Border Background="{DynamicResource LrAccentRedBgBrush}" Padding="10,6" CornerRadius="4"
-                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-          <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource LrAccentRedBrush}" TextWrapping="Wrap"/>
-        </Border>
-      </StackPanel>
-
-    </Grid>
-    </ScrollViewer>
-
-    <!-- RIGHT: projected result -->
-    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="12,0,0,0">
-
-      <TextBlock Grid.Row="0" Text="Projected Resume" FontSize="18" FontWeight="Bold"
-                 Foreground="{DynamicResource LrPrimaryTextBrush}" Margin="0,0,0,16"/>
-
-      <!-- Empty state -->
-      <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
-                  IsVisible="{Binding ShowEmptyResult}">
-        <TextBlock Text="Projected resume will appear here." Foreground="{DynamicResource LrSecondaryTextBrush}"
-                   FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-        <TextBlock Text="Fill in the form and click Project Resume." Foreground="{DynamicResource LrSubtleTextBrush}"
-                   FontSize="13" HorizontalAlignment="Center"/>
-      </StackPanel>
-
+      </Border>
+      <TabControl x:Name="JobWorkspaceTabs" Grid.Column="1" SelectedIndex="{Binding WorkspaceTab, Mode=TwoWay}" Margin="20,14">
+        <TabItem FontSize="14" x:Name="JobDetailsTab" Header="Job details">
+          <Grid RowDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,12,0,0" IsEnabled="{Binding !IsWorkingOnJob}">
+            <StackPanel Spacing="4" Margin="0,0,0,10">
+              <TextBlock Text="{Binding JobHeading}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"/>
+              <TextBlock Text="{Binding JobStep}" FontSize="12" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+            </StackPanel>
+            <TextBox x:Name="ProjectionJobDescription" Grid.Row="1" Text="{Binding JobDescriptionText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" FontSize="14" Padding="16"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     PlaceholderText="Paste the full job description here. Include the role title, company and requirements if available."/>
+            <Grid Grid.Row="2" ColumnDefinitions="*,12,Auto" Margin="0,12,0,0">
+              <TextBox x:Name="JobTrackingUrlInput" Text="{Binding JobSourceUrl}" PlaceholderText="LinkedIn / advert URL for tracking (optional)"/>
+              <Button x:Name="ExtractJobDetailsButton" Grid.Column="2" Content="Extract details" Command="{Binding ExtractJobDetailsCommand}" Padding="16,8"/>
+            </Grid>
+            <Grid Grid.Row="3" ColumnDefinitions="*,12,*" Margin="0,12,0,0" IsVisible="{Binding HasReviewedDetails}">
+              <StackPanel Spacing="5">
+                <TextBlock Text="Role title · required" FontSize="12"/>
+                <TextBox x:Name="ProjectionJobTitle" Text="{Binding JobTitle}" PlaceholderText="What is the role called?"/>
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="5">
+                <TextBlock Text="Company · required" FontSize="12"/>
+                <TextBox x:Name="ProjectionCompany" Text="{Binding Company}" PlaceholderText="Which company is hiring?"/>
+              </StackPanel>
+            </Grid>
+            <WrapPanel Grid.Row="4" Orientation="Horizontal" Margin="0,14,0,0" IsVisible="{Binding HasReviewedDetails}">
+              <Button x:Name="SaveTargetJobButton" Content="Save job" Command="{Binding SaveJobCommand}" Margin="0,0,8,6"/>
+              <Button x:Name="CreateJobResumeButton" Content="Create resume →" Command="{Binding CreateResumeCommand}" Margin="0,0,8,6"
+                      Background="{DynamicResource LrAccentBlueBrush}" Foreground="White" Padding="18,10"/>
+              <Button Content="Track application" Command="{Binding TrackJobCommand}" Margin="0,0,0,6"/>
+            </WrapPanel>
+          </Grid>
+        </TabItem>
+        <TabItem FontSize="14" x:Name="JobResumeTab" Header="Resume">
+          <Grid RowDefinitions="Auto,*,Auto" Margin="0,12,0,0">
+            <StackPanel Spacing="10" Margin="0,0,0,12">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Resume for this job" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button x:Name="ProjectResumeButton" Grid.Column="1" Content="Create / update resume" Command="{Binding CreateResumeCommand}"
+                        IsEnabled="{Binding !IsTailoring}" Background="{DynamicResource LrAccentBlueBrush}" Foreground="White"/>
+              </Grid>
+              <Expander Header="Length, style and evidence references" HorizontalAlignment="Stretch">
+                <StackPanel Spacing="8" Margin="0,8,0,0">
+                  <Grid ColumnDefinitions="*,10,*,10,*">
+                    <StackPanel Spacing="4"><TextBlock Text="Length" FontSize="12"/><ComboBox x:Name="ProjectionLengthSelector" ItemsSource="{Binding LengthOptions}" SelectedItem="{Binding SelectedLength}" HorizontalAlignment="Stretch"/></StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Detail" FontSize="12"/><ComboBox x:Name="ProjectionDetailSelector" ItemsSource="{Binding DetailOptions}" SelectedItem="{Binding SelectedDetail}" HorizontalAlignment="Stretch"/></StackPanel>
+                    <StackPanel Grid.Column="4" Spacing="4"><TextBlock Text="Tone" FontSize="12"/><ComboBox x:Name="ProjectionToneSelector" ItemsSource="{Binding ToneOptions}" SelectedItem="{Binding SelectedTone}" HorizontalAlignment="Stretch"/></StackPanel>
+                  </Grid>
+                  <ComboBox x:Name="OutputTemplateSelector" ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate}" HorizontalAlignment="Stretch"/>
+                  <CheckBox Content="Include evidence references in the document" IsChecked="{Binding IncludeCompactJobMl}"/>
+                </StackPanel>
+              </Expander>
+              <Border IsVisible="{Binding EvidenceWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Background="{DynamicResource LrAccentYellowBgBrush}" CornerRadius="6" Padding="12">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="{Binding EvidenceWarning}" TextWrapping="Wrap" FontSize="12"/>
+                  <Button Content="Add detail in My career →" Command="{Binding EditCareerCommand}" HorizontalAlignment="Left"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+            <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8" IsVisible="{Binding ShowEmptyResult}">
+              <TextBlock Text="Your tailored resume will appear here." FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"/>
+              <TextBlock Text="Uses the experience you saved in My career." FontSize="13" Foreground="{DynamicResource LrSecondaryTextBrush}" TextWrapping="Wrap"/>
+              <Button Content="Review my career" Command="{Binding EditCareerCommand}" HorizontalAlignment="Center"/>
+            </StackPanel>
       <ScrollViewer Grid.Row="1" IsVisible="{Binding HasInterview}" Background="{DynamicResource LrPageBgBrush}">
         <StackPanel Spacing="10" Margin="12" IsEnabled="{Binding !IsTailoring}">
           <Button x:Name="ReturnToProjectionButton" Content="Back to projected resume" Command="{Binding CloseInterviewCommand}" IsVisible="{Binding HasResult}"/>
@@ -206,25 +144,60 @@
         </StackPanel>
       </ScrollViewer>
 
-      <!-- Result -->
-      <Border Grid.Row="1" Background="{DynamicResource LrPageBgBrush}" CornerRadius="4"
-              IsVisible="{Binding ShowProjectedResult}">
-        <controls:MarkdownViewer x:Name="ProjectedResumeText"
-                                 Markdown="{Binding TailoredMarkdown}"
-                                 Margin="12"/>
-      </Border>
 
-      <!-- Export buttons -->
-      <Grid Grid.Row="2" ColumnDefinitions="*,8,*,8,*" Margin="0,8,0,0" IsVisible="{Binding HasResult}">
-        <Button x:Name="ExportMarkdownButton" Grid.Column="0" Content="Markdown + JobML" Command="{Binding ExportCommand}"
-                CommandParameter="markdown" Padding="12,8"/>
-        <Button x:Name="ExportWordButton" Grid.Column="2" Content="Word" Command="{Binding ExportCommand}"
-                CommandParameter="docx" Padding="12,8"/>
-        <Button x:Name="ExportPdfButton" Grid.Column="4" Content="PDF" Command="{Binding ExportCommand}"
-                CommandParameter="pdf" Padding="12,8"/>
-      </Grid>
-
+            <Border Grid.Row="1" IsVisible="{Binding ShowProjectedResult}" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6">
+              <controls:MarkdownViewer x:Name="ProjectedResumeText" Markdown="{Binding TailoredMarkdown}" Margin="16"/>
+            </Border>
+            <WrapPanel Grid.Row="2" Orientation="Horizontal" IsVisible="{Binding HasResult}" Margin="0,12,0,0">
+              <Button x:Name="ExportWordButton" Content="Save Word…" Command="{Binding ExportCommand}" CommandParameter="docx" Margin="0,0,8,0"/>
+              <Button x:Name="ExportPdfButton" Content="Save PDF…" Command="{Binding ExportCommand}" CommandParameter="pdf" Margin="0,0,8,0"/>
+              <Button x:Name="ExportMarkdownButton" Content="Save Markdown…" Command="{Binding ExportCommand}" CommandParameter="markdown"/>
+            </WrapPanel>
+          </Grid>
+        </TabItem>
+        <TabItem FontSize="14" x:Name="JobRequirementsTab" Header="Requirements">
+          <ScrollViewer>
+            <StackPanel Spacing="12" Margin="0,12,0,0">
+              <TextBlock Text="Requirements and source text" FontSize="20" FontWeight="SemiBold"/>
+              <TextBlock Text="Extract details after changing the advert. Required and preferred requirements are kept separate; benefits and rejected extraction are excluded from matching." FontSize="12" TextWrapping="Wrap"/>
+              <ItemsControl ItemsSource="{Binding RequirementReview}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:JobRequirementReview">
+                    <Border Padding="12" Margin="0,0,0,8" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6">
+                      <StackPanel Spacing="5">
+                        <TextBlock Text="{Binding Priority}" FontSize="11" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding SourceText}" FontSize="12" TextWrapping="Wrap"/>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Expander Header="Excluded extraction" HorizontalAlignment="Stretch">
+                <ItemsControl ItemsSource="{Binding ExcludedExtraction}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:JobRequirementReview">
+                      <StackPanel Spacing="4" Margin="0,8">
+                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding Priority}" FontSize="11"/>
+                        <TextBlock Text="{Binding SourceText}" FontSize="12" TextWrapping="Wrap"/>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Expander>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
     </Grid>
-
+    <Border Grid.Row="2" Padding="20,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource LrBorderBrush}">
+      <StackPanel Spacing="4">
+        <ProgressBar IsVisible="{Binding IsTailoring}" IsIndeterminate="True" Height="3"/>
+        <ProgressBar IsVisible="{Binding IsWorkingOnJob}" IsIndeterminate="True" Height="3"/>
+        <TextBlock x:Name="ProjectionStatus" Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+        <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="{DynamicResource LrAccentRedBrush}"/>
+      </StackPanel>
+    </Border>
   </Grid>
 </UserControl>

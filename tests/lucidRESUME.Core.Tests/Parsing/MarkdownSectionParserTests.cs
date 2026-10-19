@@ -7,6 +7,16 @@ namespace lucidRESUME.Core.Tests.Parsing;
 public class MarkdownSectionParserTests
 {
     [Fact]
+    public void Short_bullets_and_wrapped_status_qualifiers_are_preserved()
+    {
+        const string text = "# Alex Example\n## Experience\n### Engineer | Example\nJan 2020 - Dec 2022\n- Built C# APIs.\n- Designed the recovery workflow for billing\n  using SQL Server;\n  not yet deployed.";
+        var resume = ResumeDocument.Create("cv.md", "text/markdown", text.Length);
+        MarkdownSectionParser.PopulateSections(resume, text);
+        var role = Assert.Single(resume.Experience);
+        Assert.Equal(new[] { "Built C# APIs.", "Designed the recovery workflow for billing using SQL Server; not yet deployed." }, role.Achievements);
+    }
+
+    [Fact]
     public void Core_skill_prose_links_keep_plain_skill_names_in_structured_export()
     {
         const string markdown = """

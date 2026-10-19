@@ -22,11 +22,13 @@ public static class GenerateCommand
         var resumeOpt = new Option<FileInfo?>("--resume") { Description = "Source resume (evidence)" };
         resumeOpt.Aliases.Add("-r");
         var resumeDirOpt = new Option<DirectoryInfo?>("--resume-dir") { Description = "Directory of resume sources to merge into an evidence ledger" };
+        var careerStoreOpt = new Option<FileInfo?>("--career-store") { Description = "Read the saved complete career from this lucidRESUME data.db without changing it" };
         var promptOpt = new Option<string>("--prompt") { Required = true, Description = "Projection target (e.g. '2 page resume focused on cloud tech')" };
         promptOpt.Aliases.Add("-p");
         var outputOpt = new Option<FileInfo?>("--output") { Description = "Output file" };
         outputOpt.Aliases.Add("-o");
         var formatOpt = new Option<string?>("--format") { Description = "Output format: markdown (default), docx, pdf, all" };
+        var lengthOpt = new Option<ResumeLength>("--length") { Description = "Evidence selection length: automatic, concise, standard, extended" };
         var templateOpt = new Option<string?>("--template") { Description = "Output template: ats-classic, modern-professional, compact-technical" };
         var compactJobMlOpt = new Option<bool>("--cjobml")
         {
@@ -41,7 +43,7 @@ public static class GenerateCommand
 
         var cmd = new Command("generate", "Project a resume from the evidence ledger for a target role")
         {
-            resumeOpt, resumeDirOpt, promptOpt, outputOpt, formatOpt, templateOpt, configOpt, compactJobMlOpt,
+            resumeOpt, resumeDirOpt, careerStoreOpt, promptOpt, outputOpt, formatOpt, lengthOpt, templateOpt, configOpt, compactJobMlOpt,
             fullJobMlOpt
         };
 
@@ -58,7 +60,9 @@ public static class GenerateCommand
             var fullJobMl = result.GetValue(fullJobMlOpt);
 
             await using var sp = ServiceBootstrap.Build(config?.FullName);
-            var resume = await ResumeInputHelper.LoadAsync(sp, file, resumeDirectory, ct);
+            var resume = result.GetValue(careerStoreOpt) is { } careerStore
+                ? await ResumeInputHelper.LoadSavedCareerAsync(careerStore, file, resumeDirectory, ct)
+                : await ResumeInputHelper.LoadAsync(sp, file, resumeDirectory, ct);
             if (!string.IsNullOrWhiteSpace(fullJobMl))
             {
                 if (!Uri.TryCreate(fullJobMl, UriKind.Absolute, out var fullJobMlUri) ||
@@ -75,7 +79,8 @@ public static class GenerateCommand
 
             Console.Error.WriteLine($"Projecting ledger with prompt: \"{prompt}\"...");
             var projected = await sp.GetRequiredService<lucidRESUME.AI.SemanticCompressor>()
-                .CompressAsync(resume, syntheticJd, ct);
+                .CompressAsync(resume, syntheticJd, ct,
+                    generationOptions: new ResumeGenerationOptions { Length = result.GetValue(lengthOpt) });
             var artifact = sp.GetRequiredService<ResumeArtifactBuilder>()
                 .Build(resume, projected.Projection, syntheticJd, template.Id);
             artifact.IncludeCompactJobMl = includeCompactJobMl;

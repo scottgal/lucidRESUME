@@ -332,5 +332,5 @@ public sealed class OllamaResumeCompositionProvider(HttpClient http, IOptions<Ol
         sentences and stay within maximum_words. The target role guides emphasis but supplies no
         candidate facts. Return exactly one JSON object with a sections array containing one
         {"sectionId":"...","text":"..."} for each supplied section.
-        """;
+        """ + ResumeWritingPolicy.JobResponseInstructions;
 }

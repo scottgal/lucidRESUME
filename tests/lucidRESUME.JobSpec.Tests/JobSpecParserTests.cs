@@ -30,7 +30,8 @@ public class JobSpecParserTests
         Assert.Equal("Morena", job.Company);
         Assert.Equal(7, job.RequiredSkills.Count);
         Assert.Equal(7, job.Responsibilities.Count);
-        Assert.Equal(9, job.PreferredSkills.Count);
+        Assert.Equal(10, job.PreferredSkills.Count);
+        Assert.Contains(job.PreferredSkills, skill => skill.StartsWith("Ideally the system"));
         Assert.Contains("Production agent experience", job.RequiredSkills);
         Assert.Contains("Evaluation experience", job.RequiredSkills);
         Assert.Contains("Safe agent actions", job.RequiredSkills);

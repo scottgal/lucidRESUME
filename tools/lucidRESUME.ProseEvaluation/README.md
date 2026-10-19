@@ -1,5 +1,33 @@
 # Prose quality loop
 
+The source comparator and extraction probes also exercise ingestion:
+
+```sh
+dotnet run --project tools/lucidRESUME.ProseEvaluation -- /tmp/source-checks --compare
+dotnet run --project tools/lucidRESUME.ProseEvaluation -- \
+  /tmp/extraction-checks qwen3.5:0.8b http://127.0.0.1:11434 --extraction
+```
+
+`--compare` needs no model. It compares four synthetic career texts and four
+adverts with manually authored expectations: exact source accounts, role identity,
+engagement dates, optional tenure, requirements, negation and benefits. Expected
+facts are not derived from parser output. `--extraction` records raw model output
+and the source-validated recovery result separately, so literal recovery cannot
+hide model omissions or inventions. Skill suggestions remain subject to ingestion
+review.
+
+After changing source annotations, recheck recorded prose without making model
+calls:
+
+```sh
+dotnet run --project tools/lucidRESUME.ProseEvaluation -- /tmp/resume-quality --review
+```
+
+This writes `comparator-results.json` and refuses to apply annotations to changed
+source fixtures. `Used` means the composition provider ran; `unchanged_source`
+reports whether the returned text actually differs. Track both. Source retention
+is often the correct editorial result.
+
 This executable runs synthetic career evidence through the application's actual
 composition policy and local Ollama writer. It never opens the application store.
 Use a fresh output directory for each comparison; its isolated prose cache is

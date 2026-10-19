@@ -30,6 +30,7 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
     private string? _documentPreviewDirectory;
     private readonly IResumeExporter _docxExporter;
     private readonly MorphDocxPreviewService _morphPreview;
+    private string? _renderedPreviewKey;
 
     internal TopLevel? TopLevel { get; set; }
     public Func<Task>? SnapshotPublished { get; set; }
@@ -251,7 +252,11 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
         {
             StatusMessage = "Loading complete career JobML…";
             var career = await _completeCareer.GetAsync();
-            if (career?.JobMlSource is not null) TryLoadMarkdown(career.JobMlSource, career.ResumeId, career.OutputTemplateId);
+            if (career?.JobMlSource is not null)
+            {
+                if (career.JobMlSource == _linkedSnapshot) { StatusMessage = "Complete career is up to date."; return; }
+                TryLoadMarkdown(career.JobMlSource, career.ResumeId, career.OutputTemplateId);
+            }
             else StatusMessage = "Import career evidence to start your complete transcript.";
         }
         catch (Exception ex) { StatusMessage = $"Could not open the complete transcript: {ex.Message}"; }
@@ -287,6 +292,7 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
     private void QueueDocumentPreview()
     {
         if (HumanTabIndex != 0) return;
+        if (HasDocumentPreview && _renderedPreviewKey == SelectedTemplate.Id + "|" + MarkdownEvidenceIndex.Fingerprint(HumanMarkdown)) return;
         _previewCancellation?.Cancel();
         _previewCancellation?.Dispose();
         _previewCancellation = new CancellationTokenSource();
@@ -343,6 +349,7 @@ public sealed partial class JobMlEditorPageViewModel : ViewModelBase
             _documentPreviewPaths = result.paths;
             DocumentPreviewPageCount = result.paths.Length;
             HasDocumentPreview = true;
+            _renderedPreviewKey = template.Id + "|" + MarkdownEvidenceIndex.Fingerprint(markdown);
             LoadDocumentPreviewPage(1);
             DocumentPreviewStatus = $"Live {result.Name} Word preview";
             TryDeletePreviewDirectory(previousDirectory);

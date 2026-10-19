@@ -24,6 +24,12 @@ internal static class ResumeOutputWriter
             await WriteFormatAsync(services, artifact, ExportFormat.Markdown, basePath + ".md", ct);
             await WriteFormatAsync(services, artifact, ExportFormat.Docx, basePath + ".docx", ct);
             await WriteFormatAsync(services, artifact, ExportFormat.Pdf, basePath + ".pdf", ct);
+            if (!string.IsNullOrWhiteSpace(artifact.JobMlSource))
+            {
+                var evidencePath = basePath + ".jobml.md";
+                await File.WriteAllTextAsync(evidencePath, artifact.JobMlSource, ct);
+                Console.Error.WriteLine($"Written full JobML evidence to {evidencePath}");
+            }
             return;
         }
 

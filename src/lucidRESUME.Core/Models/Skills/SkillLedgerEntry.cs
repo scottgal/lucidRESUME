@@ -28,7 +28,7 @@ public sealed class SkillLedgerEntry
     public bool IsCurrent { get; set; }
 
     /// <summary>Number of distinct roles/jobs where this skill was evidenced.</summary>
-    public int RoleCount => Evidence.Select(e => e.ExperienceId).Distinct().Count();
+    public int RoleCount => Evidence.Where(e => e.ExperienceId.HasValue).Select(e => e.ExperienceId).Distinct().Count();
 
     /// <summary>Highest confidence evidence for this skill.</summary>
     public double MaxConfidence => Evidence.Count > 0 ? Evidence.Max(e => e.Confidence) : 0;

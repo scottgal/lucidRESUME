@@ -10,7 +10,7 @@ namespace lucidRESUME.JobSpec.Extraction;
 public sealed class JobSkillClassifier(IResumeDecisionProvider? decisions = null, ILogger<JobSkillClassifier>? logger = null,
     IOptions<JobSkillClassificationOptions>? options = null)
 {
-    public const string PolicyVersion = "job-skills-v1";
+    public const string PolicyVersion = "job-skills-v3";
     public bool HasDecisionProvider => decisions is not null;
     public string AnalysisVersion => PolicyVersion + (decisions is null ? ":offline" : ":nimble");
     private readonly JobSkillClassificationOptions _options = options?.Value ?? new();
@@ -32,7 +32,13 @@ public sealed class JobSkillClassifier(IResumeDecisionProvider? decisions = null
         "Technology", "Models", "Tools", "Data", "Backend", "Services", "Evaluations", "Performance", "Requirements", "Engineers",
         "Practical experience", "Building", "Applications", "Sound judgement", "Understanding", "Confidence", "Specification",
         "Commercial", "Startup", "Technical", "Products", "Practice", "Team", "Room", "Collaboration", "Equity", "Salary",
-        "Base Salary", "Competitive", "Competitive Base Salary", "Visa Sponsorship", "Engineering Experience"
+        "Base Salary", "Competitive", "Competitive Base Salary", "Visa Sponsorship", "Engineering Experience",
+        "Development", "Team Lead", "Lead", "Leading", "Drive", "Adoption", "Receiving", "Professional",
+        "Skills", "Queries", "Service", "Storage", "Vault", "Functions", "Days", "Benefits", "Frameworks",
+        "Judgement", "Enthusiasm", "Balancing", "Combine", "Managing", "Designing", "Design", "Analysis",
+        "Responsibility", "Solutions", "Customers", "Organisation", "Knowledge", "Principles", "Initiatives",
+        "Experience", "Location", "Hybrid", "Independent", "Architect", "Requirements:", "Staff Software Engineer", "Foundations",
+        "Delivery", "Tooling", "Coding", "Driven", "Pipelines"
     };
 
     private static readonly HashSet<string> Logistics = new(StringComparer.OrdinalIgnoreCase)
@@ -50,9 +56,14 @@ public sealed class JobSkillClassifier(IResumeDecisionProvider? decisions = null
             if (!_cache.TryGetValue(key, out var classified))
             {
                 var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                var excluded = labels.Where(label => !JobRequirementContext.IsLiteral(text, label) ||
+                    JobRequirementContext.Priority(text, label) == "ignore" ||
+                    System.Text.RegularExpressions.Regex.IsMatch(label, @"\b(?:don['’]t|do not) need\b|\bnot required\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase) ||
+                    System.Text.RegularExpressions.Regex.IsMatch(label, @"^\d+\+?\s+years(?:\s+of\s+experience)?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
                 // Unknown NER tokens have no authority on their own. Structural/taxonomy candidates remain a conservative offline fallback.
                 foreach (var label in labels)
-                    result[label] = Logistics.Contains(label) ? "logistics" : Fragments.Contains(label) ? "noise" : candidates.Any(c => c.Value.Equals(label, StringComparison.OrdinalIgnoreCase) &&
+                    result[label] = excluded.Contains(label) ? "noise" : Logistics.Contains(label) ? "logistics" : Fragments.Contains(label) ? "noise" : candidates.Any(c => c.Value.Equals(label, StringComparison.OrdinalIgnoreCase) &&
                         (c.Source.StartsWith("structural", StringComparison.Ordinal) || c.Source.StartsWith("taxonomy", StringComparison.Ordinal))) ? "skill" : "noise";
                 var audit = result.ToDictionary(pair => pair.Key, pair => new JobSkillDecision(pair.Key, pair.Value, "conservative"), StringComparer.OrdinalIgnoreCase);
                 var warnings = new List<string>();
@@ -62,7 +73,7 @@ public sealed class JobSkillClassifier(IResumeDecisionProvider? decisions = null
                     timeout.CancelAfter(TimeSpan.FromSeconds(30));
                     try
                     {
-                        foreach (var batch in labels.Where(label => !Fragments.Contains(label)).Chunk(16))
+                        foreach (var batch in labels.Where(label => !Fragments.Contains(label) && !excluded.Contains(label)).Chunk(16))
                         {
                             var requests = batch.Select(label => new ResumeDecisionRequest(
                                 "job-skill:" + label, "job-description", key, BoundedContext(text, batch, _options.MaxStateCharacters),
@@ -98,7 +109,12 @@ public sealed class JobSkillClassifier(IResumeDecisionProvider? decisions = null
                     }
                 }
                 classified = new(candidates.Where(c => c.FieldType is not ("skill" or "preferredskill") ||
-                    result.GetValueOrDefault(c.Value) is "skill" or "capability").ToList(), result, audit.Values.ToList(), warnings);
+                    result.GetValueOrDefault(c.Value) is "skill" or "capability").ToList(), result,
+                    audit.Values.Select(decision => decision with
+                    {
+                        SourceText = JobRequirementContext.Excerpt(text, decision.Label),
+                        SourceSection = JobRequirementContext.Priority(text, decision.Label)
+                    }).ToList(), warnings);
                 if (_cache.Count >= 128) _cache.Clear();
                 if (warnings.Count == 0) _cache[key] = classified;
             }

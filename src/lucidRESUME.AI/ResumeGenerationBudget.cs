@@ -12,8 +12,8 @@ public sealed record ResumeGenerationBudget(int Roles, int AchievementsPerRole, 
     {
         var structured = job.RequiredSkills.Concat(job.Responsibilities)
             .Concat(job.Competencies.Where(c => c.Priority != RequirementPriority.Preferred).Select(c => c.Name));
-        var clauses = Regex.Split(job.RawText, @"[\r\n]+|(?<=[.!?])\s+")
-            .Where(line => Regex.IsMatch(line, @"\b(build|design|own|evaluate|lead|implement|define|operate|improve|deploy|experience|responsible|required)\b", RegexOptions.IgnoreCase));
+        var clauses = ProseJobRequirements.Build(job).Where(item => item.Kind != lucidRESUME.Compiler.RequirementKind.Preferred)
+            .Select(item => item.Text);
         var requirements = Math.Max(Count(structured), Count(clauses));
         var growth = Math.Max(0, requirements - 8);
         var budget = preferences.Length switch

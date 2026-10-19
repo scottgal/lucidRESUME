@@ -91,10 +91,10 @@ public partial class App : Application
             reviewVm.LoadPreview(target, preview);
             reviewVm.OnApplied = () =>
             {
-                mainVm.NavigateCommand.Execute("Resume");
+                mainVm.NavigateCommand.Execute("CareerHome");
                 _ = resumePage.ReloadAsync();
             };
-            reviewVm.OnCancelled = () => mainVm.NavigateCommand.Execute("Resume");
+            reviewVm.OnCancelled = () => mainVm.NavigateCommand.Execute("CareerHome");
             mainVm.ShowTransientPage(reviewVm);
         };
 
@@ -149,6 +149,7 @@ public partial class App : Application
         services.AddHttpClient<Services.StartupHealthCheck>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ResumePageViewModel>();
+        services.AddSingleton<CareerWorkspacePageViewModel>();
         services.AddSingleton(new Services.JobMlWorkspacePath(Path.Combine(appDataDir, "jobml-workspace.md")));
         services.AddSingleton<JobMlEditorPageViewModel>();
         services.AddSingleton<JobsPageViewModel>();

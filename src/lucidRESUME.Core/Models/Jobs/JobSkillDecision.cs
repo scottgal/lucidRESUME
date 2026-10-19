@@ -4,4 +4,5 @@ namespace lucidRESUME.Core.Models.Jobs;
 public sealed record JobSkillDecision(string Label, string Classification, string Method,
     string? Provider = null, string? Model = null, double? Probability = null,
     IReadOnlyDictionary<string, double>? Probabilities = null,
-    string? ProposedClassification = null, bool? Accepted = null);
+    string? ProposedClassification = null, bool? Accepted = null,
+    string? SourceText = null, string? SourceSection = null);

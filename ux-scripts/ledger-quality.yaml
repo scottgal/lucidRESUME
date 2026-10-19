@@ -1,0 +1,53 @@
+name: ledger-quality-review
+description: Review source-backed career and job ledgers at normal and minimum window sizes
+default_delay: 220
+actions:
+  - type: Wait
+    value: "1200"
+  - type: Navigate
+    value: CareerHome
+  - type: Click
+    target: CareerEvidenceTab
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: career-ledger-quality
+  - type: Navigate
+    value: Jobs
+  - type: Click
+    target: NewTargetJobButton
+  - type: TypeText
+    target: ProjectionJobDescription
+    value: |
+      Development Team Lead at Example
+      Essential
+      Strong C#, SQL Server and Service Bus experience. Use Claude Code. Solid experience with safe deployments.
+      Nice to Have
+      Docker, Kubernetes and React.
+      Benefits
+      Pension, private medical insurance and training budget.
+  - type: Click
+    target: ExtractJobDetailsButton
+  - type: Wait
+    value: "1800"
+  - type: Click
+    target: JobRequirementsTab
+  - type: Screenshot
+    value: job-requirements-sources
+  - type: WindowResize
+    x: 900
+    y: 600
+  - type: Screenshot
+    value: job-requirements-small
+  - type: Click
+    target: JobDetailsTab
+  - type: Click
+    target: JobRequirementsTab
+  - type: Screenshot
+    value: job-requirements-return
+  - type: Navigate
+    value: CareerHome
+  - type: Click
+    target: CareerEvidenceTab
+  - type: Screenshot
+    value: career-quality-small

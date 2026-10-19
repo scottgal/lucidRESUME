@@ -99,7 +99,8 @@ public sealed class SkillTaxonomy
             System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
     public static bool MentionsEquivalent(string text, string skill) =>
-        GetAliases(skill).Any(alias => ContainsPhrase(text, alias));
+        GetAliases(skill).Any(alias => Core.Models.Evidence.EvidenceTerms.HasPositiveMention(text, alias)) ||
+        Core.Models.Evidence.EvidenceTerms.Mentions(text, skill);
 
     /// <summary>Returns all loaded taxonomy names (for diagnostics).</summary>
     public static IReadOnlyList<string> LoadedTaxonomies =>

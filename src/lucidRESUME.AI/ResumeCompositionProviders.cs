@@ -111,7 +111,7 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
     };
 
     private static string SystemInstructions(CompositionPass pass) => $"""
-        You are performing the {pass} editing pass on a resume compiled from a verified career ledger.
+        You are performing the {pass} editing pass on a resume compiled from an accepted, source-linked career ledger.
         This is editing, never blank-page generation. Use only facts, numbers, names, dates, technologies,
         claim IDs and evidence IDs present in immutable_human_sources. The job brief controls emphasis only.
         writing_plan focus entries are retrieval hints, not evidence that the candidate satisfies a requirement.
@@ -132,7 +132,7 @@ public sealed class OpenAiResumeCompositionProvider : IResumeCompositionProvider
         technical specifics. For HumanVoice, respect the section word budget and requested detail, remove stock phrases such as "proven
         track record", "passionate", "results-driven", "leveraged" and "spearheaded", and favour direct,
         natural UK English. Return every section once and preserve all identifier arrays.
-        """;
+        """ + ResumeWritingPolicy.JobResponseInstructions;
 
     internal static CompositionDraft Parse(string? json)
     {
@@ -232,7 +232,7 @@ public sealed class LlamaSharpResumeCompositionProvider(LlamaSharpRuntime runtim
             Return exactly one JSON object shaped as
             {"sections":[{"sectionId":"the supplied id","text":"edited prose"}],"warnings":[]}.
             Return every supplied section exactly once and no additional sections.
-            """;
+            """ + ResumeWritingPolicy.JobResponseInstructions;
 
     internal static SectionBatchEdit ParseBatch(string? json)
     {

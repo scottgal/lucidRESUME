@@ -220,9 +220,11 @@ public static class JobMlCommand
             var parsed = await ParseAsync(result.GetValue(fileOption)!, cancellationToken);
             var diagnostics = JobMlProcessor.Validate(parsed);
             Console.WriteLine(JsonSerializer.Serialize(diagnostics, JsonOptions));
-            Console.Error.WriteLine(diagnostics.Any(x => x.Severity == JobMlDiagnosticSeverity.Error)
+            var invalid = diagnostics.Any(x => x.Severity == JobMlDiagnosticSeverity.Error);
+            Console.Error.WriteLine(invalid
                 ? "INVALID"
                 : "VALID");
+            return invalid ? 1 : 0;
         });
         return command;
     }

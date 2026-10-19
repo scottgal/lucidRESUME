@@ -17,7 +17,9 @@ public static class EvidenceCommand
 
     public static Command Build()
     {
-        var resumeOpt = new Option<FileInfo>("--resume") { Required = true, Description = "Resume file" };
+        var resumeOpt = new Option<FileInfo?>("--resume") { Description = "Resume file" };
+        var careerStoreOpt = new Option<FileInfo?>("--career-store") { Description = "Saved complete-career data.db (read-only)" };
+        var auditOpt = new Option<bool>("--audit") { Description = "Compare ledger concepts with source text before and after refreshing deterministic links" };
         resumeOpt.Aliases.Add("-r");
         var outputOpt = new Option<FileInfo?>("--output") { Description = "Output JSON file" };
         outputOpt.Aliases.Add("-o");
@@ -25,27 +27,50 @@ public static class EvidenceCommand
 
         var cmd = new Command("evidence", "Surface the skill ledger with full evidence provenance")
         {
-            resumeOpt, outputOpt, configOpt
+            resumeOpt, careerStoreOpt, auditOpt, outputOpt, configOpt
         };
 
         cmd.SetAction(async (result, ct) =>
         {
-            var file = result.GetValue(resumeOpt)!;
+            var file = result.GetValue(resumeOpt);
             var output = result.GetValue(outputOpt);
             var config = result.GetValue(configOpt);
 
             await using var sp = ServiceBootstrap.Build(config?.FullName);
-            var parser = sp.GetRequiredService<IResumeParser>();
             var ledgerBuilder = sp.GetRequiredService<SkillLedgerBuilder>();
 
-            Console.Error.WriteLine($"Parsing {file.Name}...");
-            var resume = await ParseHelper.ParseAndAwaitAsync(parser, file.FullName, ct);
+            var resume = result.GetValue(careerStoreOpt) is { } database
+                ? await ResumeInputHelper.LoadSavedCareerAsync(database, file, null, ct)
+                : await ResumeInputHelper.LoadAsync(sp, file, null, ct);
+            var beforeAudit = result.GetValue(auditOpt) ? Core.Models.Evidence.EvidenceLedgerAudit.Analyse(resume) : null;
 
             Console.Error.WriteLine("Building skill ledger...");
             var ledger = await ledgerBuilder.BuildAsync(resume, ct);
+            var jobAudits = new List<object>();
+            if (result.GetValue(auditOpt) && result.GetValue(careerStoreOpt) is { } jobDatabase)
+            {
+                var jobParser = sp.GetRequiredService<IJobSpecParser>();
+                foreach (var job in await Core.Persistence.SavedCareerReader.ReadJobsAsync(jobDatabase.FullName, ct))
+                {
+                    if (string.IsNullOrWhiteSpace(job.RawText)) continue;
+                    var refreshed = await jobParser.ParseFromTextAsync(job.RawText, ct);
+                    jobAudits.Add(new
+                    {
+                        job.JobId, job.Title, job.Company,
+                        before = new { job.RequiredSkills, job.PreferredSkills, job.MentionedSkills, job.SkillAnalysisVersion },
+                        after = new { refreshed.RequiredSkills, refreshed.PreferredSkills, refreshed.MentionedSkills,
+                            refreshed.Competencies, refreshed.SkillAnalysisVersion, refreshed.SkillDecisions },
+                        removedRequired = job.RequiredSkills.Except(refreshed.RequiredSkills, StringComparer.OrdinalIgnoreCase),
+                        addedRequired = refreshed.RequiredSkills.Except(job.RequiredSkills, StringComparer.OrdinalIgnoreCase)
+                    });
+                }
+            }
 
             var evidenceOutput = new
             {
+                qualityBeforeRefresh = beforeAudit,
+                qualityAfterRefresh = result.GetValue(auditOpt) ? Core.Models.Evidence.EvidenceLedgerAudit.Analyse(resume) : null,
+                savedJobAudit = jobAudits,
                 basics = new
                 {
                     name = resume.Personal.FullName,

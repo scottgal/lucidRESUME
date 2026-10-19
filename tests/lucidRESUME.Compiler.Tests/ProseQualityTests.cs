@@ -4,8 +4,27 @@ namespace lucidRESUME.Compiler.Tests;
 
 public sealed class ProseQualityTests
 {
+    [Fact]
+    public void Test_limitations_do_not_move_past_a_separate_experiment_with_an_ambiguous_subject()
+    {
+        const string source = "In an offline test, manual review found fewer errors. The test did not measure availability. A separate pilot showed no change in resolution time.";
+        var errors = Validate(source, "In an offline test, manual review found fewer errors. A separate pilot showed no change in resolution time. The test did not measure availability.");
+        Assert.Contains(errors, error => error.Contains("detached a test limitation"));
+        Assert.Empty(Validate(source, source));
+    }
+
+    [Fact]
+    public void Being_asked_to_achieve_a_result_does_not_establish_its_completion()
+    {
+        const string source = "Asked to stabilise an internal support agent after its pilot. Added retries using C#.";
+        var errors = Validate(source, "Stabilised an internal support agent after its pilot. Added retries using C#.");
+        Assert.Contains(errors, error => error.Contains("assigned objective"));
+        Assert.Empty(Validate(source, source));
+    }
+
     [Theory]
     [InlineData("Supported an ASP.NET Core applicaiton using Azure.", "Supported an ASP.NET Core application using Azure.", "application")]
+    [InlineData("Supported a large distrubted service on Azure.", "Supported a large distributed service on Azure.", "distributed")]
     [InlineData("Built services to meet customer requirement.", "Built services to meet customer requirements.", "requirements")]
     public void Harmless_spelling_and_plural_edits_do_not_become_invented_job_facts(string source, string edit, string requirement)
     {

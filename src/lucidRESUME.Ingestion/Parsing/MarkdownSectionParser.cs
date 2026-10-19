@@ -904,8 +904,16 @@ public static partial class MarkdownSectionParser
             }
 
             // Achievement bullets
-            if (line.Length > 20 && !line.StartsWith('#'))
-                current.Achievements.Add(line.TrimStart('-', '*', '•', ' '));
+            if (!line.StartsWith('#') && (line.Length > 20 || Regex.IsMatch(line, @"^[-*•]\s+\S")))
+            {
+                var text = line.TrimStart('-', '*', '•', ' ');
+                // Preserve wrapped bullet continuations, including a short final line.
+                if (current.Achievements.Count > 0 && rawLine.Length - rawLine.TrimStart().Length >= 2 &&
+                    !Regex.IsMatch(line, @"^[-*•]\s+")) current.Achievements[^1] += " " + text;
+                else current.Achievements.Add(text);
+            }
+            else if (current.Achievements.Count > 0 && rawLine.Length - rawLine.TrimStart().Length >= 2 && line.Length > 0)
+                current.Achievements[^1] += " " + line;
         }
 
         if (current != null) resume.Experience.Add(current);

@@ -35,6 +35,9 @@ public sealed partial class GeneratedResumesPageViewModel(IAppStore store, Gener
     [ObservableProperty] private string _evidenceMarkdown = "Select a numbered citation to inspect its saved source evidence.";
     public bool HasSelection => SelectedEntry is not null;
     public bool HasImage => CurrentPageImage is not null;
+    public Action? OpenJobs { get; set; }
+    [RelayCommand]
+    private void CreateNew() => OpenJobs?.Invoke();
 
     [RelayCommand]
     public async Task ReloadAsync()
@@ -43,7 +46,10 @@ public sealed partial class GeneratedResumesPageViewModel(IAppStore store, Gener
         try
         {
             var previous = SelectedEntry?.Id;
-            Entries = (await store.LoadAsync()).GeneratedResumes.OrderByDescending(item => item.CreatedAt).ToList();
+            var loaded = (await store.LoadAsync()).GeneratedResumes.OrderByDescending(item => item.CreatedAt).ToList();
+            // Archived versions are immutable. Preserve objects, image and selection on a no-op refresh.
+            if (Entries.Select(item => item.Id).SequenceEqual(loaded.Select(item => item.Id))) return;
+            Entries = loaded.Select(item => Entries.FirstOrDefault(existing => existing.Id == item.Id) ?? item).ToList();
             SelectedEntry = Entries.FirstOrDefault(item => item.Id == previous) ?? Entries.FirstOrDefault();
             Status = $"{Entries.Count} saved version(s). Each retains its original career evidence.";
         }
@@ -108,7 +114,9 @@ public sealed partial class GeneratedResumesPageViewModel(IAppStore store, Gener
     [RelayCommand]
     private async Task SetFormatAsync(string format)
     {
-        PreviewFormat = format == "Word" ? "Word" : "PDF";
+        var next = format == "Word" ? "Word" : "PDF";
+        if (PreviewFormat == next && HasImage) return;
+        PreviewFormat = next;
         await LoadSelectionAsync();
     }
 

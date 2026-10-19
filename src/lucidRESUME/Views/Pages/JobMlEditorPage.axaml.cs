@@ -36,14 +36,14 @@ public partial class JobMlEditorPage : UserControl
 
     private void HumanEditor_OnCaretChanged()
     {
-        if (_synchronizingSelection || DataContext is not JobMlEditorPageViewModel vm) return;
+        if (_synchronizingSelection || !HumanEditor.IsKeyboardFocusWithin || DataContext is not JobMlEditorPageViewModel vm) return;
         var item = vm.FindEvidenceAtHumanPosition(HumanEditor.SelectionStart);
         if (item is not null) Synchronize(item, selectHuman: false, selectJobMl: true);
     }
 
     private void JobMlEditor_OnCaretChanged()
     {
-        if (_synchronizingSelection || DataContext is not JobMlEditorPageViewModel vm) return;
+        if (_synchronizingSelection || !JobMlEditor.IsKeyboardFocusWithin || DataContext is not JobMlEditorPageViewModel vm) return;
         var item = vm.FindEvidenceAtJobMlPosition(JobMlEditor.SelectionStart);
         if (item is not null) Synchronize(item, selectHuman: true, selectJobMl: false);
     }

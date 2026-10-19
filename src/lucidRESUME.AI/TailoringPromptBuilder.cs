@@ -39,6 +39,7 @@ public static class TailoringPromptBuilder
         sb.AppendLine("- Write direct, concrete prose: the candidate's action, the work or problem, and the supported outcome. Prefer relevant examples over generic claims of proficiency.");
         sb.AppendLine("- Preserve personal versus team contribution, uncertainty, and causality. Never turn helped into led, a team result into an individual result, or an intended benefit into an achieved outcome.");
         sb.AppendLine("- A qualitative outcome is valid. Do not force metrics, repeat keywords, or add stock phrases such as proven track record or results-driven.");
+        sb.AppendLine(ResumeWritingPolicy.JobResponseInstructions);
         sb.AppendLine();
 
         // Company-type tone guidance

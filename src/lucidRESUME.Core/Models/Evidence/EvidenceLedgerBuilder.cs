@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
@@ -11,7 +10,6 @@ namespace lucidRESUME.Core.Models.Evidence;
 /// <summary>Creates and refreshes the evidence ledger from ingestion results.</summary>
 public static partial class EvidenceLedgerBuilder
 {
-    private static readonly ConcurrentDictionary<string, Regex> SkillPatterns = new(StringComparer.OrdinalIgnoreCase);
     public static EvidenceLedger EnsureCurrent(ResumeDocument resume)
     {
         ArgumentNullException.ThrowIfNull(resume);
@@ -318,25 +316,18 @@ public static partial class EvidenceLedgerBuilder
     }
 
     private static IEnumerable<string> ConceptsIn(string text, ResumeDocument resume) => resume.Skills
+        .Where(skill => !skill.ImportSources.Contains("LLM extraction", StringComparer.OrdinalIgnoreCase))
         .Select(skill => skill.Name)
         .Concat(resume.Experience.SelectMany(role => role.Technologies))
-        .Concat(resume.Entities.Where(entity => entity.Classification.Contains("Skill", StringComparison.OrdinalIgnoreCase))
-            .Select(entity => entity.Value))
-        .Where(skill => skill.Length >= 1 && SkillPattern(skill).IsMatch(text));
-
-    private static Regex SkillPattern(string skill)
-    {
-        if (SkillPatterns.TryGetValue(skill, out var pattern)) return pattern;
-        if (SkillPatterns.Count > 4096) SkillPatterns.Clear();
-        return SkillPatterns.GetOrAdd(skill, value => new Regex(
-            @"(?<![\p{L}\p{N}+#])" + Regex.Escape(value) + @"(?![\p{L}\p{N}+#])",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
-    }
+        .Concat(EvidenceTerms.FindExplicitConcepts(text))
+        .Where(skill => skill.Length >= 1 && EvidenceTerms.Mentions(text, skill))
+        .Distinct(StringComparer.OrdinalIgnoreCase);
 
     private static string ComputeSourceRevision(ResumeDocument resume)
     {
         var parts = new List<string?>
         {
+            EvidenceTerms.Version,
             resume.Personal.FullName, resume.Personal.Email, resume.Personal.Phone, resume.Personal.ContactPreference,
             resume.Personal.Location,
             resume.Personal.LinkedInUrl, resume.Personal.GitHubUrl, resume.Personal.WebsiteUrl, resume.Personal.Summary

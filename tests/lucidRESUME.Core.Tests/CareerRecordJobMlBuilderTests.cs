@@ -10,6 +10,56 @@ namespace lucidRESUME.Core.Tests;
 public sealed class CareerRecordJobMlBuilderTests
 {
     [Fact]
+    public async Task Literal_link_refresh_preserves_prose_review_decisions_and_source_links()
+    {
+        var resume = ResumeDocument.Create("original.md", "text/markdown", 0);
+        resume.Personal.FullName = "Author";
+        resume.Experience.Add(new() { Company = "Example", Title = "Engineer", Achievements =
+            ["Delivered Azure Functions and SignalR.", "Evaluated WPF for a prototype."] });
+        var embedder = new DeterministicEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var builder = new CareerRecordJobMlBuilder(new SkillLedgerBuilder(embedder, taxonomy), taxonomy, embedder);
+        var file = await builder.BuildAsync(resume);
+        var accepted = file.Data.Claims.Single(claim => claim.Statement == "Delivered Azure Functions and SignalR.");
+        accepted.Concepts!.Skills.Clear();
+        var rejected = file.Data.Claims.Single(claim => claim.Statement == "Evaluated WPF for a prototype.");
+        rejected.Review = "rejected";
+        rejected.Concepts!.Skills.Clear();
+        file = new(file.Markdown + "\n\nCustom author prose.", file.Data);
+        resume.JobMlSource = new JobMlParser().Serialize(file);
+        Assert.True(CareerRecordJobMlBuilder.RefreshLiteralConceptLinks(resume));
+        var refreshed = new JobMlParser().Parse(resume.JobMlSource);
+        Assert.Equal(file.Markdown, refreshed.Markdown);
+        Assert.Equal(accepted.Evidence.Select(item => item.Id), refreshed.Data.Claims.Single(item => item.Id == accepted.Id).Evidence.Select(item => item.Id));
+        Assert.NotEmpty(refreshed.Data.Claims.Single(item => item.Id == accepted.Id).Concepts!.Skills);
+        var untouched = refreshed.Data.Claims.Single(item => item.Id == rejected.Id);
+        Assert.Equal("rejected", untouched.Review);
+        Assert.Empty(untouched.Concepts!.Skills);
+        Assert.False(CareerRecordJobMlBuilder.RefreshLiteralConceptLinks(resume));
+        Assert.DoesNotContain(JobMlProcessor.Validate(refreshed), item => item.Severity == JobMlDiagnosticSeverity.Error);
+    }
+
+    [Fact]
+    public async Task Author_edits_with_multiple_labels_for_one_source_keep_one_catalogue_identity()
+    {
+        var resume = ResumeDocument.Create("imported.docx", "text/markdown", 0);
+        resume.Personal.FullName = "Author";
+        resume.Personal.Summary = "Writes production software.";
+        var ledger = EvidenceLedgerBuilder.EnsureCurrent(resume);
+        ledger.Evidence[0].SourceName = "Author-reviewed career prose";
+        var embedder = new DeterministicEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var builder = new CareerRecordJobMlBuilder(new SkillLedgerBuilder(embedder, taxonomy), taxonomy, embedder);
+        var file = await builder.BuildAsync(resume);
+        var source = Assert.Single(file.Data.Sources);
+        Assert.Contains("Author-reviewed career prose", source.Name);
+        Assert.Contains("imported.docx", source.Name);
+        Assert.All(file.Data.Claims.SelectMany(claim => claim.Evidence).Where(evidence => evidence.SourceId is not null),
+            evidence => Assert.Equal(source.Id, evidence.SourceId));
+        Assert.DoesNotContain(JobMlProcessor.Validate(file), item => item.Severity == JobMlDiagnosticSeverity.Error);
+        Assert.Equal("Author-reviewed career prose", ledger.Evidence[0].SourceName);
+    }
+    [Fact]
     public void Provider_identity_guid_is_stable_and_case_insensitive()
     {
         Assert.Equal(

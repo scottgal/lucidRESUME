@@ -210,13 +210,13 @@ public sealed partial class ResumePageViewModel : ViewModelBase
 
         var files = await TopLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select Resume or Career Transcript",
+            Title = "Import CV or LinkedIn export",
             // Every source receives its own merge review. Importing a batch here
             // would either skip review or require a hidden queue of pending decisions.
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Resume Files") { Patterns = ["*.pdf", "*.docx", "*.md", "*.markdown", "*.txt"] },
+                new FilePickerFileType("CV or LinkedIn export") { Patterns = ["*.pdf", "*.docx", "*.md", "*.markdown", "*.txt", "*.zip"] },
                 new FilePickerFileType("PDF") { Patterns = ["*.pdf"] },
                 new FilePickerFileType("Word Document") { Patterns = ["*.docx"] },
                 new FilePickerFileType("Markdown or Text") { Patterns = ["*.md", "*.markdown", "*.txt"] },

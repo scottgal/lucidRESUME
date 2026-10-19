@@ -134,8 +134,8 @@ public sealed class ResumeParser : IResumeParser
             resume.AddEntity(entity);
 
         MapEntitiesToSchema(resume, entities);
-        InferName(resume, markdown);
-        if (_decisionResolver is not null && mode != ParseMode.Fast && _nameConfidence < 0.80)
+        var nameConfidence = InferName(resume, markdown);
+        if (_decisionResolver is not null && mode != ParseMode.Fast && nameConfidence < 0.80)
             await _decisionResolver.ResolveNameAsync(resume, plainText ?? markdown, ct);
 
         // ── 4. Section parsing ────────────────────────────────────────────
@@ -203,11 +203,11 @@ public sealed class ResumeParser : IResumeParser
         // ── 5. LLM fallback — only in AI/Full mode and when structural extraction has gaps
         // Fast mode: never calls LLM (sub-second parse, no external services)
         if (mode != ParseMode.Fast && _llm != null
-            && (resume.Skills.Count == 0 || resume.Experience.Count == 0 || _nameConfidence < 0.50))
+            && (resume.Skills.Count == 0 || resume.Experience.Count == 0 || nameConfidence < 0.50))
         {
             _logger.LogDebug("Structural parse gaps (skills={Skills}, exp={Exp}) — escalating to LLM",
                 resume.Skills.Count, resume.Experience.Count);
-            resume.LlmEnhancementTask = EnhanceAndRefreshLedgerAsync(resume, plainText ?? markdown, ct);
+            resume.LlmEnhancementTask = EnhanceAndRefreshLedgerAsync(resume, plainText ?? markdown, nameConfidence, ct);
         }
 
         EvidenceLedgerBuilder.Rebuild(resume);
@@ -215,21 +215,21 @@ public sealed class ResumeParser : IResumeParser
         return resume;
     }
 
-    private async Task EnhanceAndRefreshLedgerAsync(ResumeDocument resume, string text, CancellationToken ct)
+    private async Task EnhanceAndRefreshLedgerAsync(ResumeDocument resume, string text, double nameConfidence, CancellationToken ct)
     {
-        await LlmFillMissingAsync(resume, text, ct);
+        await LlmFillMissingAsync(resume, text, nameConfidence, ct);
         EvidenceLedgerBuilder.Rebuild(resume);
     }
 
-    private async Task LlmFillMissingAsync(ResumeDocument resume, string text, CancellationToken ct)
+    private async Task LlmFillMissingAsync(ResumeDocument resume, string text, double nameConfidence, CancellationToken ct)
     {
         // Name: ask LLM when RRF fusion confidence is low (< 0.50) or name is null
-        if (_nameConfidence < 0.50 || resume.Personal.FullName is null)
+        if (nameConfidence < 0.50 || resume.Personal.FullName is null)
         {
             // Send just the header (first 10 lines) — small, fast, cheap
             var headerLines = text.Split('\n').Take(10);
             var header = string.Join('\n', headerLines);
-            _logger.LogDebug("Name confidence {Conf:P0} — asking LLM for extraction", _nameConfidence);
+            _logger.LogDebug("Name confidence {Conf:P0} — asking LLM for extraction", nameConfidence);
             var llmName = await _llm!.ExtractNameAsync(header, ct);
             if (!string.IsNullOrWhiteSpace(llmName) && llmName.Length >= 3 && llmName.Length <= 50)
             {
@@ -246,23 +246,11 @@ public sealed class ResumeParser : IResumeParser
         {
             _logger.LogDebug("Skills empty — asking LLM for extraction");
             var raw = await _llm!.ExtractSkillsAsync(text, ct);
-            if (!string.IsNullOrWhiteSpace(raw))
-            {
-                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var part in raw.Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries))
-                {
-                    if (resume.Skills.Count >= 60) break;
-                    var name = part.Trim().TrimStart('-', '*', '•', ' ').Trim();
-                    if (name.Length >= 2 && name.Length <= 50
-                        && !name.Contains("experience", StringComparison.OrdinalIgnoreCase)
-                        && name.Count(c => c == ' ') <= 5
-                        && seen.Add(name))
-                        resume.Skills.Add(new lucidRESUME.Core.Models.Resume.Skill
-                        { Name = name, ImportSources = ["LLM extraction"] });
-                }
-                if (resume.Skills.Count > 0)
-                    _logger.LogInformation("LLM recovered {Count} skills", resume.Skills.Count);
-            }
+            foreach (var name in SourceBoundSkillRecovery.Recover(text, raw))
+                resume.Skills.Add(new lucidRESUME.Core.Models.Resume.Skill
+                { Name = name, ImportSources = ["LLM extraction", "source-validated"] });
+            if (resume.Skills.Count > 0)
+                _logger.LogInformation("Recovered {Count} source-validated skill suggestions for review", resume.Skills.Count);
         }
 
         // Experience: ask LLM when structural parser found nothing
@@ -376,7 +364,7 @@ public sealed class ResumeParser : IResumeParser
     /// multi-source agreement boosts confidence. LLM backstop when confidence is low.
     /// Signals: NER entities, heading text, first line, email cross-reference, OCR fix.
     /// </summary>
-    private void InferName(ResumeDocument resume, string markdown)
+    private static double InferName(ResumeDocument resume, string markdown)
     {
         var candidates = new List<(string Name, double Confidence, string Source)>();
         var lines = markdown.Split('\n');
@@ -420,7 +408,7 @@ public sealed class ResumeParser : IResumeParser
             AddIfNameLike(candidates, TryFixOcrSpacing(text), 0.50, "FirstLine-OCR");
         }
 
-        if (candidates.Count == 0) return;
+        if (candidates.Count == 0) return 0;
 
         // ── RRF fusion: group by normalised name, boost multi-source ─────────
         const double multiSourceBoost = 0.10;
@@ -454,15 +442,14 @@ public sealed class ResumeParser : IResumeParser
         }
 
         resume.Personal.FullName = bestCandidate.Name;
-        _nameConfidence = bestCandidate.Confidence;
+        var nameConfidence = bestCandidate.Confidence;
 
         // Penalise confidence for obviously incomplete names (single word, too short, non-name phrases)
         if (!IsNameLike(bestCandidate.Name) || bestCandidate.Name.Length < 4 || IsNonNamePhrase(bestCandidate.Name))
-            _nameConfidence = Math.Min(_nameConfidence, 0.30);
+            nameConfidence = Math.Min(nameConfidence, 0.30);
+        return nameConfidence;
     }
 
-    /// <summary>Confidence of the name extraction — used to decide if LLM backstop is needed.</summary>
-    private double _nameConfidence;
 
     private static void AddIfNameLike(List<(string Name, double Confidence, string Source)> candidates,
         string? text, double confidence, string source)

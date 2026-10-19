@@ -73,7 +73,7 @@ internal static class CareerEvaluation
             if (CompositionValidator.RepeatsSentence(result.Projection.Personal.Summary ?? "",
                     result.Projection.Experience.SelectMany(role => role.Achievements).ToList()))
                 findings.Add("Summary repeats a complete experience sentence.");
-            if (!progress.Any(message => message.Contains("local model") || message.Contains("Reusing")))
+            if (!progress.Any(message => message.Contains("local model") || message.Contains("Ollama model") || message.Contains("Reusing")))
                 findings.Add("No local prose model call or cached composition was observed.");
             var index = MarkdownEvidenceIndex.Create(result.Markdown);
             var ledger = EvidenceLedgerBuilder.EnsureCurrent(source);

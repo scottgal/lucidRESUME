@@ -60,7 +60,7 @@
           </Grid>
         </Grid>
         <TabControl Grid.Row="1" x:Name="HumanTabs" SelectedIndex="{Binding HumanTabIndex, Mode=TwoWay}">
-          <TabItem Header="Document">
+          <TabItem x:Name="HumanDocumentTab" Header="Document">
             <Grid RowDefinitions="*,Auto">
               <Border Background="{DynamicResource LrCardBgBrush}" Padding="8" ClipToBounds="True">
                 <Panel>
@@ -85,7 +85,7 @@
               </StackPanel>
             </Grid>
           </TabItem>
-          <TabItem Header="Write">
+          <TabItem x:Name="HumanWriteTab" Header="Write">
             <TextBox x:Name="HumanEditor" Text="{Binding HumanMarkdown, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Menlo,Consolas,Courier New"
                      FontSize="12"

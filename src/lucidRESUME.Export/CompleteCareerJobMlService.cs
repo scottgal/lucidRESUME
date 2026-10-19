@@ -19,6 +19,15 @@ public sealed class CompleteCareerJobMlService(IAppStore store, CareerRecordJobM
             if (career is null) return null;
             if (!string.IsNullOrWhiteSpace(career.JobMlSource))
             {
+                var previousSource = career.JobMlSource;
+                if (CareerRecordJobMlBuilder.RefreshLiteralConceptLinks(career))
+                    await store.MutateAsync(latest =>
+                    {
+                        if (latest.CompleteCareer?.Transcript.JobMlSource != previousSource)
+                            throw new InvalidOperationException("The career changed while refreshing evidence links. Reopen the complete transcript.");
+                        latest.CompleteCareer.Transcript.JobMlSource = career.JobMlSource;
+                        latest.CompleteCareer.Transcript.JobMlRevision = career.JobMlRevision;
+                    }, ct);
                 if (state.CompleteCareer!.SemanticIndex is null)
                 {
                     var existing = new JobMlParser().Parse(career.JobMlSource);

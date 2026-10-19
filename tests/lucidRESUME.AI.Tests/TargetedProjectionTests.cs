@@ -10,6 +10,53 @@ namespace lucidRESUME.AI.Tests;
 public sealed class TargetedProjectionTests
 {
     [Fact]
+    public async Task Primary_job_evidence_leads_a_summary_without_losing_an_authored_secondary_strength()
+    {
+        var resume = ResumeDocument.Create("career.md", "text/markdown", 0);
+        resume.Personal.Summary = "Over the past year I have developed products with agentic LLMs. Technology leader with two decades of experience.";
+        resume.Experience.Add(new() { Title = "Engineer", Company = "Example", IsCurrent = true,
+            Achievements = ["Built C# billing services using SQL Server and Azure."] });
+        var embedder = new EmptyEmbedder(); var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }), NullLogger<SemanticCompressor>.Instance);
+        var result = await compressor.CompressAsync(resume, new()
+        {
+            Title = "Development Team Lead", RequiredSkills = ["C#", "SQL Server"],
+            RawText = "Build C# billing services using SQL Server. Agentic LLM products are also relevant."
+        });
+        var summary = result.Projection.Personal.Summary!;
+        Assert.StartsWith("Technology leader", summary);
+        Assert.True(summary.IndexOf("C#", StringComparison.Ordinal) < summary.IndexOf("agentic LLMs", StringComparison.Ordinal));
+        Assert.Contains("agentic LLMs", summary);
+        Assert.Contains(result.Projection.Projection!.Blocks, block => block.ProseRef == "#summary:p1" &&
+            resume.EvidenceLedger.Claims.Any(claim => claim.Id == block.ClaimId && claim.Kind == "achievement"));
+    }
+
+    [Fact]
+    public async Task Role_account_introduces_direct_technical_evidence_before_supporting_evaluation_detail()
+    {
+        var resume = ResumeDocument.Create("career.md", "text/markdown", 0);
+        resume.Experience.Add(new()
+        {
+            Title = "Engineer", Company = "Example", IsCurrent = true,
+            Achievements = ["Curated offline evaluation cases from failed tool calls; production effect remains unknown.",
+                "Built a C# support-agent runtime using Azure OpenAI and Qdrant retrieval for internal operations.",
+                "Added per-tool authorization before allowing the internal agent to update ticket state."]
+        });
+        var embedder = new EmptyEmbedder();
+        var taxonomy = new SkillTaxonomyService(embedder);
+        var compressor = new SemanticCompressor(new SkillLedgerBuilder(embedder, taxonomy), new JdSkillLedgerBuilder(embedder),
+            new SkillLedgerMatcher(embedder), embedder, taxonomy, Options.Create(new TailoringOptions { ComposeProse = false }),
+            NullLogger<SemanticCompressor>.Instance);
+        var result = await compressor.CompressAsync(resume, new()
+        {
+            Title = "Applied AI Lead", RequiredSkills = ["C#", "Azure OpenAI", "Qdrant"],
+            Responsibilities = ["Own agent authorization and build offline evaluation cases from failed tool calls."]
+        });
+        Assert.Contains("support-agent runtime", Assert.Single(result.Projection.Experience).Achievements[0]);
+    }
+
+    [Fact]
     public async Task Broad_engineering_advert_keeps_selected_role_tools_without_unrelated_declared_ai_skills()
     {
         var source = ResumeDocument.Create("career.md", "text/markdown", 0);

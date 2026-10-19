@@ -28,24 +28,12 @@ public sealed class LlamaSharpExtractionService : ILlmExtractionService
 
     public Task<string?> ExtractSkillsAsync(string text, CancellationToken ct = default)
     {
-        var input = text.Length > 6_000 ? text[..6_000] : text;
-        return CallAsync(
-            "List every explicitly mentioned technical skill (languages, frameworks, tools, and databases). " +
-            "Reply with only a comma-separated list. Do not add related skills.\n\n" + input,
-            1_000,
-            ct);
+        return CallAsync(ResumeExtractionPrompts.Skills(text), 1_000, ct);
     }
 
     public Task<string?> ExtractExperienceSummaryAsync(string text, CancellationToken ct = default)
     {
-        var input = text.Length > 10_000 ? text[..10_000] : text;
-        return CallAsync($"""
-            Extract only work experience entries. Return one job per line in this exact format:
-            COMPANY_NAME | JOB_TITLE | START_DATE - END_DATE
-            Use "Unknown" for a missing company or date. Include no bullets, achievements, education, or explanation.
-
-            {input}
-            """, 2_000, ct);
+        return CallAsync(ResumeExtractionPrompts.Experience(text, 10_000), 2_000, ct);
     }
 
     public Task<string?> ExtractJsonAsync(string prompt, CancellationToken ct = default) =>

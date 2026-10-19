@@ -125,6 +125,15 @@ public sealed class AppState
         return CompleteCareer?.Transcript;
     }
 
+    /// <summary>Commit author-reviewed career edits and their already-applied overrides together.</summary>
+    public void SetReviewedCareer(ResumeDocument transcript)
+    {
+        CompleteCareer ??= new CompleteCareerRecord();
+        CompleteCareer.Transcript = transcript;
+        CompleteCareer.OverridesRevision = Fingerprint(Overrides);
+        CompleteCareer.UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     /// <summary>Called at the persistence boundary, not during matching or generation.
     /// Imported documents are evidence archives. Only changed inputs are composed into the career.</summary>
     public void ReconcileCompleteTranscript()

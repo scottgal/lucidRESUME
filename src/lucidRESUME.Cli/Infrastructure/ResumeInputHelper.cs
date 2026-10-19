@@ -43,6 +43,16 @@ internal static class ResumeInputHelper
         return parsed;
     }
 
+    public static async Task<ResumeDocument> LoadSavedCareerAsync(
+        FileInfo database, FileInfo? file, DirectoryInfo? directory, CancellationToken ct)
+    {
+        if (file is not null || directory is not null)
+            throw new ArgumentException("Use --career-store alone, without --resume or --resume-dir.");
+        var transcript = await lucidRESUME.Core.Persistence.SavedCareerReader.ReadAsync(database.FullName, ct);
+        Console.Error.WriteLine($"Loaded saved complete career: {transcript.Experience.Count} positions, {transcript.Skills.Count} skills (read-only)");
+        return transcript;
+    }
+
     private static async Task CategoriseAsync(IServiceProvider services, ResumeDocument resume,
         CancellationToken ct)
     {

@@ -141,6 +141,7 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
     /// <summary>Called by JobsPage or ResumePageViewModel to pre-populate the form.</summary>
     public void SetContext(ResumeDocument? resume, JobDescription? job)
     {
+        RememberJobDraft();
         ResetInterview();
         _contextResume = resume;
         HasResult = false;
@@ -148,14 +149,16 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         TailoredMarkdown = null;
         _generatedResume = null;
 
-        if (job is not null)
+        _settingParsedFields = true;
+        try
         {
-            JobTitle = job.Title ?? "";
-            Company = job.Company ?? "";
-            JobDescriptionText = job.RawText;
+            JobTitle = job?.Title ?? "";
+            Company = job?.Company ?? "";
+            JobDescriptionText = job?.RawText ?? "";
+            _contextJob = job;
+            SetWorkspaceContext(job);
         }
-
-        _contextJob = job;
+        finally { _settingParsedFields = false; }
         if (resume is not null && job is not null)
             _ = RunCoverageAsync(resume, job);
     }
@@ -568,17 +571,19 @@ public sealed partial class ApplyPageViewModel : ViewModelBase
         await SmartCompressAsync();
     }
 
-    private bool CanTailor() => !IsTailoring && !string.IsNullOrWhiteSpace(JobDescriptionText);
+    private bool CanTailor() => !IsTailoring && !IsWorkingOnJob && !string.IsNullOrWhiteSpace(JobDescriptionText);
 
     partial void OnJobDescriptionTextChanged(string value)
     {
+        if (_settingParsedFields) return;
         _contextJob = null;
         ResetInterview();
         HasResult = false;
         SmartCompressCommand.NotifyCanExecuteChanged();
+        JobEdited(descriptionChanged: true);
     }
-    partial void OnJobTitleChanged(string value) { if (_settingParsedFields) return; _contextJob = null; ResetInterview(); HasResult = false; }
-    partial void OnCompanyChanged(string value) { if (_settingParsedFields) return; _contextJob = null; ResetInterview(); HasResult = false; }
+    partial void OnJobTitleChanged(string value) { if (_settingParsedFields) return; ResetInterview(); HasResult = false; JobEdited(); }
+    partial void OnCompanyChanged(string value) { if (_settingParsedFields) return; ResetInterview(); HasResult = false; JobEdited(); }
     partial void OnIsTailoringChanged(bool value)
     {
         if (value) CancelAssessment();

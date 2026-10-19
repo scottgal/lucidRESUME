@@ -29,20 +29,13 @@ public sealed class AnthropicExtractionService : ILlmExtractionService
 
     public Task<string?> ExtractSkillsAsync(string text, CancellationToken ct = default)
     {
-        var input = text.Length > 6000 ? text[..6000] : text;
-        var prompt = "List all technical skills (programming languages, frameworks, tools, databases) " +
-                     "mentioned in the following resume text. " +
-                     "Reply with ONLY a comma-separated list, no explanation, no numbering.\n\n" + input;
+        var prompt = ResumeExtractionPrompts.Skills(text);
         return CallAsync(prompt, ct);
     }
 
     public Task<string?> ExtractExperienceSummaryAsync(string text, CancellationToken ct = default)
     {
-        var input = text.Length > 6000 ? text[..6000] : text;
-        var prompt = "Extract ONLY the work experience entries from this resume text. " +
-                     "Each job held should be ONE line: COMPANY_NAME | JOB_TITLE | START_DATE - END_DATE. " +
-                     "Do NOT include bullet points, achievements, or education. " +
-                     "If company unknown write 'Unknown'. Reply with ONLY the formatted lines.\n\n" + input;
+        var prompt = ResumeExtractionPrompts.Experience(text);
         return CallAsync(prompt, ct);
     }
 

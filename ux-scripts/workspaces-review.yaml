@@ -1,0 +1,111 @@
+name: career-and-jobs-workspaces
+description: Review editing, job intake, missing evidence, retained drafts and minimum window size
+default_delay: 220
+actions:
+  - type: Wait
+    value: "1200"
+  - type: Navigate
+    value: CareerHome
+  - type: Wait
+    value: "600"
+  - type: Screenshot
+    value: career-start
+  - type: Click
+    target: CareerEvidenceTab
+  - type: Wait
+    value: "200"
+  - type: Screenshot
+    value: career-evidence-prompts
+  - type: Click
+    target: CareerRoleEditorTab
+  - type: TypeText
+    target: CareerRoleProseEditor
+    value: "Draft account retained while navigating. Designed a .NET API and tested its recovery behaviour."
+  - type: Navigate
+    value: Jobs
+  - type: Click
+    target: NewTargetJobButton
+  - type: TypeText
+    target: ProjectionJobDescription
+    value: |
+      Development Team Lead
+      Kyckr
+      Remote United Kingdom
+      About the role
+      We need a hands-on team lead building C# and .NET services on Azure with SQL Server and REST APIs. Lead four engineers and integrate third-party data sources. Agentic development and QA are central to the role.
+  - type: TypeText
+    target: JobTrackingUrlInput
+    value: "https://www.linkedin.com/jobs/view/123456"
+  - type: Click
+    target: ExtractJobDetailsButton
+  - type: Wait
+    value: "2000"
+  - type: Screenshot
+    value: job-extracted-details
+  - type: TypeText
+    target: ProjectionJobTitle
+    value: "Development Team Lead"
+  - type: TypeText
+    target: ProjectionCompany
+    value: "Kyckr"
+  - type: Click
+    target: SaveTargetJobButton
+  - type: Wait
+    value: "500"
+  - type: Screenshot
+    value: job-saved
+  - type: Navigate
+    value: CareerHome
+  - type: Assert
+    target: CareerRoleProseEditor
+    value: "text:Draft account retained while navigating. Designed a .NET API and tested its recovery behaviour."
+  - type: Click
+    target: CareerCompleteEditorTab
+  - type: Wait
+    value: "150"
+  - type: Screenshot
+    value: complete-prose
+  - type: Click
+    target: CareerRoleEditorTab
+  - type: WindowResize
+    x: 900
+    y: 600
+  - type: Screenshot
+    value: career-small-window
+  - type: Navigate
+    value: Jobs
+  - type: Screenshot
+    value: job-small-window
+  - type: WindowResize
+    x: 1200
+    y: 800
+  - type: Navigate
+    value: Generated
+  - type: Wait
+    value: "700"
+  - type: Screenshot
+    value: archive-before-return
+  - type: Navigate
+    value: Jobs
+  - type: Navigate
+    value: Generated
+  - type: Wait
+    value: "300"
+  - type: Screenshot
+    value: archive-after-return
+  - type: Navigate
+    value: JobML
+  - type: Wait
+    value: "600"
+  - type: Click
+    target: HumanWriteTab
+  - type: Click
+    target: HumanDocumentTab
+  - type: Wait
+    value: "5000"
+  - type: Screenshot
+    value: document-tab-settled
+  - type: Wait
+    value: "1000"
+  - type: Screenshot
+    value: document-tab-still-selected

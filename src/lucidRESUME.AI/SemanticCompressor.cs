@@ -178,7 +178,7 @@ public sealed class SemanticCompressor
             { "and", "the", "for", "are", "you", "our", "can", "has", "this", "that", "will", "from", "need", "work", "teams", "systems", "platform", "engineering", "technical", "built", "build", "designed", "design", "develop", "lead", "leadership", "production" })));
         // Structured competency extraction is optional. The original job and its
         // responsibilities must still drive evidence selection when no model is available.
-        var targetTokens = Tokens(string.Join(' ', new[] { jd.Title ?? "", jd.RawText }
+        var targetTokens = Tokens(string.Join(' ', new[] { jd.Title ?? "" }.Concat(allProseRequirements.Where(item => item.Kind != lucidRESUME.Compiler.RequirementKind.Preferred).Select(item => item.Text))
             .Concat(jd.RequiredSkills).Concat(jd.Responsibilities)
             .Concat(jd.Competencies.Where(c => c.Priority != Core.Models.Coverage.RequirementPriority.Preferred)
                 .Select(c => c.Name + ": " + c.Description)))).Except(ignored).ToHashSet();
@@ -430,6 +430,12 @@ public sealed class SemanticCompressor
             };
             var paragraph = string.IsNullOrEmpty(dateRange) ? 1 : 2;
             var maximumAchievements = experiencePlan.AchievementLimits.GetValueOrDefault(exp.Id, 1);
+            // Establish the role's directly relevant technical work before supporting
+            // process or evaluation detail. Selection scores remain retrieval hints.
+            if (!isCareerAnchor)
+                relevantAchievements = relevantAchievements.OrderByDescending(text => jd.RequiredSkills
+                    .Where(skill => skill.Length <= 50 && skill.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length <= 5)
+                    .Count(skill => SkillTaxonomy.MentionsEquivalent(text, skill))).ToList();
             var packets = ProseSynthesisAssembler.Assemble(relevantAchievements, targetTokens,
                 preferences.Detail == ResumeDetail.Thorough ? 3 : 2);
             foreach (var facts in packets.Take(maximumAchievements))
@@ -473,13 +479,17 @@ public sealed class SemanticCompressor
                 var focusAccount = ResumeSummaryBuilder.FindFocusAccount(selectedAccountsForSummary.Select(item => item.Text), focusSkills);
                 var authoredFocus = ResumeSummaryBuilder.RelevantAuthoredAccount(careerSummary,
                     string.Join(' ', new[] { jd.Title ?? "", jd.RawText }.Concat(jd.MentionedSkills)));
-                summary = authoredFocus ?? ResumeSummaryBuilder.Build(careerSummary, focusSkills,
+                var roleFocus = ResumeSummaryBuilder.Build(careerSummary, focusSkills,
                     focusSkills.Count > 0 && focusSkills.All(skill => SkillTaxonomy.MentionsEquivalent(careerSummary, skill)) &&
                     !lucidRESUME.Compiler.CompositionValidator.RepeatsSentence(careerSummary,
                         projection.Experience.SelectMany(role => role.Achievements).ToList()), focusAccount);
-                if (authoredFocus is not null || summary.Contains(careerSummary, StringComparison.Ordinal) || ResumeSummaryBuilder.UsesIdentity(summary, careerSummary))
+                var foregroundRole = authoredFocus is not null && focusSkills.Count > 0 && roleFocus != careerSummary &&
+                    !focusSkills.Take(2).Any(skill => SkillTaxonomy.MentionsEquivalent(authoredFocus, skill));
+                summary = foregroundRole ? (roleFocus + " " + ResumeSummaryBuilder.WithoutRepeatedIdentity(authoredFocus!, roleFocus)).Trim() : authoredFocus ?? roleFocus;
+                if (foregroundRole && Regex.Matches(summary, @"\S+").Count > budget.SummaryWords) summary = roleFocus;
+                if ((authoredFocus is not null && summary.Contains(ResumeSummaryBuilder.WithoutRepeatedIdentity(authoredFocus, roleFocus), StringComparison.Ordinal)) || summary.Contains(careerSummary, StringComparison.Ordinal) || ResumeSummaryBuilder.UsesIdentity(summary, careerSummary))
                     Bind(projection, sourceLedger, "personal:summary", "#summary:p1");
-                foreach (var item in summary == careerSummary || authoredFocus is not null ? [] : selectedAccountsForSummary.Where(item => focusAccount is null || focusAccount.Sources.Contains(item.Text)))
+                foreach (var item in summary == careerSummary || authoredFocus is not null && !foregroundRole ? [] : selectedAccountsForSummary.Where(item => focusAccount is null || focusAccount.Sources.Contains(item.Text)))
                 {
                     var selectedParagraph = projection.Experience.Single(role => role.Id == item.Role.Id).Achievements.IndexOf(item.Text);
                     var firstParagraph = string.IsNullOrEmpty(FormatDateRange(item.Role.StartDate, item.Role.EndDate, item.Role.IsCurrent)) ? 1 : 2;

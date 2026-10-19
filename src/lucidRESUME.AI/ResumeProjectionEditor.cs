@@ -25,7 +25,10 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
             .Select(c => c.Name + ": " + c.Description).Concat(job.Responsibilities)
             .Distinct(StringComparer.OrdinalIgnoreCase).Take(10).Select(text => Short(text));
         var preferred = job.PreferredSkills.Take(6).Select(text => Short(text));
-        var brief = $"Target: {Short(job.Title ?? "")}\nCompany: {Short(job.Company ?? "")}\nRequired: {string.Join("; ", requirements)}\nResponsibilities: {string.Join("; ", responsibilities)}\nPreferred: {string.Join("; ", preferred)}\nJob context: {Short(job.RawText, 2000)}";
+        var sourceContext = string.Join('\n', JobTextSections.Read(job.RawText)
+            .Where(section => section.Section is "required" or "responsibility" or "unspecified")
+            .Select(section => $"[{section.Section}] {section.Text}"));
+        var brief = $"Target: {Short(job.Title ?? "")}\nCompany: {Short(job.Company ?? "")}\nRequired: {string.Join("; ", requirements)}\nResponsibilities: {string.Join("; ", responsibilities)}\nPreferred: {string.Join("; ", preferred)}\nJob context: {Short(sourceContext, 2000)}";
         // Include the complete input identity even when a long brief is bounded;
         // different jobs with identical headings must not share job-specific prose.
         var identity = string.Join('\n', new[] { job.Title ?? "", job.Company ?? "", job.RawText }
@@ -35,7 +38,7 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
     }
 
     private static readonly HashSet<string> SentenceCaseConcepts = new(["architecture", "microservices", "scalability",
-        "observability", "integration", "integrations", "software", "engineering", "development", "delivery", "evaluation", "workflows"], StringComparer.Ordinal);
+        "observability", "integration", "integrations", "software", "engineering", "development", "delivery", "evaluation", "workflows", "mentoring"], StringComparer.Ordinal);
 
     internal static string RestoreSourceSentenceCase(string source, string edited)
     {
@@ -115,6 +118,7 @@ public sealed class ResumeProjectionEditor(ResumeCompositionOrchestrator compose
             var text = Regex.Replace(block.Text.Trim(), @"\s+", " ").TrimStart('-', ' ');
             text = Regex.Replace(text, @"\basp\.net\b", "ASP.NET", RegexOptions.IgnoreCase);
             text = RestoreSourceSentenceCase(passage.Text, text);
+            text = ResumeSpelling.Correct(text);
             if (Regex.IsMatch(text, @"(^|\s)(#{1,6}\s|```|\{#[^}]+\})") || text.Contains("<p", StringComparison.OrdinalIgnoreCase))
             {
                 projection.GenerationWarnings.Add($"Retained source prose for {block.SectionId}: edit introduced document structure.");

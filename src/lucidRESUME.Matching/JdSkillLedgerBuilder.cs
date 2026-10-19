@@ -1,105 +1,63 @@
 using lucidRESUME.Core.Interfaces;
+using lucidRESUME.Core.Models.Coverage;
+using lucidRESUME.Core.Models.Evidence;
 using lucidRESUME.Core.Models.Jobs;
 using lucidRESUME.Core.Models.Skills;
 
 namespace lucidRESUME.Matching;
 
-/// <summary>
-/// Builds a JdSkillLedger from a JobDescription.
-/// Uses NER to extract clean skill names from the full JD text.
-/// Falls back to structural extractor output only for short, clean terms.
-/// No regex sentence parsing - NER does the heavy lifting.
-/// </summary>
+/// <summary>Projects persisted advert requirements. Matching never reruns extraction or bypasses classification.</summary>
 public sealed class JdSkillLedgerBuilder
 {
-    private readonly IEmbeddingService _embedder;
-    private readonly IEnumerable<IEntityDetector>? _detectors;
-
+    private readonly IEmbeddingService embedder;
     public JdSkillLedgerBuilder(IEmbeddingService embedder, IEnumerable<IEntityDetector>? detectors = null)
     {
-        _embedder = embedder;
-        _detectors = detectors;
+        this.embedder = embedder;
+        // Retain the constructor contract for hosts; extraction belongs to job ingestion.
+        _ = detectors;
     }
-
     public async Task<JdSkillLedger> BuildAsync(JobDescription jd, CancellationToken ct = default)
     {
-        var ledger = new JdSkillLedger
-        {
-            JobId = jd.JobId,
-            JobTitle = jd.Title,
-            Company = jd.Company,
-        };
-
+        var ledger = new JdSkillLedger { JobId = jd.JobId, JobTitle = jd.Title, Company = jd.Company };
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        // 1. NER: extract clean skill names from full JD text
-        if (_detectors is not null && !string.IsNullOrEmpty(jd.RawText))
+        var classified = !string.IsNullOrWhiteSpace(jd.SkillAnalysisVersion) || jd.SkillDecisions.Count > 0;
+        var allowed = jd.SkillDecisions.Where(decision => decision.Classification is "skill" or "capability")
+            .Select(decision => decision.Label).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        async Task AddAsync(string name, string source, SkillImportance importance, bool competency = false)
         {
-            var context = new DetectionContext(jd.RawText);
-            foreach (var detector in _detectors)
+            ct.ThrowIfCancellationRequested();
+            var clean = name.Trim().TrimStart('-', '*', '•', ' ');
+            if (clean.Length == 0) return;
+            if (!competency && classified && !allowed.Contains(name) && !allowed.Contains(clean)) return;
+            if (!competency && !string.IsNullOrWhiteSpace(jd.RawText) && !EvidenceTerms.Mentions(jd.RawText, clean)) return;
+            var literalCanonical = EvidenceTerms.Canonicalize(clean);
+            var canonical = SkillTaxonomy.Canonicalize(literalCanonical) ?? literalCanonical;
+            if (!seen.Add(canonical)) return;
+            ledger.Requirements.Add(new JdSkillRequirement
             {
-                try
-                {
-                    var entities = await detector.DetectAsync(context, ct);
-                    foreach (var entity in entities.Where(e =>
-                        e.Classification is "NerSkill" && e.Value.Length >= 2))
-                    {
-                        if (!seen.Add(entity.Value)) continue;
-
-                        var importance = IsInSection(jd.RequiredSkills, entity.Value)
-                            ? SkillImportance.Required
-                            : IsInSection(jd.PreferredSkills, entity.Value)
-                                ? SkillImportance.Preferred
-                                : SkillImportance.Inferred;
-
-                        ledger.Requirements.Add(new JdSkillRequirement
-                        {
-                            SkillName = entity.Value,
-                            Importance = importance,
-                            SourceText = entity.Value,
-                            Embedding = await _embedder.EmbedAsync(entity.Value, ct),
-                        });
-                    }
-                }
-                catch { /* non-fatal */ }
-            }
+                SkillName = clean, Importance = importance, SourceText = source,
+                Embedding = await embedder.EmbedAsync(source, ct)
+            });
         }
-
-        // 2. Structural: add terms from the extracted skill lists
-        // Split comma-delimited lines into individual skills
-        foreach (var rawSkill in jd.RequiredSkills.Concat(jd.PreferredSkills).Concat(jd.MentionedSkills))
+        if (jd.Competencies.Count > 0)
         {
-            var importance = jd.RequiredSkills.Contains(rawSkill)
-                ? SkillImportance.Required : jd.PreferredSkills.Contains(rawSkill)
-                    ? SkillImportance.Preferred : SkillImportance.Inferred;
-
-            // Split on commas if the line contains multiple skills
-            var parts = rawSkill.Contains(',')
-                ? rawSkill.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                : [rawSkill];
-
-            foreach (var part in parts)
-            {
-                var clean = part.Trim().TrimStart('-', '*', '•', ' ');
-                if (clean.Length < 2 || clean.Length > 50) continue;
-
-                // Skip years-of-experience fragments
-                if (System.Text.RegularExpressions.Regex.IsMatch(clean, @"^\d+\+?\s*years")) continue;
-
-                if (!seen.Add(clean)) continue;
-                ledger.Requirements.Add(new JdSkillRequirement
+            foreach (var competency in jd.Competencies.OrderBy(item => item.Priority))
+                await AddAsync(competency.Name, competency.Description, competency.Priority switch
                 {
-                    SkillName = clean,
-                    Importance = importance,
-                    SourceText = rawSkill,
-                    Embedding = await _embedder.EmbedAsync(clean, ct),
-                });
-            }
+                    RequirementPriority.Required => SkillImportance.Required,
+                    RequirementPriority.Preferred => SkillImportance.Preferred,
+                    _ => SkillImportance.Inferred
+                }, competency: true);
         }
-
+        else
+        {
+            foreach (var skill in jd.RequiredSkills) await AddAsync(skill, SourceFor(skill), SkillImportance.Required);
+            foreach (var skill in jd.PreferredSkills) await AddAsync(skill, SourceFor(skill), SkillImportance.Preferred);
+        }
+        foreach (var skill in jd.MentionedSkills) await AddAsync(skill, SourceFor(skill), SkillImportance.Inferred);
         return ledger;
-    }
 
-    private static bool IsInSection(IReadOnlyList<string> section, string skill) =>
-        section.Any(s => s.Contains(skill, StringComparison.OrdinalIgnoreCase));
+        string SourceFor(string name) => jd.SkillDecisions.FirstOrDefault(decision =>
+            decision.Label.Equals(name, StringComparison.OrdinalIgnoreCase))?.SourceText ?? name;
+    }
 }

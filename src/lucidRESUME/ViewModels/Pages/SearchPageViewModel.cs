@@ -14,7 +14,10 @@ public sealed record SavedJobItem(
     string Company,
     string Location,
     string Source,
-    JobDescription FullJob);
+    JobDescription FullJob)
+{
+    public override string ToString() => $"{Title} — {Company}";
+}
 
 public sealed partial class SearchPageViewModel : ViewModelBase
 {

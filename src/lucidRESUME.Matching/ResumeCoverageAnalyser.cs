@@ -33,19 +33,25 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
         }
         var companyType = _classifier.Classify(job);
         job.CompanyType = companyType;
+        var sourceLedger = Core.Models.Evidence.EvidenceLedgerBuilder.EnsureCurrent(resume);
+        bool Accepted(string locator) => sourceLedger.Claims.Any(claim => claim.Review == "accepted" &&
+            claim.Id.EndsWith(":" + locator, StringComparison.Ordinal));
 
         var skillEvidence = resume.Skills
             .Select((s, i) => (Text: s.Name, Section: $"Skills[{i}]"))
+            .Where(item => Accepted(Core.Models.Evidence.EvidenceLedgerBuilder.SkillLocator(item.Text)))
             .ToList();
 
         var techEvidence = resume.Experience
             .SelectMany((e, ei) => e.Technologies.Select((t, ti) =>
-                (Text: t, Section: $"Experience[{ei}].Technologies[{ti}]")))
+                (Text: t, Section: $"Experience[{ei}].Technologies[{ti}]", Locator: $"experience:{e.Id:N}:technology:{ti + 1}")))
+            .Where(item => Accepted(item.Locator)).Select(item => (item.Text, item.Section))
             .ToList();
 
         var achievementEvidence = resume.Experience
             .SelectMany((e, ei) => e.Achievements.Select((a, ai) =>
-                (Text: a, Section: $"Experience[{ei}].Achievements[{ai}]")))
+                (Text: a, Section: $"Experience[{ei}].Achievements[{ai}]", Locator: $"experience:{e.Id:N}:achievement:{ai + 1}")))
+            .Where(item => Accepted(item.Locator)).Select(item => (item.Text, item.Section))
             .ToList();
 
         // A role account is more useful for authoring than a bare technology label.
@@ -58,7 +64,8 @@ public sealed class ResumeCoverageAnalyser : ICoverageAnalyser
             {
                 var reviewed = resume.Experience.SelectMany((role, ri) => role.InterviewEntries
                     .Where(answer => answer.Requirement.Equals(competency.Name, StringComparison.OrdinalIgnoreCase) &&
-                                     role.Achievements.Contains(answer.ReviewedProse, StringComparer.Ordinal))
+                                     role.Achievements.Contains(answer.ReviewedProse, StringComparer.Ordinal) &&
+                                     Accepted($"experience:{role.Id:N}:achievement:{role.Achievements.IndexOf(answer.ReviewedProse) + 1}"))
                     .Select(answer => (answer.ReviewedProse, Section: $"Experience[{ri}].Achievements[{role.Achievements.IndexOf(answer.ReviewedProse)}]")))
                     .FirstOrDefault();
                 if (reviewed != default)

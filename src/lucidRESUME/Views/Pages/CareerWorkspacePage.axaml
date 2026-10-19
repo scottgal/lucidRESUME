@@ -1,0 +1,152 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:lucidRESUME.ViewModels.Pages"
+             xmlns:controls="using:lucidRESUME.Views.Controls"
+             x:Class="lucidRESUME.Views.Pages.CareerWorkspacePage"
+             x:DataType="vm:CareerWorkspacePageViewModel">
+  <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource LrPageBgBrush}">
+    <Border Padding="24,20,24,16" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource LrBorderBrush}">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="4">
+          <TextBlock Text="My career" FontSize="26" FontWeight="SemiBold"/>
+          <TextBlock Text="Your experience, in your own words." Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Button x:Name="CareerImportButton" Content="Import CV / LinkedIn" Command="{Binding ImportCommand}"/>
+          <Button x:Name="CareerSaveButton" Content="{Binding SaveLabel}" Command="{Binding SaveCommand}" IsEnabled="{Binding !IsBusy}"
+                  Background="{DynamicResource LrAccentBlueBrush}" Foreground="White" Padding="18,10"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Grid Grid.Row="1" ColumnDefinitions="230,*">
+      <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource LrBorderBrush}" Background="{DynamicResource LrSurfaceBgBrush}">
+        <Grid RowDefinitions="Auto,*,Auto" Margin="14">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+            <TextBlock Text="YOUR ROLES" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+            <Button x:Name="AddCareerRoleButton" Grid.Column="1" Content="+ Add" Command="{Binding AddRoleCommand}" IsEnabled="{Binding !IsBusy}"/>
+          </Grid>
+          <ListBox x:Name="CareerRoleList" Grid.Row="1" ItemsSource="{Binding Roles}" SelectedItem="{Binding SelectedRole}"
+                   Background="Transparent" BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:CareerRoleDraft">
+                <StackPanel Spacing="4" Margin="2,8">
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                  <TextBlock Text="{Binding Company}" Foreground="{DynamicResource LrSecondaryTextBrush}" TextWrapping="Wrap" FontSize="12"/>
+                  <TextBlock Text="{Binding Start}" FontSize="11" Foreground="{DynamicResource LrSubtleTextBrush}"/>
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel Grid.Row="2" Spacing="6" Margin="0,12,0,0">
+            <TextBlock Text="Ready for a specific job?" FontSize="12" TextWrapping="Wrap"/>
+            <Button Content="Go to jobs →" Command="{Binding OpenJobsCommand}" HorizontalAlignment="Stretch"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+      <Grid Grid.Column="1" RowDefinitions="Auto,*" Margin="20,14">
+        <Grid ColumnDefinitions="Auto,12,*" Margin="0,0,0,12">
+          <TextBlock Text="Your name" VerticalAlignment="Center"/>
+          <TextBox x:Name="CareerNameInput" Grid.Column="2" Text="{Binding FullName}" PlaceholderText="Full name"/>
+        </Grid>
+        <TabControl x:Name="CareerWritingTabs" Grid.Row="1" SelectedIndex="{Binding EditorTab, Mode=TwoWay}">
+          <TabItem FontSize="14" x:Name="CareerRoleEditorTab" Header="Role editor">
+            <Panel>
+            <StackPanel IsVisible="{Binding !HasRoles}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="360">
+              <TextBlock Text="Start with your first role" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap"/>
+              <TextBlock Text="Import a CV or LinkedIn export, or add a role and write about your work." TextWrapping="Wrap"/>
+              <Button Content="+ Add my first role" Command="{Binding AddRoleCommand}" HorizontalAlignment="Left"/>
+            </StackPanel>
+            <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="0,12,0,0" IsEnabled="{Binding !IsBusy}" IsVisible="{Binding HasRoles}">
+              <TextBlock Text="{Binding SelectedRole.Label}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,8"/>
+              <Expander IsExpanded="{Binding ShowRoleDetails, Mode=TwoWay}" x:Name="CareerRoleDetails" Grid.Row="1" Header="Role details · dates · skills" HorizontalAlignment="Stretch" Margin="0,0,0,10">
+                <StackPanel Spacing="8" Margin="0,8">
+                  <Grid ColumnDefinitions="*,12,*">
+                    <TextBox x:Name="CareerRoleTitleInput" Text="{Binding SelectedRole.Title}" PlaceholderText="Role title"/>
+                    <TextBox x:Name="CareerRoleCompanyInput" Grid.Column="2" Text="{Binding SelectedRole.Company}" PlaceholderText="Company"/>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,10,*,10,Auto">
+                    <TextBox Text="{Binding SelectedRole.Start}" PlaceholderText="Start · YYYY-MM"/>
+                    <TextBox Grid.Column="2" Text="{Binding SelectedRole.End}" PlaceholderText="End · YYYY-MM" IsEnabled="{Binding !SelectedRole.IsCurrent}"/>
+                    <CheckBox Grid.Column="4" Content="Current" IsChecked="{Binding SelectedRole.IsCurrent}"/>
+                  </Grid>
+                  <TextBox Text="{Binding SelectedRole.Location}" PlaceholderText="Location / remote (optional)"/>
+                  <TextBox x:Name="CareerRoleSkillsInput" Text="{Binding SelectedRole.SkillsText}" PlaceholderText="Skills you actually used, separated by commas"/>
+                  <CheckBox Content="Always include this role in tailored resumes" IsChecked="{Binding SelectedRole.IsCareerAnchor}"/>
+                </StackPanel>
+              </Expander>
+              <TextBox x:Name="CareerRoleProseEditor" Grid.Row="2" Text="{Binding SelectedRole.Prose, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       AcceptsReturn="True" AcceptsTab="False" TextWrapping="Wrap" FontSize="15" Padding="16"
+                       VerticalContentAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                       PlaceholderText="Write about this role. What did you build or change? What was your part, which tools did you use, and what happened?&#10;&#10;Use a blank line between examples. You can edit freely; no forms or generated wording are required."/>
+              <TextBlock Grid.Row="3" MaxHeight="48" Text="{Binding EvidenceExample}" FontSize="11"
+                         TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}" Margin="0,8,0,0"/>
+            </Grid>
+            </Panel>
+          </TabItem>
+          <TabItem FontSize="14" x:Name="CareerCompleteEditorTab" Header="Complete prose">
+            <Grid RowDefinitions="Auto,*" Margin="0,12,0,0">
+              <TextBlock Text="Edit your summary and all role accounts together. Keep the headings; change role names and dates in Role editor."
+                         TextWrapping="Wrap" Margin="0,0,0,8" FontSize="12" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+              <TextBox x:Name="CareerCompleteProseEditor" Grid.Row="1" Text="{Binding CompleteProse, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       AcceptsReturn="True" TextWrapping="Wrap" FontSize="15" Padding="16" VerticalContentAlignment="Top"
+                       ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            </Grid>
+          </TabItem>
+          <TabItem FontSize="14" x:Name="CareerSummaryTab" Header="Summary">
+            <TextBox x:Name="CareerSummaryEditor" Text="{Binding Summary, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True"
+                     TextWrapping="Wrap" FontSize="15" Padding="16" Margin="0,12,0,0" VerticalContentAlignment="Top"
+                     PlaceholderText="Write a short introduction to your experience and the work you want to do."/>
+          </TabItem>
+          <TabItem x:Name="CareerEvidenceTab" Header="Evidence prompts" FontSize="14">
+          <ScrollViewer>
+            <StackPanel Spacing="10" Margin="0,10,0,0">
+              <TextBlock Text="Saved evidence quality" FontWeight="SemiBold"/>
+              <TextBlock x:Name="CareerLedgerSummary" Text="{Binding LedgerSummary}" FontSize="12" TextWrapping="Wrap"/>
+              <ItemsControl ItemsSource="{Binding LedgerFindings}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:CompileBindings="False">
+                    <Border Padding="12" Background="{DynamicResource LrAccentYellowBgBrush}" Margin="0,0,0,8" CornerRadius="6">
+                      <StackPanel Spacing="5">
+                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding SourceText}" FontSize="12" TextWrapping="Wrap" FontStyle="Italic"/>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="Suggestions based on saved evidence. Add a real example if you have one; a missing account doesn’t mean you lack the skill."
+                         FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+              <Button Content="General career prompts" Command="{Binding GeneralEvidenceCommand}" HorizontalAlignment="Left"/>
+              <ComboBox x:Name="CareerEvidenceJobSelector" ItemsSource="{Binding TargetJobs}" SelectedItem="{Binding SelectedTargetJob}"
+                        PlaceholderText="General career evidence (or choose a saved job)" HorizontalAlignment="Stretch"/>
+              <TextBlock Text="No extra prompts for this selection. You can still add or improve any account." IsVisible="{Binding !EvidencePrompts.Count}" TextWrapping="Wrap" FontSize="12"/>
+              <ItemsControl ItemsSource="{Binding EvidencePrompts}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:CareerEvidencePrompt">
+                    <Border Padding="12" Margin="0,0,0,8" Background="{DynamicResource LrCardBgBrush}" CornerRadius="6">
+                      <StackPanel Spacing="5">
+                        <TextBlock Text="{Binding Requirement}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding Reason}" TextWrapping="Wrap" FontSize="12"/>
+                        <TextBlock Text="{Binding ExistingEvidence}" FontStyle="Italic" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+                        <TextBlock Text="{Binding Question}" TextWrapping="Wrap" FontSize="12"/>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ScrollViewer>
+          </TabItem>
+        </TabControl>
+
+      </Grid>
+    </Grid>
+    <Border Grid.Row="2" Padding="20,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource LrBorderBrush}">
+      <StackPanel Spacing="4">
+        <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3"/>
+        <TextBlock x:Name="CareerStatus" Text="{Binding Status}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource LrSecondaryTextBrush}"/>
+        <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="{DynamicResource LrAccentRedBrush}"/>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>
